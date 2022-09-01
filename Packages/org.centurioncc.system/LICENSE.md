@@ -1,0 +1,1 @@
+﻿[Centurion System](https://github.com/Centurion-Creative-Connect/System) © 2022 by [Centurion Creative Connect](https://github.com/Centurion-Creative-Connect) is licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)
