@@ -40,9 +40,8 @@ namespace CenturionCC.System.Audio
 
             if (Vector3.Distance(currentPosition, _lastPlayedPosition) > footstepTime)
             {
-                if (_timer < footstepLength)
+                if (_timer < footstepLength && CheckFootstepType())
                 {
-                    CheckFootstepType();
                     PlayFootstepSound();
                 }
 
@@ -60,7 +59,7 @@ namespace CenturionCC.System.Audio
         private void PlayFootstepSound()
         {
             var player = playerManager.GetLocalPlayer();
-            if (!player) return;
+            if (!player || player.Team == 4) return;
             var isSlow = _timer > slowFootstepThreshold;
 
             switch (_currentFootstepType)
