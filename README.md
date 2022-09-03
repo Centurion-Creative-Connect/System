@@ -29,6 +29,8 @@ Airsoft game system made for Centurion VR Survival Game Field.
 4. Import packages by pressing `Add package from git URL` and pasting these URLs
     1. `https://github.com/Centurion-Creative-Connect/System.git?path=/Packages/org.centurioncc.system`
     2. `https://github.com/Centurion-Creative-Connect/System.git?path=/Packages/org.centurioncc.system.commands`
+5. Setup layers and collision matrix from the menu (`Centurion-Utils/Setup Layers`)
+6. Done!
 
 ## FAQ
 
