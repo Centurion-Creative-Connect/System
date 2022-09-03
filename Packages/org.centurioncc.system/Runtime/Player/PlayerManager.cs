@@ -1041,7 +1041,7 @@ namespace CenturionCC.System.Player
             if (hitPlayer.Team == firedPlayer.Team)
             {
                 Invoke_OnFriendlyFire(firedPlayer, hitPlayer);
-                if (!AllowFriendlyFire)
+                if (hitPlayer.Team != 0 && !AllowFriendlyFire)
                     return;
             }
 
