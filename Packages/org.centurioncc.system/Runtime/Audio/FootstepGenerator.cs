@@ -22,7 +22,7 @@ namespace CenturionCC.System.Audio
         [Tooltip("Plays slow footstep sound if player played footstep this further than footstep timer")]
         public float slowFootstepThreshold = 0.45F;
 
-        private string _currentFootstepType = FT_Fallback;
+        private FootstepType _currentFootstepType = FootstepType.Fallback;
         private Vector3 _lastPlayedPosition = Vector3.zero;
         private bool _lastPlayerGrounded;
         private float _timer;
@@ -64,20 +64,27 @@ namespace CenturionCC.System.Audio
 
             switch (_currentFootstepType)
             {
-                case FT_NoAudio:
+                case FootstepType.NoAudio:
                     break;
-                case FT_Ground:
+                case FootstepType.Gravel:
                     player.SendCustomNetworkEvent(NetworkEventTarget.All,
                         isSlow
                             ? nameof(player.PlaySlowGroundFootstepAudio)
                             : nameof(player.PlayGroundFootstepAudio));
                     break;
-                case FT_Wood:
+                case FootstepType.Wood:
                     player.SendCustomNetworkEvent(NetworkEventTarget.All,
                         isSlow
                             ? nameof(player.PlaySlowWoodFootstepAudio)
                             : nameof(player.PlayWoodFootstepAudio));
                     break;
+                case FootstepType.Iron:
+                    player.SendCustomNetworkEvent(NetworkEventTarget.All,
+                        isSlow
+                            ? nameof(player.PlaySlowIronFootstepAudio)
+                            : nameof(player.PlayIronFootstepAudio));
+                    break;
+                case FootstepType.Fallback:
                 default:
                     player.SendCustomNetworkEvent(NetworkEventTarget.All,
                         isSlow
@@ -87,32 +94,18 @@ namespace CenturionCC.System.Audio
             }
         }
 
-        private void CheckFootstepType()
+        private bool CheckFootstepType()
         {
             const int layerMask = 1 << 11;
-            RaycastHit hit;
-            if (Physics.Raycast(transform.position, Vector3.down, out hit, 3, layerMask))
-            {
-                if (!hit.transform)
-                    return;
-                var footstepMarker = hit.transform.GetComponent<FootstepMarker>();
-                if (!footstepMarker)
-                    footstepMarker = hit.transform.parent.GetComponent<FootstepMarker>();
-                if (!footstepMarker)
-                    return;
-                _currentFootstepType = footstepMarker.FootstepType;
-            }
+            if (!Physics.Raycast(transform.position, Vector3.down, out var hit, 3, layerMask) || !hit.transform)
+                return false;
+
+            var footstepMarker = hit.transform.GetComponentInParent<FootstepMarker>();
+            if (footstepMarker == null)
+                return false;
+
+            _currentFootstepType = footstepMarker.Type;
+            return true;
         }
-
-        #region FootstepType
-
-        // ReSharper disable InconsistentNaming
-        private const string FT_Fallback = "Fallback";
-        private const string FT_Ground = "Ground";
-        private const string FT_Wood = "Wood";
-        private const string FT_NoAudio = "NoAudio";
-        // ReSharper restore InconsistentNaming
-
-        #endregion
     }
 }
