@@ -7522,7 +7522,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 346799140}
-  footstepType: Ground
+  type: 0
 --- !u!1 &348315557
 GameObject:
   m_ObjectHideFlags: 0
@@ -10424,7 +10424,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 458455891}
-  footstepType: Ground
+  type: 0
 --- !u!1 &459723658
 GameObject:
   m_ObjectHideFlags: 0
@@ -16690,8 +16690,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 100, y: 0}
-  m_SizeDelta: {x: 200, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &754465964
 MonoBehaviour:
@@ -31456,11 +31456,13 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1328940238}
   fallbackAudio: {fileID: 1651471027}
-  slowFallbackAudio: {fileID: 1651471027}
-  groundAudio: {fileID: 1651471027}
-  slowGroundAudio: {fileID: 1651471027}
-  woodAudio: {fileID: 1651471027}
-  slowWoodAudio: {fileID: 1651471027}
+  slowFallbackAudio: {fileID: 0}
+  groundAudio: {fileID: 0}
+  slowGroundAudio: {fileID: 0}
+  woodAudio: {fileID: 0}
+  slowWoodAudio: {fileID: 0}
+  ironAudio: {fileID: 0}
+  slowIronAudio: {fileID: 0}
 --- !u!1001 &1329598308
 PrefabInstance:
   m_ObjectHideFlags: 0

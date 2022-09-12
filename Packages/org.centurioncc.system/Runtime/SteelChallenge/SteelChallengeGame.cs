@@ -17,6 +17,8 @@ namespace CenturionCC.System.SteelChallenge
         public bool useAnnouncer;
 
         [SerializeField]
+        private Transform shootingBoxReference;
+        [SerializeField]
         private SteelChallengeLeaderboard leaderboard;
         [SerializeField]
         private SteelChallengeResultMenu resultMenu;
@@ -114,6 +116,8 @@ namespace CenturionCC.System.SteelChallenge
 
         private void Start()
         {
+            if (shootingBoxReference == null)
+                shootingBoxReference = transform;
             _audioManager = GameManagerHelper.GetAudioManager();
             _gunManager = GameManagerHelper.GetGunManager();
             _hitTimes = new DateTime[targets.Length];
@@ -339,7 +343,7 @@ namespace CenturionCC.System.SteelChallenge
 
             var leftFoot = p.GetBonePosition(HumanBodyBones.LeftFoot);
             var rightFoot = p.GetBonePosition(HumanBodyBones.RightFoot);
-            var footBounds = new Bounds(transform.position, new Vector3(1, 50, 1));
+            var footBounds = new Bounds(shootingBoxReference.position, new Vector3(1, 50, 1));
             var isFootInsideBounds = footBounds.Contains(leftFoot) && footBounds.Contains(rightFoot);
             var isPlayerInsideBounds = footBounds.Contains(p.GetPosition());
             return _IsHumanoid(p) ? isFootInsideBounds : isPlayerInsideBounds;

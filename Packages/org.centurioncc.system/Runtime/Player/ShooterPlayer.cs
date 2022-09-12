@@ -249,32 +249,50 @@ namespace CenturionCC.System.Player
 
         public void PlayFallbackFootstepAudio()
         {
-            _PlayFootstepAudio(_footstepAudio.FallbackAudio);
+            if (_footstepAudio)
+                _PlayFootstepAudio(_footstepAudio.FallbackAudio);
         }
 
         public void PlaySlowFallbackFootstepAudio()
         {
-            _PlayFootstepAudio(_footstepAudio.SlowFallbackAudio);
+            if (_footstepAudio)
+                _PlayFootstepAudio(_footstepAudio.SlowFallbackAudio);
         }
 
         public void PlayGroundFootstepAudio()
         {
-            _PlayFootstepAudio(_footstepAudio.GroundAudio);
+            if (_footstepAudio)
+                _PlayFootstepAudio(_footstepAudio.GroundAudio);
         }
 
         public void PlaySlowGroundFootstepAudio()
         {
-            _PlayFootstepAudio(_footstepAudio.SlowGroundAudio);
+            if (_footstepAudio)
+                _PlayFootstepAudio(_footstepAudio.SlowGroundAudio);
         }
 
         public void PlayWoodFootstepAudio()
         {
-            _PlayFootstepAudio(_footstepAudio.WoodAudio);
+            if (_footstepAudio)
+                _PlayFootstepAudio(_footstepAudio.WoodAudio);
         }
 
         public void PlaySlowWoodFootstepAudio()
         {
-            _PlayFootstepAudio(_footstepAudio.SlowWoodAudio);
+            if (_footstepAudio)
+                _PlayFootstepAudio(_footstepAudio.SlowWoodAudio);
+        }
+
+        public void PlayIronFootstepAudio()
+        {
+            if (_footstepAudio)
+                _PlayFootstepAudio(_footstepAudio.IronAudio);
+        }
+
+        public void PlaySlowIronFootstepAudio()
+        {
+            if (_footstepAudio)
+                _PlayFootstepAudio(_footstepAudio.SlowIronAudio);
         }
 
         private void _PlayFootstepAudio(AudioDataStore audioData)

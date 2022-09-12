@@ -1,7 +1,6 @@
 ﻿using CenturionCC.System.Utils;
 using UdonSharp;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace CenturionCC.System.UI
 {
@@ -17,14 +16,13 @@ namespace CenturionCC.System.UI
         [SerializeField]
         private GameObject downImage;
 
-        [FormerlySerializedAs("A00IsActive")]
-        public bool a00IsActive;
-        [FormerlySerializedAs("A01IsActive")]
-        public bool a01IsActive;
-        [FormerlySerializedAs("B00IsActive")]
-        public bool b00IsActive;
-        [FormerlySerializedAs("B01IsActive")]
-        public bool b01IsActive;
+        // Disable inconsistent naming warn for WallManager callback field
+        // ReSharper disable InconsistentNaming
+        public bool A00IsActive;
+        public bool A01IsActive;
+        public bool B00IsActive;
+        public bool B01IsActive;
+        // ReSharper restore InconsistentNaming
 
         private void Start()
         {
@@ -34,10 +32,10 @@ namespace CenturionCC.System.UI
 
         public void OnUIRefresh()
         {
-            leftImage.SetActive(a00IsActive);
-            rightImage.SetActive(a01IsActive);
-            upImage.SetActive(b00IsActive);
-            downImage.SetActive(b01IsActive);
+            leftImage.SetActive(A00IsActive);
+            rightImage.SetActive(A01IsActive);
+            upImage.SetActive(B00IsActive);
+            downImage.SetActive(B01IsActive);
         }
     }
 }

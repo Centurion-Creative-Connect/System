@@ -7,12 +7,21 @@ namespace CenturionCC.System.Audio
     public class FootstepMarker : UdonSharpBehaviour
     {
         [SerializeField]
-        private string footstepType;
+        private FootstepType type = FootstepType.Fallback;
 
-        public string FootstepType => footstepType;
+        public FootstepType Type => type;
 
 #if UNITY_EDITOR && !COMPILER_UDONSHARP
-        public void Internal_SetFootstepType(string type) => footstepType = type;
+        public void Internal_SetFootstepType(FootstepType fType) => type = fType;
 #endif
+    }
+
+    public enum FootstepType
+    {
+        Fallback,
+        NoAudio,
+        Gravel,
+        Wood,
+        Iron
     }
 }

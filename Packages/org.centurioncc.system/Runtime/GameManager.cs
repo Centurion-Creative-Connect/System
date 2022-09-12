@@ -63,7 +63,7 @@ namespace CenturionCC.System
 
         public static string GetVersion()
         {
-            return "0.1.0";
+            return "0.1.1";
         }
 
         public int KeepAlive(WatchdogProc wd, int nonce)
@@ -206,9 +206,9 @@ namespace CenturionCC.System
         [PublicAPI]
         public const string GameManagerPath = "Logics/System/GameManager";
         [PublicAPI]
-        public const string ConsolePath = "Logics/System/GameManager/NewbieConsole";
+        public const string ConsolePath = "Logics/System/LogTablet/NewbieConsole";
         [PublicAPI]
-        public const string LoggerPath = "Logics/System/GameManager/NewbieLogger";
+        public const string LoggerPath = "Logics/System/LogTablet/NewbieLogger";
 
         [PublicAPI]
         public static GameManager GetGameManager()

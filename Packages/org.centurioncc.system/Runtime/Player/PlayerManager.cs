@@ -685,32 +685,32 @@ namespace CenturionCC.System.Player
                 {
                     case 0:
                         ++noneTeam;
-                        if (player.Role.HasPermission())
+                        if (player.Role.IsGameStaff())
                             ++noneTeamMod;
                         break;
                     case 1:
                         ++redTeam;
-                        if (player.Role.HasPermission())
+                        if (player.Role.IsGameStaff())
                             ++redTeamMod;
                         break;
                     case 2:
                         ++yelTeam;
-                        if (player.Role.HasPermission())
+                        if (player.Role.IsGameStaff())
                             ++yelTeamMod;
                         break;
                     case 3:
                         ++greTeam;
-                        if (player.Role.HasPermission())
+                        if (player.Role.IsGameStaff())
                             ++greTeamMod;
                         break;
                     case 4:
                         ++bluTeam;
-                        if (player.Role.HasPermission())
+                        if (player.Role.IsGameStaff())
                             ++bluTeamMod;
                         break;
                     default:
                         ++undefinedTeam;
-                        if (player.Role.HasPermission())
+                        if (player.Role.IsGameStaff())
                             ++undefinedTeamMod;
                         break;
                 }
@@ -1041,7 +1041,7 @@ namespace CenturionCC.System.Player
             if (hitPlayer.Team == firedPlayer.Team)
             {
                 Invoke_OnFriendlyFire(firedPlayer, hitPlayer);
-                if (!AllowFriendlyFire)
+                if (hitPlayer.Team != 0 && !AllowFriendlyFire)
                     return;
             }
 

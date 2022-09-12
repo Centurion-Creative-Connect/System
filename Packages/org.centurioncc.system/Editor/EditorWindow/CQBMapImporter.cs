@@ -41,7 +41,7 @@ namespace CenturionCC.System.Editor.EditorWindow
 
                 var fm = go.AddUdonSharpComponent<FootstepMarker>();
 #if UNITY_EDITOR && !COMPILER_UDONSHARP
-                fm.Internal_SetFootstepType("Wood");
+                fm.Internal_SetFootstepType(FootstepType.Wood);
 #endif
             }
         }
