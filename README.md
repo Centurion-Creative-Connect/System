@@ -6,7 +6,7 @@ Airsoft game system made for Centurion VR Survival Game Field.
 
 - pooling bullets, guns, and players for the VRChat environment.
 - pretty realistic BB physics.
-- kinda good Hit Registration.
+- kinda good shooter-sided hit registration.
 - create custom gun behaviours to customize guns furthermore.
 
 ## How to Import
@@ -38,16 +38,15 @@ Airsoft game system made for Centurion VR Survival Game Field.
 
 Please see the sample scene included in this package!
 
-You can Import the sample
-package [using Unity's Package Manager](https://docs.unity3d.com/2019.4/Documentation/Manual/upm-ui.html)!
+You can Import the sample [using Unity's Package Manager](https://docs.unity3d.com/2019.4/Documentation/Manual/upm-ui.html)!
 
 ### How do I attribute this in my world?
 
 Placing `NewbieConsole` with `GameManagerCommand` (which allows `game license` to work) should be good enough for
 attribution!
 
-If unable to do the above, place a uGUI or TMPro Text which contains the URL
-to [this repo](https://github.com/Centurion-Creative-Connect/System) or [Twitter](https://twitter.com/vrsgf_centurion)!
+If you're unable to do the above, place a uGUI or TMPro Text which contains the URL
+to [This Repository](https://github.com/Centurion-Creative-Connect/System) or [Twitter](https://twitter.com/vrsgf_centurion)!
 
 ### I found a bug! How do I report it?
 
