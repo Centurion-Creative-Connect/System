@@ -714,7 +714,8 @@ namespace CenturionCC.System.Gun
                 if (projectile == null)
                 {
                     Logger.LogError($"{Prefix}Projectile not found!!!");
-                    WatchdogProc.TryNotifyCrash(0xB11DEAD);
+                    if (Time.timeSinceLevelLoad > 30F)
+                        WatchdogProc.TryNotifyCrash(0xB11DEAD);
                     return;
                 }
 
