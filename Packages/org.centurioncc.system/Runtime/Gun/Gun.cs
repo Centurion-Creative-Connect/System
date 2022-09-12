@@ -1122,7 +1122,9 @@ namespace CenturionCC.System.Gun
                 return;
             }
 
-            if (MainHandle.IsPickedUp ^ SubHandle.IsPickedUp)
+            if (MainHandle.IsPickedUp ^
+                (SubHandle != null && SubHandle.IsPickedUp) ^
+                (CustomHandle != null && CustomHandle.IsPickedUp))
             {
                 _isLocal = true;
                 Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
@@ -1205,7 +1207,9 @@ namespace CenturionCC.System.Gun
             OnGunHandleDrop(instance);
             b.OnHandleDrop(this, instance);
 
-            if (!MainHandle.IsPickedUp && !SubHandle.IsPickedUp)
+            if (!MainHandle.IsPickedUp &&
+                (SubHandle == null || !SubHandle.IsPickedUp) &&
+                (CustomHandle == null || !CustomHandle.IsPickedUp))
             {
                 OnGunDrop();
                 b.OnGunDrop(this);
