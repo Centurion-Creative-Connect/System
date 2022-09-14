@@ -20,373 +20,6 @@ namespace CenturionCC.System.Gun
         private const string LeftHandTrigger = "Oculus_CrossPlatform_PrimaryIndexTrigger";
         private const string RightHandTrigger = "Oculus_CrossPlatform_SecondaryIndexTrigger";
 
-        [UdonSynced] [FieldChangeCallback(nameof(RawState))]
-        private byte _currentState;
-
-        private FireMode _fireMode;
-
-        private bool _isLocal;
-
-        private bool _isPickedUp;
-        private bool _mainHandleIsPickedUp;
-
-        private Vector3 _mainHandlePosOffset;
-        private Quaternion _mainHandleRotOffset;
-
-        private GunHandle _pivotHandle;
-
-        [UdonSynced]
-        private Vector3 _pivotPosOffset;
-        [UdonSynced]
-        private Quaternion _pivotRotOffset;
-
-        [UdonSynced] [FieldChangeCallback(nameof(ShotCount))]
-        private int _shotCount = -1;
-        private bool _subHandleIsPickedUp;
-
-        private Vector3 _subHandlePosOffset;
-        private Quaternion _subHandleRotOffset;
-        private TriggerState _trigger;
-
-
-        protected string Prefix => $"<color=olive>[{name}]</color> ";
-
-        protected virtual void Start()
-        {
-            Logger = GameManagerHelper.GetLogger();
-            AudioManager = GameManagerHelper.GetAudioManager();
-            UpdateManager = GameManagerHelper.GetUpdateManager();
-
-            FireMode = AvailableFireModes.Length != 0 ? AvailableFireModes[0] : FireMode.Safety;
-
-            if (Networking.IsMaster)
-            {
-                State = GunState.Idle;
-                ShotCount = 0;
-            }
-
-            mainHandle.callback = this;
-            mainHandle.handleType = HandleType.MainHandle;
-            var m = mainHandle.transform;
-            _mainHandlePosOffset = m.localPosition;
-            _mainHandleRotOffset = m.localRotation;
-
-            subHandle.callback = this;
-            subHandle.handleType = HandleType.SubHandle;
-            var s = subHandle.transform;
-            _subHandlePosOffset = s.localPosition;
-            _subHandleRotOffset = s.localRotation;
-
-            customHandle.callback = this;
-            customHandle.handleType = HandleType.CustomHandle;
-            customHandle.transform.localPosition = Vector3.down * 50;
-
-            Internal_SetPivot(HandleType.MainHandle);
-            Internal_UpdateHandlePickupable();
-
-            UpdateManager.SubscribeUpdate(this);
-            UpdateManager.SubscribeSlowUpdate(this);
-
-            if (Behaviour != null)
-                Behaviour.Setup(this);
-        }
-
-        protected virtual void OnTriggerEnter(Collider other)
-        {
-            if (other == null)
-                return;
-
-            var otherName = other.name.ToLower();
-            Logger.LogVerbose($"{Prefix}OnTriggerEnter: {otherName}");
-
-            if (otherName.StartsWith("safezone"))
-            {
-                IsInSafeZone = true;
-                return;
-            }
-
-            if (otherName.StartsWith("holster"))
-            {
-                if (!IsLocal || IsHolstered)
-                    return;
-                var holster = other.GetComponent<GunHolster>();
-                if (holster == null || holster.HoldableSize < RequiredHolsterSize)
-                    return;
-
-                Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .5F, 1F, .1F);
-                TargetHolster = holster;
-                TargetHolster.IsHighlighting = true;
-                return;
-            }
-
-            ++CollisionCount;
-
-            OnProcessCollisionAudio(other);
-        }
-
-        protected virtual void OnTriggerExit(Collider other)
-        {
-            if (other == null)
-                return;
-
-            var otherName = other.name.ToLower();
-
-            if (otherName.StartsWith("safezone"))
-            {
-                IsInSafeZone = false;
-                return;
-            }
-
-            if (otherName.StartsWith("holster") && IsLocal)
-            {
-                if (TargetHolster != null)
-                {
-                    Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .5F, 1F, .1F);
-                    TargetHolster.IsHighlighting = false;
-                }
-
-                TargetHolster = null;
-                return;
-            }
-
-            --CollisionCount;
-            // To make sure there arent negative values on it (might happen when turning off this collider)
-            if (CollisionCount < 0)
-                CollisionCount = 0;
-        }
-
-        public virtual void _Update()
-        {
-            if (QueuedShotCount > 0)
-            {
-                --QueuedShotCount;
-                Internal_Shoot();
-            }
-
-            if (IsOptimized && !IsLocal)
-                return;
-
-            Internal_UpdateIsPickedUpState();
-            if (IsPickedUp || IsHolstered)
-                UpdatePosition();
-
-            if (IsLocal)
-            {
-                if (TargetAnimator != null)
-                    TargetAnimator.SetFloat(GunHelper.TriggerProgressParameter(), GetMainTriggerPull());
-                if (Behaviour != null)
-                    Behaviour.OnGunUpdate(this);
-
-                if (Input.GetKeyDown(KeyCode.B))
-                    FireMode = FireModeHelper.CycleFireMode(FireMode, AvailableFireModes);
-
-                if (IsInWall)
-                {
-                    Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .2F, .02F, .1F);
-                    Networking.LocalPlayer.PlayHapticEventInHand(SubHandle.CurrentHand, .2F, .02F, .1F);
-                }
-            }
-        }
-
-        public virtual void _SlowUpdate()
-        {
-            if (!Utilities.IsValid(Networking.LocalPlayer))
-                return;
-
-            IsOptimized = Vector3.Distance(target.position, Networking.LocalPlayer.GetPosition()) > OptimizationRange;
-
-            if (!IsOptimized)
-                return;
-
-            Internal_UpdateIsPickedUpState();
-            if (IsPickedUp || IsHolstered)
-                UpdatePosition();
-        }
-
-        public override void InputJump(bool value, UdonInputEventArgs args)
-        {
-            if (!value || !IsLocal)
-                return;
-
-            FireMode = FireModeHelper.CycleFireMode(FireMode, AvailableFireModes);
-        }
-
-        [PublicAPI]
-        public override ShotResult TryToShoot()
-        {
-            var canShoot = CanShoot();
-            switch (canShoot)
-            {
-                case ShotResult.Paused:
-                {
-                    return ShotResult.Paused;
-                }
-                case ShotResult.Succeeded:
-                case ShotResult.SucceededContinuously:
-                {
-                    Shoot();
-                    ++BurstCount;
-
-                    if (FireMode.HasFiredEnough(BurstCount))
-                    {
-                        Trigger = TriggerState.Fired;
-                        return ShotResult.Succeeded;
-                    }
-
-                    return ShotResult.SucceededContinuously;
-                }
-                case ShotResult.Failed:
-                {
-                    EmptyShoot();
-
-                    Trigger = TriggerState.Fired;
-                    return ShotResult.Failed;
-                }
-                case ShotResult.Cancelled:
-                default:
-                {
-                    Trigger = TriggerState.Fired;
-                    return ShotResult.Cancelled;
-                }
-            }
-        }
-
-        [PublicAPI]
-        public override void Shoot()
-        {
-            if (HapticData != null && HapticData.Shooting)
-                HapticData.Shooting.PlayBothHand();
-
-            ++ShotCount;
-            RequestSerialization();
-        }
-
-        [PublicAPI]
-        public override void EmptyShoot()
-        {
-            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_EmptyShoot));
-        }
-
-        [PublicAPI]
-        public override void MoveTo(Vector3 position, Quaternion rotation)
-        {
-            Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
-            mainHandle.ForceDrop();
-            subHandle.ForceDrop();
-            target.SetPositionAndRotation(position, rotation);
-
-            mainHandle.MoveToLocalPosition(MainHandlePositionOffset, MainHandleRotationOffset);
-            subHandle.MoveToLocalPosition(SubHandlePositionOffset, SubHandleRotationOffset);
-
-            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(UpdatePositionForSync));
-        }
-
-        [PublicAPI]
-        public override void UpdatePosition()
-        {
-            Vector3 position;
-            Quaternion rotation;
-
-            // when mainHandle & subHandle is both picked up or dropped
-            // see also: UpdatePositionWithLookAt()
-            if (IsDoubleHandedGun && mainHandle.IsPickedUp && subHandle.IsPickedUp)
-            {
-                rotation = GetLookAtRotation();
-                position = mainHandle.transform.position + rotation * MainHandlePositionOffset * -1;
-            }
-            // when only main handle is picked up
-            else if (mainHandle.IsPickedUp)
-            {
-                var mainHandleTransform = mainHandle.transform;
-                rotation = mainHandleTransform.rotation *
-                           Quaternion.AngleAxis(CurrentMainHandlePitchOffset, Vector3.right);
-                position = mainHandleTransform.position + rotation * MainHandlePositionOffset * -1;
-            }
-            // when only sub handle or other handle is picked up
-            else
-            {
-                var pivotTransform = _pivotHandle.transform;
-                rotation = pivotTransform.rotation * _pivotRotOffset;
-                position = pivotTransform.position + rotation * _pivotPosOffset * -1;
-            }
-
-            target.SetPositionAndRotation(position, rotation);
-        }
-
-        [PublicAPI]
-        public void UpdatePositionForSync()
-        {
-            SendCustomEventDelayedSeconds(nameof(UpdatePosition), 0.5F);
-            SendCustomEventDelayedSeconds(nameof(UpdatePosition), 1F);
-            SendCustomEventDelayedSeconds(nameof(UpdatePosition), 5F);
-        }
-
-        [PublicAPI]
-        public void SetState(GunState state)
-        {
-            SetState(Convert.ToByte(state));
-        }
-
-        [PublicAPI]
-        public void SetState(byte state)
-        {
-            if (RawState == state) return;
-            RawState = state;
-            Networking.SetOwner(Networking.LocalPlayer, gameObject);
-            RequestSerialization();
-        }
-
-        /// <summary>
-        /// Gets a LookAt rotation from <see cref="MainHandle"/> to <see cref="SubHandle"/>.
-        /// </summary>
-        /// <remarks>
-        /// Exposed for modification of <see cref="UpdatePosition"/> method.
-        /// </remarks>
-        /// <returns>Rotation looking from <see cref="MainHandle"/> to <see cref="SubHandle"/> with Z forward Y up orientation</returns>
-        [PublicAPI]
-        public Quaternion GetLookAtRotation()
-        {
-            var mainTransform = mainHandle.transform;
-            var subTransform = subHandle.transform;
-
-            var up = mainTransform.up;
-            var mainHandlePos = mainTransform.position;
-            var rawSubPos = subTransform.position;
-            var subHandlePos = rawSubPos + Quaternion.LookRotation(rawSubPos - mainHandlePos, up) * LookAtTargetOffset;
-
-            var look = subHandlePos - mainHandlePos;
-
-            return Quaternion.LookRotation(look, up);
-        }
-
-        /// <summary>
-        /// Gets holder's current <see cref="MainHandle"/>'s trigger input.
-        /// </summary>
-        /// <returns>0 if remote, 0-1 depending on how much current holder is pulling the trigger.</returns>
-        [PublicAPI]
-        public float GetMainTriggerPull()
-        {
-            if (!IsLocal || !MainHandle.IsPickedUp) return 0F;
-
-            return MainHandle.CurrentHand == VRC_Pickup.PickupHand.Left
-                ? Input.GetAxis(LeftHandTrigger)
-                : Input.GetAxis(RightHandTrigger);
-        }
-
-        /// <summary>
-        /// Gets holder's current <see cref="SubHandle"/>'s trigger input.
-        /// </summary>
-        /// <returns>0 if remote, 0-1 depending on how much current holder is pulling the trigger.</returns>
-        [PublicAPI]
-        public float GetSubTriggerPull()
-        {
-            if (!IsLocal || !SubHandle.IsPickedUp) return 0F;
-
-            return SubHandle.CurrentHand == VRC_Pickup.PickupHand.Left
-                ? Input.GetAxis(LeftHandTrigger)
-                : Input.GetAxis(RightHandTrigger);
-        }
-
         #region SerializeFields
 
         [SerializeField]
@@ -430,6 +63,37 @@ namespace CenturionCC.System.Gun
         protected float subHandleRePickupDelay;
 
         #endregion
+
+        [UdonSynced] [FieldChangeCallback(nameof(RawState))]
+        private byte _currentState;
+
+        private bool _isLocal;
+
+        private bool _isPickedUp;
+        private bool _mainHandleIsPickedUp;
+        private bool _subHandleIsPickedUp;
+
+        private Vector3 _mainHandlePosOffset;
+        private Quaternion _mainHandleRotOffset;
+
+        private Vector3 _subHandlePosOffset;
+        private Quaternion _subHandleRotOffset;
+
+        private GunHandle _pivotHandle;
+
+        [UdonSynced]
+        private Vector3 _pivotPosOffset;
+        [UdonSynced]
+        private Quaternion _pivotRotOffset;
+
+        private FireMode _fireMode;
+        private TriggerState _trigger;
+
+        [UdonSynced] [FieldChangeCallback(nameof(ShotCount))]
+        private int _shotCount = -1;
+
+
+        protected string Prefix => $"<color=olive>[{name}]</color> ";
 
         #region OverridenProperties
 
@@ -598,7 +262,7 @@ namespace CenturionCC.System.Gun
                 var lastState = _currentState;
                 _currentState = value;
                 if (TargetAnimator != null)
-                    TargetAnimator.SetInteger(GunHelper.StateParameter(), value);
+                    TargetAnimator.SetInteger(GunUtility.StateParameter(), value);
                 if (lastState != value)
                     OnProcessStateChange(lastState, value);
             }
@@ -688,6 +352,336 @@ namespace CenturionCC.System.Gun
 
         #endregion
 
+        protected virtual void Start()
+        {
+            Logger = GameManagerHelper.GetLogger();
+            AudioManager = GameManagerHelper.GetAudioManager();
+            UpdateManager = GameManagerHelper.GetUpdateManager();
+
+            FireMode = AvailableFireModes.Length != 0 ? AvailableFireModes[0] : FireMode.Safety;
+            Trigger = FireMode == FireMode.Safety ? TriggerState.Idle : TriggerState.Armed;
+
+            if (Networking.IsMaster)
+            {
+                State = GunState.Idle;
+                ShotCount = 0;
+            }
+
+            mainHandle.callback = this;
+            mainHandle.handleType = HandleType.MainHandle;
+            var m = mainHandle.transform;
+            _mainHandlePosOffset = m.localPosition;
+            _mainHandleRotOffset = m.localRotation;
+
+            subHandle.callback = this;
+            subHandle.handleType = HandleType.SubHandle;
+            var s = subHandle.transform;
+            _subHandlePosOffset = s.localPosition;
+            _subHandleRotOffset = s.localRotation;
+
+            customHandle.callback = this;
+            customHandle.handleType = HandleType.CustomHandle;
+            customHandle.transform.localPosition = Vector3.down * 50;
+
+            Internal_SetPivot(HandleType.MainHandle);
+            Internal_UpdateHandlePickupable();
+
+            UpdateManager.SubscribeUpdate(this);
+            UpdateManager.SubscribeSlowUpdate(this);
+
+            if (Behaviour != null)
+                Behaviour.Setup(this);
+        }
+
+        protected virtual void OnTriggerEnter(Collider other)
+        {
+            var otherName = other.name.ToLower();
+            Logger.LogVerbose($"{Prefix}OnTriggerEnter: {otherName}");
+
+            if (otherName.StartsWith("safezone"))
+            {
+                IsInSafeZone = true;
+                return;
+            }
+
+            if (otherName.StartsWith("holster"))
+            {
+                if (!IsLocal || IsHolstered)
+                    return;
+                var holster = other.GetComponent<GunHolster>();
+                if (holster == null || holster.HoldableSize < RequiredHolsterSize)
+                    return;
+
+                Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .5F, 1F, .1F);
+                TargetHolster = holster;
+                TargetHolster.IsHighlighting = true;
+                return;
+            }
+
+            ++CollisionCount;
+
+            OnProcessCollisionAudio(other);
+        }
+
+        protected virtual void OnTriggerExit(Collider other)
+        {
+            var otherName = other.name.ToLower();
+
+            if (otherName.StartsWith("safezone"))
+            {
+                IsInSafeZone = false;
+                return;
+            }
+
+            if (otherName.StartsWith("holster") && IsLocal)
+            {
+                if (TargetHolster != null)
+                {
+                    Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .5F, 1F, .1F);
+                    TargetHolster.IsHighlighting = false;
+                }
+
+                TargetHolster = null;
+                return;
+            }
+
+            --CollisionCount;
+            // To make sure there arent negative values on it (might happen when turning off this collider)
+            if (CollisionCount < 0)
+                CollisionCount = 0;
+        }
+
+        public virtual void _Update()
+        {
+            if (QueuedShotCount > 0)
+            {
+                --QueuedShotCount;
+                Internal_Shoot();
+            }
+
+            if (IsOptimized && !IsLocal)
+                return;
+
+            Internal_UpdateIsPickedUpState();
+            if (IsPickedUp || IsHolstered)
+                UpdatePosition();
+
+            if (IsLocal)
+            {
+                if (TargetAnimator != null)
+                    TargetAnimator.SetFloat(GunUtility.TriggerProgressParameter(), GetMainTriggerPull());
+                if (Behaviour != null)
+                    Behaviour.OnGunUpdate(this);
+
+                if (Input.GetKeyDown(KeyCode.B))
+                    FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
+
+                if (IsInWall)
+                {
+                    Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .2F, .02F, .1F);
+                    Networking.LocalPlayer.PlayHapticEventInHand(SubHandle.CurrentHand, .2F, .02F, .1F);
+                }
+            }
+        }
+
+        public virtual void _SlowUpdate()
+        {
+            if (!Utilities.IsValid(Networking.LocalPlayer))
+                return;
+
+            IsOptimized = Vector3.Distance(target.position, Networking.LocalPlayer.GetPosition()) > OptimizationRange;
+
+            if (!IsOptimized)
+                return;
+
+            Internal_UpdateIsPickedUpState();
+            if (IsPickedUp || IsHolstered)
+                UpdatePosition();
+        }
+
+        public override void InputJump(bool value, UdonInputEventArgs args)
+        {
+            if (!value || !IsLocal)
+                return;
+
+            FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
+        }
+
+        [PublicAPI]
+        public override ShotResult TryToShoot()
+        {
+            var canShoot = CanShoot();
+            switch (canShoot)
+            {
+                case ShotResult.Paused:
+                {
+                    return ShotResult.Paused;
+                }
+                case ShotResult.Succeeded:
+                case ShotResult.SucceededContinuously:
+                {
+                    Shoot();
+                    ++BurstCount;
+                    HasBulletInChamber = false;
+
+                    if (!FireMode.HasFiredEnough(BurstCount))
+                        return ShotResult.SucceededContinuously;
+
+                    Trigger = TriggerState.Fired;
+                    return ShotResult.Succeeded;
+                }
+                case ShotResult.Failed:
+                {
+                    EmptyShoot();
+
+                    Trigger = TriggerState.Fired;
+                    return ShotResult.Failed;
+                }
+                case ShotResult.Cancelled:
+                default:
+                {
+                    Trigger = TriggerState.Fired;
+                    return ShotResult.Cancelled;
+                }
+            }
+        }
+
+        [PublicAPI]
+        public override void Shoot()
+        {
+            if (HapticData != null && HapticData.Shooting)
+                HapticData.Shooting.PlayBothHand();
+
+            ++ShotCount;
+            RequestSerialization();
+        }
+
+        [PublicAPI]
+        public override void EmptyShoot()
+        {
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_EmptyShoot));
+        }
+
+        [PublicAPI]
+        public override void MoveTo(Vector3 position, Quaternion rotation)
+        {
+            Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
+            mainHandle.ForceDrop();
+            subHandle.ForceDrop();
+            target.SetPositionAndRotation(position, rotation);
+
+            mainHandle.MoveToLocalPosition(MainHandlePositionOffset, MainHandleRotationOffset);
+            subHandle.MoveToLocalPosition(SubHandlePositionOffset, SubHandleRotationOffset);
+
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(UpdatePositionForSync));
+        }
+
+        [PublicAPI]
+        public override void UpdatePosition()
+        {
+            Vector3 position;
+            Quaternion rotation;
+
+            // when mainHandle & subHandle is both picked up or dropped
+            // see also: UpdatePositionWithLookAt()
+            if (IsDoubleHandedGun && mainHandle.IsPickedUp && subHandle.IsPickedUp)
+            {
+                rotation = GetLookAtRotation();
+                position = mainHandle.transform.position + rotation * MainHandlePositionOffset * -1;
+            }
+            // when only main handle is picked up
+            else if (mainHandle.IsPickedUp)
+            {
+                var mainHandleTransform = mainHandle.transform;
+                rotation = mainHandleTransform.rotation *
+                           Quaternion.AngleAxis(CurrentMainHandlePitchOffset, Vector3.right);
+                position = mainHandleTransform.position + rotation * MainHandlePositionOffset * -1;
+            }
+            // when only sub handle or other handle is picked up
+            else
+            {
+                var pivotTransform = _pivotHandle.transform;
+                rotation = pivotTransform.rotation * _pivotRotOffset;
+                position = pivotTransform.position + rotation * _pivotPosOffset * -1;
+            }
+
+            target.SetPositionAndRotation(position, rotation);
+        }
+
+        [PublicAPI]
+        public void UpdatePositionForSync()
+        {
+            SendCustomEventDelayedSeconds(nameof(UpdatePosition), 0.5F);
+            SendCustomEventDelayedSeconds(nameof(UpdatePosition), 1F);
+            SendCustomEventDelayedSeconds(nameof(UpdatePosition), 5F);
+        }
+
+        [PublicAPI]
+        public void SetState(GunState state)
+        {
+            SetState(Convert.ToByte(state));
+        }
+
+        [PublicAPI]
+        public void SetState(byte state)
+        {
+            if (RawState == state) return;
+            RawState = state;
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            RequestSerialization();
+        }
+
+        /// <summary>
+        /// Gets a LookAt rotation from <see cref="MainHandle"/> to <see cref="SubHandle"/>.
+        /// </summary>
+        /// <remarks>
+        /// Exposed for modification of <see cref="UpdatePosition"/> method.
+        /// </remarks>
+        /// <returns>Rotation looking from <see cref="MainHandle"/> to <see cref="SubHandle"/> with Z forward Y up orientation</returns>
+        [PublicAPI]
+        public Quaternion GetLookAtRotation()
+        {
+            var mainTransform = mainHandle.transform;
+            var subTransform = subHandle.transform;
+
+            var up = mainTransform.up;
+            var mainHandlePos = mainTransform.position;
+            var rawSubPos = subTransform.position;
+            var subHandlePos = rawSubPos + Quaternion.LookRotation(rawSubPos - mainHandlePos, up) * LookAtTargetOffset;
+
+            var look = subHandlePos - mainHandlePos;
+
+            return Quaternion.LookRotation(look, up);
+        }
+
+        /// <summary>
+        /// Gets holder's current <see cref="MainHandle"/>'s trigger input.
+        /// </summary>
+        /// <returns>0 if remote, 0-1 depending on how much current holder is pulling the trigger.</returns>
+        [PublicAPI]
+        public float GetMainTriggerPull()
+        {
+            if (!IsLocal || !MainHandle.IsPickedUp) return 0F;
+
+            return MainHandle.CurrentHand == VRC_Pickup.PickupHand.Left
+                ? Input.GetAxis(LeftHandTrigger)
+                : Input.GetAxis(RightHandTrigger);
+        }
+
+        /// <summary>
+        /// Gets holder's current <see cref="SubHandle"/>'s trigger input.
+        /// </summary>
+        /// <returns>0 if remote, 0-1 depending on how much current holder is pulling the trigger.</returns>
+        [PublicAPI]
+        public float GetSubTriggerPull()
+        {
+            if (!IsLocal || !SubHandle.IsPickedUp) return 0F;
+
+            return SubHandle.CurrentHand == VRC_Pickup.PickupHand.Left
+                ? Input.GetAxis(LeftHandTrigger)
+                : Input.GetAxis(RightHandTrigger);
+        }
+
         #region Internals
 
         protected void Internal_Shoot()
@@ -754,7 +748,7 @@ namespace CenturionCC.System.Gun
             }
 
             if (TargetAnimator != null)
-                TargetAnimator.SetTrigger(GunHelper.IsShootingParameter());
+                TargetAnimator.SetTrigger(GunUtility.IsShootingParameter());
             if (AudioData != null)
                 Internal_PlayAudio(AudioData.Shooting);
             LastShotTime = DateTime.Now;
@@ -959,7 +953,7 @@ namespace CenturionCC.System.Gun
         {
             _fireMode = fireMode;
             if (TargetAnimator != null)
-                TargetAnimator.SetInteger(GunHelper.SelectorTypeParameter(), (int)fireMode);
+                TargetAnimator.SetInteger(GunUtility.SelectorTypeParameter(), (int)fireMode);
         }
 
         #endregion
@@ -998,6 +992,12 @@ namespace CenturionCC.System.Gun
                 return ShotResult.Failed;
             }
 
+            if (State != GunState.Idle)
+            {
+                Trigger = TriggerState.Fired;
+                return ShotResult.Failed;
+            }
+
             if (DateTime.Now.Subtract(LastShotTime).TotalSeconds < SecondsPerRound)
             {
                 return ShotResult.Paused;
@@ -1016,6 +1016,17 @@ namespace CenturionCC.System.Gun
 
         protected virtual void OnFireModeChanged(FireMode previous, FireMode next)
         {
+            if (previous == FireMode.Safety && next != FireMode.Safety)
+            {
+                Trigger = TriggerState.Armed;
+                return;
+            }
+
+            if (previous != FireMode.Safety && next == FireMode.Safety)
+            {
+                Trigger = TriggerState.Idle;
+                return;
+            }
         }
 
         protected virtual void OnProcessStateChange(byte previous, byte next)
@@ -1023,38 +1034,36 @@ namespace CenturionCC.System.Gun
             var previousState = GunState.Unknown;
             var nextState = GunState.Unknown;
 
-            if (previous < GunStateHelper.MaxValue)
+            if (previous <= GunStateHelper.MaxValue)
                 previousState = (GunState)previous;
-            if (next < GunStateHelper.MaxValue)
+            if (next <= GunStateHelper.MaxValue)
                 nextState = (GunState)next;
 
-            if (nextState.IsTwistingState() &&
-                (previousState.IsIdleState() || previousState.IsPullingOrPushingState()))
+            if (nextState == GunState.InCockingTwisting && previousState != GunState.InCockingTwisting)
             {
                 if (AudioData != null) Internal_PlayAudio(AudioData.CockingTwist);
 
                 if (TargetAnimator != null && !IsLocal)
-                    TargetAnimator.SetFloat(GunHelper.CockingTwistParameter(), 1);
+                    TargetAnimator.SetFloat(GunUtility.CockingTwistParameter(), 1);
             }
-            else if (nextState.IsPushingState() && previousState.IsPullingState())
+            else if (nextState == GunState.InCockingPush && previousState == GunState.InCockingPull)
             {
                 if (AudioData != null) Internal_PlayAudio(AudioData.CockingPull);
 
                 if (TargetAnimator != null && !IsLocal)
                 {
-                    TargetAnimator.SetFloat(GunHelper.CockingProgressParameter(), 1);
-                    TargetAnimator.SetFloat(GunHelper.CockingTwistParameter(), 1);
+                    TargetAnimator.SetFloat(GunUtility.CockingProgressParameter(), 1);
+                    TargetAnimator.SetFloat(GunUtility.CockingTwistParameter(), 1);
                 }
             }
-            else if (nextState.IsIdleState() &&
-                     (previousState.IsPullingOrPushingState() || previousState.IsTwistingState()))
+            else if (nextState == GunState.Idle && previousState != GunState.Idle)
             {
                 if (AudioData != null) Internal_PlayAudio(AudioData.CockingRelease);
 
                 if (TargetAnimator != null && !IsLocal)
                 {
-                    TargetAnimator.SetFloat(GunHelper.CockingProgressParameter(), 0);
-                    TargetAnimator.SetFloat(GunHelper.CockingTwistParameter(), 0);
+                    TargetAnimator.SetFloat(GunUtility.CockingProgressParameter(), 0);
+                    TargetAnimator.SetFloat(GunUtility.CockingTwistParameter(), 0);
                 }
             }
         }
@@ -1135,7 +1144,7 @@ namespace CenturionCC.System.Gun
                 _isLocal = true;
                 Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
                 if (TargetAnimator != null)
-                    TargetAnimator.SetBool(GunHelper.IsPickedUpLocallyParameter(), true);
+                    TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), true);
                 OnGunPickup();
                 b.OnGunPickup(this);
             }
@@ -1220,7 +1229,7 @@ namespace CenturionCC.System.Gun
                 OnGunDrop();
                 b.OnGunDrop(this);
                 if (TargetAnimator != null)
-                    TargetAnimator.SetBool(GunHelper.IsPickedUpLocallyParameter(), false);
+                    TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), false);
 
                 if (TargetHolster != null)
                 {

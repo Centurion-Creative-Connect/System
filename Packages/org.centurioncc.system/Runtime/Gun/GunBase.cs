@@ -8,7 +8,7 @@ namespace CenturionCC.System.Gun
     {
         [PublicAPI]
         public abstract string WeaponName { get; }
-        
+
         [PublicAPI]
         public abstract Transform Target { get; }
         [PublicAPI]
@@ -39,6 +39,26 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual GunState State { get; set; }
 
+        /// <summary>
+        /// Has the gun bullet in chamber?
+        /// </summary>
+        /// <remarks>
+        /// This property should be set to <c>false</c> after bullet was shot by <see cref="Shoot"/>, <see cref="TryToShoot"/>.
+        /// Load the bullet from chamber using <see cref="LoadBullet"/>.
+        /// Eject the bullet from chamber using <see cref="EjectBullet"/>.
+        /// </remarks>
+        [PublicAPI]
+        public virtual bool HasBulletInChamber { get; protected set; }
+
+        /// <summary>
+        /// Has the gun cocked?
+        /// </summary>
+        /// <remarks>
+        /// This property is set to `false` after <see cref="Shoot"/>, <see cref="TryToShoot"/>, and <see cref="EmptyShoot"/>.
+        /// Manipulate within <see cref="Gun.Behaviour.GunBehaviourBase"/> 
+        /// </remarks>
+        [PublicAPI]
+        public virtual bool HasCocked { get; set; }
 
         [PublicAPI]
         public abstract Vector3 MainHandlePositionOffset { get; }
@@ -77,11 +97,43 @@ namespace CenturionCC.System.Gun
         public abstract void UpdatePosition();
 
         /// <summary>
-        /// Moves it's Gun's position and rotation to specified location
+        /// Moves it's Gun's position and rotation to specified location.
         /// </summary>
         /// <param name="position">New world position for this Gun.</param>
         /// <param name="rotation">New world rotation for this Gun.</param>
         [PublicAPI]
         public abstract void MoveTo(Vector3 position, Quaternion rotation);
+
+        /// <summary>
+        /// Has next bullet to load into chamber? 
+        /// </summary>
+        /// <returns>`true` if magazine or gun itself can provide next bullet to shoot, `false` otherwise.</returns>
+        [PublicAPI]
+        public virtual bool HasNextBullet()
+        {
+            return true;
+        }
+
+        /// <summary>
+        /// Tries to load bullet from current magazine.
+        /// </summary>
+        /// <returns>`true` if successfully loaded bullet on a gun, `false` otherwise.</returns>
+        [PublicAPI]
+        public virtual bool LoadBullet()
+        {
+            if (HasBulletInChamber)
+                EjectBullet();
+            HasBulletInChamber = true;
+            return HasBulletInChamber;
+        }
+
+        /// <summary>
+        /// Tries to eject bullet from chamber.
+        /// </summary>
+        [PublicAPI]
+        public virtual void EjectBullet()
+        {
+            HasBulletInChamber = false;
+        }
     }
 }

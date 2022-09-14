@@ -10,29 +10,38 @@ namespace CenturionCC.System.Gun.Behaviour
         public override void OnGunPickup(GunBase instance)
         {
             var animator = instance.TargetAnimator;
-            if (animator) animator.SetBool(GunHelper.HasBulletParameter(), true);
+            if (animator) animator.SetBool(GunUtility.HasBulletParameter(), true);
         }
 
         public override void OnGunDrop(GunBase instance)
         {
             var animator = instance.TargetAnimator;
-            if (animator) animator.SetBool(GunHelper.HasBulletParameter(), true);
+            if (animator) animator.SetBool(GunUtility.HasBulletParameter(), true);
         }
 
         public override void OnGunUpdate(GunBase instance)
         {
             if (instance.Trigger == TriggerState.Firing)
-                instance.TryToShoot();
+            {
+                var shotResult = instance.TryToShoot();
+                var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
+                if (hasSucceeded)
+                {
+                    instance.LoadBullet();
+                    instance.HasCocked = true;
+                }
+            }
         }
 
         public override void Setup(GunBase instance)
         {
-            instance.State = GunState.ReadyToShoot;
+            instance.State = GunState.Idle;
+            instance.LoadBullet();
+            instance.HasCocked = true;
         }
 
         public override void Dispose(GunBase instance)
         {
-            
         }
     }
 }

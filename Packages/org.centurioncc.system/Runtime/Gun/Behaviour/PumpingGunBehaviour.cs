@@ -24,14 +24,14 @@ namespace CenturionCC.System.Gun.Behaviour
 
         private float _subHandleRefZ;
 
-        private bool CanSlide(GunState state)
+        private static bool CanSlide(GunBase target)
         {
-            return state == GunState.Idle
-                   || state == GunState.IdleWithCocked
-                   || state == GunState.Pulling
-                   || state == GunState.PullingWithBullet
-                   || state == GunState.Pushing
-                   || state == GunState.PushingWithBullet;
+            return target.HasBulletInChamber == false;
+        }
+
+        private static bool CanShoot(GunBase target)
+        {
+            return target.Trigger == TriggerState.Firing && target.State == GunState.Idle && target.HasBulletInChamber;
         }
 
         private float GetProgressNormalized(float localZ)
@@ -51,9 +51,9 @@ namespace CenturionCC.System.Gun.Behaviour
 
         public override void OnTriggerDown(GunBase instance)
         {
-            if (!instance.State.IsReadyToShoot())
+            if (instance.State != GunState.Idle || instance.HasBulletInChamber == false)
             {
-                instance.Trigger = TriggerState.Armed;
+                instance.Trigger = TriggerState.Fired;
                 instance.EmptyShoot();
             }
         }
@@ -63,25 +63,28 @@ namespace CenturionCC.System.Gun.Behaviour
             var currentState = instance.State;
             float progressNormalized;
 
-            if (instance.Trigger == TriggerState.Firing &&
-                currentState.IsReadyToShoot() &&
-                instance.TryToShoot() == ShotResult.Succeeded)
+            // Shoot a gun whenever it's able to shoot
+            if (CanShoot(instance))
             {
-                instance.State = GunState.Idle;
-                var localSubHandlePos =
-                    instance.Target.worldToLocalMatrix.MultiplyPoint3x4(instance.SubHandle.transform.position);
-                // limit ref pos going further away
-                const float allowedMoveRange = 0.02F;
-                _cockingRefZ =
-                    Mathf.Clamp
-                    (
-                        localSubHandlePos.z,
-                        _subHandleRefZ - allowedMoveRange,
-                        _subHandleRefZ + allowedMoveRange
-                    );
+                var shotResult = instance.TryToShoot();
+                if (shotResult == ShotResult.Succeeded)
+                {
+                    instance.State = GunState.Idle;
+                    var localSubHandlePos =
+                        instance.Target.worldToLocalMatrix.MultiplyPoint3x4(instance.SubHandle.transform.position);
+                    // limit ref pos going further away
+                    const float allowedMoveRange = 0.02F;
+                    _cockingRefZ =
+                        Mathf.Clamp
+                        (
+                            localSubHandlePos.z,
+                            _subHandleRefZ - allowedMoveRange,
+                            _subHandleRefZ + allowedMoveRange
+                        );
+                }
             }
 
-            // calculate progress
+            // Calculate cocking progress
             if (Networking.LocalPlayer.IsUserInVR())
             {
                 progressNormalized =
@@ -90,13 +93,14 @@ namespace CenturionCC.System.Gun.Behaviour
             }
             else
             {
-                // initiate desktop cocking
+                // Initiate desktop cocking on key press
                 if (!_isOnDesktopCocking && (currentState == GunState.Idle || Input.GetKeyDown(KeyCode.F)))
                 {
                     _isOnDesktopCocking = true;
                     _desktopCockingTimer = 0F;
                 }
 
+                // Do desktop cocking work
                 if (_isOnDesktopCocking)
                 {
                     var timeScale = desktopCockingTime / 2;
@@ -117,11 +121,11 @@ namespace CenturionCC.System.Gun.Behaviour
                 }
             }
 
-            // clamp progress
-            if (!CanSlide(currentState)) progressNormalized = 0;
+            // Clamp calculated progresses
+            if (!CanSlide(instance)) progressNormalized = 0;
 
-            // do state changing work
-            GunHelper.UpdateStateStraightPull
+            // Change states using GunUtility
+            GunUtility.UpdateStateStraightPull
             (
                 instance,
                 cockingHapticData,
