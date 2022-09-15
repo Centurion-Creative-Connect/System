@@ -26,7 +26,7 @@ namespace CenturionCC.System.Gun.Behaviour
 
         private static bool CanSlide(GunBase target)
         {
-            return target.HasBulletInChamber == false;
+            return target.State != GunState.Idle || !target.HasBulletInChamber;
         }
 
         private static bool CanShoot(GunBase target)
@@ -41,7 +41,10 @@ namespace CenturionCC.System.Gun.Behaviour
 
         private float GetProgress(float localZ)
         {
-            return Mathf.Clamp(_cockingRefZ - localZ, 0, cockingLength);
+            var diff = _cockingRefZ - localZ;
+            if (cockingLength < diff)
+                _cockingRefZ -= diff - cockingLength;
+            return Mathf.Clamp(diff, 0, cockingLength);
         }
 
         #region BehaviourBase
@@ -72,24 +75,16 @@ namespace CenturionCC.System.Gun.Behaviour
                     instance.State = GunState.Idle;
                     var localSubHandlePos =
                         instance.Target.worldToLocalMatrix.MultiplyPoint3x4(instance.SubHandle.transform.position);
-                    // limit ref pos going further away
-                    const float allowedMoveRange = 0.02F;
-                    _cockingRefZ =
-                        Mathf.Clamp
-                        (
-                            localSubHandlePos.z,
-                            _subHandleRefZ - allowedMoveRange,
-                            _subHandleRefZ + allowedMoveRange
-                        );
+                    _cockingRefZ = localSubHandlePos.z;
                 }
             }
 
             // Calculate cocking progress
             if (Networking.LocalPlayer.IsUserInVR())
             {
-                progressNormalized =
-                    GetProgressNormalized(
-                        instance.Target.worldToLocalMatrix.MultiplyPoint3x4(instance.SubHandle.transform.position).z);
+                var worldToLocalMatrix = instance.Target.worldToLocalMatrix;
+                var subHandleLocalPos = worldToLocalMatrix.MultiplyPoint3x4(instance.SubHandle.transform.position);
+                progressNormalized = GetProgressNormalized(subHandleLocalPos.z);
             }
             else
             {
