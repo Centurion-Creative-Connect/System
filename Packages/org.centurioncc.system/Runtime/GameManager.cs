@@ -63,7 +63,7 @@ namespace CenturionCC.System
 
         public static string GetVersion()
         {
-            return "0.1.1";
+            return "0.1.2";
         }
 
         public int KeepAlive(WatchdogProc wd, int nonce)
@@ -133,6 +133,18 @@ namespace CenturionCC.System
             return api == null ? $"{id}:InvalidPlayer" : $"{api.playerId}:{api.displayName}";
         }
 
+        #region GunManagerCallbackBase
+
+        public void OnShoot(ManagedGun instance, ProjectileBase projectile)
+        {
+            logger.LogVerbose(
+                $"{_prefix}OnShoot: {(instance != null ? instance.name : "null")}, {(projectile != null ? projectile.name : "null")}");
+            if (eventLogger && logShotLocation)
+                eventLogger.LogShot(instance, projectile);
+        }
+
+        #endregion
+
         #region ModeratorStuff
 
         [Obsolete("This method is no longer supported.")]
@@ -184,18 +196,6 @@ namespace CenturionCC.System
 
         public void OnPlayerTagChanged(ShooterPlayer player, TagType type, bool isOn)
         {
-        }
-
-        #endregion
-
-        #region GunManagerCallbackBase
-
-        public void OnShoot(ManagedGun instance, ProjectileBase projectile)
-        {
-            logger.LogVerbose(
-                $"{_prefix}OnShoot: {(instance != null ? instance.name : "null")}, {(projectile != null ? projectile.name : "null")}");
-            if (eventLogger && logShotLocation)
-                eventLogger.LogShot(instance, projectile);
         }
 
         #endregion
