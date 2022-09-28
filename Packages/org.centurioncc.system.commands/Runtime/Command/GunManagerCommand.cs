@@ -26,7 +26,7 @@ namespace CenturionCC.System.Command
         public override string Label => "GunManager";
         public override string[] Aliases => new[] { "Gun" };
         public override string Usage =>
-            "<command> <reset|slowReset|reload|trail|optimizationRange|rePickupDelay|collisionCheck|debug|summon|list>";
+            "<command> <reset|slowReset|reload|trail|optimizationRange|rePickupDelay|collisionCheck|debug|summon|list|info>";
 
         private void Start()
         {
@@ -309,6 +309,59 @@ namespace CenturionCC.System.Command
                 case "l":
                 case "list":
                     return HandleList(console, vars);
+                case "i":
+                case "info":
+                    if (vars.Length < 2)
+                    {
+                        console.Println("<color=red>Error: Syntax error</color>\n" +
+                                        "<color=red>Please specify variant id</color>");
+                        return ConsoleLiteral.GetNone();
+                    }
+
+                    var index = ConsoleParser.TryParseByte(vars[1]);
+                    var variantData = _gunManager.GetVariantData(index);
+
+                    if (variantData == null)
+                    {
+                        console.Println("<color=red>Error: Could not retrieve vairant data</color>");
+                        return ConsoleLiteral.GetNone();
+                    }
+
+                    // Base variant data information
+                    var result =
+                        $"UniqueId      : {variantData.UniqueId}\n" +
+                        $"WeaponName    : {variantData.WeaponName}\n" +
+                        $"HolsterSize   : {variantData.HolsterSize}\n" +
+                        $"IsDoubleHanded: {variantData.IsDoubleHanded}\n" +
+                        $"MaxRPS/MaxRPM : {variantData.MaxRoundsPerSecond}/{variantData.MaxRoundsPerSecond * 60}";
+
+                    // Append ProjectileData information if provided
+                    if (variantData.ProjectileData != null)
+                    {
+                        variantData.ProjectileData.Get(
+                            0,
+                            out var positionOffset,
+                            out var velocity,
+                            out var rotOffset,
+                            out var torque,
+                            out var drag,
+                            out var trailDuration,
+                            out var trailCol);
+
+                        result +=
+                            "\nProjectileData:\n" +
+                            $"  Spd: {velocity.ToString("F2")}\n" +
+                            $"  Drg: {drag}\n" +
+                            $"  Tor: {torque.ToString("F2")}\n" +
+                            $"  POf: {positionOffset.ToString("F2")}\n" +
+                            $"  ROf: {rotOffset.eulerAngles.ToString("F2")}\n" +
+                            $"  tDr: {trailDuration}\n" +
+                            $"  tCl: {trailCol.Evaluate(0).ToString()}";
+                    }
+
+                    console.Println(result);
+
+                    return result;
                 default:
                     return console.PrintUsage(this);
                 // ReSharper restore StringLiteralTypo
