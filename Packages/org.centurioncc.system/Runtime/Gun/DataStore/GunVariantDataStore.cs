@@ -87,8 +87,9 @@ namespace CenturionCC.System.Gun.DataStore
         public Quaternion SubHandleRotationOffset =>
             subHandleOffset ? subHandleOffset.localRotation : Quaternion.identity;
         public float MainHandlePitchOffset => mainHandlePitchOffset;
-        public Vector3 ColliderCenter => colliderSetting.center;
-        public Vector3 ColliderSize => colliderSetting.size;
+        public bool HasColliderSetting => colliderSetting != null;
+        public Vector3 ColliderCenter => HasColliderSetting ? colliderSetting.center : Vector3.zero;
+        public Vector3 ColliderSize => HasColliderSetting ? colliderSetting.size : Vector3.zero;
 
         public string TooltipMessage =>
             Networking.LocalPlayer.IsUserInVR() ? _MessageOrEmpty(vrTooltip) : _MessageOrEmpty(desktopTooltip);

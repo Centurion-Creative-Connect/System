@@ -20,64 +20,18 @@ namespace CenturionCC.System.Gun
         private const string LeftHandTrigger = "Oculus_CrossPlatform_PrimaryIndexTrigger";
         private const string RightHandTrigger = "Oculus_CrossPlatform_SecondaryIndexTrigger";
 
-        #region SerializeFields
-
-        [SerializeField]
-        protected string weaponName;
-
-        [SerializeField]
-        protected Transform target;
-        [SerializeField]
-        protected Transform shooter;
-        [SerializeField]
-        protected GunHandle mainHandle;
-        [SerializeField]
-        protected GunHandle subHandle;
-        [SerializeField]
-        protected GunHandle customHandle;
-        [SerializeField]
-        protected GunBulletHolder bulletHolder;
-        [SerializeField]
-        protected Animator animator;
-        [SerializeField]
-        protected GunBehaviourBase behaviour;
-        [SerializeField]
-        protected FireMode[] availableFireModes = { FireMode.SemiAuto };
-        [SerializeField]
-        protected ProjectileDataProvider projectileData;
-        [SerializeField]
-        protected GunAudioDataStore audioData;
-        [SerializeField]
-        protected GunHapticDataStore hapticData;
-        [SerializeField]
-        protected bool isDoubleHanded = true;
-        [SerializeField]
-        protected float roundsPerSecond = 4.5F;
-        [SerializeField]
-        protected int requiredHolsterSize = 100;
-        [SerializeField]
-        protected float mainHandlePitchOffset;
-        [SerializeField]
-        protected float mainHandleRePickupDelay;
-        [SerializeField]
-        protected float subHandleRePickupDelay;
-
-        #endregion
-
         [UdonSynced] [FieldChangeCallback(nameof(RawState))]
         private byte _currentState;
+
+        private FireMode _fireMode;
 
         private bool _isLocal;
 
         private bool _isPickedUp;
         private bool _mainHandleIsPickedUp;
-        private bool _subHandleIsPickedUp;
 
         private Vector3 _mainHandlePosOffset;
         private Quaternion _mainHandleRotOffset;
-
-        private Vector3 _subHandlePosOffset;
-        private Quaternion _subHandleRotOffset;
 
         private GunHandle _pivotHandle;
 
@@ -86,271 +40,16 @@ namespace CenturionCC.System.Gun
         [UdonSynced]
         private Quaternion _pivotRotOffset;
 
-        private FireMode _fireMode;
-        private TriggerState _trigger;
-
         [UdonSynced] [FieldChangeCallback(nameof(ShotCount))]
         private int _shotCount = -1;
+        private bool _subHandleIsPickedUp;
+
+        private Vector3 _subHandlePosOffset;
+        private Quaternion _subHandleRotOffset;
+        private TriggerState _trigger;
 
 
         protected string Prefix => $"<color=olive>[{name}]</color> ";
-
-        #region OverridenProperties
-
-        [PublicAPI]
-        public override string WeaponName => weaponName;
-
-        [PublicAPI]
-        public override GunHandle MainHandle => mainHandle;
-        [PublicAPI]
-        public override GunHandle SubHandle => subHandle;
-        [PublicAPI]
-        public override GunHandle CustomHandle => customHandle;
-        [PublicAPI]
-        public override Transform Target => target ? target : transform;
-        [PublicAPI] [CanBeNull]
-        public override Animator TargetAnimator => animator;
-        [PublicAPI] [CanBeNull]
-        public override VRCPlayerApi CurrentHolder => MainHandle.CurrentPlayer ?? SubHandle.CurrentPlayer;
-        [PublicAPI]
-        public override GunState State
-        {
-            get
-            {
-                if (RawState > GunStateHelper.MaxValue)
-                    return GunState.Unknown;
-                return (GunState)RawState;
-            }
-            set => SetState(value);
-        }
-        [PublicAPI]
-        public override TriggerState Trigger
-        {
-            get => _trigger;
-            set
-            {
-                _trigger = value;
-                if (value == TriggerState.Armed || value == TriggerState.Idle)
-                    BurstCount = 0;
-            }
-        }
-
-        [PublicAPI]
-        public override Vector3 MainHandlePositionOffset => _mainHandlePosOffset;
-        [PublicAPI]
-        public override Quaternion MainHandleRotationOffset => _mainHandleRotOffset;
-
-        [PublicAPI]
-        public override Vector3 SubHandlePositionOffset => _subHandlePosOffset;
-        [PublicAPI]
-        public override Quaternion SubHandleRotationOffset => _subHandleRotOffset;
-
-        [PublicAPI]
-        public override bool IsPickedUp => _isPickedUp;
-        [PublicAPI]
-        public override bool IsLocal => _isLocal;
-
-        #endregion
-
-        #region SystemReferences
-
-        [PublicAPI]
-        public PrintableBase Logger { get; protected set; }
-        [PublicAPI]
-        public UpdateManager UpdateManager { get; protected set; }
-        [PublicAPI]
-        public AudioManager AudioManager { get; protected set; }
-
-        #endregion
-
-        #region GunProperties
-
-        [PublicAPI]
-        public virtual bool IsDoubleHandedGun => isDoubleHanded;
-        [PublicAPI]
-        public virtual float MainHandleRePickupDelay => mainHandleRePickupDelay;
-        [PublicAPI]
-        public virtual float MainHandlePitchOffset => mainHandlePitchOffset;
-        [PublicAPI]
-        public virtual float CurrentMainHandlePitchOffset { get; private set; }
-
-        [PublicAPI]
-        public virtual float SubHandleRePickupDelay => subHandleRePickupDelay;
-        [PublicAPI]
-        public virtual Vector3 LookAtTargetOffset =>
-            new Vector3(0, MainHandlePositionOffset.y - SubHandlePositionOffset.y, 0);
-
-
-        /// <summary>
-        /// Local position of where bullets shooting out from.
-        /// </summary>
-        [PublicAPI]
-        public virtual Vector3 ShooterPositionOffset => shooter.localPosition;
-        [PublicAPI]
-        public virtual Quaternion ShooterRotationOffset => shooter.localRotation;
-
-        /// <summary>
-        /// World-based position of where bullets shooting out from.
-        /// </summary>
-        [PublicAPI]
-        public virtual Vector3 ShooterPosition => shooter.position;
-        /// <summary>
-        /// World-based rotation of where bullets shooting out from.
-        /// </summary>
-        [PublicAPI]
-        public virtual Quaternion ShooterRotation => shooter.rotation;
-
-        [PublicAPI] [CanBeNull]
-        public virtual ProjectilePool BulletHolder => bulletHolder;
-        [PublicAPI] [CanBeNull]
-        public virtual GunBehaviourBase Behaviour => behaviour;
-        [PublicAPI] [CanBeNull]
-        public virtual ProjectileDataProvider ProjectileData => projectileData;
-        [PublicAPI] [CanBeNull]
-        public virtual GunAudioDataStore AudioData => audioData;
-        [PublicAPI] [CanBeNull]
-        public virtual GunHapticDataStore HapticData => hapticData;
-
-        [PublicAPI]
-        public virtual int RequiredHolsterSize => requiredHolsterSize;
-        [PublicAPI]
-        public virtual float OptimizationRange => 45F;
-        [PublicAPI]
-        public virtual int MaxQueuedShotCount => 10;
-        /// <summary>
-        /// Max firing rate of this Gun.
-        /// </summary>
-        /// <remarks>
-        /// Uses cached <see cref="SecondsPerRound" /> property for <see cref="TryToShoot()" />.
-        /// </remarks>
-        /// <seealso cref="GunVariantDataStore.MaxRoundsPerSecond" />
-        /// <seealso cref="SecondsPerRound" />
-        [PublicAPI]
-        public virtual float RoundsPerSecond => roundsPerSecond;
-        /// <summary>
-        /// Available <see cref="FireMode"/> set of this Gun.
-        /// </summary>
-        [PublicAPI]
-        public virtual FireMode[] AvailableFireModes => availableFireModes;
-
-
-        /// <summary>
-        /// Last shot time of this Gun.
-        /// </summary>
-        [PublicAPI]
-        public DateTime LastShotTime { get; protected set; }
-        /// <summary>
-        /// Currently active <see cref="FireMode"/> of this Gun.
-        /// </summary>
-        [PublicAPI]
-        public FireMode FireMode
-        {
-            get => _fireMode;
-            set
-            {
-                var lastFireMode = _fireMode;
-                Internal_SetFireModeWithoutNotify(value);
-                OnFireModeChanged(lastFireMode, value);
-            }
-        }
-        [PublicAPI]
-        public byte RawState
-        {
-            get => _currentState;
-            protected set
-            {
-                var lastState = _currentState;
-                _currentState = value;
-                if (TargetAnimator != null)
-                    TargetAnimator.SetInteger(GunHelper.StateParameter(), value);
-                if (lastState != value)
-                    OnProcessStateChange(lastState, value);
-            }
-        }
-
-        [PublicAPI]
-        public int ShotCount
-        {
-            get => _shotCount;
-            protected set
-            {
-                if (value <= 0 || _shotCount == -1)
-                {
-                    Logger.LogVerbose($"{Prefix}Received new ShotCount: {value}");
-                    _shotCount = value;
-                    QueuedShotCount = 0;
-                    return;
-                }
-
-                var diff = value - _shotCount;
-                Logger.LogVerbose($"{Prefix}Received new ShotCount: {value}, Queueing {diff}");
-                QueuedShotCount += diff;
-                if (QueuedShotCount > MaxQueuedShotCount)
-                {
-                    var ignoredShots = QueuedShotCount - MaxQueuedShotCount;
-                    Logger.LogWarn($"{Prefix}Queued shots are suffering! ignoring {ignoredShots} shots!");
-                    QueuedShotCount = MaxQueuedShotCount;
-                }
-
-                if (QueuedShotCount < 0)
-                {
-                    Logger.LogWarn($"{Prefix}Queued shots underflow! resetting to 0!");
-                    QueuedShotCount = 0;
-                }
-
-                _shotCount = value;
-            }
-        }
-        [PublicAPI]
-        public int QueuedShotCount { get; protected set; }
-
-        [PublicAPI] [CanBeNull]
-        public GunHolster TargetHolster { get; protected set; }
-        [PublicAPI] [field: UdonSynced]
-        public bool IsHolstered { get; protected set; }
-        [PublicAPI]
-        public bool IsOptimized { get; protected set; }
-
-        /// <summary>
-        /// Alias of 1 / <see cref="RoundsPerSecond" />.
-        /// </summary>
-        /// <seealso cref="RoundsPerSecond" />
-        /// <seealso cref="TryToShoot()" />
-        [PublicAPI]
-        public float SecondsPerRound => 1 / RoundsPerSecond;
-
-        /// <summary>
-        /// Represents how many rounds were shot in one trigger.
-        /// </summary>
-        /// <remarks>
-        /// Counts up on shoot.
-        /// Resets when <see cref="GunBase.Trigger" /> is set to <see cref="TriggerState.Idle"/> or <see cref="TriggerState.Armed"/>.
-        /// </remarks>
-        /// <seealso cref="TryToShoot()" />
-        [PublicAPI]
-        public int BurstCount { get; private set; }
-        /// <summary>
-        /// Counter of currently colliding objects.
-        /// </summary>
-        /// <remarks>
-        /// Counts up on OnTriggerEnter
-        /// Counts down on OnTriggerExit
-        /// </remarks>
-        [PublicAPI]
-        public int CollisionCount { get; protected set; }
-        /// <summary>
-        /// Is this Gun inside of a wall?
-        /// </summary>
-        [PublicAPI]
-        public bool IsInWall => CollisionCount != 0;
-
-        /// <summary>
-        /// Is this Gun inside of safezone?
-        /// </summary>
-        [PublicAPI]
-        public bool IsInSafeZone { get; protected set; }
-
-        #endregion
 
         protected virtual void Start()
         {
@@ -394,6 +93,9 @@ namespace CenturionCC.System.Gun
 
         protected virtual void OnTriggerEnter(Collider other)
         {
+            if (other == null)
+                return;
+
             var otherName = other.name.ToLower();
             Logger.LogVerbose($"{Prefix}OnTriggerEnter: {otherName}");
 
@@ -424,6 +126,9 @@ namespace CenturionCC.System.Gun
 
         protected virtual void OnTriggerExit(Collider other)
         {
+            if (other == null)
+                return;
+
             var otherName = other.name.ToLower();
 
             if (otherName.StartsWith("safezone"))
@@ -681,6 +386,307 @@ namespace CenturionCC.System.Gun
                 ? Input.GetAxis(LeftHandTrigger)
                 : Input.GetAxis(RightHandTrigger);
         }
+
+        #region SerializeFields
+
+        [SerializeField]
+        protected string weaponName;
+
+        [SerializeField]
+        protected Transform target;
+        [SerializeField]
+        protected Transform shooter;
+        [SerializeField]
+        protected GunHandle mainHandle;
+        [SerializeField]
+        protected GunHandle subHandle;
+        [SerializeField]
+        protected GunHandle customHandle;
+        [SerializeField]
+        protected GunBulletHolder bulletHolder;
+        [SerializeField]
+        protected Animator animator;
+        [SerializeField]
+        protected GunBehaviourBase behaviour;
+        [SerializeField]
+        protected FireMode[] availableFireModes = { FireMode.SemiAuto };
+        [SerializeField]
+        protected ProjectileDataProvider projectileData;
+        [SerializeField]
+        protected GunAudioDataStore audioData;
+        [SerializeField]
+        protected GunHapticDataStore hapticData;
+        [SerializeField]
+        protected bool isDoubleHanded = true;
+        [SerializeField]
+        protected float roundsPerSecond = 4.5F;
+        [SerializeField]
+        protected int requiredHolsterSize = 100;
+        [SerializeField]
+        protected float mainHandlePitchOffset;
+        [SerializeField]
+        protected float mainHandleRePickupDelay;
+        [SerializeField]
+        protected float subHandleRePickupDelay;
+
+        #endregion
+
+        #region OverridenProperties
+
+        [PublicAPI]
+        public override string WeaponName => weaponName;
+
+        [PublicAPI]
+        public override GunHandle MainHandle => mainHandle;
+        [PublicAPI]
+        public override GunHandle SubHandle => subHandle;
+        [PublicAPI]
+        public override GunHandle CustomHandle => customHandle;
+        [PublicAPI]
+        public override Transform Target => target ? target : transform;
+        [PublicAPI] [CanBeNull]
+        public override Animator TargetAnimator => animator;
+        [PublicAPI] [CanBeNull]
+        public override VRCPlayerApi CurrentHolder => MainHandle.CurrentPlayer ?? SubHandle.CurrentPlayer;
+        [PublicAPI]
+        public override GunState State
+        {
+            get
+            {
+                if (RawState > GunStateHelper.MaxValue)
+                    return GunState.Unknown;
+                return (GunState)RawState;
+            }
+            set => SetState(value);
+        }
+        [PublicAPI]
+        public override TriggerState Trigger
+        {
+            get => _trigger;
+            set
+            {
+                _trigger = value;
+                if (value == TriggerState.Armed || value == TriggerState.Idle)
+                    BurstCount = 0;
+            }
+        }
+
+        [PublicAPI]
+        public override Vector3 MainHandlePositionOffset => _mainHandlePosOffset;
+        [PublicAPI]
+        public override Quaternion MainHandleRotationOffset => _mainHandleRotOffset;
+
+        [PublicAPI]
+        public override Vector3 SubHandlePositionOffset => _subHandlePosOffset;
+        [PublicAPI]
+        public override Quaternion SubHandleRotationOffset => _subHandleRotOffset;
+
+        [PublicAPI]
+        public override bool IsPickedUp => _isPickedUp;
+        [PublicAPI]
+        public override bool IsLocal => _isLocal;
+
+        #endregion
+
+        #region SystemReferences
+
+        [PublicAPI]
+        public PrintableBase Logger { get; protected set; }
+        [PublicAPI]
+        public UpdateManager UpdateManager { get; protected set; }
+        [PublicAPI]
+        public AudioManager AudioManager { get; protected set; }
+
+        #endregion
+
+        #region GunProperties
+
+        [PublicAPI]
+        public virtual bool IsDoubleHandedGun => isDoubleHanded;
+        [PublicAPI]
+        public virtual float MainHandleRePickupDelay => mainHandleRePickupDelay;
+        [PublicAPI]
+        public virtual float MainHandlePitchOffset => mainHandlePitchOffset;
+        [PublicAPI]
+        public virtual float CurrentMainHandlePitchOffset { get; private set; }
+
+        [PublicAPI]
+        public virtual float SubHandleRePickupDelay => subHandleRePickupDelay;
+        [PublicAPI]
+        public virtual Vector3 LookAtTargetOffset =>
+            new Vector3(0, MainHandlePositionOffset.y - SubHandlePositionOffset.y, 0);
+
+
+        /// <summary>
+        /// Local position of where bullets shooting out from.
+        /// </summary>
+        [PublicAPI]
+        public virtual Vector3 ShooterPositionOffset => shooter.localPosition;
+        [PublicAPI]
+        public virtual Quaternion ShooterRotationOffset => shooter.localRotation;
+
+        /// <summary>
+        /// World-based position of where bullets shooting out from.
+        /// </summary>
+        [PublicAPI]
+        public virtual Vector3 ShooterPosition => shooter.position;
+        /// <summary>
+        /// World-based rotation of where bullets shooting out from.
+        /// </summary>
+        [PublicAPI]
+        public virtual Quaternion ShooterRotation => shooter.rotation;
+
+        [PublicAPI] [CanBeNull]
+        public virtual ProjectilePool BulletHolder => bulletHolder;
+        [PublicAPI] [CanBeNull]
+        public virtual GunBehaviourBase Behaviour => behaviour;
+        [PublicAPI] [CanBeNull]
+        public virtual ProjectileDataProvider ProjectileData => projectileData;
+        [PublicAPI] [CanBeNull]
+        public virtual GunAudioDataStore AudioData => audioData;
+        [PublicAPI] [CanBeNull]
+        public virtual GunHapticDataStore HapticData => hapticData;
+
+        [PublicAPI]
+        public virtual int RequiredHolsterSize => requiredHolsterSize;
+        [PublicAPI]
+        public virtual float OptimizationRange => 45F;
+        [PublicAPI]
+        public virtual int MaxQueuedShotCount => 10;
+        /// <summary>
+        /// Max firing rate of this Gun.
+        /// </summary>
+        /// <remarks>
+        /// Uses cached <see cref="SecondsPerRound" /> property for <see cref="TryToShoot()" />.
+        /// </remarks>
+        /// <seealso cref="GunVariantDataStore.MaxRoundsPerSecond" />
+        /// <seealso cref="SecondsPerRound" />
+        [PublicAPI]
+        public virtual float RoundsPerSecond => roundsPerSecond;
+        /// <summary>
+        /// Available <see cref="FireMode"/> set of this Gun.
+        /// </summary>
+        [PublicAPI]
+        public virtual FireMode[] AvailableFireModes => availableFireModes;
+
+
+        /// <summary>
+        /// Last shot time of this Gun.
+        /// </summary>
+        [PublicAPI]
+        public DateTime LastShotTime { get; protected set; }
+        /// <summary>
+        /// Currently active <see cref="FireMode"/> of this Gun.
+        /// </summary>
+        [PublicAPI]
+        public FireMode FireMode
+        {
+            get => _fireMode;
+            set
+            {
+                var lastFireMode = _fireMode;
+                Internal_SetFireModeWithoutNotify(value);
+                OnFireModeChanged(lastFireMode, value);
+            }
+        }
+        [PublicAPI]
+        public byte RawState
+        {
+            get => _currentState;
+            protected set
+            {
+                var lastState = _currentState;
+                _currentState = value;
+                if (TargetAnimator != null)
+                    TargetAnimator.SetInteger(GunHelper.StateParameter(), value);
+                if (lastState != value)
+                    OnProcessStateChange(lastState, value);
+            }
+        }
+
+        [PublicAPI]
+        public int ShotCount
+        {
+            get => _shotCount;
+            protected set
+            {
+                if (value <= 0 || _shotCount == -1)
+                {
+                    Logger.LogVerbose($"{Prefix}Received new ShotCount: {value}");
+                    _shotCount = value;
+                    QueuedShotCount = 0;
+                    return;
+                }
+
+                var diff = value - _shotCount;
+                Logger.LogVerbose($"{Prefix}Received new ShotCount: {value}, Queueing {diff}");
+                QueuedShotCount += diff;
+                if (QueuedShotCount > MaxQueuedShotCount)
+                {
+                    var ignoredShots = QueuedShotCount - MaxQueuedShotCount;
+                    Logger.LogWarn($"{Prefix}Queued shots are suffering! ignoring {ignoredShots} shots!");
+                    QueuedShotCount = MaxQueuedShotCount;
+                }
+
+                if (QueuedShotCount < 0)
+                {
+                    Logger.LogWarn($"{Prefix}Queued shots underflow! resetting to 0!");
+                    QueuedShotCount = 0;
+                }
+
+                _shotCount = value;
+            }
+        }
+        [PublicAPI]
+        public int QueuedShotCount { get; protected set; }
+
+        [PublicAPI] [CanBeNull]
+        public GunHolster TargetHolster { get; protected set; }
+        [PublicAPI] [field: UdonSynced]
+        public bool IsHolstered { get; protected set; }
+        [PublicAPI]
+        public bool IsOptimized { get; protected set; }
+
+        /// <summary>
+        /// Alias of 1 / <see cref="RoundsPerSecond" />.
+        /// </summary>
+        /// <seealso cref="RoundsPerSecond" />
+        /// <seealso cref="TryToShoot()" />
+        [PublicAPI]
+        public float SecondsPerRound => 1 / RoundsPerSecond;
+
+        /// <summary>
+        /// Represents how many rounds were shot in one trigger.
+        /// </summary>
+        /// <remarks>
+        /// Counts up on shoot.
+        /// Resets when <see cref="GunBase.Trigger" /> is set to <see cref="TriggerState.Idle"/> or <see cref="TriggerState.Armed"/>.
+        /// </remarks>
+        /// <seealso cref="TryToShoot()" />
+        [PublicAPI]
+        public int BurstCount { get; private set; }
+        /// <summary>
+        /// Counter of currently colliding objects.
+        /// </summary>
+        /// <remarks>
+        /// Counts up on OnTriggerEnter
+        /// Counts down on OnTriggerExit
+        /// </remarks>
+        [PublicAPI]
+        public int CollisionCount { get; protected set; }
+        /// <summary>
+        /// Is this Gun inside of a wall?
+        /// </summary>
+        [PublicAPI]
+        public bool IsInWall => CollisionCount != 0;
+
+        /// <summary>
+        /// Is this Gun inside of safezone?
+        /// </summary>
+        [PublicAPI]
+        public bool IsInSafeZone { get; protected set; }
+
+        #endregion
 
         #region Internals
 
