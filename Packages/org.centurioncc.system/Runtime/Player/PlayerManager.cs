@@ -5,6 +5,7 @@ using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
 using DerpyNewbie.Common.Role;
 using DerpyNewbie.Logger;
+using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -66,7 +67,8 @@ namespace CenturionCC.System.Player
             set
             {
                 foreach (var player in GetPlayers())
-                    player.PlayerHumanoidCollider.IsCollidersVisible = value;
+                    if (player != null && player.PlayerHumanoidCollider != null)
+                        player.PlayerHumanoidCollider.IsCollidersVisible = value;
                 _showCollider = value;
             }
         }
@@ -78,7 +80,8 @@ namespace CenturionCC.System.Player
             {
                 if (_useBaseCollider != value)
                     foreach (var player in GetPlayers())
-                        player.PlayerHumanoidCollider.UseBaseCollider = value;
+                        if (player != null && player.PlayerHumanoidCollider != null)
+                            player.PlayerHumanoidCollider.UseBaseCollider = value;
                 _useBaseCollider = value;
             }
         }
@@ -90,7 +93,8 @@ namespace CenturionCC.System.Player
             {
                 if (_useAdditionalCollider != value)
                     foreach (var player in GetPlayers())
-                        player.PlayerHumanoidCollider.UseAdditionalCollider = value;
+                        if (player != null && player.PlayerHumanoidCollider != null)
+                            player.PlayerHumanoidCollider.UseAdditionalCollider = value;
                 _useAdditionalCollider = value;
             }
         }
@@ -102,7 +106,8 @@ namespace CenturionCC.System.Player
             {
                 if (_useLightweightCollider != value)
                     foreach (var player in GetPlayers())
-                        player.PlayerHumanoidCollider.UseLightweightCollider = value;
+                        if (player != null && player.PlayerHumanoidCollider != null)
+                            player.PlayerHumanoidCollider.UseLightweightCollider = value;
                 _useLightweightCollider = value;
             }
         }
@@ -114,7 +119,8 @@ namespace CenturionCC.System.Player
             {
                 if (_alwaysUseLightweightCollider != value)
                     foreach (var player in GetPlayers())
-                        player.PlayerHumanoidCollider.AlwaysUseLightweightCollider = value;
+                        if (player != null && player.PlayerHumanoidCollider != null)
+                            player.PlayerHumanoidCollider.AlwaysUseLightweightCollider = value;
                 _alwaysUseLightweightCollider = value;
             }
         }
@@ -128,7 +134,8 @@ namespace CenturionCC.System.Player
                     return;
                 _showDebugNametag = value;
                 foreach (var player in GetPlayers())
-                    player.PlayerTag.SetDebugTagShown(value);
+                    if (player != null && player.PlayerTag != null)
+                        player.PlayerTag.SetDebugTagShown(value);
             }
         }
 
@@ -140,7 +147,8 @@ namespace CenturionCC.System.Player
                 if (_showTeamTag == value) return;
                 _showTeamTag = value;
                 foreach (var player in GetPlayers())
-                    player.PlayerTag.SetTeamTagShown(value);
+                    if (player != null && player.PlayerTag != null)
+                        player.PlayerTag.SetTeamTagShown(value);
             }
         }
 
@@ -522,6 +530,12 @@ namespace CenturionCC.System.Player
 
             var instance = GetPlayer(index);
 
+            if (instance == null)
+            {
+                Logger.LogError($"{Prefix}Could not set player: Retrieved player instance was null!");
+                return;
+            }
+
             instance.MasterOnly_SetPlayer(newPlayerId);
         }
 
@@ -540,6 +554,13 @@ namespace CenturionCC.System.Player
             }
 
             var instance = GetPlayer(index);
+
+            if (instance == null)
+            {
+                Logger.LogError($"{Prefix}Could not set player: Retrieved player instance was null!");
+                return;
+            }
+
             instance.MasterOnly_SetTeam(newTeam);
         }
 
@@ -551,8 +572,9 @@ namespace CenturionCC.System.Player
                 return;
             }
 
-            for (var i = 0; i < GetPlayers().Length; i++)
-                GetPlayer(i).MasterOnly_Reset();
+            foreach (var player in GetPlayers())
+                if (player != null)
+                    player.MasterOnly_Reset();
 
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(UpdateLocalPlayer));
             Logger.LogVerbose($"{Prefix}All player instance's reset complete");
@@ -567,8 +589,8 @@ namespace CenturionCC.System.Player
             }
 
             foreach (var vrcPlayer in GetVRCPlayers())
-                if (vrcPlayer == null || !vrcPlayer.IsValid()) continue;
-                else if (!HasPlayerIdOf(vrcPlayer.playerId)) MasterOnly_AddPlayer(vrcPlayer.playerId);
+                if (vrcPlayer != null && vrcPlayer.IsValid() && !HasPlayerIdOf(vrcPlayer.playerId))
+                    MasterOnly_AddPlayer(vrcPlayer.playerId);
 
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(UpdateLocalPlayer));
             Logger.LogVerbose($"{Prefix}Added all vrc players");
@@ -583,8 +605,8 @@ namespace CenturionCC.System.Player
             }
 
             foreach (var player in GetPlayers())
-                if (player == null) continue;
-                else player.MasterOnly_Sync();
+                if (player != null)
+                    player.MasterOnly_Sync();
 
             Logger.LogVerbose($"{Prefix}Synced all shooter players");
             if (Networking.IsClogged)
@@ -600,7 +622,9 @@ namespace CenturionCC.System.Player
             }
 
             foreach (var player in GetPlayers())
-                player.MasterOnly_SetTeam(0);
+                if (player != null)
+                    player.MasterOnly_SetTeam(0);
+
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(UpdateLocalPlayer));
             Logger.LogVerbose($"{Prefix}Cleared all player teams");
         }
@@ -650,11 +674,12 @@ namespace CenturionCC.System.Player
 
         public void UpdateLocalPlayer()
         {
-            for (var i = 0; i < GetPlayers().Length; i++)
+            var localPlayerId = Networking.LocalPlayer.playerId;
+
+            foreach (var player in GetPlayers())
             {
-                var shooterPlayer = GetPlayer(i);
-                if (shooterPlayer.SyncedPlayerId != Networking.LocalPlayer.playerId) continue;
-                Invoke_OnLocalPlayerChanged(shooterPlayer, i);
+                if (player == null || player.SyncedPlayerId != localPlayerId) continue;
+                Invoke_OnLocalPlayerChanged(player, player.Index);
                 return;
             }
 
@@ -680,7 +705,7 @@ namespace CenturionCC.System.Player
 
             foreach (var player in GetPlayers())
             {
-                if (!player.IsActive) continue;
+                if (player == null || !player.IsActive) continue;
                 switch (player.Team)
                 {
                     case 0:
@@ -741,17 +766,20 @@ namespace CenturionCC.System.Player
             return VRCPlayerApi.GetPlayers(new VRCPlayerApi[VRCPlayerApi.GetPlayerCount()]);
         }
 
+        [ItemCanBeNull]
         public ShooterPlayer[] GetPlayers()
         {
             return playerInstancePool;
         }
 
+        [CanBeNull]
         public ShooterPlayer GetPlayer(int index)
         {
             if (index > playerInstancePool.Length || index < 0) return null;
             return GetPlayers()[index];
         }
 
+        [CanBeNull]
         public ShooterPlayer GetLocalPlayer()
         {
             if (GetLocalPlayerIndex() == -1) return null;
@@ -765,7 +793,14 @@ namespace CenturionCC.System.Player
 
         public int GetPlayerId(int index)
         {
-            return GetPlayers()[index].SyncedPlayerId;
+            if (index >= GetMaxPlayerCount() || index < 0)
+                return -1;
+
+            var player = GetPlayer(index);
+            if (player == null)
+                return -1;
+
+            return player.SyncedPlayerId;
         }
 
         public int GetLocalPlayerIndex()
@@ -796,7 +831,7 @@ namespace CenturionCC.System.Player
         public ShooterPlayer GetShooterPlayerByPlayerId(int playerId)
         {
             foreach (var player in GetPlayers())
-                if (player.SyncedPlayerId == playerId)
+                if (player != null && player.SyncedPlayerId == playerId)
                     return player;
 
             return null;
@@ -805,7 +840,7 @@ namespace CenturionCC.System.Player
         public bool HasPlayerIdOf(int playerId)
         {
             foreach (var player in GetPlayers())
-                if (player.SyncedPlayerId == playerId)
+                if (player != null && player.SyncedPlayerId == playerId)
                     return true;
 
             return false;
@@ -847,7 +882,8 @@ namespace CenturionCC.System.Player
             Logger.Log($"{Prefix}Invoke_OnResetAllPlayerStats");
 
             foreach (var player in GetPlayers())
-                player.PlayerStats.ResetStats();
+                if (player != null && player.PlayerStats != null)
+                    player.PlayerStats.ResetStats();
 
             foreach (var callback in _eventCallbacks)
             {

@@ -17,14 +17,14 @@ namespace CenturionCC.System.Command
         private const string RequestedFormat = Prefix + "Requested to {0} player {1} with request version of {2}";
         private const string ReceivedFormat = Prefix + "Received {0} for {1} with request version of {2}";
 
-        private NewbieConsole _console;
-        private PlayerManager _playerMgr;
-
         [SerializeField]
         private Transform[] teamPositions;
         [SerializeField]
         private Collider[] teamRegions;
+
+        private NewbieConsole _console;
         private int _lastRequestVersion;
+        private PlayerManager _playerMgr;
         [UdonSynced]
         private int _requestVersion;
         [UdonSynced]
@@ -34,6 +34,33 @@ namespace CenturionCC.System.Command
         private int _targetPlayerId;
         [UdonSynced]
         private int _targetTeam;
+
+        public override string Label => "PlayerManager";
+        public override string[] Aliases => new[] { "Player" };
+
+        public override string Usage => "<command>\n" +
+                                        "   reset\n" +
+                                        "   add [playerId]\n" +
+                                        "   remove [playerId]\n" +
+                                        "   sync [shooterPlayerId]\n" +
+                                        "   addAll\n" +
+                                        "   syncAll\n" +
+                                        "   stats [playerId]\n" +
+                                        "   statsReset <playerId>\n" +
+                                        "   statsResetAll\n" +
+                                        "   teamReset\n" +
+                                        "   team <team> [playerId]\n" +
+                                        "   shuffleTeam [include moderators] [include green blue team]\n" +
+                                        "   regionAdd <regionId> <teamId>\n" +
+                                        "   showTeamTag [true|false]\n" +
+                                        "   friendlyFire [true|false]\n" +
+                                        "   disguise [true|false]\n" +
+                                        "   roleSpecific [true|false]\n" +
+                                        "   update\n" +
+                                        "   localPlayer\n" +
+                                        "   list [-non-joined]\n" +
+                                        "   collider <show|collider name> [true|false]\n" +
+                                        "   debug [true|false]\n";
 
         private void Start()
         {
@@ -213,7 +240,8 @@ namespace CenturionCC.System.Command
 
                         foreach (var player in players)
                         {
-                            if (!player.IsActive || !includeMod && player.Role.IsGameStaff()) continue;
+                            if (player == null || !player.IsActive || !includeMod && player.Role.IsGameStaff())
+                                continue;
                             activePlayers[activePlayerCount] = player;
                             ++activePlayerCount;
                         }
@@ -289,7 +317,7 @@ namespace CenturionCC.System.Command
                         var bounds = region.bounds;
                         foreach (var player in players)
                         {
-                            if (!player.IsActive || player.Team == _targetTeam)
+                            if (player == null || !player.IsActive || player.Team == _targetTeam)
                                 continue;
 
                             var vrcPlayer = player.VrcPlayer;
@@ -352,8 +380,12 @@ namespace CenturionCC.System.Command
             _playerMgr.UpdateLocalPlayer();
             foreach (var player in _playerMgr.GetPlayers())
             {
-                player.PlayerHumanoidCollider.UpdateView();
-                player.PlayerTag.UpdateView();
+                if (player == null) continue;
+
+                if (player.PlayerHumanoidCollider)
+                    player.PlayerHumanoidCollider.UpdateView();
+                if (player.PlayerTag)
+                    player.PlayerTag.UpdateView();
             }
 
             console.Println(
@@ -577,7 +609,9 @@ namespace CenturionCC.System.Command
                 return true;
             }
 
-            if (!_playerMgr.HasLocalPlayer())
+            var localPlayer = _playerMgr.GetLocalPlayer();
+
+            if (localPlayer == null)
             {
                 console.Println("<color=red>You are not joined as player</color>");
                 return true;
@@ -586,7 +620,7 @@ namespace CenturionCC.System.Command
             if (arguments.Length <= 1)
             {
                 console.Println(
-                    $"Is Disguised: {!_playerMgr.GetLocalPlayer().PlayerTag.IsStaffTagShown}");
+                    $"Is Disguised: {!localPlayer.PlayerTag.IsStaffTagShown}");
                 return true;
             }
 
@@ -594,7 +628,7 @@ namespace CenturionCC.System.Command
             (
                 console, arguments,
                 OpDisguise, nameof(OpDisguise),
-                ConsoleParser.TryParseBoolAsInt(arguments[2], !_playerMgr.GetLocalPlayer().PlayerTag.IsStaffTagShown),
+                ConsoleParser.TryParseBoolAsInt(arguments[2], !localPlayer.PlayerTag.IsStaffTagShown),
                 true, true
             );
             return true;
@@ -609,6 +643,11 @@ namespace CenturionCC.System.Command
             }
 
             var player = _playerMgr.GetLocalPlayer();
+            if (player == null || player.PlayerTag == null)
+            {
+                console.Println("<color=red>Player or PlayerTag is null</color>");
+                return true;
+            }
 
             if (args.Length > 1)
                 player.PlayerTag.SetRoleSpecificTagShown(ConsoleParser.TryParseBoolean(args[1],
@@ -632,6 +671,12 @@ namespace CenturionCC.System.Command
             console.Println(string.Format(format, "Name", "Active", "Team", "KD", "Role", "Id:DisplayName"));
             foreach (var shooterPlayer in shooterPlayers)
             {
+                if (shooterPlayer == null)
+                {
+                    console.Println(string.Format(format, "null", "null", "null", "null", "null", "null"));
+                    continue;
+                }
+
                 console.Println(
                     string.Format(format,
                         shooterPlayer.name,
@@ -679,6 +724,7 @@ namespace CenturionCC.System.Command
         private bool HandleStats(NewbieConsole console, string[] args)
         {
             var player = _playerMgr.GetLocalPlayer();
+
             if (args != null && args.Length >= 2)
             {
                 var vrcPlayer = ConsoleParser.TryParsePlayer(args[1]);
@@ -689,11 +735,12 @@ namespace CenturionCC.System.Command
                 }
 
                 player = _playerMgr.GetShooterPlayerByPlayerId(vrcPlayer.playerId);
-                if (player == null)
-                {
-                    console.Println("<color=red>Target player is not in game.</color>");
-                    return true;
-                }
+            }
+
+            if (player == null)
+            {
+                console.Println("<color=red>Target player is not in game.</color>");
+                return true;
             }
 
             var playerStats = player.PlayerStats;
@@ -816,117 +863,6 @@ namespace CenturionCC.System.Command
             return ((n >> (p - 1)) & 1) == 1;
         }
 
-        #region TeamTeleportationLogics
-
-        public void _ExecutePlayerTeleportationForAllPlayers()
-        {
-            _console.Println($"{Prefix}Teleporting All players to team position");
-            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(TeleportToTeamPositionAll));
-        }
-
-        public void _ExecutePlayerTeleportationForAllPlayersExceptMod()
-        {
-            _console.Println($"{Prefix}Teleporting All players except moderator to team position");
-            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(TeleportToTeamPositionNonMods));
-        }
-
-        public void TeleportToTeamPositionAll()
-        {
-            _TeleportToTeamPosition(true);
-        }
-
-        public void TeleportToTeamPositionNonMods()
-        {
-            _TeleportToTeamPosition(false);
-        }
-
-        private void _TeleportToTeamPosition(bool includeModerators)
-        {
-            var local = _playerMgr.GetLocalPlayer();
-            if (local == null)
-            {
-                _console.Println($"{Prefix}Ignoring teleport call because no local player found");
-                return;
-            }
-
-            if (!includeModerators && local.Role.HasPermission())
-            {
-                _console.Println($"{Prefix}Ignoring teleport call because I'm moderator");
-                return;
-            }
-
-            if (teamPositions.Length == 0)
-            {
-                _console.Println($"{Prefix}Ignoring teleport call because no team positions were set");
-                return;
-            }
-
-            var teleportDestId = local.Team;
-            if (teleportDestId <= 0 || teleportDestId >= teamPositions.Length)
-            {
-                _console.Println(
-                    $"{Prefix}Ignoring teleport call because there is no destination set for such team: {teleportDestId}");
-                return;
-            }
-
-            _console.Println($"{Prefix}Teleporting to Team Position...");
-
-            var teleportDestOrigin = teamPositions[teleportDestId];
-            var teleportDest = teleportDestOrigin.position + teleportDestOrigin.forward * local.Index;
-            var lp = Networking.LocalPlayer;
-            lp.TeleportTo(teleportDest, lp.GetRotation(),
-                VRC_SceneDescriptor.SpawnOrientation.AlignPlayerWithSpawnPoint, false);
-        }
-
-        #endregion
-
-        #region Operations
-
-        private const int OpReset = -1;
-        private const int OpAdd = 1;
-        private const int OpRemove = 2;
-        private const int OpAddAll = 3;
-        private const int OpDisguise = 4;
-        private const int OpSync = 5;
-        private const int OpSyncAll = 6;
-        private const int OpStatsReset = 7;
-        private const int OpStatsResetAll = 8;
-        private const int OpFriendlyFireChange = 9;
-        private const int OpTeamReset = 10;
-        private const int OpTeamChange = 11;
-        private const int OpTeamShuffle = 12;
-        private const int OpTeamTagChange = 13;
-        private const int OpTeamRegionChange = 14;
-
-        #endregion
-
-        public override string Label => "PlayerManager";
-        public override string[] Aliases => new[] { "Player" };
-
-        public override string Usage => "<command>\n" +
-                                        "   reset\n" +
-                                        "   add [playerId]\n" +
-                                        "   remove [playerId]\n" +
-                                        "   sync [shooterPlayerId]\n" +
-                                        "   addAll\n" +
-                                        "   syncAll\n" +
-                                        "   stats [playerId]\n" +
-                                        "   statsReset <playerId>\n" +
-                                        "   statsResetAll\n" +
-                                        "   teamReset\n" +
-                                        "   team <team> [playerId]\n" +
-                                        "   shuffleTeam [include moderators] [include green blue team]\n" +
-                                        "   regionAdd <regionId> <teamId>\n" +
-                                        "   showTeamTag [true|false]\n" +
-                                        "   friendlyFire [true|false]\n" +
-                                        "   disguise [true|false]\n" +
-                                        "   roleSpecific [true|false]\n" +
-                                        "   update\n" +
-                                        "   localPlayer\n" +
-                                        "   list [-non-joined]\n" +
-                                        "   collider <show|collider name> [true|false]\n" +
-                                        "   debug [true|false]\n";
-
         public override bool OnBoolCommand(NewbieConsole console, string label, ref string[] vars, ref string[] envVars)
         {
             if (vars == null || vars.Length == 0)
@@ -1027,5 +963,89 @@ namespace CenturionCC.System.Command
         {
             _console = console;
         }
+
+        #region TeamTeleportationLogics
+
+        public void _ExecutePlayerTeleportationForAllPlayers()
+        {
+            _console.Println($"{Prefix}Teleporting All players to team position");
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(TeleportToTeamPositionAll));
+        }
+
+        public void _ExecutePlayerTeleportationForAllPlayersExceptMod()
+        {
+            _console.Println($"{Prefix}Teleporting All players except moderator to team position");
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(TeleportToTeamPositionNonMods));
+        }
+
+        public void TeleportToTeamPositionAll()
+        {
+            _TeleportToTeamPosition(true);
+        }
+
+        public void TeleportToTeamPositionNonMods()
+        {
+            _TeleportToTeamPosition(false);
+        }
+
+        private void _TeleportToTeamPosition(bool includeModerators)
+        {
+            var local = _playerMgr.GetLocalPlayer();
+            if (local == null)
+            {
+                _console.Println($"{Prefix}Ignoring teleport call because no local player found");
+                return;
+            }
+
+            if (!includeModerators && local.Role.HasPermission())
+            {
+                _console.Println($"{Prefix}Ignoring teleport call because I'm moderator");
+                return;
+            }
+
+            if (teamPositions.Length == 0)
+            {
+                _console.Println($"{Prefix}Ignoring teleport call because no team positions were set");
+                return;
+            }
+
+            var teleportDestId = local.Team;
+            if (teleportDestId <= 0 || teleportDestId >= teamPositions.Length)
+            {
+                _console.Println(
+                    $"{Prefix}Ignoring teleport call because there is no destination set for such team: {teleportDestId}");
+                return;
+            }
+
+            _console.Println($"{Prefix}Teleporting to Team Position...");
+
+            var teleportDestOrigin = teamPositions[teleportDestId];
+            var teleportDest = teleportDestOrigin.position + teleportDestOrigin.forward * local.Index;
+            var lp = Networking.LocalPlayer;
+            lp.TeleportTo(teleportDest, lp.GetRotation(),
+                VRC_SceneDescriptor.SpawnOrientation.AlignPlayerWithSpawnPoint, false);
+        }
+
+        #endregion
+
+        #region Operations
+
+        private const int OpReset = -1;
+        private const int OpAdd = 1;
+        private const int OpRemove = 2;
+        private const int OpAddAll = 3;
+        private const int OpDisguise = 4;
+        private const int OpSync = 5;
+        private const int OpSyncAll = 6;
+        private const int OpStatsReset = 7;
+        private const int OpStatsResetAll = 8;
+        private const int OpFriendlyFireChange = 9;
+        private const int OpTeamReset = 10;
+        private const int OpTeamChange = 11;
+        private const int OpTeamShuffle = 12;
+        private const int OpTeamTagChange = 13;
+        private const int OpTeamRegionChange = 14;
+
+        #endregion
     }
 }

@@ -10,15 +10,15 @@ namespace CenturionCC.System.Command
     {
         private GameManager _gameManager;
 
-        private void Start()
-        {
-            _gameManager = GameManagerHelper.GetGameManager();
-        }
-
         public override string Label => "GameManager";
         public override string[] Aliases => new[] { "Game" };
         public override string Usage =>
             "<command> <canShoot|hitLocal|hitRemote|isMod|useHaptic|version|license>";
+
+        private void Start()
+        {
+            _gameManager = GameManagerHelper.GetGameManager();
+        }
 
         public override string OnCommand(NewbieConsole console, string label, string[] vars, ref string[] envVars)
         {
@@ -90,7 +90,8 @@ namespace CenturionCC.System.Command
                 }
                 case "version":
                 {
-                    console.Println($"Centurion System - v{GameManager.GetVersion()}");
+                    console.Println($"Centurion System   - v{GameManager.GetVersion()}");
+                    console.Println("Centurion Commands - v0.1.2");
                     return GameManager.GetVersion();
                 }
                 case "license":

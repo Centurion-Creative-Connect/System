@@ -11,8 +11,8 @@ namespace CenturionCC.System.Command
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class GunManagerCommand : NewbieConsoleCommandHandler
     {
-        private GunManager _gunManager;
         private NewbieConsole _console;
+        private GunManager _gunManager;
 
         private int _lastRequestVersion;
         [UdonSynced]
@@ -22,6 +22,11 @@ namespace CenturionCC.System.Command
         private int _targetPlayerId;
         [UdonSynced]
         private byte _targetVariantId;
+
+        public override string Label => "GunManager";
+        public override string[] Aliases => new[] { "Gun" };
+        public override string Usage =>
+            "<command> <reset|slowReset|reload|trail|optimizationRange|rePickupDelay|collisionCheck|debug|summon|list|info>";
 
         private void Start()
         {
@@ -55,7 +60,7 @@ namespace CenturionCC.System.Command
                 var destPos = player.GetRotation() * new Vector3(0F, 0.7F, 1F) + player.GetPosition();
                 var destRot = Quaternion.identity;
                 var variantData = _gunManager.GetVariantData(_targetVariantId);
-                var instance = _gunManager.MasterOnly_SpawnWithData(variantData, destPos, destRot);
+                _gunManager.MasterOnly_SpawnWithData(variantData, destPos, destRot);
             }
         }
 
@@ -107,7 +112,10 @@ namespace CenturionCC.System.Command
             );
 
             foreach (var variant in variants)
-                result = string.Join("\n", result, string.Format(format, variant.UniqueId, variant.name));
+                if (variant != null)
+                    result = string.Join("\n", result, string.Format(format, variant.UniqueId, variant.name));
+                else
+                    result += "\nnull";
 
             result += $"\nThere is <color=green>{variants.Length}</color> variants";
 
@@ -149,32 +157,39 @@ namespace CenturionCC.System.Command
 
             foreach (var m in managedGuns)
             {
-                result = string.Join
-                (
-                    "\n",
-                    result,
-                    string.Format
+                if (m != null)
+                {
+                    result = string.Join
                     (
-                        format,
-                        m.name,
-                        m.IsLocal,
-                        m.IsOccupied,
-                        m.IsPickedUp,
-                        m.IsHolstered,
-                        m.IsOptimized,
-                        m.VariantDataUniqueId,
-                        NewbieUtils.GetPlayerName(m.CurrentHolder),
-                        m.transform.position.ToString("F2"),
-                        m.State.GetStateString(),
-                        m.FireMode.GetStateString(),
-                        m.Trigger.GetStateString(),
-                        m.ShotCount,
-                        m.IsDoubleHandedGun
-                    )
-                );
+                        "\n",
+                        result,
+                        string.Format
+                        (
+                            format,
+                            m.name,
+                            m.IsLocal,
+                            m.IsOccupied,
+                            m.IsPickedUp,
+                            m.IsHolstered,
+                            m.IsOptimized,
+                            m.VariantDataUniqueId,
+                            NewbieUtils.GetPlayerName(m.CurrentHolder),
+                            m.transform.position.ToString("F2"),
+                            m.State.GetStateString(),
+                            m.FireMode.GetStateString(),
+                            m.Trigger.GetStateString(),
+                            m.ShotCount,
+                            m.IsDoubleHandedGun
+                        )
+                    );
 
-                if (m.IsOccupied)
-                    ++activeCount;
+                    if (m.IsOccupied)
+                        ++activeCount;
+                }
+                else
+                {
+                    result += "\nnull";
+                }
             }
 
             result += $"\nThere is <color=green>{managedGuns.Length}</color> managed instances, " +
@@ -201,11 +216,6 @@ namespace CenturionCC.System.Command
                 _gunManager.MasterOnly_ResetRemoteGuns();
             }
         }
-
-        public override string Label => "GunManager";
-        public override string[] Aliases => new[] { "Gun" };
-        public override string Usage =>
-            "<command> <reset|slowReset|reload|trail|optimizationRange|rePickupDelay|collisionCheck|debug|summon|list>";
 
         public override string OnCommand(NewbieConsole console, string label, string[] vars, ref string[] envVars)
         {
@@ -299,6 +309,59 @@ namespace CenturionCC.System.Command
                 case "l":
                 case "list":
                     return HandleList(console, vars);
+                case "i":
+                case "info":
+                    if (vars.Length < 2)
+                    {
+                        console.Println("<color=red>Error: Syntax error</color>\n" +
+                                        "<color=red>Please specify variant id</color>");
+                        return ConsoleLiteral.GetNone();
+                    }
+
+                    var index = ConsoleParser.TryParseByte(vars[1]);
+                    var variantData = _gunManager.GetVariantData(index);
+
+                    if (variantData == null)
+                    {
+                        console.Println("<color=red>Error: Could not retrieve vairant data</color>");
+                        return ConsoleLiteral.GetNone();
+                    }
+
+                    // Base variant data information
+                    var result =
+                        $"UniqueId      : {variantData.UniqueId}\n" +
+                        $"WeaponName    : {variantData.WeaponName}\n" +
+                        $"HolsterSize   : {variantData.HolsterSize}\n" +
+                        $"IsDoubleHanded: {variantData.IsDoubleHanded}\n" +
+                        $"MaxRPS/MaxRPM : {variantData.MaxRoundsPerSecond}/{variantData.MaxRoundsPerSecond * 60}";
+
+                    // Append ProjectileData information if provided
+                    if (variantData.ProjectileData != null)
+                    {
+                        variantData.ProjectileData.Get(
+                            0,
+                            out var positionOffset,
+                            out var velocity,
+                            out var rotOffset,
+                            out var torque,
+                            out var drag,
+                            out var trailDuration,
+                            out var trailCol);
+
+                        result +=
+                            "\nProjectileData:\n" +
+                            $"  Spd: {velocity.ToString("F2")}\n" +
+                            $"  Drg: {drag}\n" +
+                            $"  Tor: {torque.ToString("F2")}\n" +
+                            $"  POf: {positionOffset.ToString("F2")}\n" +
+                            $"  ROf: {rotOffset.eulerAngles.ToString("F2")}\n" +
+                            $"  tDr: {trailDuration}\n" +
+                            $"  tCl: {trailCol.Evaluate(0).ToString()}";
+                    }
+
+                    console.Println(result);
+
+                    return result;
                 default:
                     return console.PrintUsage(this);
                 // ReSharper restore StringLiteralTypo

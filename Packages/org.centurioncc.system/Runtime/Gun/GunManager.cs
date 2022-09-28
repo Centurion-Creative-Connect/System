@@ -3,6 +3,7 @@ using CenturionCC.System.Gun.DataStore;
 using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
+using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -35,8 +36,11 @@ namespace CenturionCC.System.Gun
         private int _lastResetIndex = -1;
         private int _pickupLocalGunCount;
 
+        [CanBeNull]
         public PrintableBase Logger { get; private set; }
+        [ItemCanBeNull]
         public ManagedGun[] ManagedGunInstances { get; private set; }
+        [ItemCanBeNull]
         public GunVariantDataStore[] VariantDataInstances { get; private set; }
         public ProjectilePool BulletHolder => bulletHolder;
         public DefaultGunBehaviour FallbackBehaviour => fallbackBehaviour;
@@ -55,6 +59,7 @@ namespace CenturionCC.System.Gun
 
                 foreach (var managedGun in ManagedGunInstances)
                 {
+                    if (managedGun == null) continue;
                     managedGun.MainHandle.IsVisible = value;
                     managedGun.SubHandle.IsVisible = value;
                     managedGun.CustomHandle.IsVisible = value;
@@ -165,12 +170,14 @@ namespace CenturionCC.System.Gun
                 Debug.Log(wdCallback != null ? wdCallback.name : "null");
         }
 
+        [CanBeNull]
         public ManagedGun MasterOnly_Spawn(byte variantId, Vector3 position, Quaternion rotation)
         {
             var variantData = GetVariantData(variantId);
             return MasterOnly_SpawnWithData(variantData, position, rotation);
         }
 
+        [CanBeNull]
         public ManagedGun MasterOnly_SpawnWithData(GunVariantDataStore data, Vector3 position, Quaternion rotation)
         {
             if (!Networking.IsMaster)
@@ -180,6 +187,12 @@ namespace CenturionCC.System.Gun
             }
 
             var remote = GetAvailableManagedGun();
+            if (remote == null)
+            {
+                Logger.LogError($"{Prefix}Could not spawn gun: Could not retrieve available managed gun!");
+                return null;
+            }
+
             remote.MasterOnly_Occupy();
             remote.MasterOnly_SetVariantData(data);
             remote.MoveTo(position, rotation);
@@ -195,7 +208,9 @@ namespace CenturionCC.System.Gun
             }
 
             Logger.Log($"{Prefix}Resetting ManagedGuns");
-            foreach (var managedGun in ManagedGunInstances) managedGun.MasterOnly_Dispose();
+            foreach (var managedGun in ManagedGunInstances)
+                if (managedGun != null)
+                    managedGun.MasterOnly_Dispose();
 
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Invoke_OnGunsReset));
             Logger.Log($"{Prefix}ManagedGuns reset complete");
@@ -221,17 +236,13 @@ namespace CenturionCC.System.Gun
                     return;
                 }
 
-                _lastResetIndex++;
-                var index = _lastResetIndex;
-                if (managedGuns.Length > index)
-                {
-                    var managedGun = managedGuns[index];
-                    managedGun.MasterOnly_Dispose();
-                }
-                else
-                {
+                ++_lastResetIndex;
+                if (managedGuns.Length <= _lastResetIndex)
                     break;
-                }
+
+                var managedGun = managedGuns[_lastResetIndex];
+                if (managedGun != null)
+                    managedGun.MasterOnly_Dispose();
             }
 
             if (managedGuns.Length <= _lastResetIndex + 1)
@@ -248,10 +259,11 @@ namespace CenturionCC.System.Gun
         public void ReloadGuns()
         {
             foreach (var managedGun in ManagedGunInstances)
-                if (managedGun.IsOccupied)
+                if (managedGun != null && managedGun.IsOccupied)
                     managedGun.RefreshData(false);
         }
 
+        [CanBeNull]
         public GunVariantDataStore GetVariantData(byte variantUniqueId)
         {
             foreach (var variant in VariantDataInstances)
@@ -263,6 +275,7 @@ namespace CenturionCC.System.Gun
             return FallbackVariantData;
         }
 
+        [CanBeNull]
         private ManagedGun GetAvailableManagedGun()
         {
             foreach (var managedGun in ManagedGunInstances)
