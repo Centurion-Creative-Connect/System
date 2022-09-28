@@ -1,6 +1,7 @@
 ﻿using CenturionCC.System.Gun.Behaviour;
 using CenturionCC.System.Gun.GunCamera;
 using DerpyNewbie.Common;
+using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -61,12 +62,20 @@ namespace CenturionCC.System.Gun.DataStore
         public int HolsterSize => holsterSize;
         public FireMode[] AvailableFiringModes => availableFiringModes;
         public float MaxRoundsPerSecond => maxRoundsPerSecond;
+
+        [CanBeNull]
         public GameObject Model => model;
+        [CanBeNull]
         public ProjectileDataProvider ProjectileData => projectileData;
+        [CanBeNull]
         public GunAudioDataStore AudioData => audioData;
+        [CanBeNull]
         public GunCameraDataStore CameraData => cameraData;
+        [CanBeNull]
         public GunHapticDataStore HapticData => hapticData;
+        [CanBeNull]
         public GunBehaviourBase Behaviour => behaviour;
+
         public bool IsDoubleHanded => isDoubleHanded;
         public bool UseRePickupDelayForMainHandle => useRePickupDelayForMainHandle;
         public bool UseRePickupDelayForSubHandle => useRePickupDelayForSubHandle;
