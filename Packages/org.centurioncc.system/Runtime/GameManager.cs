@@ -76,11 +76,11 @@ namespace CenturionCC.System
             return null;
         }
 
-        public void PlayHitLocal(ShooterPlayer shooterPlayer)
+        public void PlayHitLocal(PlayerBase shooterPlayer)
         {
             logger.LogVerbose(
                 $"{_prefix}PlayHitLocal: {(shooterPlayer != null ? GetPlayerName(shooterPlayer.VrcPlayer) : "Dummy (shooter player null)")}");
-            if (shooterPlayer != null) shooterPlayer.PlayHit();
+            if (shooterPlayer != null) shooterPlayer.OnDeath();
 
             if (DateTime.Now.Subtract(_lastLocalPlayerHitTime).TotalSeconds > localPlayerHitDuration)
             {
@@ -89,11 +89,11 @@ namespace CenturionCC.System
             }
         }
 
-        public void PlayHitRemote(ShooterPlayer shooterPlayer)
+        public void PlayHitRemote(PlayerBase shooterPlayer)
         {
             logger.LogVerbose(
                 $"{_prefix}PlayHitRemote: {(shooterPlayer != null ? GetPlayerName(shooterPlayer.VrcPlayer) : "Dummy (shooter player null)")}");
-            if (shooterPlayer != null) shooterPlayer.PlayHit();
+            if (shooterPlayer != null) shooterPlayer.OnDeath();
         }
 
         public bool CanShoot()
@@ -163,15 +163,15 @@ namespace CenturionCC.System
 
         #region PlayerManagerCallbackBase
 
-        public void OnPlayerChanged(ShooterPlayer player, int oldId, int newId)
+        public void OnPlayerChanged(PlayerBase player, int oldId, int newId)
         {
         }
 
-        public void OnLocalPlayerChanged(ShooterPlayer playerNullable, int index)
+        public void OnLocalPlayerChanged(PlayerBase playerNullable, int index)
         {
         }
 
-        public void OnFriendlyFire(ShooterPlayer firedPlayer, ShooterPlayer hitPlayer)
+        public void OnFriendlyFire(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
         }
 
@@ -182,7 +182,7 @@ namespace CenturionCC.System
                 eventLogger.LogHitDetection(playerCollider, damageData, contactPoint, isShooterDetection);
         }
 
-        public void OnKilled(ShooterPlayer firedPlayer, ShooterPlayer hitPlayer)
+        public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
             if (hitPlayer.IsLocal)
                 PlayHitLocal(hitPlayer);
@@ -190,11 +190,11 @@ namespace CenturionCC.System
             PlayHitRemote(hitPlayer);
         }
 
-        public void OnTeamChanged(ShooterPlayer player, int oldTeam)
+        public void OnTeamChanged(PlayerBase player, int oldTeam)
         {
         }
 
-        public void OnPlayerTagChanged(ShooterPlayer player, TagType type, bool isOn)
+        public void OnPlayerTagChanged(TagType type, bool isOn)
         {
         }
 

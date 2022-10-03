@@ -59,7 +59,7 @@ namespace CenturionCC.System.Audio
         private void PlayFootstepSound()
         {
             var player = playerManager.GetLocalPlayer();
-            if (!player || player.Team == 4) return;
+            if (!player || player.TeamId == 4) return;
             var isSlow = _timer > slowFootstepThreshold;
 
             switch (_currentFootstepType)
@@ -69,27 +69,27 @@ namespace CenturionCC.System.Audio
                 case FootstepType.Gravel:
                     player.SendCustomNetworkEvent(NetworkEventTarget.All,
                         isSlow
-                            ? nameof(player.PlaySlowGroundFootstepAudio)
-                            : nameof(player.PlayGroundFootstepAudio));
+                            ? "PlaySlowGroundFootstepAudio"
+                            : "PlayGroundFootstepAudio");
                     break;
                 case FootstepType.Wood:
                     player.SendCustomNetworkEvent(NetworkEventTarget.All,
                         isSlow
-                            ? nameof(player.PlaySlowWoodFootstepAudio)
-                            : nameof(player.PlayWoodFootstepAudio));
+                            ? "PlaySlowWoodFootstepAudio"
+                            : "PlayWoodFootstepAudio");
                     break;
                 case FootstepType.Iron:
                     player.SendCustomNetworkEvent(NetworkEventTarget.All,
                         isSlow
-                            ? nameof(player.PlaySlowIronFootstepAudio)
-                            : nameof(player.PlayIronFootstepAudio));
+                            ? "PlaySlowIronFootstepAudio"
+                            : "PlayIronFootstepAudio");
                     break;
                 case FootstepType.Fallback:
                 default:
                     player.SendCustomNetworkEvent(NetworkEventTarget.All,
                         isSlow
-                            ? nameof(player.PlaySlowFallbackFootstepAudio)
-                            : nameof(player.PlayFallbackFootstepAudio));
+                            ? "PlaySlowFallbackFootstepAudio"
+                            : "PlayFallbackFootstepAudio");
                     break;
             }
         }

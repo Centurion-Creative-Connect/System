@@ -2,7 +2,6 @@
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
-using VRC.SDKBase;
 
 namespace CenturionCC.System.Player
 {
@@ -22,172 +21,87 @@ namespace CenturionCC.System.Player
         [SerializeField]
         private Text debugText;
 
-        private readonly Vector3 _nametagOffsetPosition = Vector3.up * 0.5F;
-        private bool _isDebugTagShown;
-        [UdonSynced] [FieldChangeCallback(nameof(IsRoleSpecificTagShown))]
-        private bool _isRoleSpecificTagShown;
+        private readonly Vector3 _nametagOffsetPosition = Vector3.up * 0.3F;
 
-        // TODO: reduce UdonSynced for staff only property
-        [UdonSynced] [FieldChangeCallback(nameof(IsStaffTagShown))]
-        private bool _isStaffTagShown = true;
-        private bool _isTeamTagShown;
-        private ShooterPlayer _player;
+        private bool _hasInit;
+        private PlayerBase _player;
         private PlayerManager _playerManager;
 
-        public bool IsStaffTagShown
-        {
-            get => _isStaffTagShown;
-            private set
-            {
-                if (_isStaffTagShown != value)
-                {
-                    _isStaffTagShown = value;
-                    if (_player != null && _playerManager != null)
-                        _playerManager.Invoke_OnPlayerTagChanged(_player, TagType.Staff, value);
-                }
-
-                UpdateView();
-            }
-        }
-
-        public bool IsRoleSpecificTagShown
-        {
-            get => _isRoleSpecificTagShown;
-            private set
-            {
-                if (_isRoleSpecificTagShown != value)
-                {
-                    _isRoleSpecificTagShown = value;
-
-                    if (_player != null && _playerManager != null &&
-                        (_player.Role.RoleName == "Developer" ||
-                         _player.Role.RoleName == "Owner")
-                       )
-                        _playerManager.Invoke_OnPlayerTagChanged(_player,
-                            _player.Role.RoleName == "Owner" ? TagType.Owner : TagType.Dev, value);
-                }
-
-
-                UpdateView();
-            }
-        }
-
-        public bool IsTeamTagShown
-        {
-            get => _isTeamTagShown;
-            private set
-            {
-                if (_isTeamTagShown != value)
-                {
-                    _isTeamTagShown = value;
-                    if (_player != null && _playerManager != null)
-                        _playerManager.Invoke_OnPlayerTagChanged(_player, TagType.Team, value);
-                }
-
-                UpdateView();
-            }
-        }
-
-        public bool IsDebugTagShown
-        {
-            get => _isDebugTagShown;
-            private set
-            {
-                if (_isDebugTagShown != value)
-                {
-                    _isDebugTagShown = value;
-                    if (_player != null && _playerManager != null)
-                        _playerManager.Invoke_OnPlayerTagChanged(_player, TagType.Debug, value);
-                }
-
-                UpdateView();
-            }
-        }
-
-        private void Start()
-        {
-            _playerManager = GameManagerHelper.GetPlayerManager();
-        }
-
-        public void Init(ShooterPlayer player)
+        public void Init(PlayerBase player, PlayerManager manager)
         {
             _player = player;
+            _playerManager = manager;
+            _hasInit = true;
         }
 
-        public void SetStaffTagShown(bool isShown)
+        public void SetDebugTagText(string value)
         {
-            IsStaffTagShown = isShown;
-            Networking.SetOwner(Networking.LocalPlayer, gameObject);
-            RequestSerialization();
-        }
-
-        public void SetRoleSpecificTagShown(bool isShown)
-        {
-            Debug.Log($"SetRoleSpecificTagShown: {isShown}");
-            IsRoleSpecificTagShown = isShown;
-            Networking.SetOwner(Networking.LocalPlayer, gameObject);
-            RequestSerialization();
-        }
-
-        public void SetTeamTagShown(bool isShown)
-        {
-            IsTeamTagShown = isShown;
-        }
-
-        public void SetTeamTagColor(Color color)
-        {
-            teamTag.color = color;
-        }
-
-        public void SetDebugTagShown(bool isShown)
-        {
-            IsDebugTagShown = isShown;
-        }
-
-        public void SetDebugTagText(string str)
-        {
-            debugText.text = str;
+            debugText.text = value;
         }
 
         public void UpdateView()
         {
-            Debug.Log($"UpdateView::{gameObject.transform.parent.name}");
-            if (_player == null)
+            if (!_hasInit)
+                return;
+
+            if (_player == null || _player.VrcPlayer == null)
             {
                 HideObjects();
                 return;
             }
 
-            var role = _player.Role;
-            var api = _player.VrcPlayer;
+            var localPlayer = _playerManager.GetLocalPlayer();
+            var localPlayerTeamId = 0;
+            if (localPlayer != null)
+                localPlayerTeamId = localPlayer.TeamId;
 
-            if (api == null)
+            var shouldShowTeamTag =
+                _playerManager.ShowTeamTag &&
+                (localPlayerTeamId == _player.TeamId || IsSpecialTeamId(localPlayerTeamId));
+
+            teamTag.gameObject.SetActive(shouldShowTeamTag);
+            teamTag.color = _playerManager.GetTeamColor(_player.TeamId);
+
+            masterTag.gameObject.SetActive(_playerManager.ShowStaffTag &&
+                                           _player.VrcPlayer.isMaster && IsSpecialTeamId(_player.TeamId));
+            debugText.gameObject.SetActive(_playerManager.IsDebug);
+
+            var staffTagType = GetStaffTagType();
+            var shouldShowStaffTag =
+                _playerManager.ShowStaffTag &&
+                _player.Role.IsGameStaff() && IsSpecialTeamId(_player.TeamId);
+
+            staffTag.gameObject.SetActive(shouldShowStaffTag && staffTagType == TagType.Staff);
+            ownerTag.gameObject.SetActive(shouldShowStaffTag && staffTagType == TagType.Owner);
+            devTag.gameObject.SetActive(shouldShowStaffTag && staffTagType == TagType.Dev);
+        }
+
+        public void UpdatePositionAndRotation(Vector3 localHead, Vector3 localHeadForward, Vector3 followingHead)
+        {
+            transform.SetPositionAndRotation(followingHead + _nametagOffsetPosition,
+                Quaternion.LookRotation(followingHead + _nametagOffsetPosition + localHeadForward - localHead));
+        }
+
+        private TagType GetStaffTagType()
+        {
+            var roleName = "Default";
+            if (_player.Role != null)
+                roleName = _player.Role.RoleName;
+
+            switch (roleName)
             {
-                HideObjects();
-                return;
+                case "Owner":
+                    return TagType.Owner;
+                case "Developer":
+                    return TagType.Dev;
+                default:
+                    return TagType.Staff;
             }
+        }
 
-            teamTag.gameObject.SetActive(IsTeamTagShown);
-
-            staffTag.gameObject.SetActive
-            (
-                IsStaffTagShown &&
-                (
-                    role.IsGameStaff() ||
-                    !IsRoleSpecificTagShown && role != null &&
-                    (role.RoleName == "Owner" || role.RoleName == "Developer")
-                )
-            );
-
-            masterTag.gameObject.SetActive(IsStaffTagShown && api.isMaster);
-
-            ownerTag.gameObject.SetActive(IsStaffTagShown && IsRoleSpecificTagShown && role != null &&
-                                          role.RoleName == "Owner");
-            devTag.gameObject.SetActive(IsStaffTagShown && IsRoleSpecificTagShown && role != null &&
-                                        role.RoleName == "Developer");
-
-            // Debug tag is independent from tag shown state
-            debugText.gameObject.SetActive(IsDebugTagShown);
+        private bool IsSpecialTeamId(int teamId)
+        {
+            return teamId == 0 || teamId == 4;
         }
 
         private void HideObjects()
@@ -197,12 +111,6 @@ namespace CenturionCC.System.Player
             masterTag.gameObject.SetActive(false);
             ownerTag.gameObject.SetActive(false);
             devTag.gameObject.SetActive(false);
-        }
-
-        public void UpdatePositionAndRotation(Vector3 localHead, Vector3 localHeadForward, Vector3 followingHead)
-        {
-            transform.SetPositionAndRotation(followingHead + _nametagOffsetPosition,
-                Quaternion.LookRotation(followingHead + _nametagOffsetPosition + localHeadForward - localHead));
         }
     }
 

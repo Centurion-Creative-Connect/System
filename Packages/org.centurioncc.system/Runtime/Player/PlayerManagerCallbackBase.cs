@@ -20,7 +20,7 @@ namespace CenturionCC.System.Player
         /// <param name="player">player who got affected</param>
         /// <param name="oldId">previous <see cref="VRC.SDKBase.VRCPlayerApi.playerId" />.</param>
         /// <param name="newId">added <see cref="VRC.SDKBase.VRCPlayerApi.playerId" />. -1 if removed</param>
-        public virtual void OnPlayerChanged(ShooterPlayer player, int oldId, int newId)
+        public virtual void OnPlayerChanged(PlayerBase player, int oldId, int newId)
         {
         }
 
@@ -33,7 +33,7 @@ namespace CenturionCC.System.Player
         /// </remarks>
         /// <param name="playerNullable"><see cref="ShooterPlayer" /> who got assigned. null if removed</param>
         /// <param name="index"><see cref="ShooterPlayer.Index" /> if assigned. -1 if removed</param>
-        public virtual void OnLocalPlayerChanged(ShooterPlayer playerNullable, int index)
+        public virtual void OnLocalPlayerChanged(PlayerBase playerNullable, int index)
         {
         }
 
@@ -42,12 +42,12 @@ namespace CenturionCC.System.Player
         /// </summary>
         /// <remarks>
         /// Invokes only when local player as <see cref="firedPlayer" /> fired to <see cref="hitPlayer" /> as same
-        /// <see cref="ShooterPlayer.Team" />.
+        /// <see cref="ShooterPlayer.SyncedTeamId" />.
         /// Invoked even if <see cref="PlayerManager.AllowFriendlyFire" /> is <c>true</c>
         /// </remarks>
         /// <param name="firedPlayer">who fired at <see cref="hitPlayer" /></param>
         /// <param name="hitPlayer">who got shot by <see cref="firedPlayer" /></param>
-        public virtual void OnFriendlyFire(ShooterPlayer firedPlayer, ShooterPlayer hitPlayer)
+        public virtual void OnFriendlyFire(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
         }
 
@@ -69,30 +69,25 @@ namespace CenturionCC.System.Player
         /// </summary>
         /// <param name="firedPlayer">Player who updated <see cref="PlayerStats.Kill"/></param>
         /// <param name="hitPlayer">Player who updated <see cref="PlayerStats.Death"/></param>
-        public virtual void OnKilled(ShooterPlayer firedPlayer, ShooterPlayer hitPlayer)
+        public virtual void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
         }
 
         /// <summary>
-        /// Called when <see cref="ShooterPlayer" /> changed their <see cref="ShooterPlayer.Team" />
+        /// Called when <see cref="ShooterPlayer" /> changed their <see cref="ShooterPlayer.SyncedTeamId" />
         /// </summary>
         /// <param name="player">player who changed team</param>
         /// <param name="oldTeam">previous team which <see cref="player" /> was assigned</param>
-        public virtual void OnTeamChanged(ShooterPlayer player, int oldTeam)
+        public virtual void OnTeamChanged(PlayerBase player, int oldTeam)
         {
         }
 
         /// <summary>
-        /// Called when either <see cref="PlayerManager.ShowTeamTag" /> or <see cref="ShooterPlayer.PlayerTag" /> was
-        /// changed.
+        /// Called when <see cref="PlayerManager.ShowTeamTag"/> was changed.
         /// </summary>
-        /// <param name="player">
-        /// player who changed <see cref="ShooterPlayer.PlayerTag" />. null if
-        /// <see cref="PlayerManager.ShowTeamTag" /> was changed
-        /// </param>
         /// <param name="type">type of tag which was changed</param>
         /// <param name="isOn">the state of <paramref name="type" /> tag shown</param>
-        public virtual void OnPlayerTagChanged(ShooterPlayer player, TagType type, bool isOn)
+        public virtual void OnPlayerTagChanged(TagType type, bool isOn)
         {
         }
 
@@ -107,7 +102,7 @@ namespace CenturionCC.System.Player
         /// Called when <see cref="PlayerStats.ResetStats"/> was called.
         /// </summary>
         /// <param name="player">a player which called <see cref="PlayerStats.ResetStats"/></param>
-        public virtual void OnResetPlayerStats(ShooterPlayer player)
+        public virtual void OnResetPlayerStats(PlayerBase player)
         {
         }
     }

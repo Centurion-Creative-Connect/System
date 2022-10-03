@@ -17,9 +17,9 @@ namespace CenturionCC.System.UI.Scoreboard
         [SerializeField]
         private Text deathsText;
 
-        private PlayerStats _source;
+        private PlayerBase _source;
 
-        public PlayerStats Source
+        public PlayerBase Source
         {
             get => _source;
             set
@@ -31,7 +31,7 @@ namespace CenturionCC.System.UI.Scoreboard
 
         public int GetPriority()
         {
-            return Source != null ? Source.Kill * 100 - Source.Death : -1;
+            return Source != null ? Source.Kills * 100 - Source.Deaths : -1;
         }
 
         public void UpdateText()
@@ -47,9 +47,9 @@ namespace CenturionCC.System.UI.Scoreboard
 
             rankingText.text = $"{(transform.GetSiblingIndex() + 1)}";
 
-            displayNameText.text = GameManager.GetPlayerName(Source.Player.VrcPlayer);
-            killsText.text = Source.Kill.ToString();
-            deathsText.text = Source.Death.ToString();
+            displayNameText.text = GameManager.GetPlayerName(Source.VrcPlayer);
+            killsText.text = Source.Kills.ToString();
+            deathsText.text = Source.Deaths.ToString();
         }
     }
 }

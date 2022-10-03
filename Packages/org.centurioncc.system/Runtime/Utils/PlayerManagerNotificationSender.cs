@@ -3,6 +3,7 @@ using CenturionCC.System.UI;
 using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace CenturionCC.System.Utils
 {
@@ -14,10 +15,12 @@ namespace CenturionCC.System.Utils
         private TranslatableMessage[] teamChangeNotificationMessages;
         [SerializeField]
         private TranslatableMessage unknownTeamChangeNotificationMessage;
+        [FormerlySerializedAs("onDisguiseEnabledMessage")]
         [SerializeField]
-        private TranslatableMessage onDisguiseEnabledMessage;
+        private TranslatableMessage onStaffTagEnabledMessage;
+        [FormerlySerializedAs("onDisguiseDisabledMessage")]
         [SerializeField]
-        private TranslatableMessage onDisguiseDisabledMessage;
+        private TranslatableMessage onStaffTagDisabledMessage;
         [SerializeField]
         private TranslatableMessage onTeamTagEnabledMessage;
         [SerializeField]
@@ -34,23 +37,20 @@ namespace CenturionCC.System.Utils
             _playerManager.SubscribeCallback(this);
         }
 
-        public override void OnTeamChanged(ShooterPlayer player, int oldTeam)
+        public override void OnTeamChanged(PlayerBase player, int oldTeam)
         {
             var vrcPlayer = player.VrcPlayer;
             if (vrcPlayer == null || !vrcPlayer.isLocal) return;
 
-            if (player.Team >= 0 && player.Team < teamChangeNotificationMessages.Length)
-                _notification.ShowInfo(teamChangeNotificationMessages[player.Team].Message);
+            if (player.TeamId >= 0 && player.TeamId < teamChangeNotificationMessages.Length)
+                _notification.ShowInfo(teamChangeNotificationMessages[player.TeamId].Message);
             else
                 _notification.ShowInfo(string.Format(unknownTeamChangeNotificationMessage.Message,
-                    player.Team));
+                    player.TeamId));
         }
 
-        public override void OnPlayerTagChanged(ShooterPlayer player, TagType type, bool isOn)
+        public override void OnPlayerTagChanged(TagType type, bool isOn)
         {
-            var vrcPlayer = player.VrcPlayer;
-            if (vrcPlayer == null || !vrcPlayer.isLocal) return;
-
             switch (type)
             {
                 case TagType.Debug:
@@ -67,11 +67,18 @@ namespace CenturionCC.System.Utils
                 }
                 case TagType.Master:
                 case TagType.Owner:
+                case TagType.Dev:
                 case TagType.Staff:
                 {
-                    _notification.ShowInfo(isOn
-                        ? onDisguiseEnabledMessage.Message
-                        : onDisguiseDisabledMessage.Message);
+                    if (_playerManager.RoleManager.GetPlayerRole().HasPermission())
+                        _notification.ShowInfo(isOn
+                            ? onStaffTagEnabledMessage.Message
+                            : onStaffTagDisabledMessage.Message);
+                    break;
+                }
+                default:
+                {
+                    Debug.Log($"[PMNotificationSender] Unknown tag type was provided: {type}");
                     break;
                 }
             }

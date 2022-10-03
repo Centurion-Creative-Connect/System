@@ -150,8 +150,7 @@ namespace CenturionCC.System.Command
                             nameof(OpFriendlyFireChange),
                             "All",
                             _requestVersion));
-                        _playerMgr.AllowFriendlyFire = _targetTeam == 1;
-                        _playerMgr.RequestSerialization();
+                        _playerMgr.MasterOnly_SetFriendlyFire(_targetTeam == 1);
                         return;
                     }
                     case OpTeamReset:
@@ -163,38 +162,20 @@ namespace CenturionCC.System.Command
                         _playerMgr.MasterOnly_ResetTeam();
                         return;
                     }
-                    case OpDisguise:
-                    {
-                        _console.Println(string.Format(ReceivedFormat,
-                            nameof(OpDisguise),
-                            $"{NewbieUtils.GetPlayerName(_targetPlayerId)} to {_targetTeam == 1}",
-                            _requestVersion));
-                        var targetShooterPlayer = _playerMgr.GetShooterPlayerByPlayerId(_targetPlayerId);
-                        if (targetShooterPlayer == null)
-                        {
-                            _console.LogError(
-                                $"{Prefix}Could not find target ShooterPlayer to change disguise state!");
-                            return;
-                        }
-
-                        // _targetTeam = 0 == undisguised, _targetTeam = 1 == disguised.
-                        targetShooterPlayer.PlayerTag.SetStaffTagShown(_targetTeam != 1);
-                        return;
-                    }
                     case OpSync:
                     {
                         _console.Println(string.Format(ReceivedFormat,
                             nameof(OpSync),
-                            $"ShooterPlayer:{_targetPlayerId}",
+                            $"BasePlayer:{_targetPlayerId}",
                             _requestVersion));
-                        var targetShooterPlayer = _playerMgr.GetPlayer(_targetPlayerId);
-                        if (targetShooterPlayer == null)
+                        var targetPlayer = _playerMgr.GetPlayer(_targetPlayerId);
+                        if (targetPlayer == null)
                         {
-                            _console.LogError($"{Prefix}Specified ShooterPlayer index is invalid");
+                            _console.LogError($"{Prefix}Specified player index is invalid");
                             return;
                         }
 
-                        targetShooterPlayer.MasterOnly_Sync();
+                        targetPlayer.Sync();
                         return;
                     }
                     case OpSyncAll:
@@ -212,15 +193,14 @@ namespace CenturionCC.System.Command
                             nameof(OpTeamChange),
                             $"{NewbieUtils.GetPlayerName(_targetPlayerId)} to {_targetTeam}",
                             _requestVersion));
-                        var targetShooterPlayer = _playerMgr.GetShooterPlayerByPlayerId(_targetPlayerId);
-                        if (targetShooterPlayer == null)
+                        var targetPlayer = _playerMgr.GetPlayerById(_targetPlayerId);
+                        if (targetPlayer == null)
                         {
-                            _console.LogError(
-                                $"{Prefix}Could not find target ShooterPlayer to change team!");
+                            _console.LogError($"{Prefix}Could not find target player to change team!");
                             return;
                         }
 
-                        _playerMgr.MasterOnly_SetTeam(targetShooterPlayer.Index, _targetTeam);
+                        _playerMgr.MasterOnly_SetTeam(targetPlayer.Index, _targetTeam);
                         return;
                     }
                     case OpTeamShuffle:
@@ -234,13 +214,13 @@ namespace CenturionCC.System.Command
 
                         var activePlayerCount = 0;
                         var players = _playerMgr.GetPlayers();
-                        var activePlayers = new ShooterPlayer[players.Length];
+                        var activePlayers = new PlayerBase[players.Length];
 
                         _console.Println($"{Prefix}Shuffle Step 1: Pad players: {players.Length}");
 
                         foreach (var player in players)
                         {
-                            if (player == null || !player.IsActive || !includeMod && player.Role.IsGameStaff())
+                            if (player == null || !player.IsAssigned || !includeMod && player.Role.IsGameStaff())
                                 continue;
                             activePlayers[activePlayerCount] = player;
                             ++activePlayerCount;
@@ -249,7 +229,7 @@ namespace CenturionCC.System.Command
                         _console.Println(
                             $"{Prefix}Shuffle Step 2: Trim inactive players: {activePlayerCount}");
 
-                        var trimmedActivePlayers = new ShooterPlayer[activePlayerCount];
+                        var trimmedActivePlayers = new PlayerBase[activePlayerCount];
                         for (var i = 0; i < activePlayerCount; i++)
                             trimmedActivePlayers[i] = activePlayers[i];
 
@@ -300,7 +280,15 @@ namespace CenturionCC.System.Command
                         _playerMgr.MasterOnly_SetTeamTagShown(_targetTeam == 1);
                         return;
                     }
-
+                    case OpStaffTagChange:
+                    {
+                        _console.Println(string.Format(ReceivedFormat,
+                            nameof(OpStaffTagChange),
+                            $"All to {_targetTeam}",
+                            _requestVersion));
+                        _playerMgr.MasterOnly_SetStaffTagShown(_targetTeam == 1);
+                        return;
+                    }
                     case OpTeamRegionChange:
                     {
                         _console.Println(string.Format(ReceivedFormat, nameof(OpTeamRegionChange),
@@ -317,10 +305,13 @@ namespace CenturionCC.System.Command
                         var bounds = region.bounds;
                         foreach (var player in players)
                         {
-                            if (player == null || !player.IsActive || player.Team == _targetTeam)
+                            if (player == null || !player.IsAssigned || player.TeamId == _targetTeam)
                                 continue;
 
                             var vrcPlayer = player.VrcPlayer;
+                            if (vrcPlayer == null)
+                                continue;
+
                             if (bounds.Contains(vrcPlayer.GetPosition()))
                                 _playerMgr.MasterOnly_SetTeam(player.Index, _targetTeam);
                         }
@@ -361,8 +352,8 @@ namespace CenturionCC.System.Command
         {
             if (arguments != null && arguments.Length >= 2)
             {
-                var request = ConsoleParser.TryParseBoolean(arguments[1], _playerMgr.ShowDebugNametag);
-                _playerMgr.ShowDebugNametag = request;
+                var request = ConsoleParser.TryParseBoolean(arguments[1], _playerMgr.IsDebug);
+                _playerMgr.IsDebug = request;
                 if (request)
                     console.Println(
                         "<color=red>Warning: You must not enable this feature if you're currently playing.</color>\n" +
@@ -371,22 +362,14 @@ namespace CenturionCC.System.Command
                         $"<color=red>    無効化するには '{label} debug false' と入力してください</color>\n");
             }
 
-            console.Println($"Show Debug Nametag: {_playerMgr.ShowDebugNametag}");
+            console.Println($"IsPMDebug: {_playerMgr.IsDebug}");
             return true;
         }
 
         private bool HandleUpdate(NewbieConsole console)
         {
             _playerMgr.UpdateLocalPlayer();
-            foreach (var player in _playerMgr.GetPlayers())
-            {
-                if (player == null) continue;
-
-                if (player.PlayerHumanoidCollider)
-                    player.PlayerHumanoidCollider.UpdateView();
-                if (player.PlayerTag)
-                    player.PlayerTag.UpdateView();
-            }
+            _playerMgr.UpdateAllPlayerView();
 
             console.Println(
                 "<color=green>Successfully </color><color=orange>updated</color><color=green> local player</color>");
@@ -582,7 +565,7 @@ namespace CenturionCC.System.Command
         {
             if (!console.CurrentRole.HasPermission())
             {
-                console.Println("You are not allowed to change nametag on/off unless you're moderator!");
+                console.Println("You are not allowed to change team tag on/off unless you're moderator!");
                 return true;
             }
 
@@ -601,60 +584,27 @@ namespace CenturionCC.System.Command
             );
         }
 
-        private bool HandleRequestDisguise(NewbieConsole console, string[] arguments)
+        private bool HandleRequestShowStaffTag(NewbieConsole console, string[] arguments)
         {
             if (!console.CurrentRole.HasPermission())
             {
-                console.Println("Cannot disguise unless you're moderator");
-                return true;
-            }
-
-            var localPlayer = _playerMgr.GetLocalPlayer();
-
-            if (localPlayer == null)
-            {
-                console.Println("<color=red>You are not joined as player</color>");
+                console.Println("You are not allowed to change staff tag on/off unless you're moderator!");
                 return true;
             }
 
             if (arguments.Length <= 1)
             {
-                console.Println(
-                    $"Is Disguised: {!localPlayer.PlayerTag.IsStaffTagShown}");
+                console.Println("<color=red>On/Off not specified</color>");
                 return true;
             }
 
-            SendPlayerRequest
+            return SendGenericRequest
             (
-                console, arguments,
-                OpDisguise, nameof(OpDisguise),
-                ConsoleParser.TryParseBoolAsInt(arguments[2], !localPlayer.PlayerTag.IsStaffTagShown),
-                true, true
+                console,
+                OpStaffTagChange, nameof(OpStaffTagChange),
+                -1, $"All to {(ConsoleParser.TryParseBoolean(arguments[1], _playerMgr.ShowStaffTag) ? 1 : 0)}",
+                _targetTeam = ConsoleParser.TryParseBoolean(arguments[1], _playerMgr.ShowStaffTag) ? 1 : 0, true
             );
-            return true;
-        }
-
-        private bool HandleRoleSpecificTag(NewbieConsole console, string[] args)
-        {
-            if (!_playerMgr.HasLocalPlayer())
-            {
-                console.Println("<color=red>You are not joined as player</color>");
-                return true;
-            }
-
-            var player = _playerMgr.GetLocalPlayer();
-            if (player == null || player.PlayerTag == null)
-            {
-                console.Println("<color=red>Player or PlayerTag is null</color>");
-                return true;
-            }
-
-            if (args.Length > 1)
-                player.PlayerTag.SetRoleSpecificTagShown(ConsoleParser.TryParseBoolean(args[1],
-                    player.PlayerTag.IsRoleSpecificTagShown));
-
-            console.Println($"Role Specific Tag: {player.PlayerTag.IsRoleSpecificTagShown}");
-            return true;
         }
 
         private bool HandleList(NewbieConsole console, string[] arguments)
@@ -680,12 +630,12 @@ namespace CenturionCC.System.Command
                 console.Println(
                     string.Format(format,
                         shooterPlayer.name,
-                        shooterPlayer.IsActive,
-                        GetTeamNameByInt(shooterPlayer.Team),
-                        $"{shooterPlayer.PlayerStats.Kill}/{shooterPlayer.PlayerStats.Death}",
+                        shooterPlayer.IsAssigned,
+                        GetTeamNameByInt(shooterPlayer.TeamId),
+                        $"{shooterPlayer.Kills}/{shooterPlayer.Deaths}",
                         shooterPlayer.Role != null ? shooterPlayer.Role.RoleName : "NULL",
                         NewbieUtils.GetPlayerName(shooterPlayer.VrcPlayer)));
-                if (shooterPlayer.IsActive)
+                if (shooterPlayer.IsAssigned)
                     ++activePlayerCount;
             }
 
@@ -734,7 +684,7 @@ namespace CenturionCC.System.Command
                     return true;
                 }
 
-                player = _playerMgr.GetShooterPlayerByPlayerId(vrcPlayer.playerId);
+                player = _playerMgr.GetPlayerById(vrcPlayer.playerId);
             }
 
             if (player == null)
@@ -743,13 +693,11 @@ namespace CenturionCC.System.Command
                 return true;
             }
 
-            var playerStats = player.PlayerStats;
-
             console.Println(
                 $"<color=orange><b>{GameManager.GetPlayerName(player.VrcPlayer)}'s Stats</b></color>\n" +
-                $"K: {playerStats.Kill}\n" +
-                $"D: {playerStats.Death}\n" +
-                $"KDR: {(playerStats.Death != 0 && playerStats.Death != 0 ? $"{playerStats.Kill / playerStats.Death:F1}" : "Infinity")}");
+                $"K: {player.Kills}\n" +
+                $"D: {player.Deaths}\n" +
+                $"KDR: {(player.Deaths != 0 && player.Deaths != 0 ? $"{player.Kills / player.Deaths:F1}" : "Infinity")}");
             return true;
         }
 
@@ -776,7 +724,6 @@ namespace CenturionCC.System.Command
             }
 
             console.Println("ColliderInfo:\n" +
-                            $"  isShown: {_playerMgr.ShowCollider}\n" +
                             $"  useBase: {_playerMgr.UseBaseCollider}\n" +
                             $"  useAddi: {_playerMgr.UseAdditionalCollider}\n" +
                             $"  useLWCo: {_playerMgr.UseLightweightCollider}\n" +
@@ -793,9 +740,6 @@ namespace CenturionCC.System.Command
         {
             switch (str.ToLower())
             {
-                case "show":
-                case "shown":
-                    return playerManager.ShowCollider ? 1 : 0;
                 case "base":
                     return playerManager.UseBaseCollider ? 1 : 0;
                 case "body":
@@ -823,9 +767,6 @@ namespace CenturionCC.System.Command
             // ReSharper disable AssignmentInConditionalExpression
             switch (str.ToLower())
             {
-                case "show":
-                case "shown":
-                    return (playerManager.ShowCollider = isEnabled) ? 1 : 0;
                 case "base":
                     return (playerManager.UseBaseCollider = isEnabled) ? 1 : 0;
                 case "body":
@@ -915,10 +856,14 @@ namespace CenturionCC.System.Command
                 case "regionadd":
                 case "teamregionadd":
                     return HandleRequestTeamRegionAdd(console, vars);
-                case "tt":
                 case "ttag":
+                case "teamtag":
                 case "showteamtag":
                     return HandleRequestShowTeamTag(console, vars);
+                case "stag":
+                case "stafftag":
+                case "showstafftag":
+                    return HandleRequestShowStaffTag(console, vars);
                 case "ff":
                 case "friendlyfire":
                 case "allowfriendlyfire":
@@ -927,16 +872,6 @@ namespace CenturionCC.System.Command
                             "All", ConsoleParser.TryParseBoolAsInt(vars[1], _playerMgr.AllowFriendlyFire), true);
                     console.Println($"Allow Friendly Fire: {_playerMgr.AllowFriendlyFire}");
                     return _playerMgr.AllowFriendlyFire;
-                case "vanish":
-                case "va":
-                case "disguise":
-                case "di":
-                    return HandleRequestDisguise(console, vars);
-                case "rolespecifictag":
-                case "rolespecific":
-                case "rs":
-                case "specific":
-                    return HandleRoleSpecificTag(console, vars);
                 case "u":
                 case "update":
                     return HandleUpdate(console);
@@ -1009,7 +944,7 @@ namespace CenturionCC.System.Command
                 return;
             }
 
-            var teleportDestId = local.Team;
+            var teleportDestId = local.TeamId;
             if (teleportDestId <= 0 || teleportDestId >= teamPositions.Length)
             {
                 _console.Println(
@@ -1034,7 +969,6 @@ namespace CenturionCC.System.Command
         private const int OpAdd = 1;
         private const int OpRemove = 2;
         private const int OpAddAll = 3;
-        private const int OpDisguise = 4;
         private const int OpSync = 5;
         private const int OpSyncAll = 6;
         private const int OpStatsReset = 7;
@@ -1044,7 +978,8 @@ namespace CenturionCC.System.Command
         private const int OpTeamChange = 11;
         private const int OpTeamShuffle = 12;
         private const int OpTeamTagChange = 13;
-        private const int OpTeamRegionChange = 14;
+        private const int OpStaffTagChange = 14;
+        private const int OpTeamRegionChange = 15;
 
         #endregion
     }

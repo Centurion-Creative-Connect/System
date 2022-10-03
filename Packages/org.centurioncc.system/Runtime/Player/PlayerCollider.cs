@@ -7,7 +7,7 @@ namespace CenturionCC.System.Player
     [DefaultExecutionOrder(0)] [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PlayerCollider : UdonSharpBehaviour
     {
-        public ShooterPlayer player;
+        public PlayerBase player;
         private MeshRenderer _meshRenderer;
 
         public bool IsVisible
@@ -31,21 +31,21 @@ namespace CenturionCC.System.Player
         {
             var damageData = other.gameObject.GetComponentInChildren<DamageData>();
             var contact = other.GetContact(0);
-            OnDamaged(damageData, contact.point);
+            OnDamage(damageData, contact.point);
         }
 
         public void OnTriggerEnter(Collider other)
         {
             var damageData = other.gameObject.GetComponentInChildren<DamageData>();
             var closestPoint = other.ClosestPoint(transform.position);
-            OnDamaged(damageData, closestPoint);
+            OnDamage(damageData, closestPoint);
         }
 
-        public void OnDamaged(DamageData damageData, Vector3 contactPoint)
+        public void OnDamage(DamageData damageData, Vector3 contactPoint)
         {
             if (damageData == null || player == null) return;
 
-            player.OnPlayerColliderEnter(this, damageData, contactPoint);
+            player.OnDamage(this, damageData, contactPoint);
         }
     }
 }

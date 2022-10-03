@@ -52,7 +52,7 @@ namespace CenturionCC.System.UI
                 : youAreNotInGameMessage;
         }
 
-        public override void OnLocalPlayerChanged(ShooterPlayer playerNullable, int index)
+        public override void OnLocalPlayerChanged(PlayerBase playerNullable, int index)
         {
             UpdateDisplay(index != -1, index);
         }

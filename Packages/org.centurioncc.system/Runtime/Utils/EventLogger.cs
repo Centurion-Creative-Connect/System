@@ -15,22 +15,22 @@ namespace CenturionCC.System.Utils
     {
         private const int TupleValueLength = 5;
 
-        private PrintableBase _logger;
-
-        [UdonSynced]
-        private Vector3 _hitDamagerOriginPos;
+        [SerializeField]
+        private GameObject visualizeObject;
+        private readonly string _prefix = "EventLogger::";
         [UdonSynced]
         private Vector3 _hitDamagerContactPoint;
         [UdonSynced]
         private long _hitDamagerDateTimeLong;
+
+        [UdonSynced]
+        private Vector3 _hitDamagerOriginPos;
         [UdonSynced]
         private int _hitDamagerPlayerId;
         [UdonSynced]
         private int _hitPlayerId;
 
-        [SerializeField]
-        private GameObject visualizeObject;
-        private readonly string _prefix = "EventLogger::";
+        private PrintableBase _logger;
 
         [NonSerialized]
         public bool ShouldVisualizeOnLog;
@@ -54,15 +54,15 @@ namespace CenturionCC.System.Utils
                 return;
 
             var localPlayerId = Networking.LocalPlayer.playerId;
-            var hitPlayerStats = playerCollider.player.PlayerStats;
+            var hitPlayer = playerCollider.player;
 
             if ((_hitPlayerId != localPlayerId && damageData.DamagerPlayerId != localPlayerId) ||
                 _hitPlayerId == damageData.DamagerPlayerId ||
-                Networking.GetNetworkDateTime().Subtract(hitPlayerStats.LastHitTime).TotalSeconds < 5F)
+                Networking.GetNetworkDateTime().Subtract(hitPlayer.LastDiedDateTime).TotalSeconds < 5F)
                 return;
 
-            _hitPlayerId = playerCollider.player.SyncedPlayerId;
-            _hitDamagerDateTimeLong = playerCollider.player.PlayerStats.LastHitTime.Ticks;
+            _hitPlayerId = playerCollider.player.PlayerId;
+            _hitDamagerDateTimeLong = playerCollider.player.LastDiedTimeTicks;
             _hitDamagerPlayerId = damageData.DamagerPlayerId;
             _hitDamagerOriginPos = damageData.DamageOriginPosition;
             _hitDamagerContactPoint = contactPoint;
