@@ -33,16 +33,16 @@ namespace CenturionCC.System.Player
         [SerializeField]
         private HitDisplay display;
         private AudioManager _audioManager;
+        private RoleData _cachedRoleData;
 
         private VRCPlayerApi _cachedVrcPlayerApi;
-        private RoleData _currentRoleData;
         private FootstepAudioStore _footstepAudio;
 
-        private bool _invokeOnDeathNextOnDeserialization = true;
+        private bool _invokeOnDeathNextOnDeserialization;
         [NonSerialized] [UdonSynced] [FieldChangeCallback(nameof(SyncedDeaths))]
         private int _syncedDeaths = -1;
         [NonSerialized] [UdonSynced] [FieldChangeCallback(nameof(SyncedLastAttackerPlayerId))]
-        private int _syncedLastAttackerPlayerId;
+        private int _syncedLastAttackerPlayerId = -1;
         [NonSerialized] [UdonSynced]
         private long _syncedLastDiedTimeTicks = 0;
 
@@ -70,7 +70,7 @@ namespace CenturionCC.System.Player
         public int SyncedPlayerId
         {
             get => _syncedPlayerId;
-            private set
+            protected set
             {
                 var lastPlayerId = _syncedPlayerId;
                 var lastRole = Role;
@@ -78,7 +78,7 @@ namespace CenturionCC.System.Player
 
                 _syncedPlayerId = value;
                 _cachedVrcPlayerApi = VRCPlayerApi.GetPlayerById(value);
-                _currentRoleData = playerManager.RoleManager.GetPlayerRole(VRCPlayerApi.GetPlayerById(value));
+                _cachedRoleData = playerManager.RoleManager.GetPlayerRole(VRCPlayerApi.GetPlayerById(value));
 
                 playerManager.Invoke_OnPlayerChanged(this, lastPlayerId, lastRole.HasPermission(), lastAssigned);
                 if (Networking.IsMaster && lastPlayerId != value)
@@ -91,7 +91,7 @@ namespace CenturionCC.System.Player
         public int SyncedTeamId
         {
             get => _syncedTeamId;
-            private set
+            protected set
             {
                 var lastTeam = _syncedTeamId;
 
@@ -107,7 +107,7 @@ namespace CenturionCC.System.Player
         public int SyncedDeaths
         {
             get => _syncedDeaths;
-            set
+            protected set
             {
                 var lastSyncedDeaths = _syncedDeaths;
                 _syncedDeaths = value;
@@ -122,14 +122,10 @@ namespace CenturionCC.System.Player
         public int SyncedLastAttackerPlayerId
         {
             get => _syncedLastAttackerPlayerId;
-            set
-            {
-                _syncedLastAttackerPlayerId = value;
-                Debug.Log($"{Prefix}{Index}: Last attacker id was changed to {value}");
-            }
+            protected set => _syncedLastAttackerPlayerId = value;
         }
 
-        public override RoleData Role => _currentRoleData;
+        public override RoleData Role => _cachedRoleData;
 
         private void Start()
         {
@@ -356,7 +352,10 @@ namespace CenturionCC.System.Player
 
         public override void OnDeath()
         {
-            display.Play();
+            if (IsLocal)
+                playerManager.LocalHitEffect.Play();
+            else
+                display.Play();
         }
 
         #region PlayFootstepMethods

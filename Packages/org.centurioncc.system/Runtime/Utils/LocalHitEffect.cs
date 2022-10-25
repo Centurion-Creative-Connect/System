@@ -14,6 +14,8 @@ namespace CenturionCC.System.Utils
 
         [SerializeField]
         public bool useHaptic;
+        [SerializeField]
+        public float localPlayerHitDuration = 1F;
 
         [SerializeField]
         private AudioSource hitSound;
@@ -34,6 +36,9 @@ namespace CenturionCC.System.Utils
         private int _hapticPackSize;
         [NonSerialized]
         private float[] _hapticSamples;
+
+        [NonSerialized]
+        private DateTime _lastLocalPlayerHitTime;
         [NonSerialized]
         private int _lastSpriteIndex;
 
@@ -42,7 +47,6 @@ namespace CenturionCC.System.Utils
 
         private void Start()
         {
-            _updateManager = GameObject.Find("UpdateManager").GetComponent<UpdateManager>();
             if (hapticSource.preloadAudioData == false)
                 hapticSource.LoadAudioData();
 
@@ -51,6 +55,8 @@ namespace CenturionCC.System.Utils
             _hapticSamples = new float[_hapticPackSize];
 
             hapticSource.GetData(_hapticSamples, 0);
+
+            _updateManager = GameManagerHelper.GetUpdateManager();
         }
 
         public void _Update()

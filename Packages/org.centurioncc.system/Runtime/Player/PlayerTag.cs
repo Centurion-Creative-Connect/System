@@ -55,21 +55,23 @@ namespace CenturionCC.System.Player
             if (localPlayer != null)
                 localPlayerTeamId = localPlayer.TeamId;
 
-            var shouldShowTeamTag =
-                _playerManager.ShowTeamTag &&
-                (localPlayerTeamId == _player.TeamId || IsSpecialTeamId(localPlayerTeamId));
+            var shouldShowTeamTag = _playerManager.ShowTeamTag &&
+                                    (localPlayerTeamId == _player.TeamId ||
+                                     _playerManager.IsSpecialTeamId(_player.TeamId) ||
+                                     _playerManager.IsSpecialTeamId(localPlayerTeamId));
 
             teamTag.gameObject.SetActive(shouldShowTeamTag);
             teamTag.color = _playerManager.GetTeamColor(_player.TeamId);
 
             masterTag.gameObject.SetActive(_playerManager.ShowStaffTag &&
-                                           _player.VrcPlayer.isMaster && IsSpecialTeamId(_player.TeamId));
+                                           _player.VrcPlayer.isMaster &&
+                                           _playerManager.IsSpecialTeamId(_player.TeamId));
             debugText.gameObject.SetActive(_playerManager.IsDebug);
 
             var staffTagType = GetStaffTagType();
             var shouldShowStaffTag =
                 _playerManager.ShowStaffTag &&
-                _player.Role.IsGameStaff() && IsSpecialTeamId(_player.TeamId);
+                _player.Role.IsGameStaff() && _playerManager.IsSpecialTeamId(_player.TeamId);
 
             staffTag.gameObject.SetActive(shouldShowStaffTag && staffTagType == TagType.Staff);
             ownerTag.gameObject.SetActive(shouldShowStaffTag && staffTagType == TagType.Owner);
@@ -97,11 +99,6 @@ namespace CenturionCC.System.Player
                 default:
                     return TagType.Staff;
             }
-        }
-
-        private bool IsSpecialTeamId(int teamId)
-        {
-            return teamId == 0 || teamId == 4;
         }
 
         private void HideObjects()

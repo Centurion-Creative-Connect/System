@@ -29,6 +29,12 @@ namespace CenturionCC.System.Player
         private FootstepAudioStore footstepAudio;
         [SerializeField]
         private Color[] teamColors;
+        [SerializeField]
+        private int staffTeamId = 255;
+        [SerializeField]
+        private Color staffTeamColor = new Color(0.172549F, 0.4733055F, 0.8117647F, 1F);
+        [SerializeField]
+        private LocalHitEffect localHitEffect;
 
         private bool _alwaysUseLightweightCollider;
 
@@ -60,6 +66,8 @@ namespace CenturionCC.System.Player
         public RoleProvider RoleManager => manager.roleProvider;
 
         public FootstepAudioStore FootstepAudio => footstepAudio;
+
+        public LocalHitEffect LocalHitEffect => localHitEffect;
 
         [field: UdonSynced] [field: FieldChangeCallback(nameof(AllowFriendlyFire))]
         public bool AllowFriendlyFire { get; private set; }
@@ -852,12 +860,13 @@ namespace CenturionCC.System.Player
         [PublicAPI]
         public string GetTeamColorString(int teamId)
         {
-            return _ToHtmlStringRGBA(GetTeamColor(teamId));
+            return ToHtmlStringRGBA(GetTeamColor(teamId));
         }
 
         [PublicAPI]
         public Color GetTeamColor(int teamId)
         {
+            if (teamId == staffTeamId) return staffTeamColor;
             if (teamId <= 0 || teamId >= teamColors.Length) return teamColors[0];
             return teamColors[teamId];
         }
@@ -867,17 +876,28 @@ namespace CenturionCC.System.Player
         {
             if (player == null) return "Invalid Player (null)";
             return
-                $"<color=#{GetTeamColorString(player.TeamId)}>{GameManager.GetPlayerName(player.VrcPlayer)}</color>";
+                $"<color=#{GetTeamColorString(player.TeamId)}>{NewbieUtils.GetPlayerName(player.VrcPlayer)}</color>";
         }
 
         // From UnityEngine.ColorUtility
-        private string _ToHtmlStringRGBA(Color color)
+        // ReSharper disable once InconsistentNaming
+        private static string ToHtmlStringRGBA(Color color)
         {
             var color32 = new Color32((byte)Mathf.Clamp(Mathf.RoundToInt(color.r * byte.MaxValue), 0, byte.MaxValue),
                 (byte)Mathf.Clamp(Mathf.RoundToInt(color.g * byte.MaxValue), 0, byte.MaxValue),
                 (byte)Mathf.Clamp(Mathf.RoundToInt(color.b * byte.MaxValue), 0, byte.MaxValue),
                 (byte)Mathf.Clamp(Mathf.RoundToInt(color.a * byte.MaxValue), 0, byte.MaxValue));
             return $"{color32.r:X2}{color32.g:X2}{color32.b:X2}{color32.a:X2}";
+        }
+
+        public bool IsSpecialTeamId(int teamId)
+        {
+            return teamId == 0 || IsStaffTeamId(teamId);
+        }
+
+        public bool IsStaffTeamId(int teamId)
+        {
+            return teamId == staffTeamId;
         }
 
         #endregion
@@ -908,7 +928,7 @@ namespace CenturionCC.System.Player
             }
 
             Logger.Log(
-                $"{Prefix}Invoke_OnResetAllPlayerStats: {player.name}, {GameManager.GetPlayerNameById(player.PlayerId)}");
+                $"{Prefix}Invoke_OnResetAllPlayerStats: {player.name}, {NewbieUtils.GetPlayerName(player.PlayerId)}");
 
             foreach (var callback in _eventCallbacks)
             {
@@ -939,7 +959,7 @@ namespace CenturionCC.System.Player
             }
 
             Logger.Log(
-                $"{Prefix}Invoke_OnPlayerChanged: {player.name}, {GameManager.GetPlayerNameById(lastId)}, {GameManager.GetPlayerNameById(player.PlayerId)}");
+                $"{Prefix}Invoke_OnPlayerChanged: {player.name}, {NewbieUtils.GetPlayerName(lastId)}, {NewbieUtils.GetPlayerName(player.PlayerId)}");
 
             if (player.IsAssigned && !lastActive)
             {
@@ -998,7 +1018,7 @@ namespace CenturionCC.System.Player
             }
 
             Logger.Log(
-                $"{Prefix}Invoke_OnTeamChanged: {player.name}, {GameManager.GetPlayerNameById(player.PlayerId)}, {lastTeam}, {player.TeamId}");
+                $"{Prefix}Invoke_OnTeamChanged: {player.name}, {NewbieUtils.GetPlayerName(player.PlayerId)}, {lastTeam}, {player.TeamId}");
 
             _isTeamPlayerCountsDirty = true;
             UpdateAllPlayerView();
@@ -1013,7 +1033,7 @@ namespace CenturionCC.System.Player
         public void Invoke_OnFriendlyFire(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
             Logger.Log(
-                $"{Prefix}Invoke_OnFriendlyFire: {GameManager.GetPlayerNameById(firedPlayer.PlayerId)}, {hitPlayer.TeamId}");
+                $"{Prefix}Invoke_OnFriendlyFire: {NewbieUtils.GetPlayerName(firedPlayer.PlayerId)}, {hitPlayer.TeamId}");
 
             foreach (var callback in _eventCallbacks)
             {
@@ -1055,8 +1075,10 @@ namespace CenturionCC.System.Player
                 return;
             }
 
+            hitPlayer.OnDeath();
+
             Logger.Log(
-                $"{Prefix}Invoke_OnKilled: {(firedPlayer != null ? GameManager.GetPlayerName(firedPlayer.VrcPlayer) : "null")}, {(hitPlayer != null ? GameManager.GetPlayerName(hitPlayer.VrcPlayer) : "null")}");
+                $"{Prefix}Invoke_OnKilled: {(firedPlayer != null ? NewbieUtils.GetPlayerName(firedPlayer.VrcPlayer) : "null")}, {(hitPlayer != null ? NewbieUtils.GetPlayerName(hitPlayer.VrcPlayer) : "null")}");
 
             foreach (var callback in _eventCallbacks)
             {

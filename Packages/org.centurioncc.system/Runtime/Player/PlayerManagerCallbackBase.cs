@@ -25,14 +25,14 @@ namespace CenturionCC.System.Player
         }
 
         /// <summary>
-        /// Called when a <see cref="VRC.SDKBase.Networking.LocalPlayer" /> assigned <see cref="ShooterPlayer" /> was added or
+        /// Called when a <see cref="VRC.SDKBase.Networking.LocalPlayer" /> assigned <see cref="PlayerBase" /> was added or
         /// removed
         /// </summary>
         /// <remarks>
         /// Invokes after <see cref="OnPlayerChanged" />.
         /// </remarks>
-        /// <param name="playerNullable"><see cref="ShooterPlayer" /> who got assigned. null if removed</param>
-        /// <param name="index"><see cref="ShooterPlayer.Index" /> if assigned. -1 if removed</param>
+        /// <param name="playerNullable"><see cref="PlayerBase" /> who got assigned. null if removed</param>
+        /// <param name="index"><see cref="PlayerBase.Index" /> if assigned. -1 if removed</param>
         public virtual void OnLocalPlayerChanged(PlayerBase playerNullable, int index)
         {
         }
@@ -42,7 +42,7 @@ namespace CenturionCC.System.Player
         /// </summary>
         /// <remarks>
         /// Invokes only when local player as <see cref="firedPlayer" /> fired to <see cref="hitPlayer" /> as same
-        /// <see cref="ShooterPlayer.SyncedTeamId" />.
+        /// <see cref="PlayerBase.TeamId" />.
         /// Invoked even if <see cref="PlayerManager.AllowFriendlyFire" /> is <c>true</c>
         /// </remarks>
         /// <param name="firedPlayer">who fired at <see cref="hitPlayer" /></param>
@@ -65,16 +65,16 @@ namespace CenturionCC.System.Player
 
 
         /// <summary>
-        /// Called when <see cref="ShooterPlayer"/>'s <see cref="PlayerStats.Kill"/> and <see cref="PlayerStats.Death"/> were changed.
+        /// Called when <see cref="PlayerBase"/>'s <see cref="PlayerBase.Kills"/> and <see cref="PlayerBase.Deaths"/> were changed.
         /// </summary>
-        /// <param name="firedPlayer">Player who updated <see cref="PlayerStats.Kill"/></param>
-        /// <param name="hitPlayer">Player who updated <see cref="PlayerStats.Death"/></param>
+        /// <param name="firedPlayer">Player who updated <see cref="PlayerBase.Kills"/></param>
+        /// <param name="hitPlayer">Player who updated <see cref="PlayerBase.Deaths"/></param>
         public virtual void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
         }
 
         /// <summary>
-        /// Called when <see cref="ShooterPlayer" /> changed their <see cref="ShooterPlayer.SyncedTeamId" />
+        /// Called when <see cref="PlayerBase" /> changed their <see cref="PlayerBase.TeamId" />
         /// </summary>
         /// <param name="player">player who changed team</param>
         /// <param name="oldTeam">previous team which <see cref="player" /> was assigned</param>
@@ -99,9 +99,9 @@ namespace CenturionCC.System.Player
         }
 
         /// <summary>
-        /// Called when <see cref="PlayerStats.ResetStats"/> was called.
+        /// Called when <see cref="PlayerBase.ResetStats"/> was called.
         /// </summary>
-        /// <param name="player">a player which called <see cref="PlayerStats.ResetStats"/></param>
+        /// <param name="player">a player which called <see cref="PlayerBase.ResetStats"/></param>
         public virtual void OnResetPlayerStats(PlayerBase player)
         {
         }

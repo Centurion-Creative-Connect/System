@@ -32,14 +32,15 @@ namespace CenturionCC.System.Player
         private PlayerCollider rightLowerLegCollider;
 
         private readonly Vector3 _colliderResetPosition = new Vector3(0, -10, -20);
+
         private bool _isUsingLightweightCollider;
+
         private PlayerBase _player;
-
         private PlayerManager _playerManager;
-
         public bool IsUsingLightweightCollider
         {
-            get => _isUsingLightweightCollider || _playerManager.UseLightweightCollider;
+            get => (_playerManager.UseLightweightCollider && _isUsingLightweightCollider) ||
+                   _playerManager.AlwaysUseLightweightCollider;
             private set
             {
                 if (_isUsingLightweightCollider != value)
@@ -75,8 +76,7 @@ namespace CenturionCC.System.Player
             foreach (var playerCollider in GetColliderIterator())
                 if (playerCollider != null)
                     playerCollider.player = player;
-            if (lightweightPlayerCollider)
-                lightweightPlayerCollider.player = player;
+            lightweightPlayerCollider.player = player;
         }
 
         public void UpdateCollider(VRCPlayerApi api)
@@ -139,12 +139,11 @@ namespace CenturionCC.System.Player
 
         public void CheckLightweightState(VRCPlayerApi api)
         {
-            var localHeadTrackingData = Networking.LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
-            var remoteHeadPos = api.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
-            var localHeadPos = localHeadTrackingData.position;
-
             if (_playerManager.UseLightweightCollider && !_playerManager.AlwaysUseLightweightCollider)
             {
+                var localHeadTrackingData = Networking.LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+                var remoteHeadPos = api.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
+                var localHeadPos = localHeadTrackingData.position;
                 var distanceFromLocal = Vector3.Distance(localHeadPos, remoteHeadPos);
                 var isLooking = Vector3.Dot(
                     (localHeadPos - remoteHeadPos).normalized,
@@ -155,24 +154,36 @@ namespace CenturionCC.System.Player
 
         public void UpdateView()
         {
-            _ResetCollidersPosition();
+            if (_playerManager.IsStaffTeamId(_player.TeamId))
+            {
+                foreach (var playerCollider in GetColliderIterator())
+                {
+                    playerCollider.transform.position = _colliderResetPosition;
+                    playerCollider.IsVisible = false;
+                    playerCollider.ActualCollider.enabled = false;
+                }
 
-            SetVisible(_playerManager.IsDebug);
-            SetEnable(_player.IsAssigned);
-        }
+                lightweightPlayerCollider.IsVisible = false;
+                lightweightPlayerCollider.ActualCollider.enabled = false;
+                lightweightColliderAnchor.position = _colliderResetPosition;
 
-        private void SetVisible(bool value)
-        {
+                return;
+            }
+
+            var isUsingLwc = IsUsingLightweightCollider;
+            var isDebug = _playerManager.IsDebug;
+            var isAssigned = _player.IsAssigned;
+
             foreach (var playerCollider in GetColliderIterator())
-                playerCollider.IsVisible = value && !IsUsingLightweightCollider;
-            lightweightPlayerCollider.IsVisible = value && IsUsingLightweightCollider;
-        }
+            {
+                playerCollider.transform.position = _colliderResetPosition;
+                playerCollider.IsVisible = isDebug && !isUsingLwc;
+                playerCollider.ActualCollider.enabled = isAssigned && !isUsingLwc;
+            }
 
-        private void SetEnable(bool value)
-        {
-            foreach (var playerCollider in GetColliderIterator())
-                playerCollider.ActualCollider.enabled = value && !IsUsingLightweightCollider;
-            lightweightPlayerCollider.ActualCollider.enabled = value && IsUsingLightweightCollider;
+            lightweightPlayerCollider.IsVisible = isDebug && isUsingLwc;
+            lightweightPlayerCollider.ActualCollider.enabled = isAssigned && isUsingLwc;
+            lightweightColliderAnchor.position = _colliderResetPosition;
         }
 
         public PlayerCollider[] GetColliderIterator()
@@ -184,13 +195,6 @@ namespace CenturionCC.System.Player
                 leftUpperLegCollider, rightUpperLegCollider,
                 leftLowerLegCollider, rightLowerLegCollider
             };
-        }
-
-        private void _ResetCollidersPosition()
-        {
-            foreach (var playerCollider in GetColliderIterator())
-                playerCollider.transform.position = _colliderResetPosition;
-            lightweightColliderAnchor.position = _colliderResetPosition;
         }
 
         private static Quaternion _GetBoneRotation(VRCPlayerApi api, HumanBodyBones pivotBone, HumanBodyBones nextBone)
