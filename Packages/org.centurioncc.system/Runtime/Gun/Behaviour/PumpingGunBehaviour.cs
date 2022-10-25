@@ -28,6 +28,7 @@ namespace CenturionCC.System.Gun.Behaviour
 
         private float _desktopCockingTimer;
         private bool _isOnDesktopCocking;
+        private float _mainHandleRefZ;
 
         private float _subHandleRefZ;
 

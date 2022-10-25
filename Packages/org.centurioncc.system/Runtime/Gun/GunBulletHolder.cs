@@ -14,6 +14,7 @@ namespace CenturionCC.System.Gun
         [SerializeField]
         private GameObject gunBulletPoolRoot;
         private ProjectileBase[] _bullets;
+        private bool _hasInit;
 
         private int _lastBulletIndex;
         private int _lastGeneratedBulletCount;

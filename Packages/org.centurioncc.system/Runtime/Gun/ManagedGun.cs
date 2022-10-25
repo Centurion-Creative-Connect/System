@@ -110,87 +110,6 @@ namespace CenturionCC.System.Gun
             return nonce;
         }
 
-        #region OverridenMethod
-
-        protected override void OnTriggerEnter(Collider other)
-        {
-            if (other.name.ToLower().StartsWith("eraser"))
-            {
-                SendCustomNetworkEvent(NetworkEventTarget.All, nameof(RequestDisposeToMaster));
-                return;
-            }
-
-            base.OnTriggerEnter(other);
-        }
-
-        protected override ShotResult CanShoot()
-        {
-            var result = base.CanShoot();
-
-            if (FireMode == FireMode.Safety)
-            {
-                ParentManager.Invoke_OnShootFailed(this, 12);
-                result = ShotResult.Failed;
-            }
-
-            if (ParentManager.UseCollisionCheck)
-            {
-                if (IsInWall)
-                {
-                    ParentManager.Invoke_OnShootFailed(this, 100);
-                    result = ShotResult.Failed;
-                }
-
-                if (IsInSafeZone)
-                {
-                    ParentManager.Invoke_OnShootCancelled(this, 101);
-                    result = ShotResult.Cancelled;
-                }
-            }
-
-            if (ParentManager.CanLocalShoot == false)
-            {
-                ParentManager.Invoke_OnShootCancelled(this, 200);
-                result = ShotResult.Cancelled;
-            }
-
-            return result;
-        }
-
-        protected override void OnShoot(ProjectileBase bullet, bool isPellet)
-        {
-            base.OnShoot(bullet, isPellet);
-            ParentManager.Invoke_OnShoot(this, bullet);
-        }
-
-        protected override void OnEmptyShoot()
-        {
-            base.OnEmptyShoot();
-            ParentManager.Invoke_OnEmptyShoot(this);
-        }
-
-        protected override void OnFireModeChanged(FireMode previous, FireMode next)
-        {
-            base.OnFireModeChanged(previous, next);
-            if (!IsLocal || previous == next)
-                return;
-            ParentManager.Invoke_OnFireModeChanged(this);
-        }
-
-        protected override void OnGunPickup()
-        {
-            base.OnGunPickup();
-            ParentManager.Invoke_OnPickedUpLocally(this);
-        }
-
-        protected override void OnGunDrop()
-        {
-            base.OnGunDrop();
-            ParentManager.Invoke_OnDropLocally(this);
-        }
-
-        #endregion
-
         public void RefreshData(bool refreshHandleOffset)
         {
             if (ParentManager == null)
@@ -288,6 +207,9 @@ namespace CenturionCC.System.Gun
             QueuedShotCount = 0;
 
             Trigger = TriggerState.Idle;
+            State = GunState.Idle;
+            HasBulletInChamber = false;
+            HasCocked = false;
             IsInSafeZone = false;
 
             Collider.enabled = false;
@@ -367,6 +289,87 @@ namespace CenturionCC.System.Gun
             Logger.Log($"{Prefix}{name} has been <color=red>disposed</color>");
             return true;
         }
+
+        #region OverridenMethod
+
+        protected override void OnTriggerEnter(Collider other)
+        {
+            if (other.name.ToLower().StartsWith("eraser"))
+            {
+                SendCustomNetworkEvent(NetworkEventTarget.All, nameof(RequestDisposeToMaster));
+                return;
+            }
+
+            base.OnTriggerEnter(other);
+        }
+
+        protected override ShotResult CanShoot()
+        {
+            var result = base.CanShoot();
+
+            if (FireMode == FireMode.Safety)
+            {
+                ParentManager.Invoke_OnShootFailed(this, 12);
+                result = ShotResult.Failed;
+            }
+
+            if (ParentManager.UseCollisionCheck)
+            {
+                if (IsInWall)
+                {
+                    ParentManager.Invoke_OnShootFailed(this, 100);
+                    result = ShotResult.Failed;
+                }
+
+                if (IsInSafeZone)
+                {
+                    ParentManager.Invoke_OnShootCancelled(this, 101);
+                    result = ShotResult.Cancelled;
+                }
+            }
+
+            if (ParentManager.CanLocalShoot == false)
+            {
+                ParentManager.Invoke_OnShootCancelled(this, 200);
+                result = ShotResult.Cancelled;
+            }
+
+            return result;
+        }
+
+        protected override void OnShoot(ProjectileBase bullet, bool isPellet)
+        {
+            base.OnShoot(bullet, isPellet);
+            ParentManager.Invoke_OnShoot(this, bullet);
+        }
+
+        protected override void OnEmptyShoot()
+        {
+            base.OnEmptyShoot();
+            ParentManager.Invoke_OnEmptyShoot(this);
+        }
+
+        protected override void OnFireModeChanged(FireMode previous, FireMode next)
+        {
+            base.OnFireModeChanged(previous, next);
+            if (!IsLocal || previous == next)
+                return;
+            ParentManager.Invoke_OnFireModeChanged(this);
+        }
+
+        protected override void OnGunPickup()
+        {
+            base.OnGunPickup();
+            ParentManager.Invoke_OnPickedUpLocally(this);
+        }
+
+        protected override void OnGunDrop()
+        {
+            base.OnGunDrop();
+            ParentManager.Invoke_OnDropLocally(this);
+        }
+
+        #endregion
 
         #region OverridenProperties
 
