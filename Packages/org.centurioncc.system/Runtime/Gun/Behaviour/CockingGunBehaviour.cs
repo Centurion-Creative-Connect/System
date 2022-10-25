@@ -47,7 +47,7 @@ namespace CenturionCC.System.Gun.Behaviour
 
         [Header("Desktop")]
         [SerializeField]
-        private bool canDesktopCock = true;
+        private bool doDesktopCockingAutomatically = true;
         [SerializeField]
         private KeyCode desktopCockingKey = KeyCode.F;
         [SerializeField]
@@ -69,6 +69,28 @@ namespace CenturionCC.System.Gun.Behaviour
                 idleTwistPosition = cockingPosition;
             if (activeTwistPosition == null)
                 activeTwistPosition = cockingPosition;
+        }
+
+        private void GetNormalizedProgressAndTwist(GunBase instance, out float progress, out float twist)
+        {
+            var refPos = instance.CustomHandle.transform.localPosition;
+            var currentState = instance.State;
+            progress = GetProgressNormalized(refPos);
+            twist = GetTwistNormalized(refPos);
+
+            if (!requireTwist) twist = 1;
+
+            if (twist < 1 - twistMargin &&
+                (currentState == GunState.InCockingTwisting || currentState == GunState.Idle))
+                progress = Mathf.Clamp(progress, 0, cockingMargin);
+            else if (progress > cockingMargin)
+                twist = Mathf.Clamp(twist, 1 - twistMargin, 1);
+
+            if (!canCockAfterCock && instance.State == GunState.Idle && instance.HasBulletInChamber)
+            {
+                progress = Mathf.Clamp(progress, 0, cockingMargin);
+                progress = Mathf.Clamp(twist, 1 - twistMargin, 1);
+            }
         }
 
         private float GetProgressNormalized(Vector3 gunHandleLocalPosition)
@@ -143,7 +165,6 @@ namespace CenturionCC.System.Gun.Behaviour
 
         public override void OnGunUpdate(GunBase instance)
         {
-            var currentState = instance.State;
             float progressNormalized, twistNormalized;
 
             // Shoot a gun whenever it's able to shoot. load new bullet if it's blow back variant
@@ -161,14 +182,16 @@ namespace CenturionCC.System.Gun.Behaviour
             // Calculate cocking/twist progress
             if (Networking.LocalPlayer.IsUserInVR())
             {
-                var customHandleLocalPos = instance.CustomHandle.transform.localPosition;
-                progressNormalized = GetProgressNormalized(customHandleLocalPos);
-                twistNormalized = GetTwistNormalized(customHandleLocalPos);
+                GetNormalizedProgressAndTwist(instance, out progressNormalized, out twistNormalized);
             }
             else
             {
                 // Initiate desktop cocking on key press
-                if (canDesktopCock && Input.GetKeyDown(desktopCockingKey) && !_isOnDesktopCocking)
+                var cockingInput = Input.GetKeyDown(desktopCockingKey) || doDesktopCockingAutomatically;
+                var shouldCock = instance.State == GunState.Idle &&
+                                 ((!instance.HasCocked && !isBlowBack) || !instance.HasBulletInChamber) &&
+                                 instance.HasNextBullet();
+                if (!_isOnDesktopCocking && shouldCock && cockingInput)
                 {
                     Debug.Log("[CockingGunBehaviour] Begin Desktop Reloading");
                     _isOnDesktopCocking = true;
@@ -213,21 +236,6 @@ namespace CenturionCC.System.Gun.Behaviour
                     progressNormalized = 0;
                     twistNormalized = 0;
                 }
-            }
-
-            // Clamp calculated progresses
-            if (!requireTwist) twistNormalized = 1;
-
-            if (twistNormalized < 1 - twistMargin &&
-                (currentState == GunState.InCockingTwisting || currentState == GunState.Idle))
-                progressNormalized = Mathf.Clamp(progressNormalized, 0, cockingMargin);
-            else if (progressNormalized > cockingMargin)
-                twistNormalized = Mathf.Clamp(twistNormalized, 1 - twistMargin, 1);
-
-            if (!canCockAfterCock && instance.State == GunState.Idle && instance.HasBulletInChamber)
-            {
-                progressNormalized = Mathf.Clamp(progressNormalized, 0, cockingMargin);
-                twistNormalized = Mathf.Clamp(twistNormalized, 1 - twistMargin, 1);
             }
 
             // Change states using GunUtility
@@ -287,8 +295,7 @@ namespace CenturionCC.System.Gun.Behaviour
             }
             else if (requireTwist)
             {
-                var twistNormalized = GetTwistNormalized(handlePos);
-                var progressNormalized = GetProgressNormalized(handlePos);
+                GetNormalizedProgressAndTwist(instance, out var progressNormalized, out var twistNormalized);
 
                 if (requireTwist && twistAutoLoadMargin > twistNormalized && cockingAutoLoadMargin > progressNormalized)
                 {

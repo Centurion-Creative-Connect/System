@@ -372,7 +372,7 @@ namespace CenturionCC.System.Gun
 
         public override string WeaponName => VariantData != null ? VariantData.WeaponName : null;
         public override Animator TargetAnimator => _animator;
-        public override ProjectilePool BulletHolder =>
+        public override ProjectilePool ProjectilePool =>
             ParentManager != null ? ParentManager.BulletHolder : null;
         public override GunBehaviourBase Behaviour =>
             VariantData != null ? VariantData.Behaviour : null;

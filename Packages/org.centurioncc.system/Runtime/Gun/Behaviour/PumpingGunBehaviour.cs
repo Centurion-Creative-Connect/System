@@ -13,10 +13,17 @@ namespace CenturionCC.System.Gun.Behaviour
         [SerializeField] [Range(0, 1)]
         private float minAutoLoadMargin = 0.2F;
         [SerializeField]
+        private float minimumZOffset = 0.05F;
+        [SerializeField]
         private GunCockingHapticDataStore cockingHapticData;
         [Header("Desktop")]
         [SerializeField]
+        private bool doDesktopCockingAutomatically = true;
+        [SerializeField]
+        private KeyCode desktopCockingKey = KeyCode.F;
+        [SerializeField]
         private float desktopCockingTime;
+
         private float _cockingRefZ;
 
         private float _desktopCockingTimer;
@@ -63,7 +70,6 @@ namespace CenturionCC.System.Gun.Behaviour
 
         public override void OnGunUpdate(GunBase instance)
         {
-            var currentState = instance.State;
             float progressNormalized;
 
             // Shoot a gun whenever it's able to shoot
@@ -75,7 +81,7 @@ namespace CenturionCC.System.Gun.Behaviour
                     instance.State = GunState.Idle;
                     var localSubHandlePos =
                         instance.Target.worldToLocalMatrix.MultiplyPoint3x4(instance.SubHandle.transform.position);
-                    _cockingRefZ = localSubHandlePos.z;
+                    _cockingRefZ = Mathf.Max(_mainHandleRefZ + cockingLength + minimumZOffset, localSubHandlePos.z);
                 }
             }
 
@@ -89,7 +95,9 @@ namespace CenturionCC.System.Gun.Behaviour
             else
             {
                 // Initiate desktop cocking on key press
-                if (!_isOnDesktopCocking && (currentState == GunState.Idle || Input.GetKeyDown(KeyCode.F)))
+                var cockingInput = Input.GetKeyDown(desktopCockingKey) || doDesktopCockingAutomatically;
+                var shouldCock = instance.State == GunState.Idle && !instance.HasCocked && instance.HasNextBullet();
+                if (!_isOnDesktopCocking && CanSlide(instance) && shouldCock && cockingInput)
                 {
                     _isOnDesktopCocking = true;
                     _desktopCockingTimer = 0F;
@@ -134,6 +142,7 @@ namespace CenturionCC.System.Gun.Behaviour
         public override void Setup(GunBase instance)
         {
             // Reset cocking reference position
+            _mainHandleRefZ = instance.MainHandlePositionOffset.z;
             _subHandleRefZ = instance.SubHandlePositionOffset.z;
             _cockingRefZ = _subHandleRefZ;
         }

@@ -63,6 +63,7 @@ namespace CenturionCC.System.Gun
                 {
                     next = GunState.InCockingPush;
                     target.LoadBullet();
+                    target.HasCocked = true;
                     if (hapticData && hapticData.Pull)
                         hapticData.Pull.PlayInHand(hand);
                 }
@@ -115,7 +116,7 @@ namespace CenturionCC.System.Gun
             {
                 next = GunState.InCockingPush;
                 target.LoadBullet();
-
+                target.HasCocked = true;
                 if (hapticData && hapticData.Pull)
                     hapticData.Pull.PlayInHand(hand);
             }

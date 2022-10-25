@@ -20,6 +20,17 @@ namespace CenturionCC.System.Gun.DataStore
         };
 
         [SerializeField]
+        private Vector3[] positionOffsetPatterns =
+        {
+            Vector3.zero,
+            Vector3.zero,
+            Vector3.zero,
+            Vector3.zero,
+            Vector3.zero,
+            Vector3.zero
+        };
+
+        [SerializeField]
         private float[] speedOffsetPatterns =
         {
             0.0F,
@@ -35,16 +46,22 @@ namespace CenturionCC.System.Gun.DataStore
             return recoilOffsetPatterns[GetIndexFromCount(count)];
         }
 
+        public virtual Vector3 GetPositionOffset(int count)
+        {
+            return positionOffsetPatterns[GetIndexFromCount(count)];
+        }
+
         public virtual float GetSpeedOffset(int count)
         {
             return speedOffsetPatterns[GetIndexFromCount(count)];
         }
 
-        public virtual void Get(int count, out float speedOffset, out Vector3 recoilOffset)
+        public virtual void Get(int count, out float speedOffset, out Vector3 recoilOffset, out Vector3 positionOffset)
         {
             var i = GetIndexFromCount(count);
             speedOffset = speedOffsetPatterns[i];
             recoilOffset = recoilOffsetPatterns[i];
+            positionOffset = positionOffsetPatterns[i];
         }
 
         private int GetIndexFromCount(int count)

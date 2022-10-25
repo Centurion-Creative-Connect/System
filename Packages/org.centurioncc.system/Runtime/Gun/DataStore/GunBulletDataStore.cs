@@ -35,9 +35,8 @@ namespace CenturionCC.System.Gun.DataStore
             out float drag,
             out float trailDuration, out Gradient trailColor)
         {
-            recoilPattern.Get(i, out var speedOffset, out var recoilOffset);
+            recoilPattern.Get(i, out var speedOffset, out var recoilOffset, out positionOffset);
             drag = baseDrag;
-            positionOffset = Vector3.zero;
             rotationOffset = Quaternion.Euler(recoilOffset);
             velocity = Vector3.forward * (baseSpeed + speedOffset);
             torque = new Vector3(baseHopUpStrength, 0, 0) + recoilOffset;

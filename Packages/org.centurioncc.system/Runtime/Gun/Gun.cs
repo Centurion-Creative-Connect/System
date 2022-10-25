@@ -2,7 +2,6 @@
 using CenturionCC.System.Audio;
 using CenturionCC.System.Gun.Behaviour;
 using CenturionCC.System.Gun.DataStore;
-using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using JetBrains.Annotations;
@@ -200,8 +199,10 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual Quaternion ShooterRotation => shooter.rotation;
 
-        [PublicAPI] [CanBeNull]
-        public virtual ProjectilePool BulletHolder => bulletHolder;
+        [Obsolete("Use ProjectilePool instead")] [CanBeNull]
+        public virtual ProjectilePool BulletHolder => ProjectilePool;
+        [PublicAPI]
+        public virtual ProjectilePool ProjectilePool => bulletHolder;
         [PublicAPI] [CanBeNull]
         public virtual GunBehaviourBase Behaviour => behaviour;
         [PublicAPI] [CanBeNull]
@@ -329,6 +330,7 @@ namespace CenturionCC.System.Gun
         /// <seealso cref="TryToShoot()" />
         [PublicAPI]
         public int BurstCount { get; private set; }
+
         /// <summary>
         /// Counter of currently colliding objects.
         /// </summary>
@@ -338,6 +340,7 @@ namespace CenturionCC.System.Gun
         /// </remarks>
         [PublicAPI]
         public int CollisionCount { get; protected set; }
+
         /// <summary>
         /// Is this Gun inside of a wall?
         /// </summary>
@@ -693,10 +696,16 @@ namespace CenturionCC.System.Gun
                 return;
             }
 
-            var bulletSource = BulletHolder;
-            if (bulletSource == null)
+            var pool = ProjectilePool;
+            if (pool == null)
             {
-                Logger.LogError($"{Prefix}BulletHolder not found.");
+                Logger.LogError($"{Prefix}ProjectilePool not found.");
+                return;
+            }
+
+            if (!pool.HasInitialized)
+            {
+                Logger.LogError($"{Prefix}ProjectilePool not yet initialized.");
                 return;
             }
 
@@ -710,15 +719,6 @@ namespace CenturionCC.System.Gun
 
             for (int i = 0; i < data.ProjectileCount; i++)
             {
-                var projectile = bulletSource.GetProjectile();
-                if (projectile == null)
-                {
-                    Logger.LogError($"{Prefix}Projectile not found!!!");
-                    if (Time.timeSinceLevelLoad > 30F)
-                        WatchdogProc.TryNotifyCrash(0xB11DEAD);
-                    return;
-                }
-
                 data.Get
                 (
                     dataIndexOffset + i,
@@ -728,12 +728,10 @@ namespace CenturionCC.System.Gun
                     out var trailTime, out var trailGradient
                 );
 
-                Debug.Log(
-                    $"Fired: {dataIndexOffset + i} with {velocity.ToString("F2")}, {torque.ToString("F2")}");
-
                 var tempRot = rot * rotOffset;
                 var tempPos = pos + (tempRot * posOffset);
-                projectile.Shoot
+
+                var projectile = pool.Shoot
                 (
                     tempPos,
                     tempRot,
@@ -744,6 +742,12 @@ namespace CenturionCC.System.Gun
                     trailTime, trailGradient
                 );
 
+                if (projectile == null)
+                {
+                    Logger.LogError($"{Prefix}Projectile not found!!!");
+                    continue;
+                }
+
                 OnShoot(projectile, i != 0);
             }
 
@@ -752,10 +756,11 @@ namespace CenturionCC.System.Gun
             if (AudioData != null)
                 Internal_PlayAudio(AudioData.Shooting);
             LastShotTime = DateTime.Now;
+            HasCocked = false;
         }
 
         /// <summary>
-        /// Exposed as public for networked event! VRChat pls fix
+        /// Exposed as public for networked event!
         /// </summary>
         public void Internal_EmptyShoot()
         {
