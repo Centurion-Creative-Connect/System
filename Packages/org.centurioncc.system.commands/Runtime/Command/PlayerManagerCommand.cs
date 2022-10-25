@@ -425,7 +425,7 @@ namespace CenturionCC.System.Command
             (
                 console,
                 targetOp, targetOpName,
-                target.playerId, GameManager.GetPlayerName(target),
+                target.playerId, NewbieUtils.GetPlayerName(target),
                 targetTeam, requireModForExecute
             );
         }
@@ -694,7 +694,7 @@ namespace CenturionCC.System.Command
             }
 
             console.Println(
-                $"<color=orange><b>{GameManager.GetPlayerName(player.VrcPlayer)}'s Stats</b></color>\n" +
+                $"<color=orange><b>{NewbieUtils.GetPlayerName(player.VrcPlayer)}'s Stats</b></color>\n" +
                 $"K: {player.Kills}\n" +
                 $"D: {player.Deaths}\n" +
                 $"KDR: {(player.Deaths != 0 && player.Deaths != 0 ? $"{player.Kills / player.Deaths:F1}" : "Infinity")}");

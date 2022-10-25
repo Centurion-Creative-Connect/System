@@ -2,6 +2,7 @@
 using CenturionCC.System.Player;
 using CenturionCC.System.UI;
 using CenturionCC.System.Utils;
+using DerpyNewbie.Common;
 using DerpyNewbie.Common.Role;
 using UdonSharp;
 using UnityEngine;
@@ -133,8 +134,8 @@ namespace CenturionCC.System.Moderator
             _notification.ShowInfo(string.Format
             (
                 "Staff Only: Hit Info\n{0} => {1}: {2}",
-                GameManager.GetPlayerName(firedVrcPlayer),
-                GameManager.GetPlayerName(hitPlayer.VrcPlayer),
+                NewbieUtils.GetPlayerName(firedVrcPlayer),
+                NewbieUtils.GetPlayerName(hitPlayer.VrcPlayer),
                 damageType
             ));
         }

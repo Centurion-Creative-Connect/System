@@ -170,7 +170,7 @@ namespace CenturionCC.System.Player
                 if (attacker == null)
                 {
                     playerManager.Logger.LogError(
-                        $"{Prefix}{Index}: Failed to get attacker {SyncedLastAttackerPlayerId} for {GameManager.GetPlayerName(VrcPlayer)}!");
+                        $"{Prefix}{Index}: Failed to get attacker {SyncedLastAttackerPlayerId} for {NewbieUtils.GetPlayerName(VrcPlayer)}!");
                     return;
                 }
 

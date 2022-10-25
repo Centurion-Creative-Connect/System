@@ -2,6 +2,7 @@
 using CenturionCC.System.Gun;
 using CenturionCC.System.Player;
 using CenturionCC.System.Utils;
+using DerpyNewbie.Common;
 using DerpyNewbie.Common.Role;
 using UdonSharp;
 using UnityEngine;
@@ -244,7 +245,7 @@ namespace CenturionCC.System.UI
             {
                 var player = _gameManager.players.GetPlayerById(modPlayerApi.playerId);
                 message +=
-                    $"{(player == null ? GameManager.GetPlayerNameById(modPlayerApi.playerId) : _gameManager.players.GetTeamColoredName(player))}\n";
+                    $"{(player == null ? NewbieUtils.GetPlayerName(modPlayerApi.playerId) : _gameManager.players.GetTeamColoredName(player))}\n";
             }
 
             activeModeratorListText.text = message;

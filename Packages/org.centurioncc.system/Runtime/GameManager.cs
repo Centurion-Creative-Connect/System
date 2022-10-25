@@ -76,24 +76,23 @@ namespace CenturionCC.System
             return null;
         }
 
-        public void PlayHitLocal(PlayerBase shooterPlayer)
+        [Obsolete]
+        public void PlayHitLocal(PlayerBase player)
         {
-            logger.LogVerbose(
-                $"{_prefix}PlayHitLocal: {(shooterPlayer != null ? GetPlayerName(shooterPlayer.VrcPlayer) : "Dummy (shooter player null)")}");
-            if (shooterPlayer != null) shooterPlayer.OnDeath();
-
-            if (DateTime.Now.Subtract(_lastLocalPlayerHitTime).TotalSeconds > localPlayerHitDuration)
-            {
-                hitEffect.Play();
-                _lastLocalPlayerHitTime = DateTime.Now;
-            }
+            PlayOnDeath(player);
         }
 
-        public void PlayHitRemote(PlayerBase shooterPlayer)
+        [Obsolete]
+        public void PlayHitRemote(PlayerBase player)
+        {
+            PlayOnDeath(player);
+        }
+
+        private void PlayOnDeath(PlayerBase player)
         {
             logger.LogVerbose(
-                $"{_prefix}PlayHitRemote: {(shooterPlayer != null ? GetPlayerName(shooterPlayer.VrcPlayer) : "Dummy (shooter player null)")}");
-            if (shooterPlayer != null) shooterPlayer.OnDeath();
+                $"{_prefix}PlayOnDeath: {(player != null ? NewbieUtils.GetPlayerName(player.VrcPlayer) : "Dummy (shooter player null)")}");
+            player.OnDeath();
         }
 
         public bool CanShoot()
@@ -118,19 +117,16 @@ namespace CenturionCC.System
             return DateTime.Now.Subtract(_lastLocalPlayerHitTime).TotalSeconds < antiZombieTime;
         }
 
+        [Obsolete("Use NewbieUtils.GetPlayerName() instead")]
         public static string GetPlayerName(VRCPlayerApi api)
         {
-            return _GetPlayerName(api, api != null ? api.playerId : -1);
+            return NewbieUtils.GetPlayerName(api);
         }
 
+        [Obsolete("Use NewbieUtils.GetPlayerName() instead")]
         public static string GetPlayerNameById(int playerId)
         {
-            return _GetPlayerName(VRCPlayerApi.GetPlayerById(playerId), playerId);
-        }
-
-        private static string _GetPlayerName(VRCPlayerApi api, int id)
-        {
-            return api == null ? $"{id}:InvalidPlayer" : $"{api.playerId}:{api.displayName}";
+            return NewbieUtils.GetPlayerName(playerId);
         }
 
         #region GunManagerCallbackBase
@@ -185,9 +181,7 @@ namespace CenturionCC.System
         public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
             if (hitPlayer.IsLocal)
-                PlayHitLocal(hitPlayer);
-
-            PlayHitRemote(hitPlayer);
+                _lastLocalPlayerHitTime = DateTime.Now;
         }
 
         public void OnTeamChanged(PlayerBase player, int oldTeam)

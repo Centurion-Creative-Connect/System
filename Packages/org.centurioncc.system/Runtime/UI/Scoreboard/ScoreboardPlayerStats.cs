@@ -1,4 +1,5 @@
 ﻿using CenturionCC.System.Player;
+using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
@@ -47,7 +48,7 @@ namespace CenturionCC.System.UI.Scoreboard
 
             rankingText.text = $"{(transform.GetSiblingIndex() + 1)}";
 
-            displayNameText.text = GameManager.GetPlayerName(Source.VrcPlayer);
+            displayNameText.text = NewbieUtils.GetPlayerName(Source.VrcPlayer);
             killsText.text = Source.Kills.ToString();
             deathsText.text = Source.Deaths.ToString();
         }
