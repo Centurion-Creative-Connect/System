@@ -76,23 +76,25 @@ namespace CenturionCC.System
             return null;
         }
 
-        [Obsolete]
+        [Obsolete("Use PlayerBase.OnDeath() directly.")]
         public void PlayHitLocal(PlayerBase player)
         {
             PlayOnDeath(player);
         }
 
-        [Obsolete]
+        [Obsolete("Use PlayerBase.OnDeath() directly.")]
         public void PlayHitRemote(PlayerBase player)
         {
             PlayOnDeath(player);
         }
 
+        [Obsolete("Use PlayerBase.OnDeath() directly.")]
         private void PlayOnDeath(PlayerBase player)
         {
             logger.LogVerbose(
                 $"{_prefix}PlayOnDeath: {(player != null ? NewbieUtils.GetPlayerName(player.VrcPlayer) : "Dummy (shooter player null)")}");
-            player.OnDeath();
+            if (player != null)
+                player.OnDeath();
         }
 
         public bool CanShoot()
