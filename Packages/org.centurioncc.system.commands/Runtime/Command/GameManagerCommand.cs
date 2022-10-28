@@ -13,7 +13,7 @@ namespace CenturionCC.System.Command
         public override string Label => "GameManager";
         public override string[] Aliases => new[] { "Game" };
         public override string Usage =>
-            "<command> <canShoot|hitLocal|hitRemote|isMod|useHaptic|version|license>";
+            "<command> <canShoot|testHit|isMod|useHaptic|version|license>";
 
         private void Start()
         {
@@ -31,19 +31,12 @@ namespace CenturionCC.System.Command
                     console.Println($"CanShoot: {_gameManager.CanShoot()}");
                     return ConsoleLiteral.Of(_gameManager.CanShoot());
                 }
-                case "hitlocal":
-                case "testhitlocal":
+                case "testhit":
                 {
-                    console.Println("Playing local hit as dummy");
-                    _gameManager.PlayHitLocal(null);
-                    return ConsoleLiteral.GetNone();
-                }
-                case "hitremote":
-                case "testhitremote":
-                {
-                    console.Println("Playing remote hit");
+                    console.Println("Playing onDeath for all players");
                     foreach (var player in _gameManager.players.GetPlayers())
-                        _gameManager.PlayHitRemote(player);
+                        if (player != null)
+                            player.OnDeath();
                     return ConsoleLiteral.GetNone();
                 }
                 case "mod":
