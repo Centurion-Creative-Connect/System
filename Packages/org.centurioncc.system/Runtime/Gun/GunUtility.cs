@@ -59,7 +59,7 @@ namespace CenturionCC.System.Gun
             }
             else if (progressNormalized > maxMargin)
             {
-                if (curr != GunState.InCockingPush && curr != GunState.Idle)
+                if (curr != GunState.InCockingPush)
                 {
                     next = GunState.InCockingPush;
                     target.LoadBullet();
@@ -111,8 +111,7 @@ namespace CenturionCC.System.Gun
                 if (hapticData && hapticData.InBetween)
                     hapticData.InBetween.PlayHapticOnHand(hand, progressNormalized);
             }
-            else if (progressNormalized > maxMargin &&
-                     curr != GunState.InCockingPush && curr != GunState.Idle)
+            else if (progressNormalized > maxMargin && curr != GunState.InCockingPush)
             {
                 next = GunState.InCockingPush;
                 target.LoadBullet();

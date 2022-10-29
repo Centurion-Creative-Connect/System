@@ -13,7 +13,7 @@ namespace CenturionCC.System.Gun.Behaviour
         [SerializeField] [Range(0, 1)]
         private float minAutoLoadMargin = 0.2F;
         [SerializeField]
-        private float minimumZOffset = 0.05F;
+        private float minimumZOffset = 0.1F;
         [SerializeField]
         private GunCockingHapticDataStore cockingHapticData;
         [Header("Desktop")]
