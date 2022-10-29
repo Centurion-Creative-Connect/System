@@ -143,22 +143,6 @@ namespace CenturionCC.System
 
         #endregion
 
-        #region ModeratorStuff
-
-        [Obsolete("This method is no longer supported.")]
-        public bool GetModeratorMode()
-        {
-            return false;
-        }
-
-        [Obsolete("This method is obsolete. Use RoleManager::GetRole() instead.")]
-        public bool IsModerator()
-        {
-            return roleProvider.GetPlayerRole().HasPermission();
-        }
-
-        #endregion
-
         #region PlayerManagerCallbackBase
 
         public void OnPlayerChanged(PlayerBase player, int oldId, int newId)
@@ -197,13 +181,16 @@ namespace CenturionCC.System
         #endregion
     }
 
+    // Obsolete from v0.2
+    [Obsolete("Use CenturionSystemReference instead.")]
     public static class GameManagerHelper
     {
-        [PublicAPI]
+        [PublicAPI] [Obsolete(
+            "Do not reference the direct path. Use CenturionSystemReference.GetGameManager() instead.")]
         public const string GameManagerPath = "Logics/System/GameManager";
-        [PublicAPI]
+        [PublicAPI] [Obsolete("Do not reference the direct path. Use CenturionSystemReference.GetConsole() instead.")]
         public const string ConsolePath = "Logics/System/LogTablet/NewbieConsole";
-        [PublicAPI]
+        [PublicAPI] [Obsolete("Do not reference the direct path. Use CenturionSystemReference.GetLogger() instead.")]
         public const string LoggerPath = "Logics/System/LogTablet/NewbieLogger";
 
         [PublicAPI]
