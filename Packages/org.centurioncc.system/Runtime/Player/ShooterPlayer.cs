@@ -112,7 +112,7 @@ namespace CenturionCC.System.Player
                 var lastSyncedDeaths = _syncedDeaths;
                 _syncedDeaths = value;
 
-                if (lastSyncedDeaths == -1)
+                if (lastSyncedDeaths == -1 || lastSyncedDeaths == value)
                     return;
 
                 _invokeOnDeathNextOnDeserialization = true;
