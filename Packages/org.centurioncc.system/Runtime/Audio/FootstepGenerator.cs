@@ -59,7 +59,7 @@ namespace CenturionCC.System.Audio
         private void PlayFootstepSound()
         {
             var player = playerManager.GetLocalPlayer();
-            if (!player || player.TeamId == 4) return;
+            if (!player || playerManager.IsStaffTeamId(player.TeamId)) return;
             var isSlow = _timer > slowFootstepThreshold;
 
             switch (_currentFootstepType)
