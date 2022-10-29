@@ -1730,7 +1730,7 @@ MonoBehaviour:
   twistMinAngle: 0
   twistMargin: 0.1
   twistAutoLoadMargin: 0.4
-  canDesktopCock: 1
+  doDesktopCockingAutomatically: 1
   desktopCockingKey: 102
   desktopCockingTime: 2
   cockingHapticData: {fileID: 642276974}
@@ -3975,6 +3975,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 107248752}
   useHaptic: 1
+  localPlayerHitDuration: 1
   hitSound: {fileID: 479973092}
   hitDisplay: {fileID: 1173807951}
   hapticSource: {fileID: 8300000, guid: 58212c46dfdbde4419144d1037c7fb56, type: 3}
@@ -8015,6 +8016,9 @@ MonoBehaviour:
   - {r: 0.80799675, g: 0.8117647, b: 0.172549, a: 1}
   - {r: 0.172549, g: 0.8117647, b: 0.24817246, a: 1}
   - {r: 0.172549, g: 0.47330546, b: 0.8117647, a: 1}
+  staffTeamId: 255
+  staffTeamColor: {r: 0.17254902, g: 0.4745098, b: 0.8117647, a: 255}
+  localHitEffect: {fileID: 107248753}
 --- !u!1001 &405819046
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16297,7 +16301,10 @@ MonoBehaviour:
   cockingLength: 0.08
   maxAutoLoadMargin: 0.8
   minAutoLoadMargin: 0.2
+  minimumZOffset: 0.1
   cockingHapticData: {fileID: 0}
+  doDesktopCockingAutomatically: 1
+  desktopCockingKey: 102
   desktopCockingTime: 1
 --- !u!114 &669977920
 MonoBehaviour:
@@ -16909,7 +16916,7 @@ MonoBehaviour:
   commandLabel: AutoExec
   commandAliases: []
   commandDescription: Executed automatically at start.
-  commandsToExecute: wait 1;echo;echo <size=10><color=green>Licenses</color></size>;license;echo;echo;;game
+  commandsToExecute: console length 15000;wait 1;echo;echo <size=10><color=green>Licenses</color></size>;license;echo;echo;;game
     license;echo;echo <size=10><color=green>Versions</color></size>;version;game
     version;echo;echo <size=10><color=green>Help</color></size>;help
   executionDelay: 0.1
@@ -16951,8 +16958,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 100, y: 0}
-  m_SizeDelta: {x: 200, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &754465964
 MonoBehaviour:
@@ -17822,7 +17829,12 @@ PrefabInstance:
     - target: {fileID: 1055321711490392694, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: blueprintId
-      value: wrld_081315ba-8e4d-47ef-92dc-57a7d7d4f12b
+      value: wrld_38745cf7-8fc2-40ee-ab5d-fd272395999f
+      objectReference: {fileID: 0}
+    - target: {fileID: 1055321711490392694, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: completedSDKPipeline
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1094421957795580606, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
@@ -20231,7 +20243,7 @@ MonoBehaviour:
   twistMinAngle: 0
   twistMargin: 0
   twistAutoLoadMargin: 0
-  canDesktopCock: 1
+  doDesktopCockingAutomatically: 1
   desktopCockingKey: 102
   desktopCockingTime: 1
   cockingHapticData: {fileID: 1962994837}
@@ -38627,6 +38639,13 @@ MonoBehaviour:
   - {x: -0.06, y: 0.04, z: 0}
   - {x: -0.07, y: 0.045, z: 0}
   - {x: -0.08, y: 0.05, z: 0}
+  positionOffsetPatterns:
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
   speedOffsetPatterns:
   - 0
   - 0.2
