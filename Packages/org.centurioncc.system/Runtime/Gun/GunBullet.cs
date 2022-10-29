@@ -22,15 +22,20 @@ namespace CenturionCC.System.Gun
         private TrailRenderer trailRenderer;
         [SerializeField]
         private TrailRenderer debugTrailRenderer;
+        private Collider _collider;
 
         private float _currentMaxLifetime;
-        private Collider _collider;
+        private Vector3 _damageOriginPos;
+        private Quaternion _damageOriginRot;
+
+        private int _damagerPlayerId;
+        private string _damageType;
         private float _hopUpStrength;
         private Vector3 _initialRotationUp;
-
-        private Vector3 _nextVelocity;
         private Vector3 _nextTorque;
         private bool _nextUseTrail;
+
+        private Vector3 _nextVelocity;
         private Rigidbody _rigidbody;
 
         private bool _shootFlag;
@@ -40,17 +45,28 @@ namespace CenturionCC.System.Gun
         private bool UseDebugTrail => gunManager.UseDebugBulletTrail;
         private int RicochetCount { get; set; }
 
-        private int _damagerPlayerId;
-        private Vector3 _damageOriginPos;
-        private Quaternion _damageOriginRot;
-        private string _damageType;
-
         public override bool ShouldApplyDamage =>
             gunManager.AllowedRicochetCount + 1 >= RicochetCount;
         public override int DamagerPlayerId => _damagerPlayerId;
         public override Vector3 DamageOriginPosition => _damageOriginPos;
         public override Quaternion DamageOriginRotation => _damageOriginRot;
         public override string DamageType => _damageType;
+
+        public void Start()
+        {
+            _rigidbody = gameObject.GetComponent<Rigidbody>();
+            _collider = gameObject.GetComponent<Collider>();
+            _updateManager = CenturionSystemReference.GetUpdateManager();
+            SendCustomEventDelayedFrames(nameof(LateStart), 1);
+        }
+
+        private void OnCollisionEnter(Collision collision)
+        {
+            ++RicochetCount;
+            _rigidbody.velocity /= DampingCoefficient;
+            if (Vector3.Distance(gameObject.transform.position, Networking.LocalPlayer.GetPosition()) < 35F)
+                TryScheduleRicochetAudio(collision);
+        }
 
         public override void Shoot(Vector3 pos, Quaternion rot, Vector3 velocity, Vector3 torque, float drag,
             string damageType, int playerId,
@@ -94,22 +110,6 @@ namespace CenturionCC.System.Gun
             _updateManager.UnsubscribeFixedUpdate(this);
             _updateManager.SubscribeFixedUpdate(this);
             gameObject.SetActive(true);
-        }
-
-        public void Start()
-        {
-            _rigidbody = gameObject.GetComponent<Rigidbody>();
-            _collider = gameObject.GetComponent<Collider>();
-            _updateManager = GameManagerHelper.GetUpdateManager();
-            SendCustomEventDelayedFrames(nameof(LateStart), 1);
-        }
-
-        private void OnCollisionEnter(Collision collision)
-        {
-            ++RicochetCount;
-            _rigidbody.velocity /= DampingCoefficient;
-            if (Vector3.Distance(gameObject.transform.position, Networking.LocalPlayer.GetPosition()) < 35F)
-                TryScheduleRicochetAudio(collision);
         }
 
         public void _FixedUpdate()

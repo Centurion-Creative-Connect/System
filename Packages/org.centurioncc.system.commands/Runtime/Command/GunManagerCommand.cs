@@ -30,7 +30,7 @@ namespace CenturionCC.System.Command
 
         private void Start()
         {
-            _gunManager = GameManagerHelper.GetGunManager();
+            _gunManager = CenturionSystemReference.GetGunManager();
         }
 
         public override void OnPreSerialization()

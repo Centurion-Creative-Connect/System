@@ -57,8 +57,8 @@ namespace CenturionCC.System.UI
 
             {
                 var p = manager.players;
-                showDebugNameTag.SetIsOnWithoutNotify(p.ShowDebugNametag);
-                showCollider.SetIsOnWithoutNotify(p.ShowCollider);
+                showDebugNameTag.SetIsOnWithoutNotify(p.IsDebug);
+                showCollider.SetIsOnWithoutNotify(p.IsDebug);
                 useBaseCollider.SetIsOnWithoutNotify(p.UseBaseCollider);
                 useBodyCollider.SetIsOnWithoutNotify(p.UseAdditionalCollider);
             }
@@ -83,7 +83,7 @@ namespace CenturionCC.System.UI
                 {
                     m.logger.Log($"{Prefix}update collider status");
                     _lastShowCollider = showCollider.isOn;
-                    p.ShowCollider = _lastShowCollider;
+                    p.IsDebug = _lastShowCollider;
                 }
 
                 // Base
@@ -114,7 +114,7 @@ namespace CenturionCC.System.UI
             {
                 m.logger.Log($"{Prefix}update debug nametag status");
                 _lastShowDebugNameTag = showDebugNameTag.isOn;
-                m.players.ShowDebugNametag = _lastShowDebugNameTag;
+                m.players.IsDebug = _lastShowDebugNameTag;
             }
 
             if (CheckToggle(showDebugTrail, _lastShowDebugTrail))
@@ -168,14 +168,14 @@ namespace CenturionCC.System.UI
         {
             var localPlayer = manager.players.GetLocalPlayer();
             if (localPlayer != null)
-                manager.PlayHitLocal(localPlayer);
+                localPlayer.OnDeath();
         }
 
         public void PlayHitRemote()
         {
             var remotePlayer = manager.players.GetPlayer(GetIntFromField(remoteIdField));
             if (remotePlayer != null)
-                manager.PlayHitRemote(remotePlayer);
+                remotePlayer.OnDeath();
         }
 
         private bool CheckToggle(Toggle toggle, bool lastValue)

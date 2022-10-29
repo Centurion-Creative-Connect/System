@@ -22,28 +22,37 @@ namespace CenturionCC.System.Player
         [SerializeField]
         private bool autoAddPlayerAtJoin = true;
         [SerializeField]
-        private ShooterPlayer[] playerInstancePool;
+        private PlayerBase[] playerInstancePool;
         [SerializeField]
         private GameManager manager;
         [SerializeField]
         private FootstepAudioStore footstepAudio;
         [SerializeField]
         private Color[] teamColors;
+        [SerializeField]
+        private int staffTeamId = 255;
+        [SerializeField]
+        private Color staffTeamColor = new Color(0.172549F, 0.4733055F, 0.8117647F, 1F);
+        [SerializeField]
+        private LocalHitEffect localHitEffect;
 
         private bool _alwaysUseLightweightCollider;
 
         private WatchdogChildCallbackBase[] _callbacks;
         private int _eventCallbackCount;
         private UdonSharpBehaviour[] _eventCallbacks = new UdonSharpBehaviour[5];
+        private bool _isDebug;
 
         private bool _isTeamPlayerCountsDirty;
 
         private int _localPlayerIndex = -1;
         private bool _showCollider;
-        private bool _showDebugNametag;
+        [UdonSynced] [FieldChangeCallback(nameof(ShowStaffTag))]
+        private bool _showStaffTag = true;
 
         [UdonSynced] [FieldChangeCallback(nameof(ShowTeamTag))]
         private bool _showTeamTag;
+
         private bool _useAdditionalCollider;
         private bool _useBaseCollider;
         private bool _useLightweightCollider;
@@ -58,31 +67,18 @@ namespace CenturionCC.System.Player
 
         public FootstepAudioStore FootstepAudio => footstepAudio;
 
-        [field: UdonSynced] [field: FieldChangeCallback(nameof(AllowFriendlyFire))]
-        public bool AllowFriendlyFire { get; set; }
+        public LocalHitEffect LocalHitEffect => localHitEffect;
 
-        public bool ShowCollider
-        {
-            get => _showCollider;
-            set
-            {
-                foreach (var player in GetPlayers())
-                    if (player != null && player.PlayerHumanoidCollider != null)
-                        player.PlayerHumanoidCollider.IsCollidersVisible = value;
-                _showCollider = value;
-            }
-        }
+        [field: UdonSynced] [field: FieldChangeCallback(nameof(AllowFriendlyFire))]
+        public bool AllowFriendlyFire { get; private set; }
 
         public bool UseBaseCollider
         {
             get => _useBaseCollider;
             set
             {
-                if (_useBaseCollider != value)
-                    foreach (var player in GetPlayers())
-                        if (player != null && player.PlayerHumanoidCollider != null)
-                            player.PlayerHumanoidCollider.UseBaseCollider = value;
                 _useBaseCollider = value;
+                UpdateAllPlayerView();
             }
         }
 
@@ -91,11 +87,8 @@ namespace CenturionCC.System.Player
             get => _useAdditionalCollider;
             set
             {
-                if (_useAdditionalCollider != value)
-                    foreach (var player in GetPlayers())
-                        if (player != null && player.PlayerHumanoidCollider != null)
-                            player.PlayerHumanoidCollider.UseAdditionalCollider = value;
                 _useAdditionalCollider = value;
+                UpdateAllPlayerView();
             }
         }
 
@@ -104,11 +97,8 @@ namespace CenturionCC.System.Player
             get => _useLightweightCollider;
             set
             {
-                if (_useLightweightCollider != value)
-                    foreach (var player in GetPlayers())
-                        if (player != null && player.PlayerHumanoidCollider != null)
-                            player.PlayerHumanoidCollider.UseLightweightCollider = value;
                 _useLightweightCollider = value;
+                UpdateAllPlayerView();
             }
         }
 
@@ -117,25 +107,18 @@ namespace CenturionCC.System.Player
             get => _alwaysUseLightweightCollider;
             set
             {
-                if (_alwaysUseLightweightCollider != value)
-                    foreach (var player in GetPlayers())
-                        if (player != null && player.PlayerHumanoidCollider != null)
-                            player.PlayerHumanoidCollider.AlwaysUseLightweightCollider = value;
                 _alwaysUseLightweightCollider = value;
+                UpdateAllPlayerView();
             }
         }
 
-        public bool ShowDebugNametag
+        public bool IsDebug
         {
-            get => _showDebugNametag;
+            get => _isDebug;
             set
             {
-                if (_showDebugNametag == value)
-                    return;
-                _showDebugNametag = value;
-                foreach (var player in GetPlayers())
-                    if (player != null && player.PlayerTag != null)
-                        player.PlayerTag.SetDebugTagShown(value);
+                _isDebug = value;
+                UpdateAllPlayerView();
             }
         }
 
@@ -144,11 +127,22 @@ namespace CenturionCC.System.Player
             get => _showTeamTag;
             private set
             {
-                if (_showTeamTag == value) return;
+                var shouldNotify = _showTeamTag != value;
                 _showTeamTag = value;
-                foreach (var player in GetPlayers())
-                    if (player != null && player.PlayerTag != null)
-                        player.PlayerTag.SetTeamTagShown(value);
+                if (shouldNotify)
+                    Invoke_OnPlayerTagChanged(TagType.Team, value);
+            }
+        }
+
+        public bool ShowStaffTag
+        {
+            get => _showStaffTag;
+            private set
+            {
+                var shouldNotify = _showStaffTag != value;
+                _showStaffTag = value;
+                if (shouldNotify)
+                    Invoke_OnPlayerTagChanged(TagType.Staff, value);
             }
         }
 
@@ -163,9 +157,9 @@ namespace CenturionCC.System.Player
             if (playerInstancePool == null || playerInstancePool.Length <= 0)
             {
                 Logger.Log($"{Prefix}Getting ShooterPlayer instances");
-                var players = new ShooterPlayer[transform.childCount];
+                var players = new PlayerBase[transform.childCount];
                 for (var i = 0; i < players.Length; i++)
-                    players[i] = transform.GetChild(i).GetComponent<ShooterPlayer>();
+                    players[i] = transform.GetChild(i).GetComponent<PlayerBase>();
 
                 playerInstancePool = players;
             }
@@ -174,7 +168,7 @@ namespace CenturionCC.System.Player
             for (var i = 0; i < playerInstancePool.Length; i++)
             {
                 var player = GetPlayer(i);
-                if (player != null) player.Index = i;
+                if (player != null) player.SetId(i);
             }
 
             Logger.Log($"{Prefix}Generate Watchdog Callback");
@@ -219,7 +213,7 @@ namespace CenturionCC.System.Player
 
         public override string ToString()
         {
-            if (IsReady() && Networking.GetOwner(gameObject).IsValid())
+            if (Networking.GetOwner(gameObject).IsValid())
                 return
                     $"{Prefix}\n" +
                     "PLAYERINFO:\n" +
@@ -480,7 +474,7 @@ namespace CenturionCC.System.Player
             for (var i = 0; i < GetPlayers().Length; i++)
             {
                 var player = GetPlayer(i);
-                if (player && player.IsActive) continue;
+                if (player && player.PlayerId != -1) continue;
                 MasterOnly_SetPlayer(i, playerId);
                 result = i;
                 return result;
@@ -502,7 +496,7 @@ namespace CenturionCC.System.Player
             for (var i = 0; i < GetPlayers().Length; i++)
             {
                 var player = GetPlayer(i);
-                if (player && player.SyncedPlayerId != playerId) continue;
+                if (player && player.PlayerId != playerId) continue;
                 MasterOnly_SetPlayer(i, -1);
                 result = true;
                 break;
@@ -536,7 +530,7 @@ namespace CenturionCC.System.Player
                 return;
             }
 
-            instance.MasterOnly_SetPlayer(newPlayerId);
+            instance.SetPlayer(newPlayerId);
         }
 
         public void MasterOnly_SetTeam(int index, int newTeam)
@@ -561,7 +555,7 @@ namespace CenturionCC.System.Player
                 return;
             }
 
-            instance.MasterOnly_SetTeam(newTeam);
+            instance.SetTeam(newTeam);
         }
 
         public void MasterOnly_ResetAllPlayer()
@@ -574,7 +568,7 @@ namespace CenturionCC.System.Player
 
             foreach (var player in GetPlayers())
                 if (player != null)
-                    player.MasterOnly_Reset();
+                    player.ResetPlayer();
 
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(UpdateLocalPlayer));
             Logger.LogVerbose($"{Prefix}All player instance's reset complete");
@@ -588,7 +582,7 @@ namespace CenturionCC.System.Player
                 return;
             }
 
-            foreach (var vrcPlayer in GetVRCPlayers())
+            foreach (var vrcPlayer in VRCPlayerApi.GetPlayers(new VRCPlayerApi[VRCPlayerApi.GetPlayerCount()]))
                 if (vrcPlayer != null && vrcPlayer.IsValid() && !HasPlayerIdOf(vrcPlayer.playerId))
                     MasterOnly_AddPlayer(vrcPlayer.playerId);
 
@@ -606,7 +600,7 @@ namespace CenturionCC.System.Player
 
             foreach (var player in GetPlayers())
                 if (player != null)
-                    player.MasterOnly_Sync();
+                    player.Sync();
 
             Logger.LogVerbose($"{Prefix}Synced all shooter players");
             if (Networking.IsClogged)
@@ -623,7 +617,7 @@ namespace CenturionCC.System.Player
 
             foreach (var player in GetPlayers())
                 if (player != null)
-                    player.MasterOnly_SetTeam(0);
+                    player.SetTeam(0);
 
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(UpdateLocalPlayer));
             Logger.LogVerbose($"{Prefix}Cleared all player teams");
@@ -638,6 +632,30 @@ namespace CenturionCC.System.Player
             }
 
             ShowTeamTag = isOn;
+            RequestSerialization();
+        }
+
+        public void MasterOnly_SetStaffTagShown(bool isOn)
+        {
+            if (!Networking.IsMaster)
+            {
+                Logger.LogError(string.Format(MustBeMasterError, nameof(MasterOnly_SetStaffTagShown)));
+                return;
+            }
+
+            ShowStaffTag = isOn;
+            RequestSerialization();
+        }
+
+        public void MasterOnly_SetFriendlyFire(bool isOn)
+        {
+            if (!Networking.IsMaster)
+            {
+                Logger.LogError(string.Format(MustBeMasterError, nameof(MasterOnly_SetFriendlyFire)));
+                return;
+            }
+
+            AllowFriendlyFire = isOn;
             RequestSerialization();
         }
 
@@ -660,7 +678,7 @@ namespace CenturionCC.System.Player
                 return;
             }
 
-            var instance = GetShooterPlayerByPlayerId(playerId);
+            var instance = GetPlayerById(playerId);
 
             if (instance == null)
             {
@@ -668,8 +686,7 @@ namespace CenturionCC.System.Player
                 return;
             }
 
-            instance.PlayerStats.SendCustomNetworkEvent(NetworkEventTarget.All,
-                nameof(instance.PlayerStats.ResetStats));
+            instance.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(instance.ResetPlayer));
         }
 
         public void UpdateLocalPlayer()
@@ -678,7 +695,7 @@ namespace CenturionCC.System.Player
 
             foreach (var player in GetPlayers())
             {
-                if (player == null || player.SyncedPlayerId != localPlayerId) continue;
+                if (player == null || player.PlayerId != localPlayerId) continue;
                 Invoke_OnLocalPlayerChanged(player, player.Index);
                 return;
             }
@@ -705,8 +722,8 @@ namespace CenturionCC.System.Player
 
             foreach (var player in GetPlayers())
             {
-                if (player == null || !player.IsActive) continue;
-                switch (player.Team)
+                if (player == null || !player.IsAssigned) continue;
+                switch (player.TeamId)
                 {
                     case 0:
                         ++noneTeam;
@@ -756,121 +773,131 @@ namespace CenturionCC.System.Player
             _isTeamPlayerCountsDirty = false;
         }
 
+        public void UpdateAllPlayerView()
+        {
+            foreach (var player in GetPlayers())
+                if (player != null)
+                    player.UpdateView();
+            Logger.LogVerbose($"{Prefix}Updated all player view");
+        }
+
         #endregion
 
         #region Getters
 
-        // ReSharper disable once InconsistentNaming
-        public VRCPlayerApi[] GetVRCPlayers()
-        {
-            return VRCPlayerApi.GetPlayers(new VRCPlayerApi[VRCPlayerApi.GetPlayerCount()]);
-        }
-
-        [ItemCanBeNull]
-        public ShooterPlayer[] GetPlayers()
+        [PublicAPI] [ItemCanBeNull]
+        public PlayerBase[] GetPlayers()
         {
             return playerInstancePool;
         }
 
-        [CanBeNull]
-        public ShooterPlayer GetPlayer(int index)
+        [PublicAPI] [CanBeNull]
+        public PlayerBase GetPlayer(int index)
         {
             if (index > playerInstancePool.Length || index < 0) return null;
             return GetPlayers()[index];
         }
 
-        [CanBeNull]
-        public ShooterPlayer GetLocalPlayer()
+        [PublicAPI] [CanBeNull]
+        public PlayerBase GetLocalPlayer()
         {
-            if (GetLocalPlayerIndex() == -1) return null;
             return GetPlayer(GetLocalPlayerIndex());
         }
 
+        [PublicAPI]
         public int GetMaxPlayerCount()
         {
             return GetPlayers().Length;
         }
 
+        [PublicAPI]
         public int GetPlayerId(int index)
         {
-            if (index >= GetMaxPlayerCount() || index < 0)
-                return -1;
-
             var player = GetPlayer(index);
-            if (player == null)
-                return -1;
-
-            return player.SyncedPlayerId;
+            return player != null ? player.PlayerId : -1;
         }
 
+        [PublicAPI]
         public int GetLocalPlayerIndex()
         {
             return _localPlayerIndex;
         }
 
+        [PublicAPI]
         public bool CanJoin()
         {
             return !HasLocalPlayer();
         }
 
+        [PublicAPI]
         public bool CanLeave()
         {
             return HasLocalPlayer();
         }
 
+        [PublicAPI]
         public bool HasLocalPlayer()
         {
             return _localPlayerIndex != -1;
         }
 
-        public bool IsReady()
-        {
-            return manager;
-        }
-
-        public ShooterPlayer GetShooterPlayerByPlayerId(int playerId)
+        [PublicAPI]
+        public PlayerBase GetPlayerById(int playerId)
         {
             foreach (var player in GetPlayers())
-                if (player != null && player.SyncedPlayerId == playerId)
+                if (player != null && player.PlayerId == playerId)
                     return player;
 
             return null;
         }
 
+        [PublicAPI]
         public bool HasPlayerIdOf(int playerId)
         {
-            foreach (var player in GetPlayers())
-                if (player != null && player.SyncedPlayerId == playerId)
-                    return true;
-
-            return false;
+            return GetPlayerById(playerId) != null;
         }
 
+        [PublicAPI]
         public string GetTeamColorString(int teamId)
         {
-            return _ToHtmlStringRGBA(GetTeamColor(teamId));
+            return ToHtmlStringRGBA(GetTeamColor(teamId));
         }
 
+        [PublicAPI]
         public Color GetTeamColor(int teamId)
         {
+            if (teamId == staffTeamId) return staffTeamColor;
             if (teamId <= 0 || teamId >= teamColors.Length) return teamColors[0];
             return teamColors[teamId];
         }
 
-        public string GetTeamColoredName(ShooterPlayer player)
+        [PublicAPI]
+        public string GetTeamColoredName(PlayerBase player)
         {
             if (player == null) return "Invalid Player (null)";
-            return $"<color=#{GetTeamColorString(player.Team)}>{GameManager.GetPlayerName(player.VrcPlayer)}</color>";
+            return
+                $"<color=#{GetTeamColorString(player.TeamId)}>{NewbieUtils.GetPlayerName(player.VrcPlayer)}</color>";
         }
 
         // From UnityEngine.ColorUtility
-        private string _ToHtmlStringRGBA(Color color)
+        // ReSharper disable once InconsistentNaming
+        private static string ToHtmlStringRGBA(Color color)
         {
             var color32 = new Color32((byte)Mathf.Clamp(Mathf.RoundToInt(color.r * byte.MaxValue), 0, byte.MaxValue),
                 (byte)Mathf.Clamp(Mathf.RoundToInt(color.g * byte.MaxValue), 0, byte.MaxValue),
                 (byte)Mathf.Clamp(Mathf.RoundToInt(color.b * byte.MaxValue), 0, byte.MaxValue),
                 (byte)Mathf.Clamp(Mathf.RoundToInt(color.a * byte.MaxValue), 0, byte.MaxValue));
             return $"{color32.r:X2}{color32.g:X2}{color32.b:X2}{color32.a:X2}";
+        }
+
+        public bool IsSpecialTeamId(int teamId)
+        {
+            return teamId == 0 || IsStaffTeamId(teamId);
+        }
+
+        public bool IsStaffTeamId(int teamId)
+        {
+            return teamId == staffTeamId;
         }
 
         #endregion
@@ -882,8 +909,8 @@ namespace CenturionCC.System.Player
             Logger.Log($"{Prefix}Invoke_OnResetAllPlayerStats");
 
             foreach (var player in GetPlayers())
-                if (player != null && player.PlayerStats != null)
-                    player.PlayerStats.ResetStats();
+                if (player != null)
+                    player.ResetStats();
 
             foreach (var callback in _eventCallbacks)
             {
@@ -892,7 +919,7 @@ namespace CenturionCC.System.Player
             }
         }
 
-        public void Invoke_OnResetPlayerStats(ShooterPlayer player)
+        public void Invoke_OnResetPlayerStats(PlayerBase player)
         {
             if (!player)
             {
@@ -901,7 +928,7 @@ namespace CenturionCC.System.Player
             }
 
             Logger.Log(
-                $"{Prefix}Invoke_OnResetAllPlayerStats: {player.name}, {GameManager.GetPlayerNameById(player.SyncedPlayerId)}");
+                $"{Prefix}Invoke_OnResetAllPlayerStats: {player.name}, {NewbieUtils.GetPlayerName(player.PlayerId)}");
 
             foreach (var callback in _eventCallbacks)
             {
@@ -910,7 +937,7 @@ namespace CenturionCC.System.Player
             }
         }
 
-        public void Invoke_OnPlayerChanged(ShooterPlayer player,
+        public void Invoke_OnPlayerChanged(PlayerBase player,
             int lastId, bool lastIsMod, bool lastActive)
         {
             if (!player)
@@ -919,7 +946,7 @@ namespace CenturionCC.System.Player
                 return;
             }
 
-            if (lastId == player.SyncedPlayerId)
+            if (lastId == player.PlayerId)
             {
                 Logger.LogWarn($"{Prefix}Invoke_OnPlayerChanged called without actual player id not changed");
                 return;
@@ -932,21 +959,21 @@ namespace CenturionCC.System.Player
             }
 
             Logger.Log(
-                $"{Prefix}Invoke_OnPlayerChanged: {player.name}, {GameManager.GetPlayerNameById(lastId)}, {GameManager.GetPlayerNameById(player.SyncedPlayerId)}");
+                $"{Prefix}Invoke_OnPlayerChanged: {player.name}, {NewbieUtils.GetPlayerName(lastId)}, {NewbieUtils.GetPlayerName(player.PlayerId)}");
 
-            if (player.IsActive && !lastActive)
+            if (player.IsAssigned && !lastActive)
             {
                 ++PlayerCount;
                 if (player.Role.HasPermission())
                     ++ModeratorPlayerCount;
             }
-            else if (!player.IsActive && lastActive)
+            else if (!player.IsAssigned && lastActive)
             {
                 --PlayerCount;
                 if (lastIsMod)
                     --ModeratorPlayerCount;
             }
-            else if (player.IsActive)
+            else if (player.IsAssigned)
             {
                 if (player.Role.HasPermission() && !lastIsMod)
                     ++ModeratorPlayerCount;
@@ -954,19 +981,21 @@ namespace CenturionCC.System.Player
                     --ModeratorPlayerCount;
             }
 
+            UpdateAllPlayerView();
+
             foreach (var callback in _eventCallbacks)
             {
                 if (callback == null) continue;
-                ((PlayerManagerCallbackBase)callback).OnPlayerChanged(player, lastId, player.SyncedPlayerId);
+                ((PlayerManagerCallbackBase)callback).OnPlayerChanged(player, lastId, player.PlayerId);
             }
 
-            if (player.SyncedPlayerId == Networking.LocalPlayer.playerId)
+            if (player.PlayerId == Networking.LocalPlayer.playerId)
                 Invoke_OnLocalPlayerChanged(player, player.Index);
 
             if (lastId == Networking.LocalPlayer.playerId) Invoke_OnLocalPlayerChanged(player, -1);
         }
 
-        public void Invoke_OnLocalPlayerChanged(ShooterPlayer playerNullable, int index)
+        public void Invoke_OnLocalPlayerChanged(PlayerBase playerNullable, int index)
         {
             Logger.Log(
                 $"{Prefix}Invoke_OnLocalPlayerChanged: {(playerNullable != null ? playerNullable.name : "null")}. {index}");
@@ -980,18 +1009,19 @@ namespace CenturionCC.System.Player
             }
         }
 
-        public void Invoke_OnTeamChanged(ShooterPlayer player, int lastTeam)
+        public void Invoke_OnTeamChanged(PlayerBase player, int lastTeam)
         {
-            if (lastTeam == player.Team)
+            if (lastTeam == player.TeamId)
             {
                 Logger.LogWarn($"{Prefix}Invoke_OnTeamChanged called without actual team not changed");
                 return;
             }
 
             Logger.Log(
-                $"{Prefix}Invoke_OnTeamChanged: {player.name}, {GameManager.GetPlayerNameById(player.SyncedPlayerId)}, {lastTeam}, {player.Team}");
+                $"{Prefix}Invoke_OnTeamChanged: {player.name}, {NewbieUtils.GetPlayerName(player.PlayerId)}, {lastTeam}, {player.TeamId}");
 
             _isTeamPlayerCountsDirty = true;
+            UpdateAllPlayerView();
 
             foreach (var callback in _eventCallbacks)
             {
@@ -1000,10 +1030,10 @@ namespace CenturionCC.System.Player
             }
         }
 
-        public void Invoke_OnFriendlyFire(ShooterPlayer firedPlayer, ShooterPlayer hitPlayer)
+        public void Invoke_OnFriendlyFire(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
             Logger.Log(
-                $"{Prefix}Invoke_OnFriendlyFire: {GameManager.GetPlayerNameById(firedPlayer.SyncedPlayerId)}, {hitPlayer.Team}");
+                $"{Prefix}Invoke_OnFriendlyFire: {NewbieUtils.GetPlayerName(firedPlayer.PlayerId)}, {hitPlayer.TeamId}");
 
             foreach (var callback in _eventCallbacks)
             {
@@ -1015,6 +1045,12 @@ namespace CenturionCC.System.Player
         public void Invoke_OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint,
             bool isShooterDetection)
         {
+            if (playerCollider == null || damageData == null)
+            {
+                Logger.LogWarn($"{Prefix}Invoke_OnHitDetection called without actual data.");
+                return;
+            }
+
             Logger.Log($"{Prefix}Invoke_OnHitDetection: " +
                        $"{(playerCollider != null ? playerCollider.name : "null")}, " +
                        $"{(damageData != null ? damageData.DamageType : "null")} , " +
@@ -1029,74 +1065,9 @@ namespace CenturionCC.System.Player
                     contactPoint,
                     isShooterDetection);
             }
-
-
-            if (playerCollider == null || damageData == null)
-            {
-                Logger.LogError($"{Prefix}Invoke_OnHitDetection: Either of objects were null! will not check!");
-                return;
-            }
-
-            if (!damageData.ShouldApplyDamage)
-            {
-                Logger.Log($"{Prefix}Will ignore hit detection because DamageData.ShouldApplyDamage is false.");
-                return;
-            }
-
-            var hitPlayer = playerCollider.player;
-            var firedPlayer = GetShooterPlayerByPlayerId(damageData.DamagerPlayerId);
-            var localPlayerId = Networking.LocalPlayer.playerId;
-
-            if (hitPlayer == null)
-            {
-                Logger.LogWarn($"{Prefix}Will ignore hit detection because hit player is null.");
-                return;
-            }
-
-            if (firedPlayer == null)
-            {
-                Logger.LogWarn(
-                    $"{Prefix}Will ignore hit detection to {GameManager.GetPlayerName(hitPlayer.VrcPlayer)} because shooter '{GameManager.GetPlayerNameById(damageData.DamagerPlayerId)}' is not in game");
-                return;
-            }
-
-            if (hitPlayer.SyncedPlayerId == firedPlayer.SyncedPlayerId)
-            {
-                Logger.LogWarn(
-                    $"{Prefix}Will ignore hit detection to {GameManager.GetPlayerName(hitPlayer.VrcPlayer)} because shooter is same player.");
-                return;
-            }
-
-            if (hitPlayer.SyncedPlayerId != localPlayerId && firedPlayer.SyncedPlayerId != localPlayerId)
-            {
-                Logger.LogWarn(
-                    $"{Prefix}Will ignore hit detection to {GameManager.GetPlayerName(hitPlayer.VrcPlayer)} because neither is local player.");
-                return;
-            }
-
-            if (hitPlayer.Team == firedPlayer.Team)
-            {
-                Invoke_OnFriendlyFire(firedPlayer, hitPlayer);
-                if (hitPlayer.Team != 0 && !AllowFriendlyFire)
-                    return;
-            }
-
-            var hitPlayerStats = hitPlayer.PlayerStats;
-
-            if (Networking.GetNetworkDateTime().Subtract(hitPlayerStats.LastHitTime).TotalSeconds < 5F)
-            {
-                Logger.Log(
-                    $"{Prefix}Will ignore hit detection to {GameManager.GetPlayerName(hitPlayer.VrcPlayer)} because that player has been hit recently.");
-                return;
-            }
-
-            hitPlayerStats.LastDamagerPlayerId = damageData.DamagerPlayerId;
-            hitPlayerStats.LastHitTime = Networking.GetNetworkDateTime();
-            ++hitPlayerStats.Death;
-            hitPlayerStats.Sync();
         }
 
-        public void Invoke_OnKilled(ShooterPlayer firedPlayer, ShooterPlayer hitPlayer)
+        public void Invoke_OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
             if (firedPlayer == null || hitPlayer == null)
             {
@@ -1104,8 +1075,10 @@ namespace CenturionCC.System.Player
                 return;
             }
 
+            hitPlayer.OnDeath();
+
             Logger.Log(
-                $"{Prefix}Invoke_OnKilled: {(firedPlayer != null ? GameManager.GetPlayerName(firedPlayer.VrcPlayer) : "null")}, {(hitPlayer != null ? GameManager.GetPlayerName(hitPlayer.VrcPlayer) : "null")}");
+                $"{Prefix}Invoke_OnKilled: {(firedPlayer != null ? NewbieUtils.GetPlayerName(firedPlayer.VrcPlayer) : "null")}, {(hitPlayer != null ? NewbieUtils.GetPlayerName(hitPlayer.VrcPlayer) : "null")}");
 
             foreach (var callback in _eventCallbacks)
             {
@@ -1114,15 +1087,17 @@ namespace CenturionCC.System.Player
             }
         }
 
-        public void Invoke_OnPlayerTagChanged(ShooterPlayer player, TagType type, bool isOn)
+        public void Invoke_OnPlayerTagChanged(TagType type, bool isOn)
         {
             Logger.Log(
-                $"{Prefix}Invoke_OnPlayerTagChanged: {(player != null ? GameManager.GetPlayerName(player.VrcPlayer) : "null")}");
+                $"{Prefix}Invoke_OnPlayerTagChanged: {type}, {isOn}");
+
+            UpdateAllPlayerView();
 
             foreach (var callback in _eventCallbacks)
             {
                 if (callback == null) continue;
-                ((PlayerManagerCallbackBase)callback).OnPlayerTagChanged(player, type, isOn);
+                ((PlayerManagerCallbackBase)callback).OnPlayerTagChanged(type, isOn);
             }
         }
 

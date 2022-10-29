@@ -2,7 +2,6 @@
 using CenturionCC.System.Audio;
 using CenturionCC.System.Gun.Behaviour;
 using CenturionCC.System.Gun.DataStore;
-using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using JetBrains.Annotations;
@@ -53,11 +52,12 @@ namespace CenturionCC.System.Gun
 
         protected virtual void Start()
         {
-            Logger = GameManagerHelper.GetLogger();
-            AudioManager = GameManagerHelper.GetAudioManager();
-            UpdateManager = GameManagerHelper.GetUpdateManager();
+            Logger = CenturionSystemReference.GetLogger();
+            AudioManager = CenturionSystemReference.GetAudioManager();
+            UpdateManager = CenturionSystemReference.GetUpdateManager();
 
             FireMode = AvailableFireModes.Length != 0 ? AvailableFireModes[0] : FireMode.Safety;
+            Trigger = FireMode == FireMode.Safety ? TriggerState.Idle : TriggerState.Armed;
 
             if (Networking.IsMaster)
             {
@@ -93,9 +93,6 @@ namespace CenturionCC.System.Gun
 
         protected virtual void OnTriggerEnter(Collider other)
         {
-            if (other == null)
-                return;
-
             var otherName = other.name.ToLower();
             Logger.LogVerbose($"{Prefix}OnTriggerEnter: {otherName}");
 
@@ -126,9 +123,6 @@ namespace CenturionCC.System.Gun
 
         protected virtual void OnTriggerExit(Collider other)
         {
-            if (other == null)
-                return;
-
             var otherName = other.name.ToLower();
 
             if (otherName.StartsWith("safezone"))
@@ -173,12 +167,12 @@ namespace CenturionCC.System.Gun
             if (IsLocal)
             {
                 if (TargetAnimator != null)
-                    TargetAnimator.SetFloat(GunHelper.TriggerProgressParameter(), GetMainTriggerPull());
+                    TargetAnimator.SetFloat(GunUtility.TriggerProgressParameter(), GetMainTriggerPull());
                 if (Behaviour != null)
                     Behaviour.OnGunUpdate(this);
 
                 if (Input.GetKeyDown(KeyCode.B))
-                    FireMode = FireModeHelper.CycleFireMode(FireMode, AvailableFireModes);
+                    FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
 
                 if (IsInWall)
                 {
@@ -208,7 +202,7 @@ namespace CenturionCC.System.Gun
             if (!value || !IsLocal)
                 return;
 
-            FireMode = FireModeHelper.CycleFireMode(FireMode, AvailableFireModes);
+            FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
         }
 
         [PublicAPI]
@@ -226,14 +220,13 @@ namespace CenturionCC.System.Gun
                 {
                     Shoot();
                     ++BurstCount;
+                    HasBulletInChamber = false;
 
-                    if (FireMode.HasFiredEnough(BurstCount))
-                    {
-                        Trigger = TriggerState.Fired;
-                        return ShotResult.Succeeded;
-                    }
+                    if (!FireMode.HasFiredEnough(BurstCount))
+                        return ShotResult.SucceededContinuously;
 
-                    return ShotResult.SucceededContinuously;
+                    Trigger = TriggerState.Fired;
+                    return ShotResult.Succeeded;
                 }
                 case ShotResult.Failed:
                 {
@@ -536,8 +529,10 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual Quaternion ShooterRotation => shooter.rotation;
 
-        [PublicAPI] [CanBeNull]
-        public virtual ProjectilePool BulletHolder => bulletHolder;
+        [Obsolete("Use ProjectilePool instead")] [CanBeNull]
+        public virtual ProjectilePool BulletHolder => ProjectilePool;
+        [PublicAPI]
+        public virtual ProjectilePool ProjectilePool => bulletHolder;
         [PublicAPI] [CanBeNull]
         public virtual GunBehaviourBase Behaviour => behaviour;
         [PublicAPI] [CanBeNull]
@@ -598,7 +593,7 @@ namespace CenturionCC.System.Gun
                 var lastState = _currentState;
                 _currentState = value;
                 if (TargetAnimator != null)
-                    TargetAnimator.SetInteger(GunHelper.StateParameter(), value);
+                    TargetAnimator.SetInteger(GunUtility.StateParameter(), value);
                 if (lastState != value)
                     OnProcessStateChange(lastState, value);
             }
@@ -665,6 +660,7 @@ namespace CenturionCC.System.Gun
         /// <seealso cref="TryToShoot()" />
         [PublicAPI]
         public int BurstCount { get; private set; }
+
         /// <summary>
         /// Counter of currently colliding objects.
         /// </summary>
@@ -674,6 +670,7 @@ namespace CenturionCC.System.Gun
         /// </remarks>
         [PublicAPI]
         public int CollisionCount { get; protected set; }
+
         /// <summary>
         /// Is this Gun inside of a wall?
         /// </summary>
@@ -699,10 +696,16 @@ namespace CenturionCC.System.Gun
                 return;
             }
 
-            var bulletSource = BulletHolder;
-            if (bulletSource == null)
+            var pool = ProjectilePool;
+            if (pool == null)
             {
-                Logger.LogError($"{Prefix}BulletHolder not found.");
+                Logger.LogError($"{Prefix}ProjectilePool not found.");
+                return;
+            }
+
+            if (!pool.HasInitialized)
+            {
+                Logger.LogError($"{Prefix}ProjectilePool not yet initialized.");
                 return;
             }
 
@@ -716,15 +719,6 @@ namespace CenturionCC.System.Gun
 
             for (int i = 0; i < data.ProjectileCount; i++)
             {
-                var projectile = bulletSource.GetProjectile();
-                if (projectile == null)
-                {
-                    Logger.LogError($"{Prefix}Projectile not found!!!");
-                    if (Time.timeSinceLevelLoad > 30F)
-                        WatchdogProc.TryNotifyCrash(0xB11DEAD);
-                    return;
-                }
-
                 data.Get
                 (
                     dataIndexOffset + i,
@@ -734,12 +728,10 @@ namespace CenturionCC.System.Gun
                     out var trailTime, out var trailGradient
                 );
 
-                Debug.Log(
-                    $"Fired: {dataIndexOffset + i} with {velocity.ToString("F2")}, {torque.ToString("F2")}");
-
                 var tempRot = rot * rotOffset;
                 var tempPos = pos + (tempRot * posOffset);
-                projectile.Shoot
+
+                var projectile = pool.Shoot
                 (
                     tempPos,
                     tempRot,
@@ -750,18 +742,25 @@ namespace CenturionCC.System.Gun
                     trailTime, trailGradient
                 );
 
+                if (projectile == null)
+                {
+                    Logger.LogError($"{Prefix}Projectile not found!!!");
+                    continue;
+                }
+
                 OnShoot(projectile, i != 0);
             }
 
             if (TargetAnimator != null)
-                TargetAnimator.SetTrigger(GunHelper.IsShootingParameter());
+                TargetAnimator.SetTrigger(GunUtility.IsShootingParameter());
             if (AudioData != null)
                 Internal_PlayAudio(AudioData.Shooting);
             LastShotTime = DateTime.Now;
+            HasCocked = false;
         }
 
         /// <summary>
-        /// Exposed as public for networked event! VRChat pls fix
+        /// Exposed as public for networked event!
         /// </summary>
         public void Internal_EmptyShoot()
         {
@@ -959,7 +958,7 @@ namespace CenturionCC.System.Gun
         {
             _fireMode = fireMode;
             if (TargetAnimator != null)
-                TargetAnimator.SetInteger(GunHelper.SelectorTypeParameter(), (int)fireMode);
+                TargetAnimator.SetInteger(GunUtility.SelectorTypeParameter(), (int)fireMode);
         }
 
         #endregion
@@ -998,6 +997,12 @@ namespace CenturionCC.System.Gun
                 return ShotResult.Failed;
             }
 
+            if (State != GunState.Idle)
+            {
+                Trigger = TriggerState.Fired;
+                return ShotResult.Failed;
+            }
+
             if (DateTime.Now.Subtract(LastShotTime).TotalSeconds < SecondsPerRound)
             {
                 return ShotResult.Paused;
@@ -1016,6 +1021,17 @@ namespace CenturionCC.System.Gun
 
         protected virtual void OnFireModeChanged(FireMode previous, FireMode next)
         {
+            if (previous == FireMode.Safety && next != FireMode.Safety)
+            {
+                Trigger = TriggerState.Armed;
+                return;
+            }
+
+            if (previous != FireMode.Safety && next == FireMode.Safety)
+            {
+                Trigger = TriggerState.Idle;
+                return;
+            }
         }
 
         protected virtual void OnProcessStateChange(byte previous, byte next)
@@ -1023,38 +1039,36 @@ namespace CenturionCC.System.Gun
             var previousState = GunState.Unknown;
             var nextState = GunState.Unknown;
 
-            if (previous < GunStateHelper.MaxValue)
+            if (previous <= GunStateHelper.MaxValue)
                 previousState = (GunState)previous;
-            if (next < GunStateHelper.MaxValue)
+            if (next <= GunStateHelper.MaxValue)
                 nextState = (GunState)next;
 
-            if (nextState.IsTwistingState() &&
-                (previousState.IsIdleState() || previousState.IsPullingOrPushingState()))
+            if (nextState == GunState.InCockingTwisting && previousState != GunState.InCockingTwisting)
             {
                 if (AudioData != null) Internal_PlayAudio(AudioData.CockingTwist);
 
                 if (TargetAnimator != null && !IsLocal)
-                    TargetAnimator.SetFloat(GunHelper.CockingTwistParameter(), 1);
+                    TargetAnimator.SetFloat(GunUtility.CockingTwistParameter(), 1);
             }
-            else if (nextState.IsPushingState() && previousState.IsPullingState())
+            else if (nextState == GunState.InCockingPush && previousState == GunState.InCockingPull)
             {
                 if (AudioData != null) Internal_PlayAudio(AudioData.CockingPull);
 
                 if (TargetAnimator != null && !IsLocal)
                 {
-                    TargetAnimator.SetFloat(GunHelper.CockingProgressParameter(), 1);
-                    TargetAnimator.SetFloat(GunHelper.CockingTwistParameter(), 1);
+                    TargetAnimator.SetFloat(GunUtility.CockingProgressParameter(), 1);
+                    TargetAnimator.SetFloat(GunUtility.CockingTwistParameter(), 1);
                 }
             }
-            else if (nextState.IsIdleState() &&
-                     (previousState.IsPullingOrPushingState() || previousState.IsTwistingState()))
+            else if (nextState == GunState.Idle && previousState != GunState.Idle)
             {
                 if (AudioData != null) Internal_PlayAudio(AudioData.CockingRelease);
 
                 if (TargetAnimator != null && !IsLocal)
                 {
-                    TargetAnimator.SetFloat(GunHelper.CockingProgressParameter(), 0);
-                    TargetAnimator.SetFloat(GunHelper.CockingTwistParameter(), 0);
+                    TargetAnimator.SetFloat(GunUtility.CockingProgressParameter(), 0);
+                    TargetAnimator.SetFloat(GunUtility.CockingTwistParameter(), 0);
                 }
             }
         }
@@ -1135,7 +1149,7 @@ namespace CenturionCC.System.Gun
                 _isLocal = true;
                 Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
                 if (TargetAnimator != null)
-                    TargetAnimator.SetBool(GunHelper.IsPickedUpLocallyParameter(), true);
+                    TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), true);
                 OnGunPickup();
                 b.OnGunPickup(this);
             }
@@ -1220,7 +1234,7 @@ namespace CenturionCC.System.Gun
                 OnGunDrop();
                 b.OnGunDrop(this);
                 if (TargetAnimator != null)
-                    TargetAnimator.SetBool(GunHelper.IsPickedUpLocallyParameter(), false);
+                    TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), false);
 
                 if (TargetHolster != null)
                 {

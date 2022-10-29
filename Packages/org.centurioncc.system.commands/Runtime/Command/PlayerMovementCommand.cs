@@ -10,9 +10,14 @@ namespace CenturionCC.System.Command
     {
         private PlayerMovement _movement;
 
+        public override string Label => "PlayerMovement";
+        public override string[] Aliases => new[] { "Movement" };
+        public override string Usage => "<command> <jump|run|walk|strafe|gravity|info|update|reset|apply> [value]";
+        public override string Description => "Manipulate player's movement speed.";
+
         private void Start()
         {
-            _movement = GameManagerHelper.GetGameManager().movement;
+            _movement = CenturionSystemReference.GetGameManager().movement;
         }
 
         private void PrintInfo(NewbieConsole console)
@@ -84,11 +89,6 @@ namespace CenturionCC.System.Command
             console.Println($"Walk: {_movement.walkSpeed}");
             return _movement.walkSpeed;
         }
-
-        public override string Label => "PlayerMovement";
-        public override string[] Aliases => new[] { "Movement" };
-        public override string Usage => "<command> <jump|run|walk|strafe|gravity|info|update|reset|apply> [value]";
-        public override string Description => "Manipulate player's movement speed.";
 
         public override string OnCommand(NewbieConsole console, string label, string[] vars, ref string[] envVars)
         {

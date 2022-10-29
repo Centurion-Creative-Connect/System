@@ -25,7 +25,7 @@ namespace CenturionCC.System.Gun.GunCamera
             _resetPos = thisTransform.position;
             _resetRot = thisTransform.rotation;
 
-            _updateManager = GameManagerHelper.GetUpdateManager();
+            _updateManager = CenturionSystemReference.GetUpdateManager();
 
             gunCameraInstance.SetGunCamera(transform, gunCameraDataStore);
         }

@@ -29,6 +29,7 @@ namespace CenturionCC.System.Editor.EditorWindow
 
         protected override void OnApplyButton()
         {
+            var environmentLayer = LayerMask.NameToLayer("Environment");
             var meshes = _mapRootObj.GetComponentsInChildren<MeshRenderer>();
             foreach (var meshRenderer in meshes)
             {
@@ -43,7 +44,10 @@ namespace CenturionCC.System.Editor.EditorWindow
 #if UNITY_EDITOR && !COMPILER_UDONSHARP
                 fm.Internal_SetFootstepType(FootstepType.Wood);
 #endif
+                go.layer = environmentLayer;
             }
+
+            EditorUtility.DisplayDialog("CQBMapImport", "CQB Map was successfully converted", "OK!");
         }
 
         protected override bool CanApply()

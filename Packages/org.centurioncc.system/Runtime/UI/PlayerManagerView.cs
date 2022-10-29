@@ -37,7 +37,7 @@ namespace CenturionCC.System.UI
             resetButton.interactable = false;
             updateButton.interactable = false;
 
-            GameManagerHelper.GetPlayerManager().SubscribeCallback(this);
+            CenturionSystemReference.GetPlayerManager().SubscribeCallback(this);
         }
 
         public void UpdateDisplay(bool hasLocalPlayer, int localPlayerIndex)
@@ -52,7 +52,7 @@ namespace CenturionCC.System.UI
                 : youAreNotInGameMessage;
         }
 
-        public override void OnLocalPlayerChanged(ShooterPlayer playerNullable, int index)
+        public override void OnLocalPlayerChanged(PlayerBase playerNullable, int index)
         {
             UpdateDisplay(index != -1, index);
         }

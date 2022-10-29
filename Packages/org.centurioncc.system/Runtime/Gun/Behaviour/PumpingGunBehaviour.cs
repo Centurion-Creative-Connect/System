@@ -13,25 +13,33 @@ namespace CenturionCC.System.Gun.Behaviour
         [SerializeField] [Range(0, 1)]
         private float minAutoLoadMargin = 0.2F;
         [SerializeField]
+        private float minimumZOffset = 0.1F;
+        [SerializeField]
         private GunCockingHapticDataStore cockingHapticData;
         [Header("Desktop")]
         [SerializeField]
+        private bool doDesktopCockingAutomatically = true;
+        [SerializeField]
+        private KeyCode desktopCockingKey = KeyCode.F;
+        [SerializeField]
         private float desktopCockingTime;
+
         private float _cockingRefZ;
 
         private float _desktopCockingTimer;
         private bool _isOnDesktopCocking;
+        private float _mainHandleRefZ;
 
         private float _subHandleRefZ;
 
-        private bool CanSlide(GunState state)
+        private static bool CanSlide(GunBase target)
         {
-            return state == GunState.Idle
-                   || state == GunState.IdleWithCocked
-                   || state == GunState.Pulling
-                   || state == GunState.PullingWithBullet
-                   || state == GunState.Pushing
-                   || state == GunState.PushingWithBullet;
+            return target.State != GunState.Idle || !target.HasBulletInChamber;
+        }
+
+        private static bool CanShoot(GunBase target)
+        {
+            return target.Trigger == TriggerState.Firing && target.State == GunState.Idle && target.HasBulletInChamber;
         }
 
         private float GetProgressNormalized(float localZ)
@@ -41,7 +49,10 @@ namespace CenturionCC.System.Gun.Behaviour
 
         private float GetProgress(float localZ)
         {
-            return Mathf.Clamp(_cockingRefZ - localZ, 0, cockingLength);
+            var diff = _cockingRefZ - localZ;
+            if (cockingLength < diff)
+                _cockingRefZ -= diff - cockingLength;
+            return Mathf.Clamp(diff, 0, cockingLength);
         }
 
         #region BehaviourBase
@@ -51,52 +62,49 @@ namespace CenturionCC.System.Gun.Behaviour
 
         public override void OnTriggerDown(GunBase instance)
         {
-            if (!instance.State.IsReadyToShoot())
+            if (instance.State != GunState.Idle || instance.HasBulletInChamber == false)
             {
-                instance.Trigger = TriggerState.Armed;
+                instance.Trigger = TriggerState.Fired;
                 instance.EmptyShoot();
             }
         }
 
         public override void OnGunUpdate(GunBase instance)
         {
-            var currentState = instance.State;
             float progressNormalized;
 
-            if (instance.Trigger == TriggerState.Firing &&
-                currentState.IsReadyToShoot() &&
-                instance.TryToShoot() == ShotResult.Succeeded)
+            // Shoot a gun whenever it's able to shoot
+            if (CanShoot(instance))
             {
-                instance.State = GunState.Idle;
-                var localSubHandlePos =
-                    instance.Target.worldToLocalMatrix.MultiplyPoint3x4(instance.SubHandle.transform.position);
-                // limit ref pos going further away
-                const float allowedMoveRange = 0.02F;
-                _cockingRefZ =
-                    Mathf.Clamp
-                    (
-                        localSubHandlePos.z,
-                        _subHandleRefZ - allowedMoveRange,
-                        _subHandleRefZ + allowedMoveRange
-                    );
+                var shotResult = instance.TryToShoot();
+                if (shotResult == ShotResult.Succeeded)
+                {
+                    instance.State = GunState.Idle;
+                    var localSubHandlePos =
+                        instance.Target.worldToLocalMatrix.MultiplyPoint3x4(instance.SubHandle.transform.position);
+                    _cockingRefZ = Mathf.Max(_mainHandleRefZ + cockingLength + minimumZOffset, localSubHandlePos.z);
+                }
             }
 
-            // calculate progress
+            // Calculate cocking progress
             if (Networking.LocalPlayer.IsUserInVR())
             {
-                progressNormalized =
-                    GetProgressNormalized(
-                        instance.Target.worldToLocalMatrix.MultiplyPoint3x4(instance.SubHandle.transform.position).z);
+                var worldToLocalMatrix = instance.Target.worldToLocalMatrix;
+                var subHandleLocalPos = worldToLocalMatrix.MultiplyPoint3x4(instance.SubHandle.transform.position);
+                progressNormalized = GetProgressNormalized(subHandleLocalPos.z);
             }
             else
             {
-                // initiate desktop cocking
-                if (!_isOnDesktopCocking && (currentState == GunState.Idle || Input.GetKeyDown(KeyCode.F)))
+                // Initiate desktop cocking on key press
+                var cockingInput = Input.GetKeyDown(desktopCockingKey) || doDesktopCockingAutomatically;
+                var shouldCock = instance.State == GunState.Idle && !instance.HasCocked && instance.HasNextBullet();
+                if (!_isOnDesktopCocking && CanSlide(instance) && shouldCock && cockingInput)
                 {
                     _isOnDesktopCocking = true;
                     _desktopCockingTimer = 0F;
                 }
 
+                // Do desktop cocking work
                 if (_isOnDesktopCocking)
                 {
                     var timeScale = desktopCockingTime / 2;
@@ -117,11 +125,11 @@ namespace CenturionCC.System.Gun.Behaviour
                 }
             }
 
-            // clamp progress
-            if (!CanSlide(currentState)) progressNormalized = 0;
+            // Clamp calculated progresses
+            if (!CanSlide(instance)) progressNormalized = 0;
 
-            // do state changing work
-            GunHelper.UpdateStateStraightPull
+            // Change states using GunUtility
+            GunUtility.UpdateStateStraightPull
             (
                 instance,
                 cockingHapticData,
@@ -135,6 +143,7 @@ namespace CenturionCC.System.Gun.Behaviour
         public override void Setup(GunBase instance)
         {
             // Reset cocking reference position
+            _mainHandleRefZ = instance.MainHandlePositionOffset.z;
             _subHandleRefZ = instance.SubHandlePositionOffset.z;
             _cockingRefZ = _subHandleRefZ;
         }

@@ -2,6 +2,7 @@
 using CenturionCC.System.Gun;
 using CenturionCC.System.Player;
 using CenturionCC.System.Utils;
+using DerpyNewbie.Common;
 using DerpyNewbie.Common.Role;
 using UdonSharp;
 using UnityEngine;
@@ -72,9 +73,9 @@ namespace CenturionCC.System.UI
         private bool _currentResetStatusImage;
 
         private GameManager _gameManager;
-        private RoleProvider _roleProvider;
 
         private DateTime _lastGunResetTime;
+        private RoleProvider _roleProvider;
         private bool _updateActiveModeratorsNextFrame;
         private bool _updatePlayerStatusNextFrame;
         private bool _updateStatisticsNextFrame;
@@ -82,7 +83,7 @@ namespace CenturionCC.System.UI
 
         private void Start()
         {
-            _gameManager = GameManagerHelper.GetGameManager();
+            _gameManager = CenturionSystemReference.GetGameManager();
             _roleProvider = _gameManager.roleProvider;
 
             foreach (var o in moderatorOnlyObjects)
@@ -242,9 +243,9 @@ namespace CenturionCC.System.UI
             var modPlayers = _roleProvider.GetPlayersOf(_roleProvider.RoleOf("Staff"));
             foreach (var modPlayerApi in modPlayers)
             {
-                var player = _gameManager.players.GetShooterPlayerByPlayerId(modPlayerApi.playerId);
+                var player = _gameManager.players.GetPlayerById(modPlayerApi.playerId);
                 message +=
-                    $"{(player == null ? GameManager.GetPlayerNameById(modPlayerApi.playerId) : _gameManager.players.GetTeamColoredName(player))}\n";
+                    $"{(player == null ? NewbieUtils.GetPlayerName(modPlayerApi.playerId) : _gameManager.players.GetTeamColoredName(player))}\n";
             }
 
             activeModeratorListText.text = message;
@@ -297,12 +298,12 @@ namespace CenturionCC.System.UI
 
         #region PlayerManagerCallback
 
-        public void OnPlayerChanged(ShooterPlayer player, int oldId, int newId)
+        public void OnPlayerChanged(PlayerBase player, int oldId, int newId)
         {
             _updatePlayerStatusNextFrame = true;
         }
 
-        public void OnFriendlyFire(ShooterPlayer firedPlayer, ShooterPlayer hitPlayer)
+        public void OnFriendlyFire(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(IncrementFriendlyFireCounter));
         }
@@ -314,7 +315,7 @@ namespace CenturionCC.System.UI
             _updateStatisticsNextFrame = true;
         }
 
-        public void OnKilled(ShooterPlayer firedPlayer, ShooterPlayer hitPlayer)
+        public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
             if (hitPlayer.IsLocal)
                 ++_localHitCount;
@@ -324,7 +325,7 @@ namespace CenturionCC.System.UI
             _updateStatisticsNextFrame = true;
         }
 
-        public void OnTeamChanged(ShooterPlayer player, int oldTeam)
+        public void OnTeamChanged(PlayerBase player, int oldTeam)
         {
             _updatePlayerStatusNextFrame = true;
             _updateActiveModeratorsNextFrame = true;

@@ -29,7 +29,7 @@ namespace CenturionCC.System.Gun
             if (summonPosition == null)
                 summonPosition = transform;
             if (_gunManager == null)
-                _gunManager = GameManagerHelper.GetGunManager();
+                _gunManager = CenturionSystemReference.GetGunManager();
             if (_summoningPopUp == null)
             {
                 var go = GameObject.Find(SummoningPopUpHint);

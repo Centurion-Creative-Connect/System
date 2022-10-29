@@ -9,9 +9,14 @@ namespace CenturionCC.System.Command
     {
         private FootstepGenerator _footstep;
 
+        public override string Label => "Footstep";
+        public override string Description => "Read/Writes footstep sound settings";
+
+        public override string Usage => "<command> <enable|step|pace|slow> [value] or <command> <apply>";
+
         private void Start()
         {
-            _footstep = GameManagerHelper.GetGameManager().footstep;
+            _footstep = CenturionSystemReference.GetGameManager().footstep;
         }
 
         private float HandlePace(NewbieConsole console, string[] arguments)
@@ -49,11 +54,6 @@ namespace CenturionCC.System.Command
             console.Println($"Enabled: {_footstep.PlayFootstep}");
             return _footstep.PlayFootstep;
         }
-
-        public override string Label => "Footstep";
-        public override string Description => "Read/Writes footstep sound settings";
-
-        public override string Usage => "<command> <enable|step|pace|slow> [value] or <command> <apply>";
 
         public override string OnCommand(NewbieConsole console, string label, string[] vars, ref string[] envVars)
         {

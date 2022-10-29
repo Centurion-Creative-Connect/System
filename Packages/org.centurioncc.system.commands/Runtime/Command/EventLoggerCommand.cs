@@ -20,9 +20,14 @@ namespace CenturionCC.System.Command
 
         private EventLogger _eventLogger;
 
+        public override string Label => "EventLogger";
+        public override string Usage =>
+            "<command> <write|clear> <hit|shot> or <command> <writeVisual|clearVisual> or <command> <visualizeOnHit> [true|false]";
+        public override string Description => "Manipulate logs produced in EventLogger";
+
         private void Start()
         {
-            _eventLogger = GameManagerHelper.GetGameManager().eventLogger;
+            _eventLogger = CenturionSystemReference.GetGameManager().eventLogger;
         }
 
         private string HandleWrite(NewbieConsole console, string[] args)
@@ -125,11 +130,6 @@ namespace CenturionCC.System.Command
             return _eventLogger.ShouldVisualizeOnLog;
         }
 
-        public override string Label => "EventLogger";
-        public override string Usage =>
-            "<command> <write|clear> <hit|shot> or <command> <writeVisual|clearVisual> or <command> <visualizeOnHit> [true|false]";
-        public override string Description => "Manipulate logs produced in EventLogger";
-
         public override string OnCommand(NewbieConsole console, string label, string[] vars, ref string[] envVars)
         {
             if (vars == null || vars.Length == 0)
@@ -158,11 +158,11 @@ namespace CenturionCC.System.Command
 
                 default:
                     console.Println("<color=red>Available Options:\n" +
-                                        "   write\n" +
-                                        "   clear\n" +
-                                        "   writeVisual\n" +
-                                        "   clearVisual\n" +
-                                        "   visualizeOnHit</color>");
+                                    "   write\n" +
+                                    "   clear\n" +
+                                    "   writeVisual\n" +
+                                    "   clearVisual\n" +
+                                    "   visualizeOnHit</color>");
                     return ConsoleLiteral.GetNone();
                 // ReSharper restore StringLiteralTypo
             }

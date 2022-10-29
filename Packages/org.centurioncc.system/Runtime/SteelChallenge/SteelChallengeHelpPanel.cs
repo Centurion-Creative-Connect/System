@@ -18,7 +18,7 @@ namespace CenturionCC.System.SteelChallenge
 
         private void Start()
         {
-            _updateManager = GameManagerHelper.GetUpdateManager();
+            _updateManager = CenturionSystemReference.GetUpdateManager();
             _updateManager.SubscribeSlowFixedUpdate(this);
             helpPanel.SetActive(false);
         }

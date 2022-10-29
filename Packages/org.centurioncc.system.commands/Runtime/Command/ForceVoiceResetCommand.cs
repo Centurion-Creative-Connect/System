@@ -11,14 +11,14 @@ namespace CenturionCC.System.Command
     {
         private NotificationUI _notification;
 
-        private void Start()
-        {
-            _notification = GameManagerHelper.GetNotificationUI();
-        }
-
         public override string Label => "ForceVoiceReset";
         public override string Usage => "<command>";
         public override string Description => "Resets voice settings for users currently in instance";
+
+        private void Start()
+        {
+            _notification = CenturionSystemReference.GetNotificationUI();
+        }
 
         public override void OnActionCommand(NewbieConsole console, string label, ref string[] vars,
             ref string[] envVars)

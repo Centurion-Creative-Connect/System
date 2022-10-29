@@ -22,18 +22,18 @@ namespace CenturionCC.System.UI.Scoreboard
 
         private void Start()
         {
-            _playerMgr = GameManagerHelper.GetPlayerManager();
+            _playerMgr = CenturionSystemReference.GetPlayerManager();
             _playerMgr.SubscribeCallback(this);
         }
 
-        public override void OnPlayerChanged(ShooterPlayer player, int oldId, int newId)
+        public override void OnPlayerChanged(PlayerBase player, int oldId, int newId)
         {
             var element = GetOrCreateElement(player);
             if (element != null)
                 element.UpdateText();
         }
 
-        public override void OnTeamChanged(ShooterPlayer player, int oldTeam)
+        public override void OnTeamChanged(PlayerBase player, int oldTeam)
         {
             var element = GetOrCreateElement(player);
             if (element == null)
@@ -41,7 +41,7 @@ namespace CenturionCC.System.UI.Scoreboard
 
             var target = reserve;
 
-            switch (player.Team)
+            switch (player.TeamId)
             {
                 case 1:
                     target = redList;
@@ -55,12 +55,12 @@ namespace CenturionCC.System.UI.Scoreboard
             SortScoreboard();
         }
 
-        public override void OnKilled(ShooterPlayer firedPlayer, ShooterPlayer hitPlayer)
+        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
             SortScoreboard();
         }
 
-        public override void OnResetPlayerStats(ShooterPlayer player)
+        public override void OnResetPlayerStats(PlayerBase player)
         {
             var element = GetOrCreateElement(player);
 
@@ -68,18 +68,18 @@ namespace CenturionCC.System.UI.Scoreboard
                 element.UpdateText();
         }
 
-        private ScoreboardPlayerStats GetOrCreateElement(ShooterPlayer player)
+        private ScoreboardPlayerStats GetOrCreateElement(PlayerBase player)
         {
             foreach (var element in _generatedScoreboardElement)
             {
                 var source = element.Source;
-                if (source != null && source.Player != null && source.Player.SyncedPlayerId == player.SyncedPlayerId)
+                if (source != null && source.PlayerId == player.PlayerId)
                     return element;
             }
 
             var generated = Instantiate(sourceScoreboardElement, reserve);
             var generatedElement = generated.GetComponent<ScoreboardPlayerStats>();
-            generatedElement.Source = player.PlayerStats;
+            generatedElement.Source = player;
             _generatedScoreboardElement = _generatedScoreboardElement.AddAsList(generatedElement);
             return generatedElement;
         }

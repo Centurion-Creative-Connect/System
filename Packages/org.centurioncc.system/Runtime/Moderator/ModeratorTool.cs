@@ -1,5 +1,4 @@
-﻿using System;
-using CenturionCC.System.Gun;
+﻿using CenturionCC.System.Gun;
 using CenturionCC.System.Player;
 using CenturionCC.System.UI;
 using CenturionCC.System.Utils;
@@ -26,11 +25,11 @@ namespace CenturionCC.System.Moderator
         [Header("Anti-Cheat Pitch")]
         public float pitchDetection = -10F;
         public int pitchDetectionWarnCount = 20;
+        private GunManager _gunManager;
 
 
         private bool _isModeratorMode;
         private NotificationUI _notification;
-        private GunManager _gunManager;
         private PlayerManager _playerManager;
         private RoleProvider _roleManager;
 
@@ -43,7 +42,7 @@ namespace CenturionCC.System.Moderator
 
         private void Start()
         {
-            var game = GameManagerHelper.GetGameManager();
+            var game = CenturionSystemReference.GetGameManager();
             _playerManager = game.players;
             _gunManager = game.guns;
             _notification = game.notification;
@@ -62,35 +61,36 @@ namespace CenturionCC.System.Moderator
                 return;
 
             var holderPlayerId = holder.playerId;
-            var player = _playerManager.GetShooterPlayerByPlayerId(holderPlayerId);
+            var player = _playerManager.GetPlayerById(holderPlayerId);
 
             if (player == null)
                 return;
 
-            // Pitch Check
-            var pitch = instance.Target.rotation.GetRoll();
-            if (pitch < pitchDetection)
-            {
-                player.PlayerStats.AntiCheatSuspicionLevel++;
-                if (player.PlayerStats.AntiCheatSuspicionLevel > pitchDetectionWarnCount)
-                    _notification.ShowWarn(
-                        $"{GameManager.GetPlayerName(player.VrcPlayer)} が曲射撃ちしてるかも!: {pitch:F1} ({player.PlayerStats.AntiCheatSuspicionLevel})");
-            }
-
-            // Zombie Check
-            var hitTimeDiff = DateTime.Now.Subtract(player.PlayerStats.LastHitTime).TotalSeconds;
-            if (hitTimeDiff > zombieDetectionTimeCutoff && hitTimeDiff < zombieDetectionTime)
-            {
-                player.PlayerStats.AntiCheatSuspicionLevel++;
-                if (player.PlayerStats.AntiCheatSuspicionLevel > zombieDetectionWarnCount)
-                    _notification.ShowWarn(
-                        $"{GameManager.GetPlayerName(player.VrcPlayer)} がゾンビしてるかも!: {hitTimeDiff:F1} ({player.PlayerStats.AntiCheatSuspicionLevel})");
-            }
-
-            // Reset Detection Count if not warned for period
-            if (DateTime.Now.Subtract(player.PlayerStats.AntiCheatLastSuspicionChangedTime).TotalSeconds >
-                detectionCounterResetTimeInSeconds)
-                player.PlayerStats.AntiCheatSuspicionLevel = 0;
+            // TODO: fix this
+            // // Pitch Check
+            // var pitch = instance.Target.rotation.GetRoll();
+            // if (pitch < pitchDetection)
+            // {
+            //     player.PlayerStats.AntiCheatSuspicionLevel++;
+            //     if (player.PlayerStats.AntiCheatSuspicionLevel > pitchDetectionWarnCount)
+            //         _notification.ShowWarn(
+            //             $"{GameManager.GetPlayerName(player.VrcPlayer)} が曲射撃ちしてるかも!: {pitch:F1} ({player.PlayerStats.AntiCheatSuspicionLevel})");
+            // }
+            //
+            // // Zombie Check
+            // var hitTimeDiff = DateTime.Now.Subtract(player.PlayerStats.LastHitTime).TotalSeconds;
+            // if (hitTimeDiff > zombieDetectionTimeCutoff && hitTimeDiff < zombieDetectionTime)
+            // {
+            //     player.PlayerStats.AntiCheatSuspicionLevel++;
+            //     if (player.PlayerStats.AntiCheatSuspicionLevel > zombieDetectionWarnCount)
+            //         _notification.ShowWarn(
+            //             $"{GameManager.GetPlayerName(player.VrcPlayer)} がゾンビしてるかも!: {hitTimeDiff:F1} ({player.PlayerStats.AntiCheatSuspicionLevel})");
+            // }
+            //
+            // // Reset Detection Count if not warned for period
+            // if (DateTime.Now.Subtract(player.PlayerStats.AntiCheatLastSuspicionChangedTime).TotalSeconds >
+            //     detectionCounterResetTimeInSeconds)
+            //     player.PlayerStats.AntiCheatSuspicionLevel = 0;
         }
 
         // public void OnShoot(ManagedGun instance, ProjectileBase projectile)
@@ -98,16 +98,19 @@ namespace CenturionCC.System.Moderator
         //     // CheckShot(instance);
         // }
 
-        public void OnKilled(ShooterPlayer firedPlayer, ShooterPlayer hitPlayer)
+        public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
             if (!IsModeratorMode) return;
 
             var firedVrcPlayer = firedPlayer.VrcPlayer;
+
+            if (firedVrcPlayer == null) return;
+
             var damageType = "Unknown";
 
             foreach (var gun in _gunManager.ManagedGunInstances)
             {
-                if (gun.CurrentHolder != null && gun.CurrentHolder.playerId == firedVrcPlayer.playerId)
+                if (gun != null && gun.CurrentHolder != null && gun.CurrentHolder.playerId == firedPlayer.PlayerId)
                     damageType = gun.WeaponName;
             }
 
@@ -131,8 +134,8 @@ namespace CenturionCC.System.Moderator
             _notification.ShowInfo(string.Format
             (
                 "Staff Only: Hit Info\n{0} => {1}: {2}",
-                GameManager.GetPlayerName(firedVrcPlayer),
-                GameManager.GetPlayerName(hitPlayer.VrcPlayer),
+                NewbieUtils.GetPlayerName(firedVrcPlayer),
+                NewbieUtils.GetPlayerName(hitPlayer.VrcPlayer),
                 damageType
             ));
         }

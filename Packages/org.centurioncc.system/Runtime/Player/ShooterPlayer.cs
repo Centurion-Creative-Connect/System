@@ -2,8 +2,9 @@
 using CenturionCC.System.Audio;
 using CenturionCC.System.Utils;
 using CenturionCC.System.Utils.Watchdog;
+using DerpyNewbie.Common;
 using DerpyNewbie.Common.Role;
-using JetBrains.Annotations;
+using DerpyNewbie.Logger;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -11,7 +12,7 @@ using VRC.SDKBase;
 namespace CenturionCC.System.Player
 {
     [DefaultExecutionOrder(30)] [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-    public class ShooterPlayer : UdonSharpBehaviour
+    public class ShooterPlayer : PlayerBase
     {
         private const string Prefix = "[<color=blue>Player</color>] ";
         private const string DebugString =
@@ -21,124 +22,163 @@ namespace CenturionCC.System.Player
             "active  : {3}\n" +
             "team    : {4}\n" +
             "K/D     : {5}\n" +
-            "<size=8>{6}</size>";
+            "IsLWCol : {6}";
 
         [SerializeField]
         private PlayerManager playerManager;
         [SerializeField]
         private PlayerTag playerTag;
         [SerializeField]
-        private PlayerStats playerStats;
-        [SerializeField]
         private PlayerHumanoidCollider playerHumanoidCollider;
         [SerializeField]
         private HitDisplay display;
-
         private AudioManager _audioManager;
-        private VRCPlayerApi _cachedApi;
+        private RoleData _cachedRoleData;
+
+        private VRCPlayerApi _cachedVrcPlayerApi;
         private FootstepAudioStore _footstepAudio;
 
-        private int _lastCachedPlayerId;
+        private bool _invokeOnDeathNextOnDeserialization;
+        [NonSerialized] [UdonSynced] [FieldChangeCallback(nameof(SyncedDeaths))]
+        private int _syncedDeaths = -1;
+        [NonSerialized] [UdonSynced] [FieldChangeCallback(nameof(SyncedLastAttackerPlayerId))]
+        private int _syncedLastAttackerPlayerId = -1;
+        [NonSerialized] [UdonSynced]
+        private long _syncedLastDiedTimeTicks = 0;
 
         [NonSerialized] [UdonSynced] [FieldChangeCallback(nameof(SyncedPlayerId))]
         private int _syncedPlayerId = -1;
-        [NonSerialized] [UdonSynced] [FieldChangeCallback(nameof(Team))]
-        private int _team = 0;
+        [NonSerialized] [UdonSynced] [FieldChangeCallback(nameof(SyncedTeamId))]
+        private int _syncedTeamId = 0;
 
-        [NonSerialized]
-        public int Index;
+        public override VRCPlayerApi VrcPlayer => _cachedVrcPlayerApi;
 
+        public override int PlayerId => SyncedPlayerId;
 
-        public VRCPlayerApi VrcPlayer
+        public override int TeamId => SyncedTeamId;
+
+        public override int Deaths
         {
-            get
-            {
-                if (_lastCachedPlayerId != SyncedPlayerId)
-                {
-                    var api = VRCPlayerApi.GetPlayerById(SyncedPlayerId);
-                    _cachedApi = api;
-                    _lastCachedPlayerId = SyncedPlayerId;
-                }
-
-                return _cachedApi;
-            }
+            get => SyncedDeaths;
+            set => SyncedDeaths = value;
         }
+
+        public override long LastDiedTimeTicks => _syncedLastDiedTimeTicks;
+
+        public override bool IsAssigned => VrcPlayer != null && VrcPlayer.IsValid();
 
         public int SyncedPlayerId
         {
             get => _syncedPlayerId;
-            private set
+            protected set
             {
                 var lastPlayerId = _syncedPlayerId;
                 var lastRole = Role;
-                var lastIsActive = IsActive;
+                var lastAssigned = IsAssigned;
 
                 _syncedPlayerId = value;
-                Role = playerManager.RoleManager.GetPlayerRole(VRCPlayerApi.GetPlayerById(value));
-                IsActive = VrcPlayer != null && VrcPlayer.IsValid();
-                playerHumanoidCollider.IsCollidersActive = IsActive;
+                _cachedVrcPlayerApi = VRCPlayerApi.GetPlayerById(value);
+                _cachedRoleData = playerManager.RoleManager.GetPlayerRole(VRCPlayerApi.GetPlayerById(value));
 
-                playerManager.Invoke_OnPlayerChanged(this, lastPlayerId, lastRole.HasPermission(), lastIsActive);
+                playerManager.Invoke_OnPlayerChanged(this, lastPlayerId, lastRole.HasPermission(), lastAssigned);
                 if (Networking.IsMaster && lastPlayerId != value)
-                    MasterOnly_SetTeam(0);
+                    SetTeam(0);
 
-                playerTag.SetTeamTagColor(playerManager.GetTeamColor(Team));
-                playerTag.UpdateView();
+                UpdateView();
             }
         }
 
-        public PlayerStats PlayerStats => playerStats;
-
-        public PlayerTag PlayerTag => playerTag;
-
-        public PlayerHumanoidCollider PlayerHumanoidCollider => playerHumanoidCollider;
-
-        public int Team
+        public int SyncedTeamId
         {
-            get => _team;
-            private set
+            get => _syncedTeamId;
+            protected set
             {
-                var lastTeam = _team;
+                var lastTeam = _syncedTeamId;
 
-                _team = value;
+                _syncedTeamId = value;
 
-                if (lastTeam != _team)
+                if (lastTeam != _syncedTeamId)
                     playerManager.Invoke_OnTeamChanged(this, lastTeam);
-                playerTag.SetTeamTagColor(playerManager.GetTeamColor(value));
+
+                UpdateView();
             }
         }
 
-        [CanBeNull]
-        public RoleData Role { get; private set; }
+        public int SyncedDeaths
+        {
+            get => _syncedDeaths;
+            protected set
+            {
+                var lastSyncedDeaths = _syncedDeaths;
+                _syncedDeaths = value;
 
-        public bool IsLocal => SyncedPlayerId == Networking.LocalPlayer.playerId;
+                if (lastSyncedDeaths == -1 || lastSyncedDeaths == value)
+                    return;
 
-        public bool IsActive { get; private set; }
+                _invokeOnDeathNextOnDeserialization = true;
+            }
+        }
+
+        public int SyncedLastAttackerPlayerId
+        {
+            get => _syncedLastAttackerPlayerId;
+            protected set => _syncedLastAttackerPlayerId = value;
+        }
+
+        public override RoleData Role => _cachedRoleData;
 
         private void Start()
         {
             if (playerManager == null)
             {
-                var o = GameObject.Find("PlayerManager");
-                playerManager = o.GetComponent<PlayerManager>();
+                playerManager = CenturionSystemReference.GetPlayerManager();
                 _audioManager = playerManager.AudioManager;
                 _footstepAudio = playerManager.FootstepAudio;
             }
 
-            playerStats.Init(this, playerManager);
-            playerTag.Init(this);
-            playerHumanoidCollider.Init(this);
+            playerTag.Init(this, playerManager);
+            playerHumanoidCollider.Init(this, playerManager);
 
             if (Networking.IsMaster)
-                MasterOnly_Reset();
+                ResetPlayer();
 
             playerManager.UpdateManager.SubscribeFixedUpdate(this);
             playerManager.UpdateManager.SubscribeSlowFixedUpdate(this);
         }
 
+        public override void OnDeserialization()
+        {
+            CheckDiff();
+        }
+
+        public override void OnPreSerialization()
+        {
+            CheckDiff();
+        }
+
+        private void CheckDiff()
+        {
+            if (_invokeOnDeathNextOnDeserialization)
+            {
+                _invokeOnDeathNextOnDeserialization = false;
+                var attacker = playerManager.GetPlayerById(SyncedLastAttackerPlayerId);
+                if (attacker == null)
+                {
+                    playerManager.Logger.LogError(
+                        $"{Prefix}{Index}: Failed to get attacker {SyncedLastAttackerPlayerId} for {NewbieUtils.GetPlayerName(VrcPlayer)}!");
+                    return;
+                }
+
+                ++attacker.Kills;
+
+                playerManager.Invoke_OnKilled(attacker, this);
+                UpdateView();
+            }
+        }
+
         public void _FixedUpdate()
         {
-            if (!IsActive) return;
+            if (!IsAssigned) return;
 
             var api = VrcPlayer;
             if (api == null || !api.IsValid())
@@ -167,17 +207,17 @@ namespace CenturionCC.System.Player
             );
             playerHumanoidCollider.SlowUpdateCollider(api);
 
-            if (playerTag.IsDebugTagShown)
+            if (playerManager.IsDebug)
             {
                 var o = gameObject;
                 playerTag.SetDebugTagText(string.Format(DebugString,
                     o.name,
-                    SyncedPlayerId,
+                    PlayerId,
                     Networking.GetOwner(o).playerId,
-                    IsActive,
-                    Team,
-                    $"{PlayerStats.Kill} / {PlayerStats.Death}",
-                    playerHumanoidCollider.GetDebugString())
+                    IsAssigned,
+                    TeamId,
+                    $"{Kills} / {Deaths}",
+                    playerHumanoidCollider.IsUsingLightweightCollider)
                 );
             }
         }
@@ -187,62 +227,134 @@ namespace CenturionCC.System.Player
             return nonce;
         }
 
-        public void MasterOnly_SetPlayer(int id)
+        public override void SetPlayer(int id)
         {
             if (!Networking.IsMaster)
                 return;
 
             SyncedPlayerId = id;
 
-            Networking.SetOwner(Networking.LocalPlayer, gameObject);
-            RequestSerialization();
+            Sync();
         }
 
-        public void MasterOnly_SetTeam(int team)
+        public override void SetTeam(int team)
         {
             if (!Networking.IsMaster)
                 return;
 
-            Team = team;
+            SyncedTeamId = team;
 
+            Sync();
+        }
+
+        public override void UpdateView()
+        {
+            playerTag.UpdateView();
+            playerHumanoidCollider.UpdateView();
+        }
+
+        public override void Sync()
+        {
             Networking.SetOwner(Networking.LocalPlayer, gameObject);
             RequestSerialization();
         }
 
-        public void MasterOnly_Sync()
+        public override void ResetPlayer()
         {
             if (!Networking.IsMaster)
                 return;
 
-            Networking.SetOwner(Networking.LocalPlayer, gameObject);
-            RequestSerialization();
-        }
-
-        public void MasterOnly_Reset()
-        {
-            if (!Networking.IsMaster)
-                return;
+            ResetStats();
 
             SyncedPlayerId = -1;
-            Team = 0;
+            SyncedTeamId = 0;
 
-            playerStats.ResetStats();
-
-            Networking.SetOwner(Networking.LocalPlayer, gameObject);
-            RequestSerialization();
+            Sync();
         }
 
-        public void OnPlayerColliderEnter(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint)
+        public override void ResetStats()
         {
-            var localPlayerId = Networking.LocalPlayer.playerId;
-            var isLocalDamager = damageData.DamagerPlayerId == localPlayerId;
+            Kills = 0;
+            Deaths = 0;
 
-            playerManager.Invoke_OnHitDetection(playerCollider, damageData, contactPoint, isLocalDamager);
+            playerManager.Invoke_OnResetPlayerStats(this);
         }
 
-        public void PlayHit()
+        public override void OnDamage(PlayerCollider playerCollider, DamageData data, Vector3 contactPoint)
         {
-            display.Play();
+            if (playerCollider == null || data == null)
+            {
+                playerManager.Logger.LogError(
+                    $"{Prefix}OnDamage: PlayerCollider or DamageData were null! will not check!");
+                return;
+            }
+
+            if (!data.ShouldApplyDamage)
+            {
+                playerManager.Logger.LogVerbose(
+                    $"{Prefix}OnDamage: Will ignore damage because ShouldApplyDamage == false");
+                return;
+            }
+
+            var attacker = playerManager.GetPlayerById(data.DamagerPlayerId);
+
+            if (attacker == null)
+            {
+                playerManager.Logger.LogVerbose(
+                    $"{Prefix}OnDamage: Will ignore damage to {NewbieUtils.GetPlayerName(VrcPlayer)} because attacker is null");
+                return;
+            }
+
+            if (PlayerId == attacker.PlayerId)
+            {
+                playerManager.Logger.LogVerbose(
+                    $"{Prefix}OnDamage: Will ignore damage to {NewbieUtils.GetPlayerName(VrcPlayer)} because self shooting");
+                return;
+            }
+
+            if (!IsLocal && !attacker.IsLocal)
+            {
+                playerManager.Logger.LogVerbose(
+                    $"{Prefix}OnDamage: Will ignore damage to {NewbieUtils.GetPlayerName(VrcPlayer)} because neither of players are local player");
+                return;
+            }
+
+            if (TeamId == attacker.TeamId)
+            {
+                playerManager.Invoke_OnFriendlyFire(attacker, this);
+                if (TeamId != 0 && !playerManager.AllowFriendlyFire)
+                {
+                    playerManager.Logger.LogVerbose(
+                        $"{Prefix}OnDamage: Will ignore damage to {NewbieUtils.GetPlayerName(VrcPlayer)} because attacker {NewbieUtils.GetPlayerName(attacker.VrcPlayer)} is in same team");
+                    return;
+                }
+            }
+
+            if (Networking.GetNetworkDateTime().Subtract(LastDiedDateTime).TotalSeconds < 5F)
+            {
+                playerManager.Logger.LogVerbose(
+                    $"{Prefix}Will ignore damage to {NewbieUtils.GetPlayerName(VrcPlayer)} because that player has been hit recently");
+                return;
+            }
+
+            ++Deaths;
+            SyncedLastAttackerPlayerId = attacker.PlayerId;
+            _syncedLastDiedTimeTicks = Networking.GetNetworkDateTime().Ticks;
+
+            Sync();
+
+            ++attacker.Kills;
+            attacker.Sync();
+
+            playerManager.Invoke_OnHitDetection(playerCollider, data, contactPoint, attacker.IsLocal);
+        }
+
+        public override void OnDeath()
+        {
+            if (IsLocal)
+                playerManager.LocalHitEffect.Play();
+            else
+                display.Play();
         }
 
         #region PlayFootstepMethods

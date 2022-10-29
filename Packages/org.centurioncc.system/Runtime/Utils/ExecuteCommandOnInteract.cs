@@ -25,7 +25,7 @@ namespace CenturionCC.System.Utils
         private void Start()
         {
             if (console == null)
-                console = GameObject.Find(GameManagerHelper.ConsolePath).GetComponent<NewbieConsole>();
+                console = CenturionSystemReference.GetConsole();
         }
 
         public override void Interact()

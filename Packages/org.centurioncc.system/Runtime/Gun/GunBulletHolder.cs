@@ -14,14 +14,16 @@ namespace CenturionCC.System.Gun
         [SerializeField]
         private GameObject gunBulletPoolRoot;
         private ProjectileBase[] _bullets;
-
-        private bool _isInitialized;
+        private bool _hasInit;
 
         private int _lastBulletIndex;
         private int _lastGeneratedBulletCount;
 
+        public override bool HasInitialized => _hasInit;
+
         private void Start()
         {
+            _hasInit = false;
             _bullets = new ProjectileBase[gunBulletMax];
             GenerateSteps();
         }
@@ -56,7 +58,7 @@ namespace CenturionCC.System.Gun
             if (_lastGeneratedBulletCount >= _bullets.Length)
             {
                 UnityEngine.Debug.Log("[GunBulletHolder] Successfully generated all bullets!");
-                _isInitialized = true;
+                _hasInit = true;
                 return;
             }
 
@@ -65,7 +67,7 @@ namespace CenturionCC.System.Gun
 
         public override ProjectileBase GetProjectile()
         {
-            if (!_isInitialized)
+            if (!HasInitialized)
                 return null;
 
             if (++_lastBulletIndex >= _bullets.Length)
@@ -84,6 +86,18 @@ namespace CenturionCC.System.Gun
             }
 
             return bullet;
+        }
+
+        public override ProjectileBase Shoot(Vector3 pos, Quaternion rot, Vector3 velocity, Vector3 torque, float drag,
+            string damageType,
+            int playerId, float trailTime, Gradient trailGradient)
+        {
+            var projectile = GetProjectile();
+            if (projectile == null)
+                return null;
+
+            projectile.Shoot(pos, rot, velocity, torque, drag, damageType, playerId, trailTime, trailGradient);
+            return projectile;
         }
     }
 }

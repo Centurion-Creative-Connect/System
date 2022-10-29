@@ -9,15 +9,15 @@ namespace CenturionCC.System.Command
     {
         private WallManager _wall;
 
-        private void Start()
-        {
-            _wall = GameManagerHelper.GetGameManager().wall;
-        }
-
         public override string Label => "WallManager";
         public override string[] Aliases => new[] { "Wall" };
         public override string Usage => "<command> <left|right|up|down> [value]";
         public override string Description => "Manipulates WallManager.";
+
+        private void Start()
+        {
+            _wall = CenturionSystemReference.GetGameManager().wall;
+        }
 
         public override bool OnBoolCommand(NewbieConsole console, string label, ref string[] vars, ref string[] envVars)
         {

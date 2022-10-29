@@ -47,7 +47,7 @@ namespace CenturionCC.System.Gun.Behaviour
 
         [Header("Desktop")]
         [SerializeField]
-        private bool canDesktopCock = true;
+        private bool doDesktopCockingAutomatically = true;
         [SerializeField]
         private KeyCode desktopCockingKey = KeyCode.F;
         [SerializeField]
@@ -69,6 +69,28 @@ namespace CenturionCC.System.Gun.Behaviour
                 idleTwistPosition = cockingPosition;
             if (activeTwistPosition == null)
                 activeTwistPosition = cockingPosition;
+        }
+
+        private void GetNormalizedProgressAndTwist(GunBase instance, out float progress, out float twist)
+        {
+            var refPos = instance.CustomHandle.transform.localPosition;
+            var currentState = instance.State;
+            progress = GetProgressNormalized(refPos);
+            twist = GetTwistNormalized(refPos);
+
+            if (!requireTwist) twist = 1;
+
+            if (twist < 1 - twistMargin &&
+                (currentState == GunState.InCockingTwisting || currentState == GunState.Idle))
+                progress = Mathf.Clamp(progress, 0, cockingMargin);
+            else if (progress > cockingMargin)
+                twist = Mathf.Clamp(twist, 1 - twistMargin, 1);
+
+            if (!canCockAfterCock && instance.State == GunState.Idle && instance.HasBulletInChamber)
+            {
+                progress = Mathf.Clamp(progress, 0, cockingMargin);
+                progress = Mathf.Clamp(twist, 1 - twistMargin, 1);
+            }
         }
 
         private float GetProgressNormalized(Vector3 gunHandleLocalPosition)
@@ -97,9 +119,11 @@ namespace CenturionCC.System.Gun.Behaviour
 
         #region StateCheckMethods
 
-        private bool CanShoot(GunState state)
+        private bool CanShoot(GunBase target)
         {
-            return state == GunState.ReadyToShoot || isDoubleAction && state == GunState.IdleWithBullet;
+            return target.Trigger == TriggerState.Firing &&
+                   target.State == GunState.Idle &&
+                   (target.HasBulletInChamber || isDoubleAction);
         }
 
         #endregion
@@ -111,7 +135,7 @@ namespace CenturionCC.System.Gun.Behaviour
 
         public override void OnTriggerDown(GunBase instance)
         {
-            if (!CanShoot(instance.State))
+            if (!CanShoot(instance))
             {
                 instance.EmptyShoot();
                 instance.Trigger = TriggerState.Armed;
@@ -141,84 +165,82 @@ namespace CenturionCC.System.Gun.Behaviour
 
         public override void OnGunUpdate(GunBase instance)
         {
-            var currentState = instance.State;
             float progressNormalized, twistNormalized;
 
-            // Shoot process
-            if (instance.Trigger == TriggerState.Firing &&
-                CanShoot(currentState) &&
-                instance.TryToShoot() == ShotResult.Succeeded)
-                instance.State = isBlowBack ? GunState.ReadyToShoot : GunState.Idle;
-
-            // Desktop cocking start process
-            if (canDesktopCock && Input.GetKeyDown(desktopCockingKey) && !_isOnDesktopCocking)
+            // Shoot a gun whenever it's able to shoot. load new bullet if it's blow back variant
+            if (CanShoot(instance))
             {
-                Debug.Log("[CockingGunBehaviour] Begin Desktop Reloading");
-                _isOnDesktopCocking = true;
-                _isDesktopCockingCurrentlyPulling = true;
-                _desktopCockingTimer = 0F;
+                var shotResult = instance.TryToShoot();
+                var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
+                if (hasSucceeded && isBlowBack)
+                {
+                    instance.HasCocked = true;
+                    instance.LoadBullet();
+                }
             }
 
-            // Cocking progress calc process
+            // Calculate cocking/twist progress
             if (Networking.LocalPlayer.IsUserInVR())
             {
-                var customHandleLocalPos = instance.CustomHandle.transform.localPosition;
-                progressNormalized = GetProgressNormalized(customHandleLocalPos);
-                twistNormalized = GetTwistNormalized(customHandleLocalPos);
-            }
-            else if (_isOnDesktopCocking)
-            {
-                var timeScale = requireTwist ? desktopCockingTime / 4 : desktopCockingTime / 2;
-                var progressTime = requireTwist ? _desktopCockingTimer - timeScale : _desktopCockingTimer;
-                var twistTime = _desktopCockingTimer;
-
-                if (_isDesktopCockingCurrentlyPulling)
-                {
-                    _desktopCockingTimer += Time.deltaTime;
-
-                    twistNormalized = Mathf.Clamp01(twistTime / timeScale);
-                    progressNormalized = Mathf.Clamp01(progressTime / timeScale);
-
-                    // If completed pulling back process
-                    if (progressNormalized >= 1) _isDesktopCockingCurrentlyPulling = false;
-                }
-                else
-                {
-                    _desktopCockingTimer -= Time.deltaTime;
-
-                    progressNormalized = Mathf.Clamp01(progressTime / timeScale);
-                    twistNormalized = Mathf.Clamp01(twistTime / timeScale);
-
-                    // If completed reloading process
-                    if (_desktopCockingTimer <= 0)
-                    {
-                        _isOnDesktopCocking = false;
-                        _desktopCockingTimer = 0F;
-                    }
-                }
+                GetNormalizedProgressAndTwist(instance, out progressNormalized, out twistNormalized);
             }
             else
             {
-                progressNormalized = 0;
-                twistNormalized = 0;
+                // Initiate desktop cocking on key press
+                var cockingInput = Input.GetKeyDown(desktopCockingKey) || doDesktopCockingAutomatically;
+                var shouldCock = instance.State == GunState.Idle &&
+                                 ((!instance.HasCocked && !isBlowBack) || !instance.HasBulletInChamber) &&
+                                 instance.HasNextBullet();
+                if (!_isOnDesktopCocking && shouldCock && cockingInput)
+                {
+                    Debug.Log("[CockingGunBehaviour] Begin Desktop Reloading");
+                    _isOnDesktopCocking = true;
+                    _isDesktopCockingCurrentlyPulling = true;
+                    _desktopCockingTimer = 0F;
+                }
+
+                // Do desktop cocking work
+                if (_isOnDesktopCocking)
+                {
+                    var timeScale = requireTwist ? desktopCockingTime / 4 : desktopCockingTime / 2;
+                    var progressTime = requireTwist ? _desktopCockingTimer - timeScale : _desktopCockingTimer;
+                    var twistTime = _desktopCockingTimer;
+
+                    if (_isDesktopCockingCurrentlyPulling)
+                    {
+                        _desktopCockingTimer += Time.deltaTime;
+
+                        twistNormalized = Mathf.Clamp01(twistTime / timeScale);
+                        progressNormalized = Mathf.Clamp01(progressTime / timeScale);
+
+                        // If completed pulling back process
+                        if (progressNormalized >= 1) _isDesktopCockingCurrentlyPulling = false;
+                    }
+                    else
+                    {
+                        _desktopCockingTimer -= Time.deltaTime;
+
+                        progressNormalized = Mathf.Clamp01(progressTime / timeScale);
+                        twistNormalized = Mathf.Clamp01(twistTime / timeScale);
+
+                        // If completed reloading process
+                        if (_desktopCockingTimer <= 0)
+                        {
+                            _isOnDesktopCocking = false;
+                            _desktopCockingTimer = 0F;
+                        }
+                    }
+                }
+                else
+                {
+                    progressNormalized = 0;
+                    twistNormalized = 0;
+                }
             }
 
-            // Clamping process
-            if (!requireTwist) twistNormalized = 1;
-
-            if (twistNormalized < 1 - twistMargin && !currentState.IsPullingOrPushingState())
-                progressNormalized = Mathf.Clamp(progressNormalized, 0, cockingMargin);
-            else if (progressNormalized > cockingMargin)
-                twistNormalized = Mathf.Clamp(twistNormalized, 1 - twistMargin, 1);
-
-            if (!canCockAfterCock && currentState.IsCocked())
-            {
-                progressNormalized = Mathf.Clamp(progressNormalized, 0, cockingMargin);
-                twistNormalized = Mathf.Clamp(twistNormalized, 1 - twistMargin, 1);
-            }
-
+            // Change states using GunUtility
             if (requireTwist)
-                GunHelper.UpdateStateBoltAction(
+                GunUtility.UpdateStateBoltAction(
                     instance,
                     cockingHapticData,
                     instance.CustomHandle.CurrentHand,
@@ -229,7 +251,7 @@ namespace CenturionCC.System.Gun.Behaviour
                     twistMargin
                 );
             else
-                GunHelper.UpdateStateStraightPull(
+                GunUtility.UpdateStateStraightPull(
                     instance,
                     cockingHapticData,
                     instance.CustomHandle.CurrentHand,
@@ -273,8 +295,7 @@ namespace CenturionCC.System.Gun.Behaviour
             }
             else if (requireTwist)
             {
-                var twistNormalized = GetTwistNormalized(handlePos);
-                var progressNormalized = GetProgressNormalized(handlePos);
+                GetNormalizedProgressAndTwist(instance, out var progressNormalized, out var twistNormalized);
 
                 if (requireTwist && twistAutoLoadMargin > twistNormalized && cockingAutoLoadMargin > progressNormalized)
                 {

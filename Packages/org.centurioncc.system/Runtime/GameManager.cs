@@ -63,7 +63,7 @@ namespace CenturionCC.System
 
         public static string GetVersion()
         {
-            return "0.1.2";
+            return "0.2.0";
         }
 
         public int KeepAlive(WatchdogProc wd, int nonce)
@@ -76,24 +76,25 @@ namespace CenturionCC.System
             return null;
         }
 
-        public void PlayHitLocal(ShooterPlayer shooterPlayer)
+        [Obsolete("Use PlayerBase.OnDeath() directly.")]
+        public void PlayHitLocal(PlayerBase player)
         {
-            logger.LogVerbose(
-                $"{_prefix}PlayHitLocal: {(shooterPlayer != null ? GetPlayerName(shooterPlayer.VrcPlayer) : "Dummy (shooter player null)")}");
-            if (shooterPlayer != null) shooterPlayer.PlayHit();
-
-            if (DateTime.Now.Subtract(_lastLocalPlayerHitTime).TotalSeconds > localPlayerHitDuration)
-            {
-                hitEffect.Play();
-                _lastLocalPlayerHitTime = DateTime.Now;
-            }
+            PlayOnDeath(player);
         }
 
-        public void PlayHitRemote(ShooterPlayer shooterPlayer)
+        [Obsolete("Use PlayerBase.OnDeath() directly.")]
+        public void PlayHitRemote(PlayerBase player)
+        {
+            PlayOnDeath(player);
+        }
+
+        [Obsolete("Use PlayerBase.OnDeath() directly.")]
+        private void PlayOnDeath(PlayerBase player)
         {
             logger.LogVerbose(
-                $"{_prefix}PlayHitRemote: {(shooterPlayer != null ? GetPlayerName(shooterPlayer.VrcPlayer) : "Dummy (shooter player null)")}");
-            if (shooterPlayer != null) shooterPlayer.PlayHit();
+                $"{_prefix}PlayOnDeath: {(player != null ? NewbieUtils.GetPlayerName(player.VrcPlayer) : "Dummy (shooter player null)")}");
+            if (player != null)
+                player.OnDeath();
         }
 
         public bool CanShoot()
@@ -118,19 +119,16 @@ namespace CenturionCC.System
             return DateTime.Now.Subtract(_lastLocalPlayerHitTime).TotalSeconds < antiZombieTime;
         }
 
+        [Obsolete("Use NewbieUtils.GetPlayerName() instead")]
         public static string GetPlayerName(VRCPlayerApi api)
         {
-            return _GetPlayerName(api, api != null ? api.playerId : -1);
+            return NewbieUtils.GetPlayerName(api);
         }
 
+        [Obsolete("Use NewbieUtils.GetPlayerName() instead")]
         public static string GetPlayerNameById(int playerId)
         {
-            return _GetPlayerName(VRCPlayerApi.GetPlayerById(playerId), playerId);
-        }
-
-        private static string _GetPlayerName(VRCPlayerApi api, int id)
-        {
-            return api == null ? $"{id}:InvalidPlayer" : $"{api.playerId}:{api.displayName}";
+            return NewbieUtils.GetPlayerName(playerId);
         }
 
         #region GunManagerCallbackBase
@@ -145,33 +143,17 @@ namespace CenturionCC.System
 
         #endregion
 
-        #region ModeratorStuff
-
-        [Obsolete("This method is no longer supported.")]
-        public bool GetModeratorMode()
-        {
-            return false;
-        }
-
-        [Obsolete("This method is obsolete. Use RoleManager::GetRole() instead.")]
-        public bool IsModerator()
-        {
-            return roleProvider.GetPlayerRole().HasPermission();
-        }
-
-        #endregion
-
         #region PlayerManagerCallbackBase
 
-        public void OnPlayerChanged(ShooterPlayer player, int oldId, int newId)
+        public void OnPlayerChanged(PlayerBase player, int oldId, int newId)
         {
         }
 
-        public void OnLocalPlayerChanged(ShooterPlayer playerNullable, int index)
+        public void OnLocalPlayerChanged(PlayerBase playerNullable, int index)
         {
         }
 
-        public void OnFriendlyFire(ShooterPlayer firedPlayer, ShooterPlayer hitPlayer)
+        public void OnFriendlyFire(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
         }
 
@@ -182,32 +164,33 @@ namespace CenturionCC.System
                 eventLogger.LogHitDetection(playerCollider, damageData, contactPoint, isShooterDetection);
         }
 
-        public void OnKilled(ShooterPlayer firedPlayer, ShooterPlayer hitPlayer)
+        public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
             if (hitPlayer.IsLocal)
-                PlayHitLocal(hitPlayer);
-
-            PlayHitRemote(hitPlayer);
+                _lastLocalPlayerHitTime = DateTime.Now;
         }
 
-        public void OnTeamChanged(ShooterPlayer player, int oldTeam)
+        public void OnTeamChanged(PlayerBase player, int oldTeam)
         {
         }
 
-        public void OnPlayerTagChanged(ShooterPlayer player, TagType type, bool isOn)
+        public void OnPlayerTagChanged(TagType type, bool isOn)
         {
         }
 
         #endregion
     }
 
+    // Obsolete from v0.2
+    [Obsolete("Use CenturionSystemReference instead.")]
     public static class GameManagerHelper
     {
-        [PublicAPI]
+        [PublicAPI] [Obsolete(
+            "Do not reference the direct path. Use CenturionSystemReference.GetGameManager() instead.")]
         public const string GameManagerPath = "Logics/System/GameManager";
-        [PublicAPI]
+        [PublicAPI] [Obsolete("Do not reference the direct path. Use CenturionSystemReference.GetConsole() instead.")]
         public const string ConsolePath = "Logics/System/LogTablet/NewbieConsole";
-        [PublicAPI]
+        [PublicAPI] [Obsolete("Do not reference the direct path. Use CenturionSystemReference.GetLogger() instead.")]
         public const string LoggerPath = "Logics/System/LogTablet/NewbieLogger";
 
         [PublicAPI]
