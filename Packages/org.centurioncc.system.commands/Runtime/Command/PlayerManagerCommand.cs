@@ -466,7 +466,10 @@ namespace CenturionCC.System.Command
         private bool HandleRequestTeamChange(NewbieConsole console, string[] arguments)
         {
             if (arguments == null || arguments.Length <= 1)
+            {
+                console.Println("<color=red>Usage: <command> team <team_id> [playerId]</color>");
                 return false;
+            }
 
             var targetPlayer = Networking.LocalPlayer;
             var targetTeam = ConsoleParser.TryParseInt(arguments[1]);
