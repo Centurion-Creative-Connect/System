@@ -55,23 +55,21 @@ namespace CenturionCC.System.Player
             if (localPlayer != null)
                 localPlayerTeamId = localPlayer.TeamId;
 
-            var shouldShowTeamTag = _playerManager.ShowTeamTag &&
-                                    (localPlayerTeamId == _player.TeamId ||
-                                     _playerManager.IsSpecialTeamId(_player.TeamId) ||
-                                     _playerManager.IsSpecialTeamId(localPlayerTeamId));
+            var isEitherInSpecialTeam = _playerManager.IsSpecialTeamId(_player.TeamId) ||
+                                        _playerManager.IsSpecialTeamId(localPlayerTeamId);
 
-            teamTag.gameObject.SetActive(shouldShowTeamTag);
+            // Show team tag only when they are in the same team or special team
+            teamTag.gameObject.SetActive(_playerManager.ShowTeamTag &&
+                                         (localPlayerTeamId == _player.TeamId || isEitherInSpecialTeam));
             teamTag.color = _playerManager.GetTeamColor(_player.TeamId);
 
             masterTag.gameObject.SetActive(_playerManager.ShowStaffTag &&
-                                           _player.VrcPlayer.isMaster &&
-                                           _playerManager.IsSpecialTeamId(_player.TeamId));
+                                           _player.VrcPlayer.isMaster && isEitherInSpecialTeam);
             debugText.gameObject.SetActive(_playerManager.IsDebug);
 
             var staffTagType = GetStaffTagType();
-            var shouldShowStaffTag =
-                _playerManager.ShowStaffTag &&
-                _player.Role.IsGameStaff() && _playerManager.IsSpecialTeamId(_player.TeamId);
+            var shouldShowStaffTag = _playerManager.ShowStaffTag &&
+                                     _player.Role.IsGameStaff() && isEitherInSpecialTeam;
 
             staffTag.gameObject.SetActive(shouldShowStaffTag && staffTagType == TagType.Staff);
             ownerTag.gameObject.SetActive(shouldShowStaffTag && staffTagType == TagType.Owner);
