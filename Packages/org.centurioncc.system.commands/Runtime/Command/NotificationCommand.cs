@@ -9,9 +9,13 @@ namespace CenturionCC.System.Command
     {
         private NotificationUI _notification;
 
+        public override string Label => "Notification";
+        public override string[] Aliases => new[] { "Msg", "Pop" };
+        public override string Usage => "<command> [info|warn|err] <msg>";
+
         private void Start()
         {
-            _notification = GameManagerHelper.GetNotificationUI();
+            _notification = CenturionSystemReference.GetNotificationUI();
         }
 
         private static string MakeString(int begin, string[] args)
@@ -25,10 +29,6 @@ namespace CenturionCC.System.Command
 
             return result.Trim();
         }
-
-        public override string Label => "Notification";
-        public override string[] Aliases => new[] { "Msg", "Pop" };
-        public override string Usage => "<command> [info|warn|err] <msg>";
 
         public override void OnActionCommand(NewbieConsole console, string label,
             ref string[] vars, ref string[] envVars)

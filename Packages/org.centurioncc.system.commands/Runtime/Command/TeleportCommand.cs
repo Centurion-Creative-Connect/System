@@ -10,26 +10,30 @@ namespace CenturionCC.System.Command
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class TeleportCommand : ActionCommandHandler
     {
+        private const string PlayerNotFoundMessage = "<color=red>Player {0} does not exist.</color>";
         [SerializeField]
         private TranslatableMessage onTeleportSuccessfulMessage;
+
+        private NewbieConsole _console;
+
+        private int _lastRequestVersion = -1;
+        private NotificationUI _notification;
 
         [UdonSynced]
         private int _opponentPlayerId;
         [UdonSynced]
-        private int _toPlayerId;
-        [UdonSynced]
         private int _requestVersion = -1;
+        [UdonSynced]
+        private int _toPlayerId;
 
-        private int _lastRequestVersion = -1;
-
-        private NewbieConsole _console;
-        private NotificationUI _notification;
-
-        private const string PlayerNotFoundMessage = "<color=red>Player {0} does not exist.</color>";
+        public override string Label => "Teleport";
+        public override string[] Aliases => new[] { "Tp" };
+        public override string Usage => "<command> <toPlayer> or <command> <opponentPlayer> <toPlayer>";
+        public override string Description => "Teleports player to specified player";
 
         private void Start()
         {
-            _notification = GameManagerHelper.GetNotificationUI();
+            _notification = CenturionSystemReference.GetNotificationUI();
             _requestVersion = 0;
             _lastRequestVersion = 0;
         }
@@ -83,11 +87,6 @@ namespace CenturionCC.System.Command
             _console.Println(
                 $"[TeleportCommand] Successfully teleported {NewbieUtils.GetPlayerName(Networking.LocalPlayer)} to {NewbieUtils.GetPlayerName(toPlayer)}!");
         }
-
-        public override string Label => "Teleport";
-        public override string[] Aliases => new[] { "Tp" };
-        public override string Usage => "<command> <toPlayer> or <command> <opponentPlayer> <toPlayer>";
-        public override string Description => "Teleports player to specified player";
 
         public override void OnActionCommand(NewbieConsole console, string label,
             ref string[] vars, ref string[] envVars)

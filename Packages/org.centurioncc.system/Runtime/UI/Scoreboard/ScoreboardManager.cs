@@ -22,7 +22,7 @@ namespace CenturionCC.System.UI.Scoreboard
 
         private void Start()
         {
-            _playerMgr = GameManagerHelper.GetPlayerManager();
+            _playerMgr = CenturionSystemReference.GetPlayerManager();
             _playerMgr.SubscribeCallback(this);
         }
 

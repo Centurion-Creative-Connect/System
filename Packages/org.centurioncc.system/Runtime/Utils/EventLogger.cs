@@ -41,7 +41,7 @@ namespace CenturionCC.System.Utils
 
         private void Start()
         {
-            _logger = GameManagerHelper.GetLogger();
+            _logger = CenturionSystemReference.GetLogger();
         }
 
         public void LogHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint,

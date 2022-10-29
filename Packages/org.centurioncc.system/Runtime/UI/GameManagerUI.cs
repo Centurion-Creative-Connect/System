@@ -168,14 +168,14 @@ namespace CenturionCC.System.UI
         {
             var localPlayer = manager.players.GetLocalPlayer();
             if (localPlayer != null)
-                manager.PlayHitLocal(localPlayer);
+                localPlayer.OnDeath();
         }
 
         public void PlayHitRemote()
         {
             var remotePlayer = manager.players.GetPlayer(GetIntFromField(remoteIdField));
             if (remotePlayer != null)
-                manager.PlayHitRemote(remotePlayer);
+                remotePlayer.OnDeath();
         }
 
         private bool CheckToggle(Toggle toggle, bool lastValue)

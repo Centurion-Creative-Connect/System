@@ -94,7 +94,7 @@ namespace CenturionCC.System.Gun
 
         public void Start()
         {
-            Logger = GameManagerHelper.GetLogger();
+            Logger = CenturionSystemReference.GetLogger();
 
             // cant use get components in children yet so get transform child and get component each
             var variants = new GunVariantDataStore[variantRoot.transform.childCount];

@@ -56,7 +56,7 @@ namespace CenturionCC.System.Utils
 
             hapticSource.GetData(_hapticSamples, 0);
 
-            _updateManager = GameManagerHelper.GetUpdateManager();
+            _updateManager = CenturionSystemReference.GetUpdateManager();
         }
 
         public void _Update()

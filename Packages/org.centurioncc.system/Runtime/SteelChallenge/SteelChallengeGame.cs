@@ -118,8 +118,8 @@ namespace CenturionCC.System.SteelChallenge
         {
             if (shootingBoxReference == null)
                 shootingBoxReference = transform;
-            _audioManager = GameManagerHelper.GetAudioManager();
-            _gunManager = GameManagerHelper.GetGunManager();
+            _audioManager = CenturionSystemReference.GetAudioManager();
+            _gunManager = CenturionSystemReference.GetGunManager();
             _hitTimes = new DateTime[targets.Length];
             foreach (var target in targets)
                 target.game = this;

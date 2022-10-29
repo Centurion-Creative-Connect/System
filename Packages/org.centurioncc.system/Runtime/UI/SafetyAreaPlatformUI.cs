@@ -83,7 +83,7 @@ namespace CenturionCC.System.UI
 
         private void Start()
         {
-            _gameManager = GameManagerHelper.GetGameManager();
+            _gameManager = CenturionSystemReference.GetGameManager();
             _roleProvider = _gameManager.roleProvider;
 
             foreach (var o in moderatorOnlyObjects)

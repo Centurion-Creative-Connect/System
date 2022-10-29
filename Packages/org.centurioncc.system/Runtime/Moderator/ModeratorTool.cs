@@ -42,7 +42,7 @@ namespace CenturionCC.System.Moderator
 
         private void Start()
         {
-            var game = GameManagerHelper.GetGameManager();
+            var game = CenturionSystemReference.GetGameManager();
             _playerManager = game.players;
             _gunManager = game.guns;
             _notification = game.notification;

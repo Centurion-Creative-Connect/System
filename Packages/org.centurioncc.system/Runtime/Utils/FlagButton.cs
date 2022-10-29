@@ -13,15 +13,15 @@ namespace CenturionCC.System.Utils
         public float delay = 2F;
         private AudioSource _audioSource;
         private GameManager _gameManager;
-        private SendVariableSyncEvent _variableEvent;
         private float _lastPlayedTime;
+        private SendVariableSyncEvent _variableEvent;
 
         private void Start()
         {
             _audioSource = GetComponent<AudioSource>();
             _variableEvent = GetComponent<SendVariableSyncEvent>();
             if (_gameManager == null)
-                _gameManager = GameManagerHelper.GetGameManager();
+                _gameManager = CenturionSystemReference.GetGameManager();
 
             _variableEvent.SetCallback(this, nameof(PlayFlagAudio));
         }

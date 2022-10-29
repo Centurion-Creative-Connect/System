@@ -18,17 +18,22 @@ namespace CenturionCC.System.Command
         [SerializeField]
         private TranslatableMessage teleportDestinationNotFoundMessage;
 
-        [UdonSynced]
-        private int _toPlayerId;
-
         private NewbieConsole _console;
         private NotificationUI _notification;
 
+        [UdonSynced]
+        private int _toPlayerId;
+
         private string PlayerNotFoundMessage => "<color=red>Player {0} does not exist.</color>";
+
+        public override string Label => "TeleportAll";
+        public override string[] Aliases => new[] { "TpAll" };
+        public override string Usage => "<command> [toPlayer]";
+        public override string Description => "Teleports all player to self or specified player";
 
         private void Start()
         {
-            _notification = GameManagerHelper.GetNotificationUI();
+            _notification = CenturionSystemReference.GetNotificationUI();
         }
 
         public void SendBeforeTeleportNotification()
@@ -61,11 +66,6 @@ namespace CenturionCC.System.Command
             _console.Println(
                 $"[TeleportAllCommand] Successfully teleported you to {NewbieUtils.GetPlayerName(toPlayer)}");
         }
-
-        public override string Label => "TeleportAll";
-        public override string[] Aliases => new[] { "TpAll" };
-        public override string Usage => "<command> [toPlayer]";
-        public override string Description => "Teleports all player to self or specified player";
 
         public override void OnActionCommand(NewbieConsole console, string label, ref string[] vars,
             ref string[] envVars)

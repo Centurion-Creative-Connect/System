@@ -52,9 +52,9 @@ namespace CenturionCC.System.Gun
 
         protected virtual void Start()
         {
-            Logger = GameManagerHelper.GetLogger();
-            AudioManager = GameManagerHelper.GetAudioManager();
-            UpdateManager = GameManagerHelper.GetUpdateManager();
+            Logger = CenturionSystemReference.GetLogger();
+            AudioManager = CenturionSystemReference.GetAudioManager();
+            UpdateManager = CenturionSystemReference.GetUpdateManager();
 
             FireMode = AvailableFireModes.Length != 0 ? AvailableFireModes[0] : FireMode.Safety;
             Trigger = FireMode == FireMode.Safety ? TriggerState.Idle : TriggerState.Armed;

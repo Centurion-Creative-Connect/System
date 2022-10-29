@@ -64,7 +64,7 @@ namespace CenturionCC.System.Command
 
         private void Start()
         {
-            _playerMgr = GameManagerHelper.GetPlayerManager();
+            _playerMgr = CenturionSystemReference.GetPlayerManager();
         }
 
         public override void OnPreSerialization()

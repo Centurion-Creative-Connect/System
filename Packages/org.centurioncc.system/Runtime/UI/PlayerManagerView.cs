@@ -37,7 +37,7 @@ namespace CenturionCC.System.UI
             resetButton.interactable = false;
             updateButton.interactable = false;
 
-            GameManagerHelper.GetPlayerManager().SubscribeCallback(this);
+            CenturionSystemReference.GetPlayerManager().SubscribeCallback(this);
         }
 
         public void UpdateDisplay(bool hasLocalPlayer, int localPlayerIndex)

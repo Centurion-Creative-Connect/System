@@ -131,8 +131,7 @@ namespace CenturionCC.System.Player
         {
             if (playerManager == null)
             {
-                var o = GameObject.Find("PlayerManager");
-                playerManager = o.GetComponent<PlayerManager>();
+                playerManager = CenturionSystemReference.GetPlayerManager();
                 _audioManager = playerManager.AudioManager;
                 _footstepAudio = playerManager.FootstepAudio;
             }

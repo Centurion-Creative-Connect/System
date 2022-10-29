@@ -17,7 +17,7 @@ namespace CenturionCC.System.Command
 
         private void Start()
         {
-            _gameManager = GameManagerHelper.GetGameManager();
+            _gameManager = CenturionSystemReference.GetGameManager();
         }
 
         public override string OnCommand(NewbieConsole console, string label, string[] vars, ref string[] envVars)
