@@ -343,9 +343,6 @@ namespace CenturionCC.System.Player
 
             Sync();
 
-            ++attacker.Kills;
-            attacker.Sync();
-
             playerManager.Invoke_OnHitDetection(playerCollider, data, contactPoint, attacker.IsLocal);
         }
 
