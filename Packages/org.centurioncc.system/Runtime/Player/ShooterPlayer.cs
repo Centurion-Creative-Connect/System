@@ -78,7 +78,7 @@ namespace CenturionCC.System.Player
 
                 _syncedPlayerId = value;
                 _cachedVrcPlayerApi = VRCPlayerApi.GetPlayerById(value);
-                _cachedRoleData = playerManager.RoleManager.GetPlayerRole(VRCPlayerApi.GetPlayerById(value));
+                _cachedRoleData = playerManager.RoleManager.GetPlayerRole(_cachedVrcPlayerApi);
 
                 playerManager.Invoke_OnPlayerChanged(this, lastPlayerId, lastRole.HasPermission(), lastAssigned);
                 if (Networking.IsMaster && lastPlayerId != value)
