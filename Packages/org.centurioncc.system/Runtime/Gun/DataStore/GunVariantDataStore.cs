@@ -1,5 +1,6 @@
 ﻿using CenturionCC.System.Gun.Behaviour;
 using CenturionCC.System.Gun.GunCamera;
+using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using JetBrains.Annotations;
 using UdonSharp;
@@ -56,6 +57,13 @@ namespace CenturionCC.System.Gun.DataStore
         private TranslatableMessage desktopTooltip;
         [SerializeField]
         private TranslatableMessage vrTooltip;
+        [Header("ObjectMarker Properties")]
+        [SerializeField]
+        private ObjectType objectType = ObjectType.Iron;
+        [SerializeField]
+        private float objectWeight = 0F;
+        [SerializeField]
+        private string[] tags = { "NoFootstep" };
 
         public byte UniqueId => uniqueId;
         public string WeaponName => weaponName;
@@ -102,6 +110,10 @@ namespace CenturionCC.System.Gun.DataStore
 
         public string TooltipMessage =>
             Networking.LocalPlayer.IsUserInVR() ? _MessageOrEmpty(vrTooltip) : _MessageOrEmpty(desktopTooltip);
+
+        public ObjectType ObjectType => objectType;
+        public float ObjectWeight => objectWeight;
+        public string[] Tags => tags;
 
         private string _MessageOrEmpty(TranslatableMessage message)
         {
