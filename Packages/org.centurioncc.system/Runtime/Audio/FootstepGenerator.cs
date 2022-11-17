@@ -1,5 +1,7 @@
 ﻿using System;
 using CenturionCC.System.Player;
+using CenturionCC.System.Utils;
+using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -7,6 +9,13 @@ using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.Audio
 {
+    /// <summary>
+    /// FootstepGenerator determines which surface the player is on,
+    /// and invokes network event at local <see cref="PlayerBase"/> instance.
+    /// </summary>
+    /// <seealso cref="FootstepMarker"/>
+    /// <seealso cref="Utils.ObjectMarker"/>
+    /// <seealso cref="PlayerManager.GetLocalPlayer()"/>
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class FootstepGenerator : UdonSharpBehaviour
     {
@@ -100,12 +109,45 @@ namespace CenturionCC.System.Audio
             if (!Physics.Raycast(transform.position, Vector3.down, out var hit, 3, layerMask) || !hit.transform)
                 return false;
 
+            return TryGetFootstepMarker(hit) || TryGetObjectMarker(hit);
+        }
+
+        private bool TryGetFootstepMarker(RaycastHit hit)
+        {
             var footstepMarker = hit.transform.GetComponentInParent<FootstepMarker>();
             if (footstepMarker == null)
                 return false;
 
             _currentFootstepType = footstepMarker.Type;
             return true;
+        }
+
+        private bool TryGetObjectMarker(RaycastHit hit)
+        {
+            var marker = hit.transform.GetComponent<ObjectMarkerBase>();
+            if (marker == null || marker.Tags.ContainsString("NoFootstep"))
+                return false;
+
+            _currentFootstepType = ConvertToFootstepType(marker.ObjectType);
+            return true;
+        }
+
+        private static FootstepType ConvertToFootstepType(ObjectType type)
+        {
+            switch (type)
+            {
+                case ObjectType.Wood:
+                    return FootstepType.Wood;
+                case ObjectType.Dirt:
+                case ObjectType.Gravel:
+                    return FootstepType.Gravel;
+                case ObjectType.Iron:
+                    return FootstepType.Iron;
+                case ObjectType.Concrete:
+                case ObjectType.Prototype:
+                default:
+                    return FootstepType.Fallback;
+            }
         }
     }
 }
