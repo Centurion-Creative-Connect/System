@@ -1,5 +1,4 @@
 ﻿using CenturionCC.System.Audio;
-using CenturionCC.System.Utils;
 using UdonSharpEditor;
 using UnityEditor;
 using UnityEngine;
@@ -38,14 +37,12 @@ namespace CenturionCC.System.Editor.EditorWindow
                 foreach (var meshCol in go.GetComponents<MeshCollider>())
                     DestroyImmediate(meshCol);
                 go.AddComponent<MeshCollider>();
-                foreach (var footstepMarker in go.GetComponentsInChildren<FootstepMarker>())
-                    UdonSharpEditorUtility.DestroyImmediate(footstepMarker);
-                foreach (var objectMarker in go.GetComponentsInChildren<ObjectMarker>())
-                    UdonSharpEditorUtility.DestroyImmediate(objectMarker);
+                foreach (var marker in go.GetComponentsInChildren<FootstepMarker>())
+                    UdonSharpEditorUtility.DestroyImmediate(marker);
 
-                var om = go.AddUdonSharpComponent<ObjectMarker>();
+                var fm = go.AddUdonSharpComponent<FootstepMarker>();
 #if UNITY_EDITOR && !COMPILER_UDONSHARP
-                om.EditorOnly_SetObjectType(ObjectType.Wood);
+                fm.Internal_SetFootstepType(FootstepType.Wood);
 #endif
                 go.layer = environmentLayer;
             }

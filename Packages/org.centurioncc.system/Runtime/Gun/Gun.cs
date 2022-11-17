@@ -2,7 +2,6 @@
 using CenturionCC.System.Audio;
 using CenturionCC.System.Gun.Behaviour;
 using CenturionCC.System.Gun.DataStore;
-using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using JetBrains.Annotations;
@@ -56,7 +55,6 @@ namespace CenturionCC.System.Gun
             Logger = CenturionSystemReference.GetLogger();
             AudioManager = CenturionSystemReference.GetAudioManager();
             UpdateManager = CenturionSystemReference.GetUpdateManager();
-            PlayerController = CenturionSystemReference.GetPlayerController();
 
             FireMode = AvailableFireModes.Length != 0 ? AvailableFireModes[0] : FireMode.Safety;
             Trigger = FireMode == FireMode.Safety ? TriggerState.Idle : TriggerState.Armed;
@@ -424,22 +422,9 @@ namespace CenturionCC.System.Gun
         [SerializeField]
         protected float subHandleRePickupDelay;
 
-        [Header("ObjectMarker Properties")]
-        [SerializeField]
-        protected ObjectType objectType = ObjectType.Iron;
-        [SerializeField]
-        protected float objectWeight = 0F;
-        [SerializeField]
-        protected string[] tags = { "NoFootstep" };
-
         #endregion
 
         #region OverridenProperties
-
-        public override ObjectType ObjectType => objectType;
-        public override float ObjectWeight => objectWeight;
-        public override float WalkingSpeedMultiplier => 1;
-        public override string[] Tags => tags;
 
         [PublicAPI]
         public override string WeaponName => weaponName;
@@ -504,8 +489,6 @@ namespace CenturionCC.System.Gun
         public UpdateManager UpdateManager { get; protected set; }
         [PublicAPI]
         public AudioManager AudioManager { get; protected set; }
-        [PublicAPI]
-        public PlayerController PlayerController { get; protected set; }
 
         #endregion
 
@@ -1169,8 +1152,6 @@ namespace CenturionCC.System.Gun
                     TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), true);
                 OnGunPickup();
                 b.OnGunPickup(this);
-                if (PlayerController != null)
-                    PlayerController.AddHoldingObject(this);
             }
 
             OnGunHandlePickup(instance);
@@ -1263,9 +1244,6 @@ namespace CenturionCC.System.Gun
                     Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
                     RequestSerialization();
                 }
-
-                if (PlayerController != null)
-                    PlayerController.RemoveHoldingObject(this);
 
                 _isLocal = false;
             }

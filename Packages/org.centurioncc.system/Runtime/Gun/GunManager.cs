@@ -34,15 +34,14 @@ namespace CenturionCC.System.Gun
 
 
         private int _lastResetIndex = -1;
+        private int _pickupLocalGunCount;
 
         [CanBeNull]
         public PrintableBase Logger { get; private set; }
         [ItemCanBeNull]
-        public ManagedGun[] ManagedGunInstances { get; private set; } = new ManagedGun[0];
-        [ItemNotNull]
-        public ManagedGun[] LocalHeldGuns { get; private set; } = new ManagedGun[0];
+        public ManagedGun[] ManagedGunInstances { get; private set; }
         [ItemCanBeNull]
-        public GunVariantDataStore[] VariantDataInstances { get; private set; } = new GunVariantDataStore[0];
+        public GunVariantDataStore[] VariantDataInstances { get; private set; }
         public ProjectilePool BulletHolder => bulletHolder;
         public DefaultGunBehaviour FallbackBehaviour => fallbackBehaviour;
         public GunVariantDataStore FallbackVariantData => fallbackVariantData;
@@ -90,7 +89,7 @@ namespace CenturionCC.System.Gun
                 return true;
             }
         }
-        public bool IsHoldingGun => LocalHeldGuns.Length != 0;
+        public bool IsHoldingGun => _pickupLocalGunCount != 0;
         public int OccupiedRemoteGunCount { get; private set; }
 
         public void Start()
@@ -109,8 +108,6 @@ namespace CenturionCC.System.Gun
                 managedGuns[i] = managedGunRoot.transform.GetChild(i).GetComponent<ManagedGun>();
 
             ManagedGunInstances = managedGuns;
-
-            LocalHeldGuns = new ManagedGun[0];
 
             if (VariantDataInstances == null || ManagedGunInstances == null)
             {
@@ -360,8 +357,8 @@ namespace CenturionCC.System.Gun
         {
             if (instance == null) return;
 
+            ++_pickupLocalGunCount;
             Logger.Log($"{Prefix}OnPickedUpLocally: {instance.name}");
-            LocalHeldGuns = LocalHeldGuns.AddAsSet(instance);
 
             foreach (var callback in _eventCallbacks)
             {
@@ -374,8 +371,8 @@ namespace CenturionCC.System.Gun
         {
             if (instance == null) return;
 
+            --_pickupLocalGunCount;
             Logger.Log($"{Prefix}OnDropLocally: {instance.name}");
-            LocalHeldGuns = LocalHeldGuns.RemoveItem(instance);
 
             foreach (var callback in _eventCallbacks)
             {

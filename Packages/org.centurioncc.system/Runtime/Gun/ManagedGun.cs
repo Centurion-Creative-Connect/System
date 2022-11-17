@@ -1,7 +1,6 @@
 ﻿using CenturionCC.System.Gun.Behaviour;
 using CenturionCC.System.Gun.DataStore;
 using CenturionCC.System.Gun.GunCamera;
-using CenturionCC.System.Utils;
 using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Logger;
 using JetBrains.Annotations;
@@ -438,15 +437,6 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public override FireMode[] AvailableFireModes =>
             VariantData != null ? VariantData.AvailableFiringModes : new[] { FireMode.Safety };
-
-        public override ObjectType ObjectType =>
-            VariantData != null ? VariantData.ObjectType : ObjectType.Prototype;
-
-        public override float ObjectWeight =>
-            VariantData != null ? VariantData.ObjectWeight : 0;
-
-        public override string[] Tags =>
-            VariantData != null ? VariantData.Tags : new string[0];
 
         #endregion
     }

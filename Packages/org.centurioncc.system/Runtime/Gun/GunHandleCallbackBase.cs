@@ -1,9 +1,9 @@
-﻿using CenturionCC.System.Utils;
+﻿using UdonSharp;
 using UnityEngine;
 
 namespace CenturionCC.System.Gun
 {
-    public abstract class GunHandleCallbackBase : ObjectMarkerBase
+    public abstract class GunHandleCallbackBase : UdonSharpBehaviour
     {
         public abstract Vector3 GetHandleIdlePosition(GunHandle instance, HandleType handleType);
 
