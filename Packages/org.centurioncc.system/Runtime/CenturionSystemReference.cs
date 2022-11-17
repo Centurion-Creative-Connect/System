@@ -2,6 +2,7 @@
 using CenturionCC.System.Gun;
 using CenturionCC.System.Player;
 using CenturionCC.System.UI;
+using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using JetBrains.Annotations;
@@ -21,6 +22,7 @@ namespace CenturionCC.System
          */
         private const string GameManagerPath = "Logics/System/GameManager";
         private const string ConsolePath = "Logics/System/LogTablet/NewbieConsole";
+        private const string PlayerControllerPath = "Logics/System/PlayerController";
 
         [PublicAPI]
         public static GameManager GetGameManager()
@@ -31,6 +33,12 @@ namespace CenturionCC.System
         public static NewbieConsole GetConsole()
         {
             return GameObject.Find(ConsolePath).GetComponent<NewbieConsole>();
+        }
+
+        public static PlayerController GetPlayerController()
+        {
+            var obj = GameObject.Find(PlayerControllerPath);
+            return obj != null ? obj.GetComponent<PlayerController>() : null;
         }
 
         public static PrintableBase GetLogger()
