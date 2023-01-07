@@ -38,18 +38,20 @@ namespace CenturionCC.System.Player
         private VRCPlayerApi _cachedVrcPlayerApi;
         private FootstepAudioStore _footstepAudio;
 
+        private bool _hasCheckedInit;
+
         private bool _invokeOnDeathNextOnDeserialization;
         [NonSerialized] [UdonSynced] [FieldChangeCallback(nameof(SyncedDeaths))]
         private int _syncedDeaths = -1;
         [NonSerialized] [UdonSynced] [FieldChangeCallback(nameof(SyncedLastAttackerPlayerId))]
         private int _syncedLastAttackerPlayerId = -1;
         [NonSerialized] [UdonSynced]
-        private long _syncedLastDiedTimeTicks = 0;
+        private long _syncedLastDiedTimeTicks;
 
         [NonSerialized] [UdonSynced] [FieldChangeCallback(nameof(SyncedPlayerId))]
         private int _syncedPlayerId = -1;
         [NonSerialized] [UdonSynced] [FieldChangeCallback(nameof(SyncedTeamId))]
-        private int _syncedTeamId = 0;
+        private int _syncedTeamId;
 
         public override VRCPlayerApi VrcPlayer => _cachedVrcPlayerApi;
 
@@ -112,7 +114,7 @@ namespace CenturionCC.System.Player
                 var lastSyncedDeaths = _syncedDeaths;
                 _syncedDeaths = value;
 
-                if (lastSyncedDeaths == -1 || lastSyncedDeaths == value)
+                if (lastSyncedDeaths <= 0 || lastSyncedDeaths == value)
                     return;
 
                 _invokeOnDeathNextOnDeserialization = true;
@@ -130,14 +132,12 @@ namespace CenturionCC.System.Player
         private void Start()
         {
             if (playerManager == null)
-            {
                 playerManager = CenturionSystemReference.GetPlayerManager();
-                _audioManager = playerManager.AudioManager;
-                _footstepAudio = playerManager.FootstepAudio;
-            }
 
-            playerTag.Init(this, playerManager);
-            playerHumanoidCollider.Init(this, playerManager);
+            _audioManager = playerManager.AudioManager;
+            _footstepAudio = playerManager.FootstepAudio;
+
+            _EnsureInit();
 
             if (Networking.IsMaster)
                 ResetPlayer();
@@ -184,6 +184,8 @@ namespace CenturionCC.System.Player
             if (api == null || !api.IsValid())
                 return;
 
+            _EnsureInit();
+
             transform.SetPositionAndRotation(
                 api.GetPosition(),
                 api.GetRotation());
@@ -195,6 +197,8 @@ namespace CenturionCC.System.Player
             var api = VrcPlayer;
             if (api == null || !api.IsValid())
                 return;
+
+            _EnsureInit();
 
             var localHeadTrackingData = Networking.LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
             var remoteHeadPos = api.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
@@ -249,6 +253,8 @@ namespace CenturionCC.System.Player
 
         public override void UpdateView()
         {
+            _EnsureInit();
+
             playerTag.UpdateView();
             playerHumanoidCollider.UpdateView();
         }
@@ -352,6 +358,19 @@ namespace CenturionCC.System.Player
                 playerManager.LocalHitEffect.Play();
             else
                 display.Play();
+        }
+
+        private void _EnsureInit()
+        {
+            if (_hasCheckedInit)
+                return;
+
+            if (!playerTag.HasInitialized)
+                playerTag.Init(this, playerManager);
+            if (!playerHumanoidCollider.HasInitialized)
+                playerHumanoidCollider.Init(this, playerManager);
+
+            _hasCheckedInit = true;
         }
 
         #region PlayFootstepMethods
