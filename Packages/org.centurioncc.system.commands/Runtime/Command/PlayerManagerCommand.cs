@@ -220,7 +220,8 @@ namespace CenturionCC.System.Command
 
                         foreach (var player in players)
                         {
-                            if (player == null || !player.IsAssigned || !includeMod && player.Role.IsGameStaff())
+                            if (player == null || !player.IsAssigned ||
+                                !includeMod && _playerMgr.IsStaffTeamId(player.TeamId))
                                 continue;
                             activePlayers[activePlayerCount] = player;
                             ++activePlayerCount;
