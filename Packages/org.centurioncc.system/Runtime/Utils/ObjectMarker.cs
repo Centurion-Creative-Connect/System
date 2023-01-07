@@ -20,7 +20,7 @@ namespace CenturionCC.System.Utils
         [SerializeField]
         private float objectWeight = 1F;
 
-        [Tooltip("Multiplier which affects player's movement speed\n" +
+        [Tooltip("Multiplier which affects player's movement speed when standing directly above this object.\n" +
                  "Mostly used in PlayerController.")]
         [SerializeField]
         private float walkingSpeedMultiplier = 1F;
@@ -30,7 +30,8 @@ namespace CenturionCC.System.Utils
         [SerializeField]
         private string[] tags;
 
-        private PlayerController _controller;
+        [SerializeField] [HideInInspector]
+        private PlayerController controller;
 
 
         public override ObjectType ObjectType => objectType;
@@ -38,27 +39,27 @@ namespace CenturionCC.System.Utils
         public override float WalkingSpeedMultiplier => walkingSpeedMultiplier;
         public override string[] Tags => tags;
 
-        private void Start()
-        {
-            _controller = CenturionSystemReference.GetPlayerController();
-        }
-
         public override void OnPickup()
         {
-            if (_controller != null)
-                _controller.AddHoldingObject(this);
+            if (controller != null)
+                controller.AddHoldingObject(this);
         }
 
         public override void OnDrop()
         {
-            if (_controller != null)
-                _controller.RemoveHoldingObject(this);
+            if (controller != null)
+                controller.RemoveHoldingObject(this);
         }
 
 #if UNITY_EDITOR && !COMPILER_UDONSHARP
         public void EditorOnly_SetObjectType(ObjectType type)
         {
             objectType = type;
+        }
+
+        public void EditorOnly_SetReference(PlayerController c)
+        {
+            controller = c;
         }
 #endif
     }
