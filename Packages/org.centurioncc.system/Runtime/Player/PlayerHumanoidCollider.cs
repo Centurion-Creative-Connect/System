@@ -51,6 +51,8 @@ namespace CenturionCC.System.Player
             }
         }
 
+        public bool HasInitialized { get; private set; }
+
         private void Start()
         {
             // get and cache transforms
@@ -77,6 +79,7 @@ namespace CenturionCC.System.Player
                 if (playerCollider != null)
                     playerCollider.player = player;
             lightweightPlayerCollider.player = player;
+            HasInitialized = true;
         }
 
         public void UpdateCollider(VRCPlayerApi api)
@@ -92,55 +95,60 @@ namespace CenturionCC.System.Player
                 UpdateLightweightCollider(api);
         }
 
-        public void UpdateLightweightCollider(VRCPlayerApi api)
+        private void UpdateLightweightCollider(VRCPlayerApi api)
         {
             var height = (api.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position - transform.position).y;
             lightweightColliderAnchor.localScale = new Vector3(1, height + 0.25F, 1);
             lightweightColliderAnchor.localPosition = Vector3.zero;
         }
 
-        public void UpdateHeavyCollider(VRCPlayerApi api)
+        private void UpdateHeavyCollider(VRCPlayerApi api)
         {
+            var head = api.GetBonePosition(HumanBodyBones.Head);
+            var neck = api.GetBonePosition(HumanBodyBones.Neck);
+            var chest = api.GetBonePosition(HumanBodyBones.Chest);
+            var hips = api.GetBonePosition(HumanBodyBones.Hips);
+            var leftUpperArm = api.GetBonePosition(HumanBodyBones.LeftUpperArm);
+            var leftLowerArm = api.GetBonePosition(HumanBodyBones.LeftLowerArm);
+            var leftUpperLeg = api.GetBonePosition(HumanBodyBones.LeftUpperLeg);
+            var leftLowerLeg = api.GetBonePosition(HumanBodyBones.LeftLowerLeg);
+            var leftFoot = api.GetBonePosition(HumanBodyBones.LeftFoot);
+            var rightUpperArm = api.GetBonePosition(HumanBodyBones.RightUpperArm);
+            var rightLowerArm = api.GetBonePosition(HumanBodyBones.RightLowerArm);
+            var rightUpperLeg = api.GetBonePosition(HumanBodyBones.RightUpperLeg);
+            var rightLowerLeg = api.GetBonePosition(HumanBodyBones.RightLowerLeg);
+            var rightFoot = api.GetBonePosition(HumanBodyBones.RightFoot);
+
             if (_playerManager.UseBaseCollider)
             {
-                _headTransform.SetPositionAndRotation(
-                    api.GetBonePosition(HumanBodyBones.Head),
-                    _GetBoneRotation(api, HumanBodyBones.Head, HumanBodyBones.Neck));
-
-                _bodyTransform.SetPositionAndRotation(
-                    api.GetBonePosition(HumanBodyBones.Chest),
-                    _GetBoneRotation(api, HumanBodyBones.Chest, HumanBodyBones.Hips));
-
-                _leftLowerLegTransform.SetPositionAndRotation(
-                    api.GetBonePosition(HumanBodyBones.LeftLowerLeg),
-                    _GetBoneRotation(api, HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftFoot));
-                _rightLowerLegTransform.SetPositionAndRotation(
-                    api.GetBonePosition(HumanBodyBones.RightLowerLeg),
-                    _GetBoneRotation(api, HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot));
+                _headTransform.SetPositionAndRotation(head, _GetRotation(head, neck));
+                _bodyTransform.SetPositionAndRotation(chest, _GetRotation(chest, hips));
+                _leftLowerLegTransform.SetPositionAndRotation(leftLowerLeg, _GetRotation(leftLowerLeg, leftFoot));
+                _rightLowerLegTransform.SetPositionAndRotation(rightLowerLeg, _GetRotation(rightLowerLeg, rightFoot));
             }
 
             if (_playerManager.UseAdditionalCollider)
             {
-                _leftUpperArmTransform.SetPositionAndRotation(
-                    api.GetBonePosition(HumanBodyBones.LeftUpperArm),
-                    _GetBoneRotation(api, HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm));
-                _rightUpperArmTransform.SetPositionAndRotation(
-                    api.GetBonePosition(HumanBodyBones.RightUpperArm),
-                    _GetBoneRotation(api, HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm));
+                _leftUpperArmTransform.SetPositionAndRotation(leftUpperArm, _GetRotation(leftUpperArm, leftLowerArm));
+                _rightUpperArmTransform.SetPositionAndRotation(rightUpperArm,
+                    _GetRotation(rightUpperArm, rightLowerArm));
 
-                _leftUpperLegTransform.SetPositionAndRotation(
-                    api.GetBonePosition(HumanBodyBones.LeftUpperLeg),
-                    _GetBoneRotation(api, HumanBodyBones.LeftUpperLeg, HumanBodyBones.LeftLowerLeg));
-                _rightUpperLegTransform.SetPositionAndRotation(
-                    api.GetBonePosition(HumanBodyBones.RightUpperLeg),
-                    _GetBoneRotation(api, HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg));
+                _leftUpperLegTransform.SetPositionAndRotation(leftUpperLeg, _GetRotation(leftUpperLeg, leftLowerLeg));
+                _rightUpperLegTransform.SetPositionAndRotation(rightUpperLeg,
+                    _GetRotation(rightUpperLeg, rightLowerLeg));
             }
         }
 
-        public void CheckLightweightState(VRCPlayerApi api)
+        private void CheckLightweightState(VRCPlayerApi api)
         {
             if (_playerManager.UseLightweightCollider && !_playerManager.AlwaysUseLightweightCollider)
             {
+                if (_player.IsLocal)
+                {
+                    IsUsingLightweightCollider = false;
+                    return;
+                }
+
                 var localHeadTrackingData = Networking.LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
                 var remoteHeadPos = api.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
                 var localHeadPos = localHeadTrackingData.position;
@@ -154,6 +162,9 @@ namespace CenturionCC.System.Player
 
         public void UpdateView()
         {
+            if (!HasInitialized)
+                return;
+
             if (_playerManager.IsStaffTeamId(_player.TeamId))
             {
                 foreach (var playerCollider in GetColliderIterator())
@@ -186,7 +197,7 @@ namespace CenturionCC.System.Player
             lightweightColliderAnchor.position = _colliderResetPosition;
         }
 
-        public PlayerCollider[] GetColliderIterator()
+        private PlayerCollider[] GetColliderIterator()
         {
             return new[]
             {
@@ -197,10 +208,8 @@ namespace CenturionCC.System.Player
             };
         }
 
-        private static Quaternion _GetBoneRotation(VRCPlayerApi api, HumanBodyBones pivotBone, HumanBodyBones nextBone)
+        private static Quaternion _GetRotation(Vector3 vec1, Vector3 vec2)
         {
-            var vec1 = api.GetBonePosition(pivotBone);
-            var vec2 = api.GetBonePosition(nextBone);
             if (vec1.sqrMagnitude == 0F && vec2.sqrMagnitude == 0F)
                 return Quaternion.identity;
             return Quaternion.LookRotation(vec1 - vec2);
