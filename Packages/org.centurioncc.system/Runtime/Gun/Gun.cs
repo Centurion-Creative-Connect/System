@@ -426,7 +426,7 @@ namespace CenturionCC.System.Gun
 
         [Header("ObjectMarker Properties")]
         [SerializeField]
-        protected ObjectType objectType = ObjectType.Iron;
+        protected ObjectType objectType = ObjectType.Metallic;
         [SerializeField]
         protected float objectWeight = 0F;
         [SerializeField]

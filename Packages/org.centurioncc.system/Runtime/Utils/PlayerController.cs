@@ -149,7 +149,7 @@ namespace CenturionCC.System.Utils
                     return string.Format(format, "Ground");
                 case ObjectType.Wood:
                     return string.Format(format, "Wood");
-                case ObjectType.Iron:
+                case ObjectType.Metallic:
                     return string.Format(format, "Iron");
                 case ObjectType.Concrete:
                 case ObjectType.Prototype:

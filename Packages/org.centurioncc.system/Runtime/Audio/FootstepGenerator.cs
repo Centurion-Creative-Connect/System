@@ -141,7 +141,7 @@ namespace CenturionCC.System.Audio
                 case ObjectType.Dirt:
                 case ObjectType.Gravel:
                     return FootstepType.Gravel;
-                case ObjectType.Iron:
+                case ObjectType.Metallic:
                     return FootstepType.Iron;
                 case ObjectType.Concrete:
                 case ObjectType.Prototype:

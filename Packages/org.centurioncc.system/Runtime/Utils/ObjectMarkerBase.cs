@@ -18,7 +18,7 @@ namespace CenturionCC.System.Utils
         /// </summary>
         public abstract float ObjectWeight { get; }
         /// <summary>
-        /// Describes how fast the player can be moved when player is on top of this object.
+        /// Describes how fast the player can be moved when player is standing directly above this object.
         /// Default is 1.
         /// </summary>
         public abstract float WalkingSpeedMultiplier { get; }
@@ -35,7 +35,7 @@ namespace CenturionCC.System.Utils
         Prototype,
         Gravel,
         Wood,
-        Iron,
+        Metallic,
         Dirt,
         Concrete,
     }

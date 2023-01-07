@@ -59,7 +59,7 @@ namespace CenturionCC.System.Gun.DataStore
         private TranslatableMessage vrTooltip;
         [Header("ObjectMarker Properties")]
         [SerializeField]
-        private ObjectType objectType = ObjectType.Iron;
+        private ObjectType objectType = ObjectType.Metallic;
         [SerializeField]
         private float objectWeight = 0F;
         [SerializeField]
