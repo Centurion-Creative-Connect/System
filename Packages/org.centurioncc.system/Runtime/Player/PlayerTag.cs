@@ -23,15 +23,16 @@ namespace CenturionCC.System.Player
 
         private readonly Vector3 _nametagOffsetPosition = Vector3.up * 0.3F;
 
-        private bool _hasInit;
         private PlayerBase _player;
         private PlayerManager _playerManager;
+
+        public bool HasInitialized { get; private set; }
 
         public void Init(PlayerBase player, PlayerManager manager)
         {
             _player = player;
             _playerManager = manager;
-            _hasInit = true;
+            HasInitialized = true;
         }
 
         public void SetDebugTagText(string value)
@@ -41,7 +42,7 @@ namespace CenturionCC.System.Player
 
         public void UpdateView()
         {
-            if (!_hasInit)
+            if (!HasInitialized)
                 return;
 
             if (_player == null || _player.VrcPlayer == null)
