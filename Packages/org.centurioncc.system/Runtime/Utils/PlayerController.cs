@@ -64,8 +64,6 @@ namespace CenturionCC.System.Utils
         {
             if (surfaceUpdateFrequency < Time.timeSinceLevelLoad - _lastSurfaceUpdatedTime)
             {
-                Debug.Log($"[PlayerController] Tick: {Networking.LocalPlayer.GetPosition().y}");
-
                 _lastSurfaceUpdatedTime = Time.timeSinceLevelLoad;
                 return true;
             }
@@ -248,7 +246,7 @@ namespace CenturionCC.System.Utils
 
         [Tooltip("Delay in seconds until try to update current surface object marker.")]
         [SerializeField]
-        private float surfaceUpdateFrequency = 1F;
+        private float surfaceUpdateFrequency = 0.5F;
         [Tooltip("Layers to check objects with ObjectMarker attached.")]
         [SerializeField]
         private LayerMask surfaceCheckingLayer = 1 << 11;
@@ -264,7 +262,7 @@ namespace CenturionCC.System.Utils
         [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(BaseStrafeSpeed))]
         private float baseStrafeSpeed = 2F;
         [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(BaseJumpImpulse))]
-        private float baseJumpImpulse = 3F;
+        private float baseJumpImpulse = 0;
         [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(BaseGravityStrength))]
         private float baseGravityStrength = 1F;
 
@@ -275,7 +273,7 @@ namespace CenturionCC.System.Utils
         [SerializeField]
         private float environmentEffectMultiplier = 1F;
         [SerializeField]
-        public bool checkGunDirectionToAllowRunning = true;
+        public bool checkGunDirectionToAllowRunning = false;
         [SerializeField] [Range(0, 1F)]
         public float gunDirectionUpperBound = 0.7F;
         [SerializeField] [Range(-1F, 0)]
@@ -286,7 +284,7 @@ namespace CenturionCC.System.Utils
         #region Footstep
 
         [SerializeField]
-        private bool playFootstepSound;
+        private bool playFootstepSound = true;
         [SerializeField] [Range(0, 2)] [UdonSynced]
         [Tooltip("Plays footstep sound if player went this amount of units away.")]
         public float footstepDistance = 1F;
