@@ -33,15 +33,17 @@ namespace CenturionCC.System.Gun
         private Vector3 _mainHandlePosOffset;
         private Quaternion _mainHandleRotOffset;
 
-        private GunHandle _pivotHandle;
+        protected GunHandle _pivotHandle;
 
         [UdonSynced]
-        private Vector3 _pivotPosOffset;
+        protected Vector3 _pivotPosOffset = Vector3.zero;
         [UdonSynced]
-        private Quaternion _pivotRotOffset;
+        protected Quaternion _pivotRotOffset = Quaternion.identity;
 
         [UdonSynced] [FieldChangeCallback(nameof(ShotCount))]
-        private int _shotCount = -1;
+        protected int _shotCount = -1;
+
+
         private bool _subHandleIsPickedUp;
 
         private Vector3 _subHandlePosOffset;
@@ -83,8 +85,13 @@ namespace CenturionCC.System.Gun
             customHandle.handleType = HandleType.CustomHandle;
             customHandle.transform.localPosition = Vector3.down * 50;
 
+            _pivotHandle = mainHandle;
+
             Internal_SetPivot(HandleType.MainHandle);
             Internal_UpdateHandlePickupable();
+
+            MainHandle.Detach();
+            SubHandle.Detach();
 
             UpdateManager.SubscribeUpdate(this);
             UpdateManager.SubscribeSlowUpdate(this);
@@ -163,8 +170,7 @@ namespace CenturionCC.System.Gun
                 return;
 
             Internal_UpdateIsPickedUpState();
-            if (IsPickedUp || IsHolstered)
-                UpdatePosition();
+            UpdatePosition();
 
             if (IsLocal)
             {
@@ -189,14 +195,13 @@ namespace CenturionCC.System.Gun
             if (!Utilities.IsValid(Networking.LocalPlayer))
                 return;
 
-            IsOptimized = Vector3.Distance(target.position, Networking.LocalPlayer.GetPosition()) > OptimizationRange;
+            IsOptimized = Vector3.Distance(Target.position, Networking.LocalPlayer.GetPosition()) > OptimizationRange;
 
             if (!IsOptimized)
                 return;
 
             Internal_UpdateIsPickedUpState();
-            if (IsPickedUp || IsHolstered)
-                UpdatePosition();
+            UpdatePosition();
         }
 
         public override void InputJump(bool value, UdonInputEventArgs args)
@@ -249,9 +254,6 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public override void Shoot()
         {
-            if (HapticData != null && HapticData.Shooting)
-                HapticData.Shooting.PlayBothHand();
-
             ++ShotCount;
             RequestSerialization();
         }
@@ -266,12 +268,12 @@ namespace CenturionCC.System.Gun
         public override void MoveTo(Vector3 position, Quaternion rotation)
         {
             Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
-            mainHandle.ForceDrop();
-            subHandle.ForceDrop();
-            target.SetPositionAndRotation(position, rotation);
+            MainHandle.ForceDrop();
+            SubHandle.ForceDrop();
+            Target.SetPositionAndRotation(position, rotation);
 
-            mainHandle.MoveToLocalPosition(MainHandlePositionOffset, MainHandleRotationOffset);
-            subHandle.MoveToLocalPosition(SubHandlePositionOffset, SubHandleRotationOffset);
+            MainHandle.MoveToLocalPosition(MainHandlePositionOffset, MainHandleRotationOffset);
+            SubHandle.MoveToLocalPosition(SubHandlePositionOffset, SubHandleRotationOffset);
 
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(UpdatePositionForSync));
         }
@@ -279,33 +281,15 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public override void UpdatePosition()
         {
-            Vector3 position;
-            Quaternion rotation;
-
-            // when mainHandle & subHandle is both picked up or dropped
-            // see also: UpdatePositionWithLookAt()
-            if (IsDoubleHandedGun && mainHandle.IsPickedUp && subHandle.IsPickedUp)
-            {
-                rotation = GetLookAtRotation();
-                position = mainHandle.transform.position + rotation * MainHandlePositionOffset * -1;
-            }
-            // when only main handle is picked up
-            else if (mainHandle.IsPickedUp)
-            {
-                var mainHandleTransform = mainHandle.transform;
-                rotation = mainHandleTransform.rotation *
-                           Quaternion.AngleAxis(CurrentMainHandlePitchOffset, Vector3.right);
-                position = mainHandleTransform.position + rotation * MainHandlePositionOffset * -1;
-            }
-            // when only sub handle or other handle is picked up
-            else
-            {
-                var pivotTransform = _pivotHandle.transform;
-                rotation = pivotTransform.rotation * _pivotRotOffset;
-                position = pivotTransform.position + rotation * _pivotPosOffset * -1;
-            }
-
-            target.SetPositionAndRotation(position, rotation);
+            Internal_UpdatePosition(
+                IsDoubleHandedGun && MainHandle.IsPickedUp && SubHandle.IsPickedUp
+                    ? PositionUpdateMethod.LookAt
+                    : MainHandle.IsPickedUp
+                        ? PositionUpdateMethod.MainHandle
+                        : IsPickedUp
+                            ? PositionUpdateMethod.PivotHandle
+                            : PositionUpdateMethod.NotPickedUp
+            );
         }
 
         [PublicAPI]
@@ -341,8 +325,12 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public Quaternion GetLookAtRotation()
         {
-            var mainTransform = mainHandle.transform;
-            var subTransform = subHandle.transform;
+            if (!IsDoubleHandedGun)
+                return MainHandle.transform.rotation *
+                       Quaternion.AngleAxis(CurrentMainHandlePitchOffset, Vector3.right);
+
+            var mainTransform = MainHandle.transform;
+            var subTransform = SubHandle.transform;
 
             var up = mainTransform.up;
             var mainHandlePos = mainTransform.position;
@@ -518,7 +506,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual float MainHandlePitchOffset => mainHandlePitchOffset;
         [PublicAPI]
-        public virtual float CurrentMainHandlePitchOffset { get; private set; }
+        public virtual float CurrentMainHandlePitchOffset { get; protected set; }
 
         [PublicAPI]
         public virtual float SubHandleRePickupDelay => subHandleRePickupDelay;
@@ -586,12 +574,12 @@ namespace CenturionCC.System.Gun
         /// Last shot time of this Gun.
         /// </summary>
         [PublicAPI]
-        public DateTime LastShotTime { get; protected set; }
+        public virtual DateTime LastShotTime { get; protected set; }
         /// <summary>
         /// Currently active <see cref="FireMode"/> of this Gun.
         /// </summary>
         [PublicAPI]
-        public FireMode FireMode
+        public virtual FireMode FireMode
         {
             get => _fireMode;
             set
@@ -602,7 +590,7 @@ namespace CenturionCC.System.Gun
             }
         }
         [PublicAPI]
-        public byte RawState
+        public virtual byte RawState
         {
             get => _currentState;
             protected set
@@ -617,7 +605,7 @@ namespace CenturionCC.System.Gun
         }
 
         [PublicAPI]
-        public int ShotCount
+        public virtual int ShotCount
         {
             get => _shotCount;
             protected set
@@ -650,14 +638,14 @@ namespace CenturionCC.System.Gun
             }
         }
         [PublicAPI]
-        public int QueuedShotCount { get; protected set; }
+        public virtual int QueuedShotCount { get; protected set; }
 
         [PublicAPI] [CanBeNull]
-        public GunHolster TargetHolster { get; protected set; }
+        public virtual GunHolster TargetHolster { get; protected set; }
         [PublicAPI] [field: UdonSynced]
-        public bool IsHolstered { get; protected set; }
+        public virtual bool IsHolstered { get; protected set; }
         [PublicAPI]
-        public bool IsOptimized { get; protected set; }
+        public virtual bool IsOptimized { get; protected set; }
 
         /// <summary>
         /// Alias of 1 / <see cref="RoundsPerSecond" />.
@@ -676,7 +664,7 @@ namespace CenturionCC.System.Gun
         /// </remarks>
         /// <seealso cref="TryToShoot()" />
         [PublicAPI]
-        public int BurstCount { get; private set; }
+        public virtual int BurstCount { get; protected set; }
 
         /// <summary>
         /// Counter of currently colliding objects.
@@ -686,19 +674,19 @@ namespace CenturionCC.System.Gun
         /// Counts down on OnTriggerExit
         /// </remarks>
         [PublicAPI]
-        public int CollisionCount { get; protected set; }
+        public virtual int CollisionCount { get; protected set; }
 
         /// <summary>
         /// Is this Gun inside of a wall?
         /// </summary>
         [PublicAPI]
-        public bool IsInWall => CollisionCount != 0;
+        public virtual bool IsInWall => CollisionCount != 0;
 
         /// <summary>
         /// Is this Gun inside of safezone?
         /// </summary>
         [PublicAPI]
-        public bool IsInSafeZone { get; protected set; }
+        public virtual bool IsInSafeZone { get; protected set; }
 
         #endregion
 
@@ -731,8 +719,8 @@ namespace CenturionCC.System.Gun
                 playerId = CurrentHolder.playerId;
 
             var dataIndexOffset = (ShotCount - QueuedShotCount) * data.ProjectileCount;
-            var pos = shooter.position;
-            var rot = shooter.rotation;
+            var pos = ShooterPosition;
+            var rot = ShooterRotation;
 
             for (int i = 0; i < data.ProjectileCount; i++)
             {
@@ -772,6 +760,9 @@ namespace CenturionCC.System.Gun
                 TargetAnimator.SetTrigger(GunUtility.IsShootingParameter());
             if (AudioData != null)
                 Internal_PlayAudio(AudioData.Shooting);
+            if (IsLocal && HapticData != null && HapticData.Shooting)
+                HapticData.Shooting.PlayBothHand();
+
             LastShotTime = DateTime.Now;
             HasCocked = false;
         }
@@ -779,7 +770,7 @@ namespace CenturionCC.System.Gun
         /// <summary>
         /// Exposed as public for networked event!
         /// </summary>
-        public void Internal_EmptyShoot()
+        public virtual void Internal_EmptyShoot()
         {
             OnEmptyShoot();
             if (AudioData != null)
@@ -788,16 +779,16 @@ namespace CenturionCC.System.Gun
 
         protected void Internal_PlayAudio(AudioDataStore audioStore)
         {
-            AudioManager.PlayAudioAtTransform(audioStore.Clip, target, audioStore.Volume, audioStore.Pitch);
+            AudioManager.PlayAudioAtTransform(audioStore.Clip, Target, audioStore.Volume, audioStore.Pitch);
         }
 
         protected void Internal_UpdateIsPickedUpState()
         {
-            var mainHandleIsPickedUp = mainHandle.IsPickedUp;
-            var subHandleIsPickedUp = subHandle.IsPickedUp;
+            var mainHandleIsPickedUp = MainHandle.IsPickedUp;
+            var subHandleIsPickedUp = SubHandle.IsPickedUp;
             var isPickedUp = mainHandleIsPickedUp || subHandleIsPickedUp;
 
-            if (IsPickedUp != isPickedUp)
+            if (_isPickedUp != isPickedUp)
             {
                 _isPickedUp = isPickedUp;
 
@@ -818,20 +809,13 @@ namespace CenturionCC.System.Gun
             if (_mainHandleIsPickedUp != mainHandleIsPickedUp)
             {
                 _mainHandleIsPickedUp = mainHandleIsPickedUp;
-                if (!IsHolstered)
-                    mainHandle.SetAttached(!mainHandleIsPickedUp);
+                // if (!IsHolstered)
+                //     MainHandle.SetAttached(!mainHandleIsPickedUp);
                 if (!mainHandleIsPickedUp)
                 {
                     if (subHandleIsPickedUp)
                     {
                         Internal_SetPivot(HandleType.SubHandle);
-
-                        if (!Mathf.Approximately(MainHandleRePickupDelay, 0F))
-                        {
-                            mainHandle.SetPickupable(false);
-                            SendCustomEventDelayedSeconds(nameof(Internal_UpdateHandlePickupable),
-                                MainHandleRePickupDelay);
-                        }
                     }
                     else
                     {
@@ -845,20 +829,12 @@ namespace CenturionCC.System.Gun
             if (_subHandleIsPickedUp != subHandleIsPickedUp)
             {
                 _subHandleIsPickedUp = subHandleIsPickedUp;
-                subHandle.SetAttached(!subHandleIsPickedUp);
+                // SubHandle.SetAttached(!subHandleIsPickedUp);
                 if (!subHandleIsPickedUp)
                 {
                     if (mainHandleIsPickedUp)
                     {
                         Internal_SetPivot(HandleType.MainHandle);
-
-                        if (!Mathf.Approximately(SubHandleRePickupDelay, 0F))
-                        {
-                            // Make pickupable after set amount of time
-                            subHandle.SetPickupable(false);
-                            SendCustomEventDelayedSeconds(nameof(Internal_UpdateHandlePickupable),
-                                SubHandleRePickupDelay);
-                        }
 
                         // Get SubHandle owner back when remote dropped a handle!
                         if (IsLocal)
@@ -879,9 +855,9 @@ namespace CenturionCC.System.Gun
         /// </summary>
         public void Internal_UpdateHandlePickupable()
         {
-            mainHandle.SetPickupable(true);
-            subHandle.SetPickupable(IsDoubleHandedGun);
-            customHandle.SetPickupable(Behaviour != null &&
+            MainHandle.SetPickupable(true);
+            SubHandle.SetPickupable(IsDoubleHandedGun);
+            CustomHandle.SetPickupable(Behaviour != null &&
                                        Behaviour.RequireCustomHandle &&
                                        IsPickedUp &&
                                        Networking.LocalPlayer.IsUserInVR());
@@ -896,14 +872,14 @@ namespace CenturionCC.System.Gun
             var newZ =
                 Mathf.Clamp
                 (
-                    transform.worldToLocalMatrix.MultiplyPoint3x4(subHandle.transform.position).z,
+                    Target.worldToLocalMatrix.MultiplyPoint3x4(SubHandle.transform.position).z,
                     subHandleOffsetZ - allowedMoveRangeInZAxis,
                     subHandleOffsetZ + allowedMoveRangeInZAxis
                 );
 
-            var localToWorldMatrix = transform.localToWorldMatrix;
+            var localToWorldMatrix = Target.localToWorldMatrix;
 
-            subHandle.transform.SetPositionAndRotation
+            SubHandle.transform.SetPositionAndRotation
             (
                 localToWorldMatrix.MultiplyPoint3x4(
                     new Vector3
@@ -919,12 +895,11 @@ namespace CenturionCC.System.Gun
         protected void Internal_LimitMainHandlePos()
         {
             // Move handles match with it's gun's position
-            var thisTransform = transform;
 
-            mainHandle.transform.SetPositionAndRotation
+            MainHandle.transform.SetPositionAndRotation
             (
-                thisTransform.localToWorldMatrix.MultiplyPoint3x4(MainHandlePositionOffset),
-                thisTransform.rotation
+                Target.localToWorldMatrix.MultiplyPoint3x4(MainHandlePositionOffset),
+                Target.rotation
             );
         }
 
@@ -934,19 +909,20 @@ namespace CenturionCC.System.Gun
             {
                 case HandleType.MainHandle:
                 {
-                    _pivotHandle = mainHandle;
+                    _pivotHandle = MainHandle;
                     _pivotRotOffset = MainHandleRotationOffset;
                     _pivotPosOffset = MainHandlePositionOffset;
                     break;
                 }
                 case HandleType.SubHandle:
                 {
-                    _pivotHandle = subHandle;
+                    _pivotHandle = SubHandle;
                     // TODO: better look into this for more cleaner implementation
                     if (IsLocal)
                     {
-                        _pivotRotOffset = Quaternion.Inverse(subHandle.transform.rotation) * GetLookAtRotation();
-                        _pivotPosOffset = transform.InverseTransformPoint(subHandle.transform.position);
+                        Internal_UpdatePosition(PositionUpdateMethod.LookAt);
+                        _pivotRotOffset = Quaternion.Inverse(SubHandle.transform.rotation) * GetLookAtRotation();
+                        _pivotPosOffset = Target.InverseTransformPoint(SubHandle.transform.position);
                         Networking.SetOwner(Networking.LocalPlayer, gameObject);
                         RequestSerialization();
                     }
@@ -961,6 +937,45 @@ namespace CenturionCC.System.Gun
                     break;
                 }
             }
+        }
+
+        protected void Internal_UpdatePosition(PositionUpdateMethod method)
+        {
+            Vector3 position;
+            Quaternion rotation;
+
+            switch (method)
+            {
+                default:
+                case PositionUpdateMethod.LookAt:
+                case PositionUpdateMethod.NotPickedUp:
+                    rotation = GetLookAtRotation();
+                    position = MainHandle.transform.position + rotation * MainHandlePositionOffset * -1;
+                    break;
+                case PositionUpdateMethod.MainHandle:
+                    var mainHandleTransform = MainHandle.transform;
+                    rotation = mainHandleTransform.rotation *
+                               Quaternion.AngleAxis(CurrentMainHandlePitchOffset, Vector3.right);
+                    position = mainHandleTransform.position + rotation * MainHandlePositionOffset * -1;
+                    break;
+                case PositionUpdateMethod.PivotHandle:
+                    if (_pivotHandle == null)
+                        return;
+
+                    var pivotTransform = _pivotHandle.transform;
+                    rotation = pivotTransform.rotation * _pivotRotOffset;
+                    position = pivotTransform.position + rotation * _pivotPosOffset * -1;
+                    break;
+            }
+
+            Target.SetPositionAndRotation(position, rotation);
+
+            if (!Networking.IsOwner(gameObject) || method == PositionUpdateMethod.NotPickedUp) return;
+
+            if (!MainHandle.IsPickedUp)
+                MainHandle.MoveToLocalPosition(MainHandlePositionOffset, MainHandleRotationOffset);
+            if (!SubHandle.IsPickedUp)
+                SubHandle.MoveToLocalPosition(SubHandlePositionOffset, SubHandleRotationOffset);
         }
 
         protected void Internal_SetRelatedObjectsOwner(VRCPlayerApi api)
@@ -1246,9 +1261,23 @@ namespace CenturionCC.System.Gun
             OnGunHandleDrop(instance);
             b.OnHandleDrop(this, instance);
 
-            if (!MainHandle.IsPickedUp &&
-                (SubHandle == null || !SubHandle.IsPickedUp) &&
-                (CustomHandle == null || !CustomHandle.IsPickedUp))
+
+            switch (handleType)
+            {
+                case HandleType.MainHandle when !Mathf.Approximately(MainHandleRePickupDelay, 0F):
+                    mainHandle.SetPickupable(false);
+                    SendCustomEventDelayedSeconds(nameof(Internal_UpdateHandlePickupable), MainHandleRePickupDelay);
+                    break;
+                case HandleType.SubHandle when !Mathf.Approximately(SubHandleRePickupDelay, 0F):
+                    subHandle.SetPickupable(false);
+                    SendCustomEventDelayedSeconds(nameof(Internal_UpdateHandlePickupable), SubHandleRePickupDelay);
+                    break;
+            }
+
+            // When dropped entirely
+            if (!(MainHandle.IsPickedUp ||
+                  (SubHandle != null && SubHandle.IsPickedUp) ||
+                  (CustomHandle != null && CustomHandle.IsPickedUp)))
             {
                 OnGunDrop();
                 b.OnGunDrop(this);
@@ -1269,8 +1298,18 @@ namespace CenturionCC.System.Gun
 
                 _isLocal = false;
             }
+
+            Internal_UpdateIsPickedUpState();
         }
 
         #endregion
+    }
+
+    public enum PositionUpdateMethod
+    {
+        LookAt,
+        MainHandle,
+        PivotHandle,
+        NotPickedUp
     }
 }
