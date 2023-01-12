@@ -12,12 +12,12 @@ namespace CenturionCC.System.Gun
         public Transform target;
         public Transform free;
         public Material pickupableMaterial;
-        private Material _defaultMaterial;
-        private MeshRenderer _mesh;
-        private VRC_Pickup _pickup;
         private Collider _collider;
+        private Material _defaultMaterial;
 
         private bool _isAttached;
+        private MeshRenderer _mesh;
+        private VRC_Pickup _pickup;
 
         public bool IsVisible
         {
@@ -68,8 +68,10 @@ namespace CenturionCC.System.Gun
 
         public void MoveToLocalPosition(Vector3 pos, Quaternion rot)
         {
-            var expectedPoint = target.TransformPoint(pos);
-            transform.SetPositionAndRotation(expectedPoint, rot);
+            var localToWorld = target.localToWorldMatrix;
+            var expectedPos = localToWorld.MultiplyPoint3x4(pos);
+            var expectedRot = localToWorld.rotation * rot;
+            transform.SetPositionAndRotation(expectedPos, expectedRot);
         }
 
         public void SetPickupable(bool isPickupable)
