@@ -77,12 +77,27 @@ namespace CenturionCC.System.Gun.Behaviour
             if (CanShoot(instance))
             {
                 var shotResult = instance.TryToShoot();
-                if (shotResult == ShotResult.Succeeded)
+
+                switch (shotResult)
                 {
-                    instance.State = GunState.Idle;
-                    var localSubHandlePos =
-                        instance.Target.worldToLocalMatrix.MultiplyPoint3x4(instance.SubHandle.transform.position);
-                    _cockingRefZ = Mathf.Max(_mainHandleRefZ + cockingLength + minimumZOffset, localSubHandlePos.z);
+                    // IF paused, don't process further to freeze handle movement.
+                    case ShotResult.Paused:
+                        return;
+                    // IF succeeded continuously (most likely not happen), loads bullet then return to try shooting again.
+                    case ShotResult.SucceededContinuously:
+                        instance.LoadBullet();
+                        return;
+                    // IF succeeded, sets state to Idle then change cocking reference Z(which will be used to determine cocking progress) will be updated.
+                    case ShotResult.Succeeded:
+                        instance.State = GunState.Idle;
+                        var localSubHandlePos =
+                            instance.Target.worldToLocalMatrix.MultiplyPoint3x4(instance.SubHandle.transform.position);
+                        _cockingRefZ = Mathf.Max(_mainHandleRefZ + cockingLength + minimumZOffset, localSubHandlePos.z);
+                        break;
+                    case ShotResult.Cancelled:
+                    case ShotResult.Failed:
+                    default:
+                        break;
                 }
             }
 
