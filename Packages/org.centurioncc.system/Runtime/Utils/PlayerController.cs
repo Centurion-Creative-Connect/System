@@ -13,34 +13,39 @@ namespace CenturionCC.System.Utils
     /// Expands VRChats player feature.
     /// </summary>
     /// <remarks>
-    /// This class currently manipulates 2 features by checking player's walking surface:
+    /// This class currently manipulates 3 features by checking player's walking surface:
     /// - adjusting player's movement speed by environmental effect and holding objects weight.
     /// - playing footstep sound when walking fast enough.
+    /// - snaps player onto ground (by adjusting gravity accordingly) if walking on slopes
     /// </remarks>
     /// <seealso cref="ObjectMarker"/>
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class PlayerController : UdonSharpBehaviour
     {
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private GunManager gunManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PlayerManager playerManager;
+
         private bool _canRun = true;
         private ObjectMarkerBase _currentSurfaceObject;
 
         private Vector3 _footstepLastCheckedPosition;
         private float _footstepLastInvokedTime;
-        private GunManager _gunManager;
+        private RaycastHit _hit;
+        private bool _isApplyingGroundSnap;
+        private float _lastGroundSnapUpdatedTime;
         private bool _lastSurfaceNoFootstep;
 
         private float _lastSurfaceUpdatedTime;
+        private Ray _ray;
+        private Vector3 _vel;
 
-        private PlayerManager _playerManager;
-
-        private void Start()
+        private void Update()
         {
-            _playerManager = CenturionSystemReference.GetPlayerManager();
-            _gunManager = CenturionSystemReference.GetGunManager();
-        }
+            if (snapPlayerToGroundOnSlopes)
+                UpdateGroundSnap();
 
-        private void FixedUpdate()
-        {
             if (UpdateTimer())
             {
                 UpdateCurrentSurface();
@@ -73,12 +78,11 @@ namespace CenturionCC.System.Utils
 
         private void UpdateCurrentSurface()
         {
-            if (!Physics.Raycast(Networking.LocalPlayer.GetPosition() + new Vector3(0f, .1F, 0F), Vector3.down,
-                    out var hit, 3,
-                    surfaceCheckingLayer))
+            _ray = new Ray(Networking.LocalPlayer.GetPosition() + new Vector3(0f, .1F, 0F), Vector3.down);
+            if (!Physics.Raycast(_ray, out _hit, 3, surfaceCheckingLayer))
                 return;
 
-            var objMarker = hit.transform.GetComponent<ObjectMarkerBase>();
+            var objMarker = _hit.transform.GetComponent<ObjectMarkerBase>();
             var hasChanged = objMarker != _currentSurfaceObject;
             if (hasChanged)
                 Debug.Log(
@@ -95,14 +99,14 @@ namespace CenturionCC.System.Utils
 
         private void UpdateCanRunState()
         {
-            if (!checkGunDirectionToAllowRunning || _gunManager.LocalHeldGuns.Length == 0)
+            if (!checkGunDirectionToAllowRunning || gunManager.LocalHeldGuns.Length == 0)
             {
                 _canRun = true;
                 return;
             }
 
             _canRun = true;
-            foreach (var gun in _gunManager.LocalHeldGuns)
+            foreach (var gun in gunManager.LocalHeldGuns)
             {
                 var dot = Vector3.Dot(Vector3.up, gun.transform.forward);
                 if (dot < gunDirectionUpperBound && dot > gunDirectionLowerBound)
@@ -115,11 +119,16 @@ namespace CenturionCC.System.Utils
 
         private void UpdateFootstep()
         {
-            var currentPlayerPos = Networking.LocalPlayer.GetPosition();
+            var currentPlayer = Networking.LocalPlayer;
+            var currentPlayerPos = currentPlayer.GetPosition();
 
             // Did player traveled one step distance?
             if (Vector3.Distance(_footstepLastCheckedPosition, currentPlayerPos) <
                 footstepDistance * TotalMultiplier) return;
+
+            // Is player airborne?
+            if (!currentPlayer.IsPlayerGrounded())
+                return;
 
             var timeDiff = (Time.time - _footstepLastInvokedTime) * TotalMultiplier;
             _footstepLastInvokedTime = Time.time;
@@ -128,13 +137,76 @@ namespace CenturionCC.System.Utils
             // Did player traveled fast enough to play footstep?
             if (footstepTime < timeDiff || _currentSurfaceObject == null) return;
 
-            var playerBase = _playerManager.GetLocalPlayer();
-            if (playerBase == null || _playerManager.IsStaffTeamId(playerBase.TeamId))
+            var playerBase = playerManager.GetLocalPlayer();
+            if (playerBase == null || playerManager.IsStaffTeamId(playerBase.TeamId))
                 return;
 
             var isSlow = footstepSlowThresholdTime < timeDiff;
             var methodName = GetFootstepMethodName(_currentSurfaceObject.ObjectType, isSlow);
             playerBase.SendCustomNetworkEvent(NetworkEventTarget.All, methodName);
+        }
+
+        private void UpdateGroundSnap()
+        {
+            var localPlayer = Networking.LocalPlayer;
+
+            // If we've been applying ground snap for period of time, remove that effect by setting gravity to default.
+            if (_isApplyingGroundSnap && _lastGroundSnapUpdatedTime < Time.timeSinceLevelLoad)
+            {
+                // Debug.Log($"[PlayerController] GroundSnap: Reset");
+                UpdateLocalVrcPlayer();
+                _isApplyingGroundSnap = false;
+            }
+
+            _vel = localPlayer.GetVelocity();
+
+            // We're going upwards, don't check ground.
+            if (0.01F < _vel.y)
+            {
+                // Debug.Log($"[PlayerController] GroundSnap: {_isApplyingGroundSnap} Going Upwards");
+                return;
+            }
+
+            // Player is already airborne, don't check ground.
+            if (!localPlayer.IsPlayerGrounded() && !_isApplyingGroundSnap)
+            {
+                // Debug.Log("[PlayerController] GroundSnap: Not Grounded");
+                return;
+            }
+
+            // Make it 2D normalized vector to easier use
+            _vel = (new Vector3(_vel.x, 0F, _vel.z).normalized) * groundSnapForwardDistance;
+
+            _ray = new Ray(localPlayer.GetPosition() + Vector3.up + _vel, Vector3.down);
+            if (!Physics.Raycast(_ray, out _hit, groundSnapMaxDistance + 1, playerGroundLayer))
+            {
+                // Debug.DrawRay(_ray.origin, _ray.direction * (groundSnapMaxDistance + 1), Color.red, 5F);
+                // Debug.Log(
+                //     $"[PlayerController] GroundSnap: {_isApplyingGroundSnap} Ray Not Hit: {_vel.ToString("F2")}");
+                if (_isApplyingGroundSnap)
+                {
+                    // Debug.Log("[PlayerController] GroundSnap: Abort");
+                    UpdateLocalVrcPlayer();
+                    _isApplyingGroundSnap = false;
+                }
+
+                return;
+            }
+
+
+            // If hit was occuring at roughly same place, don't begin snapping.
+            if (_hit.distance <= 1.0075F)
+            {
+                // Debug.DrawRay(_ray.origin, _ray.direction * _hit.distance, Color.cyan, 5F);
+                return;
+            }
+
+            // Debug.DrawRay(_ray.origin, _ray.direction * _hit.distance, Color.green, 5F);
+
+            localPlayer.SetGravityStrength(100F);
+            _lastGroundSnapUpdatedTime = Time.timeSinceLevelLoad + .5F;
+            _isApplyingGroundSnap = true;
+            // Debug.Log($"[PlayerController] GroundSnap: Begin: {_hit.distance}");
         }
 
         private static string GetFootstepMethodName(ObjectType type, bool isSlow)
@@ -250,6 +322,19 @@ namespace CenturionCC.System.Utils
         [Tooltip("Layers to check objects with ObjectMarker attached.")]
         [SerializeField]
         private LayerMask surfaceCheckingLayer = 1 << 11;
+
+        #endregion
+
+        #region GroundSnapping
+
+        [SerializeField]
+        public bool snapPlayerToGroundOnSlopes = true;
+        [SerializeField]
+        private LayerMask playerGroundLayer = (1 | 1 << 9 | 1 << 11);
+        [SerializeField]
+        public float groundSnapMaxDistance = 0.4F;
+        [SerializeField]
+        public float groundSnapForwardDistance = 0.2F;
 
         #endregion
 

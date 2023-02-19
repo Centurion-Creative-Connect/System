@@ -71,13 +71,13 @@ namespace CenturionCC.System.Command
                 {
                     if (vars.Length >= 2 && console.CurrentRole.HasPermission())
                     {
-                        _gameManager.guns.AllowedRicochetCount = ConsoleParser.TryParseInt(vars[1]);
+                        _gameManager.guns.allowedRicochetCount = ConsoleParser.TryParseInt(vars[1]);
                         Networking.SetOwner(Networking.LocalPlayer, _gameManager.gameObject);
                         _gameManager.RequestSerialization();
                     }
 
-                    console.Println($"AllowedRicochetCount: {_gameManager.guns.AllowedRicochetCount}");
-                    return ConsoleLiteral.Of(_gameManager.guns.AllowedRicochetCount);
+                    console.Println($"AllowedRicochetCount: {_gameManager.guns.allowedRicochetCount}");
+                    return ConsoleLiteral.Of(_gameManager.guns.allowedRicochetCount);
                 }
                 case "haptic":
                 case "usehaptic":

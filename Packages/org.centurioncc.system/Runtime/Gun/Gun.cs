@@ -19,6 +19,9 @@ namespace CenturionCC.System.Gun
     {
         private const string LeftHandTrigger = "Oculus_CrossPlatform_PrimaryIndexTrigger";
         private const string RightHandTrigger = "Oculus_CrossPlatform_SecondaryIndexTrigger";
+        private const float FreeHandPickupProximity = .1F;
+        private const float SwapHandDisallowPickupProximity = 0.15F;
+        private const float DisallowPickupFromBelowRange = -0.1F;
 
         [UdonSynced] [FieldChangeCallback(nameof(RawState))]
         private byte _currentState;
@@ -32,6 +35,8 @@ namespace CenturionCC.System.Gun
 
         private Vector3 _mainHandlePosOffset;
         private Quaternion _mainHandleRotOffset;
+        private float _nextMainHandlePickupableTime;
+        private float _nextSubHandlePickupableTime;
 
         protected GunHandle _pivotHandle;
 
@@ -55,11 +60,6 @@ namespace CenturionCC.System.Gun
 
         protected virtual void Start()
         {
-            Logger = CenturionSystemReference.GetLogger();
-            AudioManager = CenturionSystemReference.GetAudioManager();
-            UpdateManager = CenturionSystemReference.GetUpdateManager();
-            PlayerController = CenturionSystemReference.GetPlayerController();
-
             FireMode = AvailableFireModes.Length != 0 ? AvailableFireModes[0] : FireMode.Safety;
             Trigger = FireMode == FireMode.Safety ? TriggerState.Idle : TriggerState.Armed;
 
@@ -69,21 +69,24 @@ namespace CenturionCC.System.Gun
                 ShotCount = 0;
             }
 
-            mainHandle.callback = this;
-            mainHandle.handleType = HandleType.MainHandle;
-            var m = mainHandle.transform;
+            MainHandle.callback = this;
+            MainHandle.handleType = HandleType.MainHandle;
+            MainHandle.target = Target;
+            var m = MainHandle.transform;
             _mainHandlePosOffset = m.localPosition;
             _mainHandleRotOffset = m.localRotation;
 
-            subHandle.callback = this;
-            subHandle.handleType = HandleType.SubHandle;
-            var s = subHandle.transform;
+            SubHandle.callback = this;
+            SubHandle.handleType = HandleType.SubHandle;
+            SubHandle.target = Target;
+            var s = SubHandle.transform;
             _subHandlePosOffset = s.localPosition;
             _subHandleRotOffset = s.localRotation;
 
-            customHandle.callback = this;
-            customHandle.handleType = HandleType.CustomHandle;
-            customHandle.transform.localPosition = Vector3.down * 50;
+            CustomHandle.callback = this;
+            CustomHandle.handleType = HandleType.CustomHandle;
+            CustomHandle.target = Target;
+            CustomHandle.transform.localPosition = Vector3.down * 50;
 
             _pivotHandle = mainHandle;
 
@@ -172,21 +175,23 @@ namespace CenturionCC.System.Gun
             Internal_UpdateIsPickedUpState();
             UpdatePosition();
 
-            if (IsLocal)
+            if (!IsLocal)
+                return;
+
+            Internal_CheckForHandleDistance();
+
+            if (TargetAnimator != null)
+                TargetAnimator.SetFloat(GunUtility.TriggerProgressParameter(), GetMainTriggerPull());
+            if (Behaviour != null)
+                Behaviour.OnGunUpdate(this);
+
+            if (Input.GetKeyDown(KeyCode.B))
+                FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
+
+            if (IsInWall)
             {
-                if (TargetAnimator != null)
-                    TargetAnimator.SetFloat(GunUtility.TriggerProgressParameter(), GetMainTriggerPull());
-                if (Behaviour != null)
-                    Behaviour.OnGunUpdate(this);
-
-                if (Input.GetKeyDown(KeyCode.B))
-                    FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
-
-                if (IsInWall)
-                {
-                    Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .2F, .02F, .1F);
-                    Networking.LocalPlayer.PlayHapticEventInHand(SubHandle.CurrentHand, .2F, .02F, .1F);
-                }
+                Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .2F, .02F, .1F);
+                Networking.LocalPlayer.PlayHapticEventInHand(SubHandle.CurrentHand, .2F, .02F, .1F);
             }
         }
 
@@ -420,6 +425,15 @@ namespace CenturionCC.System.Gun
         [SerializeField]
         protected string[] tags = { "NoFootstep" };
 
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PrintableBase logger;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private UpdateManager updateManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private AudioManager audioManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PlayerController playerController;
+
         #endregion
 
         #region OverridenProperties
@@ -487,13 +501,13 @@ namespace CenturionCC.System.Gun
         #region SystemReferences
 
         [PublicAPI]
-        public PrintableBase Logger { get; protected set; }
+        public PrintableBase Logger => logger;
         [PublicAPI]
-        public UpdateManager UpdateManager { get; protected set; }
+        public UpdateManager UpdateManager => updateManager;
         [PublicAPI]
-        public AudioManager AudioManager { get; protected set; }
+        public AudioManager AudioManager => audioManager;
         [PublicAPI]
-        public PlayerController PlayerController { get; protected set; }
+        public PlayerController PlayerController => playerController;
 
         #endregion
 
@@ -763,7 +777,7 @@ namespace CenturionCC.System.Gun
             if (IsLocal && HapticData != null && HapticData.Shooting)
                 HapticData.Shooting.PlayBothHand();
 
-            LastShotTime = DateTime.Now;
+            LastShotTime = DateTime.UtcNow;
             HasCocked = false;
         }
 
@@ -780,6 +794,16 @@ namespace CenturionCC.System.Gun
         protected void Internal_PlayAudio(AudioDataStore audioStore)
         {
             AudioManager.PlayAudioAtTransform(audioStore.Clip, Target, audioStore.Volume, audioStore.Pitch);
+        }
+
+        protected void Internal_CheckForHandleDistance()
+        {
+            if (!SubHandle.IsPickedUp) return;
+
+            var localSubHandlePos = Target.worldToLocalMatrix.MultiplyPoint3x4(SubHandle.transform.position);
+
+            if (Vector3.Distance(localSubHandlePos, SubHandlePositionOffset) > .3F)
+                SubHandle.ForceDrop();
         }
 
         protected void Internal_UpdateIsPickedUpState()
@@ -802,8 +826,6 @@ namespace CenturionCC.System.Gun
                         ? MainHandlePitchOffset
                         : 0;
                 }
-
-                Internal_UpdateHandlePickupable();
             }
 
             if (_mainHandleIsPickedUp != mainHandleIsPickedUp)
@@ -848,19 +870,70 @@ namespace CenturionCC.System.Gun
                     Internal_LimitSubHandlePos();
                 }
             }
+
+            Internal_UpdateHandlePickupable();
         }
 
-        /// <summary>
-        /// Exposed as public for delayed event! VRChat pls fix
-        /// </summary>
-        public void Internal_UpdateHandlePickupable()
+        protected void Internal_UpdateHandlePickupable()
         {
-            MainHandle.SetPickupable(true);
-            SubHandle.SetPickupable(IsDoubleHandedGun);
-            CustomHandle.SetPickupable(Behaviour != null &&
-                                       Behaviour.RequireCustomHandle &&
-                                       IsPickedUp &&
-                                       Networking.LocalPlayer.IsUserInVR());
+            // Only do complex update while picked up
+            if (IsLocal && IsPickedUp)
+            {
+                var localPlayer = Networking.LocalPlayer;
+                var inVR = localPlayer.IsUserInVR();
+                var leftHand = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.LeftHand).position;
+                var rightHand = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.RightHand).position;
+                var currentTime = Time.time;
+
+                MainHandle.SetPickupable(currentTime > _nextMainHandlePickupableTime &&
+                                         GetPickupProximity(MainHandle, leftHand, rightHand, inVR, false));
+                SubHandle.SetPickupable(IsDoubleHandedGun && currentTime > _nextSubHandlePickupableTime &&
+                                        GetPickupProximity(SubHandle, leftHand, rightHand, inVR, false));
+                CustomHandle.SetPickupable(Behaviour != null &&
+                                           Behaviour.RequireCustomHandle &&
+                                           IsPickedUp &&
+                                           localPlayer.IsUserInVR() &&
+                                           GetPickupProximity(CustomHandle, leftHand, rightHand, inVR, true));
+            }
+            else
+            {
+                MainHandle.SetPickupable(true);
+                SubHandle.SetPickupable(IsDoubleHandedGun);
+                CustomHandle.SetPickupable(Behaviour != null && Behaviour.RequireCustomHandle && IsPickedUp &&
+                                           Networking.LocalPlayer.IsUserInVR());
+            }
+        }
+
+        protected bool GetPickupProximity(GunHandle handle, Vector3 leftHandPos, Vector3 rightHandPos, bool inVR,
+            bool disallowFromBelow)
+        {
+            var handlePos = handle.transform.position;
+
+            // We only want to interrupt proximity when user is in VR mode
+            if (!inVR)
+                return true;
+
+            if (handle.IsPickedUp)
+            {
+                // If already picked up, check opposite hand's distance is not too close for being able to switch
+                var freeHandDistance =
+                    Vector3.Distance(
+                        handle.CurrentHand == VRC_Pickup.PickupHand.Left ? rightHandPos : leftHandPos,
+                        handlePos);
+                return freeHandDistance > FreeHandPickupProximity;
+            }
+
+            // If not yet picked up, check closest hand's distance to ensure that handle is possible to pickup
+            var lhDistance = Vector3.Distance(leftHandPos, handlePos);
+            var rhDistance = Vector3.Distance(rightHandPos, handlePos);
+            var closestHandDistance = Mathf.Min(lhDistance, rhDistance);
+
+            var up = Target.up;
+            var dot = Mathf.Max(Vector3.Dot(up, (leftHandPos - handlePos).normalized),
+                Vector3.Dot(up, (rightHandPos - handlePos).normalized));
+
+            return closestHandDistance < SwapHandDisallowPickupProximity &&
+                   (!disallowFromBelow || dot > DisallowPickupFromBelowRange);
         }
 
         protected void Internal_LimitSubHandlePos()
@@ -1035,7 +1108,7 @@ namespace CenturionCC.System.Gun
                 return ShotResult.Failed;
             }
 
-            if (DateTime.Now.Subtract(LastShotTime).TotalSeconds < SecondsPerRound)
+            if (DateTime.UtcNow.Subtract(LastShotTime).TotalSeconds < SecondsPerRound)
             {
                 return ShotResult.Paused;
             }
@@ -1108,6 +1181,13 @@ namespace CenturionCC.System.Gun
         protected virtual void OnProcessCollisionAudio(Collider other)
         {
             if (AudioData == null || AudioData.Collision == null)
+                return;
+
+            if (CollisionCount < 1)
+                return;
+
+            var objMarker = other.GetComponent<ObjectMarkerBase>();
+            if (objMarker != null && objMarker.Tags.ContainsString("NoCollisionAudio"))
                 return;
 
             var otherName = other.name.ToLower();
@@ -1264,13 +1344,11 @@ namespace CenturionCC.System.Gun
 
             switch (handleType)
             {
-                case HandleType.MainHandle when !Mathf.Approximately(MainHandleRePickupDelay, 0F):
-                    mainHandle.SetPickupable(false);
-                    SendCustomEventDelayedSeconds(nameof(Internal_UpdateHandlePickupable), MainHandleRePickupDelay);
+                case HandleType.MainHandle:
+                    _nextMainHandlePickupableTime = Time.time + MainHandleRePickupDelay;
                     break;
-                case HandleType.SubHandle when !Mathf.Approximately(SubHandleRePickupDelay, 0F):
-                    subHandle.SetPickupable(false);
-                    SendCustomEventDelayedSeconds(nameof(Internal_UpdateHandlePickupable), SubHandleRePickupDelay);
+                case HandleType.SubHandle:
+                    _nextSubHandlePickupableTime = Time.time + SubHandleRePickupDelay;
                     break;
             }
 

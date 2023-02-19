@@ -41,19 +41,18 @@ namespace CenturionCC.System.Utils
         [SerializeField]
         private float slideOutAmount = 2F;
 
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private UpdateManager updateManager;
+
         private float _currSlideIn;
         private float _currSlideOut;
         private Vector3 _defaultPosition;
         private float _playerHeight;
         private float _timer;
-
-        private UpdateManager _updateManager;
         public bool IsPlaying { get; private set; }
 
         private void Start()
         {
-            _updateManager = GameObject.Find("UpdateManager").GetComponent<UpdateManager>();
-
             if (!display)
             {
                 Debug.LogError("HitDisplay::Display is null");
@@ -87,8 +86,8 @@ namespace CenturionCC.System.Utils
             Stop();
             display.SetActive(true);
             IsPlaying = true;
-            _updateManager.UnsubscribeUpdate(this);
-            _updateManager.SubscribeUpdate(this);
+            updateManager.UnsubscribeUpdate(this);
+            updateManager.SubscribeUpdate(this);
             Debug.Log("[HitDisplay] now playing!");
         }
 
@@ -124,7 +123,7 @@ namespace CenturionCC.System.Utils
 
         public void Stop()
         {
-            _updateManager.UnsubscribeUpdate(this);
+            updateManager.UnsubscribeUpdate(this);
 
             _timer = 0;
             _currSlideIn = 0;

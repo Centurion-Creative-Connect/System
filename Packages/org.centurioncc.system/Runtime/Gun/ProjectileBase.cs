@@ -1,4 +1,5 @@
-﻿using CenturionCC.System.Utils;
+﻿using System;
+using CenturionCC.System.Utils;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -6,7 +7,8 @@ namespace CenturionCC.System.Gun
 {
     public abstract class ProjectileBase : DamageData
     {
-        public virtual bool IsCurrentlyActive { get; protected set; }
+        [NonSerialized]
+        public bool IsCurrentlyActive;
 
         [PublicAPI]
         public virtual void Shoot(Vector3 pos, Quaternion rot,

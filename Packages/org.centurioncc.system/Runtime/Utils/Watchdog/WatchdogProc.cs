@@ -33,7 +33,7 @@ namespace CenturionCC.System.Utils.Watchdog
             SendCustomEventDelayedFrames(nameof(LateStart), 1);
         }
 
-        private void FixedUpdate()
+        private void Update()
         {
             if (hasCrashed) return;
 

@@ -179,6 +179,7 @@ namespace CenturionCC.System.Gun.Behaviour
                 }
             }
 
+
             // Calculate cocking/twist progress
             if (Networking.LocalPlayer.IsUserInVR())
             {

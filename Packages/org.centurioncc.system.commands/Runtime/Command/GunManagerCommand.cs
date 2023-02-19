@@ -239,48 +239,48 @@ namespace CenturionCC.System.Command
                     return ConsoleLiteral.GetNone();
                 case "trail":
                     if (vars.Length >= 2)
-                        _gunManager.UseDebugBulletTrail =
-                            ConsoleParser.TryParseBoolean(vars[1], _gunManager.UseDebugBulletTrail);
+                        _gunManager.useDebugBulletTrail =
+                            ConsoleParser.TryParseBoolean(vars[1], _gunManager.useDebugBulletTrail);
 
-                    console.Println($"UseTrail: {_gunManager.UseDebugBulletTrail}");
-                    return ConsoleLiteral.Of(_gunManager.UseDebugBulletTrail);
+                    console.Println($"UseTrail: {_gunManager.useDebugBulletTrail}");
+                    return ConsoleLiteral.Of(_gunManager.useDebugBulletTrail);
                 case "or":
                 case "optimization":
                 case "optimizationrange":
                     if (vars.Length >= 2)
-                        _gunManager.OptimizationRange = ConsoleParser.TryParseFloat(vars[1]);
+                        _gunManager.optimizationRange = ConsoleParser.TryParseFloat(vars[1]);
 
-                    console.Println($"OptimizationRange: {_gunManager.OptimizationRange}");
-                    return ConsoleLiteral.Of(_gunManager.OptimizationRange);
+                    console.Println($"OptimizationRange: {_gunManager.optimizationRange}");
+                    return ConsoleLiteral.Of(_gunManager.optimizationRange);
                 case "arc":
                 case "ricochetcount":
                 case "allowedricochetcount":
                     if (vars.Length >= 2)
                     {
-                        _gunManager.AllowedRicochetCount = ConsoleParser.TryParseInt(vars[1]);
+                        _gunManager.allowedRicochetCount = ConsoleParser.TryParseInt(vars[1]);
                         Networking.SetOwner(Networking.LocalPlayer, _gunManager.gameObject);
                         _gunManager.RequestSerialization();
                     }
 
-                    console.Println($"AllowedRicochetCount: {_gunManager.AllowedRicochetCount}");
-                    return ConsoleLiteral.Of(_gunManager.AllowedRicochetCount);
+                    console.Println($"AllowedRicochetCount: {_gunManager.allowedRicochetCount}");
+                    return ConsoleLiteral.Of(_gunManager.allowedRicochetCount);
                 case "rep":
                 case "repickup":
                 case "repickupdelay":
                     if (vars.Length >= 2)
-                        _gunManager.HandleRePickupDelay = ConsoleParser.TryParseFloat(vars[1]);
+                        _gunManager.handleRePickupDelay = ConsoleParser.TryParseFloat(vars[1]);
 
-                    console.Println($"RePickupDelay: {_gunManager.HandleRePickupDelay}");
-                    return ConsoleLiteral.Of(_gunManager.HandleRePickupDelay);
+                    console.Println($"RePickupDelay: {_gunManager.handleRePickupDelay}");
+                    return ConsoleLiteral.Of(_gunManager.handleRePickupDelay);
                 case "cc":
                 case "collision":
                 case "collisioncheck":
                     if (vars.Length >= 2)
-                        _gunManager.UseCollisionCheck =
-                            ConsoleParser.TryParseBoolean(vars[1], _gunManager.UseCollisionCheck);
+                        _gunManager.useCollisionCheck =
+                            ConsoleParser.TryParseBoolean(vars[1], _gunManager.useCollisionCheck);
 
-                    console.Println($"CollisionCheck: {_gunManager.UseCollisionCheck}");
-                    return ConsoleLiteral.Of(_gunManager.UseCollisionCheck);
+                    console.Println($"CollisionCheck: {_gunManager.useCollisionCheck}");
+                    return ConsoleLiteral.Of(_gunManager.useCollisionCheck);
                 case "debug":
                     if (vars.Length >= 2)
                         _gunManager.IsDebugGunHandleVisible =

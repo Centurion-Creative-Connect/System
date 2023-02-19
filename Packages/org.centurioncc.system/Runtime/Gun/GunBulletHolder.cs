@@ -51,6 +51,8 @@ namespace CenturionCC.System.Gun
                     continue;
                 }
 
+                obj.SetActive(false);
+
                 _bullets[_lastGeneratedBulletCount] = bullet;
                 ++_lastGeneratedBulletCount;
             }

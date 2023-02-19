@@ -29,8 +29,17 @@ namespace CenturionCC.System.UI.Scoreboard
         public override void OnPlayerChanged(PlayerBase player, int oldId, int newId)
         {
             var element = GetOrCreateElement(player);
-            if (element != null)
-                element.UpdateText();
+            if (element == null)
+                return;
+
+            // If element's referenced player was unassigned, then remove element itself.
+            if (element.Source == null || !element.Source.IsAssigned)
+            {
+                RemoveElement(element);
+                return;
+            }
+
+            element.UpdateText();
         }
 
         public override void OnTeamChanged(PlayerBase player, int oldTeam)
@@ -82,6 +91,13 @@ namespace CenturionCC.System.UI.Scoreboard
             generatedElement.Source = player;
             _generatedScoreboardElement = _generatedScoreboardElement.AddAsList(generatedElement);
             return generatedElement;
+        }
+
+        private void RemoveElement(ScoreboardPlayerStats element)
+        {
+            _generatedScoreboardElement = _generatedScoreboardElement.RemoveItem(element);
+            Destroy(element.gameObject);
+            SortScoreboard();
         }
 
         private void SortScoreboard()

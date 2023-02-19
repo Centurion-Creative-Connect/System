@@ -28,15 +28,28 @@ namespace CenturionCC.System.Gun
         private GunVariantDataStore fallbackVariantData;
         [SerializeField]
         private DefaultGunBehaviour fallbackBehaviour;
+
+        [SerializeField] [HideInInspector] [NewbieInject]
+        // ReSharper disable once InconsistentNaming
+        public PrintableBase Logger;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        // ReSharper disable once InconsistentNaming
+        public RicochetHandler RicochetHandler;
+
+        public int allowedRicochetCount = 0;
+        public int maxQueuedShotCount = 10;
+        public float optimizationRange = 30F;
+        public float handleRePickupDelay = 0.5F;
+
+        public bool useDebugBulletTrail;
+        public bool useBulletTrail = true;
+        public bool useCollisionCheck = true;
         private WatchdogChildCallbackBase[] _childWdCallbacks;
         private UdonSharpBehaviour[] _eventCallbacks = new UdonSharpBehaviour[0];
         private bool _isDebugGunHandleVisible;
 
 
         private int _lastResetIndex = -1;
-
-        [CanBeNull]
-        public PrintableBase Logger { get; private set; }
         [ItemCanBeNull]
         public ManagedGun[] ManagedGunInstances { get; private set; } = new ManagedGun[0];
         [ItemNotNull]
@@ -46,10 +59,7 @@ namespace CenturionCC.System.Gun
         public ProjectilePool BulletHolder => bulletHolder;
         public DefaultGunBehaviour FallbackBehaviour => fallbackBehaviour;
         public GunVariantDataStore FallbackVariantData => fallbackVariantData;
-        public int AllowedRicochetCount { get; set; } = 0;
-        public int MaxQueuedShotCount { get; set; } = 10;
-        public float OptimizationRange { get; set; } = 30F;
-        public float HandleRePickupDelay { get; set; } = 0.5F;
+
         public bool IsDebugGunHandleVisible
         {
             get => _isDebugGunHandleVisible;
@@ -69,9 +79,6 @@ namespace CenturionCC.System.Gun
                 _isDebugGunHandleVisible = value;
             }
         }
-        public bool UseDebugBulletTrail { get; set; }
-        public bool UseBulletTrail { get; set; } = true;
-        public bool UseCollisionCheck { get; set; } = true;
         public bool CanLocalShoot
         {
             get
@@ -95,8 +102,6 @@ namespace CenturionCC.System.Gun
 
         public void Start()
         {
-            Logger = CenturionSystemReference.GetLogger();
-
             // cant use get components in children yet so get transform child and get component each
             var variants = new GunVariantDataStore[variantRoot.transform.childCount];
             for (var i = 0; i < variants.Length; i++)

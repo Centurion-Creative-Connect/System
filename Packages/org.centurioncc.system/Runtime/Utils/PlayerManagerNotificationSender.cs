@@ -26,15 +26,14 @@ namespace CenturionCC.System.Utils
         [SerializeField]
         private TranslatableMessage onTeamTagDisabledMessage;
 
-        private NotificationUI _notification;
-        private PlayerManager _playerManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private NotificationUI notification;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PlayerManager playerManager;
 
         private void Start()
         {
-            var gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
-            _notification = gameManager.notification;
-            _playerManager = gameManager.players;
-            _playerManager.SubscribeCallback(this);
+            playerManager.SubscribeCallback(this);
         }
 
         public override void OnTeamChanged(PlayerBase player, int oldTeam)
@@ -43,9 +42,9 @@ namespace CenturionCC.System.Utils
             if (vrcPlayer == null || !vrcPlayer.isLocal) return;
 
             if (player.TeamId >= 0 && player.TeamId < teamChangeNotificationMessages.Length)
-                _notification.ShowInfo(teamChangeNotificationMessages[player.TeamId].Message);
+                notification.ShowInfo(teamChangeNotificationMessages[player.TeamId].Message);
             else
-                _notification.ShowInfo(string.Format(unknownTeamChangeNotificationMessage.Message,
+                notification.ShowInfo(string.Format(unknownTeamChangeNotificationMessage.Message,
                     player.TeamId));
         }
 
@@ -55,12 +54,12 @@ namespace CenturionCC.System.Utils
             {
                 case TagType.Debug:
                 {
-                    _notification.ShowInfo($"Debug player info is now {(isOn ? "shown" : "hidden")}.");
+                    notification.ShowInfo($"Debug player info is now {(isOn ? "shown" : "hidden")}.");
                     break;
                 }
                 case TagType.Team:
                 {
-                    _notification.ShowInfo(isOn
+                    notification.ShowInfo(isOn
                         ? onTeamTagEnabledMessage.Message
                         : onTeamTagDisabledMessage.Message);
                     break;
@@ -70,8 +69,8 @@ namespace CenturionCC.System.Utils
                 case TagType.Dev:
                 case TagType.Staff:
                 {
-                    if (_playerManager.RoleManager.GetPlayerRole().HasPermission())
-                        _notification.ShowInfo(isOn
+                    if (playerManager.RoleManager.GetPlayerRole().HasPermission())
+                        notification.ShowInfo(isOn
                             ? onStaffTagEnabledMessage.Message
                             : onStaffTagDisabledMessage.Message);
                     break;

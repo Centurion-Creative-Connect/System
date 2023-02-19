@@ -1,9 +1,6 @@
-﻿using CenturionCC.System.Audio;
-using DerpyNewbie.Common;
+﻿using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
-using VRC.SDKBase;
-using VRC.Udon.Common.Enums;
 
 namespace CenturionCC.System.Gun
 {
@@ -11,10 +8,9 @@ namespace CenturionCC.System.Gun
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class GunBullet : ProjectileBase
     {
-        private const float LifeTime = 3F;
+        private const float LifeTime = 5F;
         private const float HopUpCoefficient = .005F;
-        private const float DampingCoefficient = 5F;
-        private const float RicochetVolumeSpeedCoefficient = 3F;
+        private const float DampingCoefficient = 2.5F;
 
         [SerializeField]
         private GunManager gunManager;
@@ -22,9 +18,11 @@ namespace CenturionCC.System.Gun
         private TrailRenderer trailRenderer;
         [SerializeField]
         private TrailRenderer debugTrailRenderer;
+
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private UpdateManager updateManager;
         private Collider _collider;
 
-        private float _currentMaxLifetime;
         private Vector3 _damageOriginPos;
         private Quaternion _damageOriginRot;
 
@@ -36,17 +34,13 @@ namespace CenturionCC.System.Gun
         private bool _nextUseTrail;
 
         private Vector3 _nextVelocity;
+        private int _ricochetCount;
         private Rigidbody _rigidbody;
-
-        private bool _shootFlag;
-
-        private UpdateManager _updateManager;
-        private bool UseTrail => gunManager.UseBulletTrail && _nextUseTrail;
-        private bool UseDebugTrail => gunManager.UseDebugBulletTrail;
-        private int RicochetCount { get; set; }
+        private bool UseTrail => gunManager.useBulletTrail && _nextUseTrail;
+        private bool UseDebugTrail => gunManager.useDebugBulletTrail;
 
         public override bool ShouldApplyDamage =>
-            gunManager.AllowedRicochetCount + 1 >= RicochetCount;
+            gunManager.allowedRicochetCount + 1 >= _ricochetCount;
         public override int DamagerPlayerId => _damagerPlayerId;
         public override Vector3 DamageOriginPosition => _damageOriginPos;
         public override Quaternion DamageOriginRotation => _damageOriginRot;
@@ -56,16 +50,15 @@ namespace CenturionCC.System.Gun
         {
             _rigidbody = gameObject.GetComponent<Rigidbody>();
             _collider = gameObject.GetComponent<Collider>();
-            _updateManager = CenturionSystemReference.GetUpdateManager();
             SendCustomEventDelayedFrames(nameof(LateStart), 1);
         }
 
         private void OnCollisionEnter(Collision collision)
         {
-            ++RicochetCount;
+            ++_ricochetCount;
             _rigidbody.velocity /= DampingCoefficient;
-            if (Vector3.Distance(gameObject.transform.position, Networking.LocalPlayer.GetPosition()) < 35F)
-                TryScheduleRicochetAudio(collision);
+            if (gunManager.RicochetHandler != null)
+                gunManager.RicochetHandler.OnRicochet(this, collision);
         }
 
         public override void Shoot(Vector3 pos, Quaternion rot, Vector3 velocity, Vector3 torque, float drag,
@@ -104,40 +97,20 @@ namespace CenturionCC.System.Gun
 
             // Prepare
             _collider.enabled = false;
-            _shootFlag = true;
-            RicochetCount = 0;
+            _ricochetCount = 0;
 
-            _updateManager.UnsubscribeFixedUpdate(this);
-            _updateManager.SubscribeFixedUpdate(this);
-            gameObject.SetActive(true);
+            Activate();
+            SendCustomEventDelayedSeconds(nameof(Deactivate), LifeTime);
         }
 
+        // _FixedUpdate will only be subscribed when it's in their lifetime.
         public void _FixedUpdate()
         {
-            if (!IsCurrentlyActive)
-            {
-                if (!_shootFlag) return;
-
-                DeactivateTrailRenderer();
-                Activate();
-                _shootFlag = false;
-                SendCustomEventDelayedFrames(nameof(ActivateTrailRenderer), 1, EventTiming.LateUpdate);
-                return;
-            }
-
-            if (_currentMaxLifetime > Time.timeSinceLevelLoad)
-            {
-                // Apply HopUp
-                var vel = _rigidbody.velocity;
-                _rigidbody.AddForce(
-                    _initialRotationUp * (new Vector3(vel.x, 0, vel.z).magnitude * _hopUpStrength),
-                    ForceMode.Force);
-            }
-            else
-            {
-                Deactivate();
-                DeactivateTrailRenderer();
-            }
+            // Apply HopUp
+            var vel = _rigidbody.velocity;
+            _rigidbody.AddForce(
+                _initialRotationUp * (new Vector3(vel.x, 0, vel.z).magnitude * _hopUpStrength),
+                ForceMode.Force);
         }
 
         public void LateStart()
@@ -148,84 +121,54 @@ namespace CenturionCC.System.Gun
 
         public void Deactivate()
         {
-            _updateManager.UnsubscribeFixedUpdate(this);
+            updateManager.UnsubscribeFixedUpdate(this);
             gameObject.SetActive(false);
             IsCurrentlyActive = false;
 
-            RicochetCount = int.MaxValue;
+            _ricochetCount = int.MaxValue;
 
             _rigidbody.velocity = Vector3.zero;
             _rigidbody.angularVelocity = Vector3.zero;
             _rigidbody.Sleep();
+
+            TrailRendererEmission(false);
         }
 
         public void Activate()
         {
-            _rigidbody.MovePosition(_damageOriginPos);
+            updateManager.UnsubscribeFixedUpdate(this);
+            updateManager.SubscribeFixedUpdate(this);
+            gameObject.SetActive(true);
             _rigidbody.WakeUp();
+            _rigidbody.MovePosition(_damageOriginPos);
 
             _rigidbody.AddForce(_damageOriginRot * _nextVelocity - _rigidbody.velocity, ForceMode.VelocityChange);
             _rigidbody.AddTorque(_damageOriginRot * _nextTorque, ForceMode.Force);
 
-            // _rigidbody.AddTorque(_nextPosition.right * (-1 * _nextHopUpRotation), ForceMode.Force);
-
-            _currentMaxLifetime = Time.timeSinceLevelLoad + LifeTime;
             IsCurrentlyActive = true;
-
-            RicochetCount = 0;
-
             _collider.enabled = true;
-            gameObject.SetActive(true);
+            _ricochetCount = 0;
+            SendCustomEventDelayedFrames(nameof(LateActivate), 1);
         }
 
-        public void ActivateTrailRenderer()
+        public void LateActivate()
+        {
+            TrailRendererEmission(true);
+        }
+
+        private void TrailRendererEmission(bool emit)
         {
             if (trailRenderer && UseTrail)
             {
                 trailRenderer.Clear();
-                trailRenderer.emitting = true;
+                trailRenderer.emitting = emit;
             }
 
             if (debugTrailRenderer && UseDebugTrail)
             {
                 debugTrailRenderer.Clear();
-                debugTrailRenderer.emitting = true;
+                debugTrailRenderer.emitting = emit;
             }
-        }
-
-        public void DeactivateTrailRenderer()
-        {
-            if (trailRenderer)
-            {
-                trailRenderer.Clear();
-                trailRenderer.emitting = false;
-            }
-
-            if (debugTrailRenderer)
-            {
-                debugTrailRenderer.Clear();
-                debugTrailRenderer.emitting = false;
-            }
-        }
-
-        private void TryScheduleRicochetAudio(Collision col)
-        {
-            var marker = col.rigidbody
-                ? col.rigidbody.GetComponent<AudioMarker>()
-                : TryGetMarkerRecursively(col.gameObject, 5);
-            var volume = col.impulse.magnitude / RicochetVolumeSpeedCoefficient;
-            // Debug.Log($"mag: {col.impulse.magnitude}, vol: {volume}");
-            if (marker)
-                marker.PlayAt(transform.position, Mathf.Clamp01(volume));
-        }
-
-        [RecursiveMethod]
-        private AudioMarker TryGetMarkerRecursively(GameObject o, int maxTryCount)
-        {
-            var marker = o.GetComponent<AudioMarker>();
-            if (marker || maxTryCount <= 0) return marker;
-            if (!o.transform.parent) return null;
-            return TryGetMarkerRecursively(o.transform.parent.gameObject, --maxTryCount);
         }
     }
 }

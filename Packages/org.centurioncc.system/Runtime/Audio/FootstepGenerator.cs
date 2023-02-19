@@ -68,7 +68,7 @@ namespace CenturionCC.System.Audio
         private void PlayFootstepSound()
         {
             var player = playerManager.GetLocalPlayer();
-            if (!player || playerManager.IsStaffTeamId(player.TeamId)) return;
+            if (player == null || playerManager.IsStaffTeamId(player.TeamId)) return;
             var isSlow = _timer > slowFootstepThreshold;
 
             switch (_currentFootstepType)
@@ -109,7 +109,7 @@ namespace CenturionCC.System.Audio
             if (!Physics.Raycast(transform.position, Vector3.down, out var hit, 3, layerMask) || !hit.transform)
                 return false;
 
-            return TryGetFootstepMarker(hit) || TryGetObjectMarker(hit);
+            return TryGetFootstepMarker(hit);
         }
 
         private bool TryGetFootstepMarker(RaycastHit hit)

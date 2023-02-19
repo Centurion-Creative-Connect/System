@@ -66,7 +66,7 @@ namespace CenturionCC.System.Player
 
             masterTag.gameObject.SetActive(_playerManager.ShowStaffTag &&
                                            _player.VrcPlayer.isMaster && isEitherInSpecialTeam);
-            debugText.gameObject.SetActive(_playerManager.IsDebug);
+            debugText.transform.parent.gameObject.SetActive(_playerManager.IsDebug);
 
             var staffTagType = GetStaffTagType();
             var shouldShowStaffTag = _playerManager.ShowStaffTag &&

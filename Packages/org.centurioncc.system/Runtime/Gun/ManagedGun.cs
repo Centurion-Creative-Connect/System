@@ -17,6 +17,8 @@ namespace CenturionCC.System.Gun
     [DefaultExecutionOrder(110)] [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class ManagedGun : Gun
     {
+        [PublicAPI] [CanBeNull]
+        public GameObject Model;
         private Animator _animator;
         private bool _hasInit;
         [UdonSynced] [FieldChangeCallback(nameof(IsOccupied))]
@@ -27,9 +29,6 @@ namespace CenturionCC.System.Gun
 
         [PublicAPI]
         public GunManager ParentManager { get; protected set; }
-
-        [PublicAPI] [CanBeNull]
-        public GameObject Model { get; protected set; }
 
         [PublicAPI]
         public BoxCollider Collider { get; protected set; }
@@ -314,7 +313,7 @@ namespace CenturionCC.System.Gun
                 result = ShotResult.Failed;
             }
 
-            if (ParentManager.UseCollisionCheck)
+            if (ParentManager.useCollisionCheck)
             {
                 if (IsInWall)
                 {
@@ -419,18 +418,18 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public override float MainHandleRePickupDelay =>
             VariantData != null && ParentManager != null && VariantData.UseRePickupDelayForMainHandle
-                ? ParentManager.HandleRePickupDelay
+                ? ParentManager.handleRePickupDelay
                 : 0F;
         [PublicAPI]
         public override float SubHandleRePickupDelay =>
             VariantData != null && ParentManager != null && VariantData.UseRePickupDelayForSubHandle
-                ? ParentManager.HandleRePickupDelay
+                ? ParentManager.handleRePickupDelay
                 : 0F;
         [PublicAPI]
-        public override float OptimizationRange => ParentManager != null ? ParentManager.OptimizationRange : 0F;
+        public override float OptimizationRange => ParentManager != null ? ParentManager.optimizationRange : 0F;
 
         [PublicAPI]
-        public override int MaxQueuedShotCount => ParentManager != null ? ParentManager.MaxQueuedShotCount : 10;
+        public override int MaxQueuedShotCount => ParentManager != null ? ParentManager.maxQueuedShotCount : 10;
 
         public override float RoundsPerSecond =>
             VariantData != null ? VariantData.MaxRoundsPerSecond : float.PositiveInfinity;

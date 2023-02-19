@@ -76,18 +76,12 @@ namespace CenturionCC.System.Gun
 
         public void SetPickupable(bool isPickupable)
         {
-            Debug.Log($"[GunHandle-{name}] SetPickupable: {isPickupable}, {target.name}");
             _pickup.pickupable = isPickupable;
             if (_collider != null)
                 _collider.enabled = isPickupable;
 
             if (_mesh && pickupableMaterial)
                 _mesh.material = IsPickupable ? pickupableMaterial : _defaultMaterial;
-
-            if (!isPickupable && callback)
-                MoveToLocalPosition(
-                    callback.GetHandleIdlePosition(this, handleType),
-                    callback.GetHandleIdleRotation(this, handleType));
         }
 
         public void SetPickupable(bool isPickupable, float delay)

@@ -53,7 +53,7 @@ namespace CenturionCC.System.UI
             visualizeGunHandle.SetIsOnWithoutNotify(manager.guns.IsDebugGunHandleVisible);
             visualizeOnHit.SetIsOnWithoutNotify(manager.eventLogger.ShouldVisualizeOnLog);
             useModeratorMode.SetIsOnWithoutNotify(manager.moderatorTool.IsModeratorMode);
-            showDebugTrail.SetIsOnWithoutNotify(manager.guns.UseDebugBulletTrail);
+            showDebugTrail.SetIsOnWithoutNotify(manager.guns.useDebugBulletTrail);
 
             {
                 var p = manager.players;
@@ -121,7 +121,7 @@ namespace CenturionCC.System.UI
             {
                 m.logger.Log($"{Prefix}update debug trail status");
                 _lastShowDebugTrail = showDebugTrail.isOn;
-                m.guns.UseDebugBulletTrail = _lastShowDebugTrail;
+                m.guns.useDebugBulletTrail = _lastShowDebugTrail;
             }
 
             if (CheckToggle(visualizeGunHandle, _lastVisualizeGunHandle))

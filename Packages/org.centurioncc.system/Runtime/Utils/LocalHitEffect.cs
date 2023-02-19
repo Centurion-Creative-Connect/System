@@ -2,6 +2,7 @@
 using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using VRC.SDKBase;
 
@@ -28,6 +29,10 @@ namespace CenturionCC.System.Utils
         [SerializeField]
         private Sprite[] availableSprites;
 
+        [FormerlySerializedAs("_updateManager")]
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private UpdateManager updateManager;
+
         [NonSerialized]
         private float _currentTime;
         [NonSerialized]
@@ -42,9 +47,6 @@ namespace CenturionCC.System.Utils
         [NonSerialized]
         private int _lastSpriteIndex;
 
-        [NonSerialized]
-        private UpdateManager _updateManager;
-
         private void Start()
         {
             if (hapticSource.preloadAudioData == false)
@@ -55,8 +57,6 @@ namespace CenturionCC.System.Utils
             _hapticSamples = new float[_hapticPackSize];
 
             hapticSource.GetData(_hapticSamples, 0);
-
-            _updateManager = CenturionSystemReference.GetUpdateManager();
         }
 
         public void _Update()
@@ -64,7 +64,7 @@ namespace CenturionCC.System.Utils
             if (_currentTime > hapticSource.length || !useHaptic)
             {
                 _currentTime = 0F;
-                _updateManager.UnsubscribeUpdate(this);
+                updateManager.UnsubscribeUpdate(this);
             }
 
             var i = Mathf.RoundToInt(_currentTime * _hapticFrequency);
@@ -96,8 +96,8 @@ namespace CenturionCC.System.Utils
 
             if (useHaptic)
             {
-                _updateManager.UnsubscribeUpdate(this);
-                _updateManager.SubscribeUpdate(this);
+                updateManager.UnsubscribeUpdate(this);
+                updateManager.SubscribeUpdate(this);
             }
         }
 

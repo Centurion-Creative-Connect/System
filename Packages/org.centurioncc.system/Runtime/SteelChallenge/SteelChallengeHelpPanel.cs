@@ -11,6 +11,8 @@ namespace CenturionCC.System.SteelChallenge
     {
         [SerializeField]
         private GameObject helpPanel;
+        [SerializeField]
+        private bool doPopUpForNewPlayer = true;
 
         private bool _hasPoppedUpAfterJoin;
 
@@ -19,25 +21,29 @@ namespace CenturionCC.System.SteelChallenge
         private void Start()
         {
             _updateManager = CenturionSystemReference.GetUpdateManager();
-            _updateManager.SubscribeSlowFixedUpdate(this);
+
+            // Don't subscribe to update events if not desired (for perf reasons)
+            if (!doPopUpForNewPlayer) return;
+
+            _updateManager.SubscribeSlowUpdate(this);
             helpPanel.SetActive(false);
         }
 
-        public void _SlowFixedUpdate()
+        public void _SlowUpdate()
         {
             if (!Utilities.IsValid(Networking.LocalPlayer))
                 return;
 
             if (_hasPoppedUpAfterJoin)
             {
-                _updateManager.UnsubscribeSlowFixedUpdate(this);
+                _updateManager.UnsubscribeSlowUpdate(this);
                 return;
             }
 
             if (Vector3.Distance(Networking.LocalPlayer.GetPosition(), helpPanel.transform.position) < 5F)
             {
                 PopUp();
-                _updateManager.UnsubscribeSlowFixedUpdate(this);
+                _updateManager.UnsubscribeSlowUpdate(this);
             }
         }
 

@@ -1,4 +1,5 @@
-﻿using UdonSharp;
+﻿using DerpyNewbie.Common;
+using UdonSharp;
 using UnityEngine;
 
 namespace CenturionCC.System.Utils
@@ -30,9 +31,8 @@ namespace CenturionCC.System.Utils
         [SerializeField]
         private string[] tags;
 
-        [SerializeField] [HideInInspector]
+        [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerController controller;
-
 
         public override ObjectType ObjectType => objectType;
         public override float ObjectWeight => objectWeight;
