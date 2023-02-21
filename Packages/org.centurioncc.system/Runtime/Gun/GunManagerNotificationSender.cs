@@ -1,14 +1,21 @@
-﻿using DerpyNewbie.Common;
+﻿using CenturionCC.System.UI;
+using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
+using UnityEngine.Serialization;
+using VRC.SDKBase;
 
 namespace CenturionCC.System.Gun
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class GunManagerNotificationSender : GunManagerCallbackBase
     {
-        [SerializeField]
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private GunManager gunManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
         private GameManager gameManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private NotificationUI notificationUI;
         [Header("Messages")]
         [SerializeField]
         private TranslatableMessage onGunsResetMessage;
@@ -18,8 +25,11 @@ namespace CenturionCC.System.Gun
         private TranslatableMessage onCantShootInWall;
         [SerializeField]
         private TranslatableMessage onCantShootWhenSelectorSafety;
+        [FormerlySerializedAs("onCantShootAfterHitOrNotGrounded")]
         [SerializeField]
-        private TranslatableMessage onCantShootAfterHitOrNotGrounded;
+        private TranslatableMessage onCantShootAfterHit;
+        [SerializeField]
+        private TranslatableMessage onCantShootOnAir;
         [SerializeField]
         private TranslatableMessage onCantShootUnknown;
         [SerializeField]
@@ -34,10 +44,7 @@ namespace CenturionCC.System.Gun
 
         private void Start()
         {
-            if (gameManager == null)
-                gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
-
-            gameManager.guns.SubscribeCallback(this);
+            gunManager.SubscribeCallback(this);
         }
 
         public override void OnGunsReset()
@@ -78,7 +85,7 @@ namespace CenturionCC.System.Gun
             // 12  = RemoteInstance.FireMode is 0 == safety
             // 100 = in wall
             // 101 = in safe zone
-            // 200 = anti-zombie time, or player not grounded
+            // 200 = callback returned false
             if (!notifyCancelled)
                 return;
 
@@ -94,7 +101,12 @@ namespace CenturionCC.System.Gun
                     SendNotification(onCantShootInSafeZone, true);
                     break;
                 case 200:
-                    SendNotification(onCantShootAfterHitOrNotGrounded, true);
+                    if (!Networking.LocalPlayer.IsPlayerGrounded())
+                        SendNotification(onCantShootOnAir, true);
+                    else if (gameManager.IsInAntiZombieTime())
+                        SendNotification(onCantShootAfterHit, true);
+                    else
+                        SendErrNotification(onCantShootUnknown, $"{reasonId}");
                     break;
                 default:
                     SendErrNotification(onCantShootUnknown, $"{reasonId}");
@@ -104,13 +116,13 @@ namespace CenturionCC.System.Gun
 
         private void SendNotification(TranslatableMessage m, bool isWarn)
         {
-            if (m == null || gameManager == null || gameManager.notification == null)
+            if (m == null)
                 return;
 
             if (isWarn)
-                gameManager.notification.ShowWarn(m.Message);
+                notificationUI.ShowWarn(m.Message);
             else
-                gameManager.notification.ShowInfo(m.Message);
+                notificationUI.ShowInfo(m.Message);
         }
 
         private void SendNotification2(TranslatableMessage format, TranslatableMessage info)
@@ -120,7 +132,7 @@ namespace CenturionCC.System.Gun
 
             var infoMsg = info == null ? "Unknown" : info.Message;
 
-            gameManager.notification.ShowInfo(string.Format(format.Message, infoMsg));
+            notificationUI.ShowInfo(string.Format(format.Message, infoMsg));
         }
 
         private void SendErrNotification(TranslatableMessage format, string info)
@@ -128,7 +140,7 @@ namespace CenturionCC.System.Gun
             if (format == null)
                 return;
 
-            gameManager.notification.ShowError(string.Format(format.Message, info));
+            notificationUI.ShowError(string.Format(format.Message, info));
         }
     }
 }
