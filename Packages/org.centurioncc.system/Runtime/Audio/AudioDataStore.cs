@@ -10,18 +10,27 @@ namespace CenturionCC.System.Audio
         private AudioClip[] clips;
         [Header("Volume")]
         [SerializeField, Range(0F, 1F)]
-        private float maxVolume;
+        private float maxVolume = 1;
         [SerializeField, Range(0F, 1F)]
-        private float minVolume;
+        private float minVolume = 1;
         [Header("Pitch")]
         [SerializeField, Range(0F, 2F)]
-        private float maxPitch;
+        private float maxPitch = 1;
         [SerializeField, Range(0F, 2F)]
-        private float minPitch;
+        private float minPitch = 1;
+        [Header("3D Settings")]
+        [SerializeField, Range(0F, 5F)]
+        private float dopplerLevel = 1;
+        [SerializeField, Range(0F, 360F)]
+        private float spread = 0F;
+        [SerializeField]
+        private float minDistance = 0.5F;
+        [SerializeField]
+        private float maxDistance = 25F;
+        private int _cachedClipsLength;
+        private bool _cachedIsClipsNull;
 
         private bool _hasCache;
-        private bool _cachedIsClipsNull;
-        private int _cachedClipsLength;
 
         public AudioClip Clip
         {
@@ -39,5 +48,9 @@ namespace CenturionCC.System.Audio
         }
         public float Volume => Random.Range(minVolume, maxVolume);
         public float Pitch => Random.Range(minPitch, maxPitch);
+        public float DopplerLevel => dopplerLevel;
+        public float Spread => spread;
+        public float MinDistance => minDistance;
+        public float MaxDistance => maxDistance;
     }
 }

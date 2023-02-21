@@ -8,58 +8,99 @@ namespace CenturionCC.System.Audio
     [SelectionBase] [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class AudioManager : UdonSharpBehaviour
     {
+        private const string Prefix = "[AudioManager] ";
+        private const string AudioDataStoreNullError =
+            Prefix + "AudioDataStore is null. dropping!";
+        private const string ClipOrPositionNullError =
+            Prefix + "Clip or Position is null. dropping!";
+        private const string DroppingAudioBecauseTooFar =
+            Prefix + "Audio clip `{0}` playing at `{1}` ({2}m) is too far away. dropping!";
+
         [SerializeField]
         private AudioSource[] sources;
         private int _lastPickedSource;
 
-        [PublicAPI]
-        public void PlayAudioAtTransform(AudioClip clip, Transform position, float volume, float pitch = 1)
+        private VRCPlayerApi _localPlayer;
+
+        private void Start()
         {
-            if (clip == null || position == null)
-            {
-                Debug.LogError("[AudioManager] Illegal Argument: clip or position is null. dropping");
-                return;
-            }
-
-            if (AudioHelper.CanHearAudioAtPosition(position.position))
-            {
-                var source = GetAudioSource();
-
-                var sourceTransform = source.transform;
-
-                sourceTransform.SetParent(position);
-                sourceTransform.localPosition = Vector3.zero;
-
-                AudioHelper.PlayAudioSource(source, clip, volume, pitch);
-            }
-            else
-            {
-                Debug.Log(
-                    $"[AudioManager] dropping audio:{clip.name} playing at {position.position} because it's too far away");
-            }
+            _localPlayer = Networking.LocalPlayer;
         }
 
         [PublicAPI]
-        public void PlayAudioAtPosition(AudioClip clip, Vector3 position, float volume, float pitch = 1)
+        public void PlayAudioAtTransform([CanBeNull] AudioClip clip, [CanBeNull] Transform t, float volume,
+            float pitch = 1F, float dopplerLevel = 1F, float spread = 0F, float minDistance = 0.5F,
+            float maxDistance = 25F)
         {
-            if (clip == null)
+            if (clip == null || t == null)
             {
-                Debug.LogError("[AudioSource] Illegal Argument: clip is null. dropping");
+                Debug.LogError(ClipOrPositionNullError);
                 return;
             }
 
-            if (AudioHelper.CanHearAudioAtPosition(position))
+            var dist = Vector3.Distance(t.position, _localPlayer.GetPosition());
+            if (dist > maxDistance + 10F)
             {
-                var source = GetAudioSource();
+                Debug.Log(string.Format(DroppingAudioBecauseTooFar, clip.name, t.position, dist));
+                return;
+            }
 
-                source.transform.position = position;
-                AudioHelper.PlayAudioSource(source, clip, volume, pitch);
-            }
-            else
+            var source = GetAudioSource();
+            var sourceTransform = source.transform;
+
+            sourceTransform.SetParent(t);
+            sourceTransform.localPosition = Vector3.zero;
+
+            AudioHelper.PlayAudioSource(source, clip, volume, pitch, dopplerLevel, spread, minDistance, maxDistance);
+        }
+
+        [PublicAPI]
+        public void PlayAudioAtPosition([CanBeNull] AudioClip clip, Vector3 position, float volume, float pitch = 1,
+            float dopplerLevel = 1F, float spread = 0F, float minDistance = 0.5F, float maxDistance = 25F)
+        {
+            if (clip == null)
             {
-                Debug.Log(
-                    $"[AudioManager] dropping audio:{clip.name} playing at {position} because it's too far away");
+                Debug.LogError(ClipOrPositionNullError);
+                return;
             }
+
+            var dist = Vector3.Distance(position, _localPlayer.GetPosition());
+            if (dist > maxDistance + 10F)
+            {
+                Debug.Log(string.Format(DroppingAudioBecauseTooFar, clip.name, position, dist));
+                return;
+            }
+
+            var source = GetAudioSource();
+
+            source.transform.position = position;
+            AudioHelper.PlayAudioSource(source, clip, volume, pitch, dopplerLevel, spread, minDistance, maxDistance);
+        }
+
+        [PublicAPI]
+        public void PlayAudioAtTransform([CanBeNull] AudioDataStore dataStore, [CanBeNull] Transform t)
+        {
+            if (dataStore == null)
+            {
+                Debug.LogError(AudioDataStoreNullError);
+                return;
+            }
+
+            PlayAudioAtTransform(dataStore.Clip, t, dataStore.Volume, dataStore.Pitch,
+                dataStore.DopplerLevel, dataStore.Spread, dataStore.MinDistance, dataStore.MaxDistance);
+        }
+
+        [PublicAPI]
+        public void PlayAudioAtPosition([CanBeNull] AudioDataStore dataStore, Vector3 position)
+        {
+            if (dataStore == null)
+            {
+                Debug.LogError(AudioDataStoreNullError);
+                return;
+            }
+
+            PlayAudioAtPosition(dataStore.Clip, position, dataStore.Volume, dataStore.Pitch,
+                dataStore.DopplerLevel, dataStore.Spread, dataStore.MinDistance, dataStore.MaxDistance);
         }
 
         private AudioSource GetAudioSource()
@@ -72,17 +113,19 @@ namespace CenturionCC.System.Audio
 
     public static class AudioHelper
     {
-        public static void PlayAudioSource(AudioSource source, AudioClip clip, float vol, float pit)
+        public static void PlayAudioSource(AudioSource source, AudioClip clip, float vol, float pit,
+            float doppler, float spread, float minDist, float maxDist)
         {
             source.clip = clip;
             source.pitch = pit;
             source.volume = vol;
-            source.Play();
-        }
+            source.dopplerLevel = doppler;
+            source.spread = spread;
+            source.minDistance = minDist;
+            source.maxDistance = maxDist;
 
-        public static bool CanHearAudioAtPosition(Vector3 pos)
-        {
-            return Vector3.Distance(Networking.LocalPlayer.GetPosition(), pos) < 30F;
+            // Delaying needed to stop AudioSource's cracking sound by re-using them
+            source.PlayDelayed(0.03F);
         }
     }
 }

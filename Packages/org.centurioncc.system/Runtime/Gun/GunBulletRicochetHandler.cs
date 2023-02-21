@@ -9,7 +9,7 @@ namespace CenturionCC.System.Gun
     public class GunBulletRicochetHandler : RicochetHandler
     {
         private const float RicochetVolumeSpeedCoefficient = 3F;
-        private const float MaxAudioDistance = 35F;
+        private const float MaxAudioDistance = 10F;
 
         [SerializeField]
         private AudioDataStore ricochetAudioData;
@@ -38,7 +38,11 @@ namespace CenturionCC.System.Gun
                 ricochetAudioData.Clip,
                 contact.point,
                 ricochetAudioData.Volume * Mathf.Clamp01(collision.impulse.magnitude / RicochetVolumeSpeedCoefficient),
-                ricochetAudioData.Pitch
+                ricochetAudioData.Pitch,
+                ricochetAudioData.DopplerLevel,
+                ricochetAudioData.Spread,
+                ricochetAudioData.MinDistance,
+                ricochetAudioData.MaxDistance
             );
         }
     }

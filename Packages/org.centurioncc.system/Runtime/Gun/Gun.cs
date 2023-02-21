@@ -793,7 +793,7 @@ namespace CenturionCC.System.Gun
 
         protected void Internal_PlayAudio(AudioDataStore audioStore)
         {
-            AudioManager.PlayAudioAtTransform(audioStore.Clip, Target, audioStore.Volume, audioStore.Pitch);
+            AudioManager.PlayAudioAtTransform(audioStore, Target);
         }
 
         protected void Internal_CheckForHandleDistance()

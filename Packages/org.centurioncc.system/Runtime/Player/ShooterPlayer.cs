@@ -425,9 +425,7 @@ namespace CenturionCC.System.Player
 
         private void _PlayFootstepAudio(AudioDataStore audioData)
         {
-            if (audioData != null)
-                _audioManager.PlayAudioAtPosition(
-                    audioData.Clip, transform.position, audioData.Volume, audioData.Pitch);
+            _audioManager.PlayAudioAtPosition(audioData, transform.position);
         }
 
         #endregion

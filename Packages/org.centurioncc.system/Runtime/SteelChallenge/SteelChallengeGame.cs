@@ -417,13 +417,7 @@ namespace CenturionCC.System.SteelChallenge
 
         private void _PlayAudio(AudioDataStore a, Vector3 p)
         {
-            if (a == null)
-                return;
-            _audioManager.PlayAudioAtPosition(
-                a.Clip,
-                p,
-                a.Volume,
-                a.Pitch);
+            _audioManager.PlayAudioAtPosition(a, p);
         }
 
         #endregion

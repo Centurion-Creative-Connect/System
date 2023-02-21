@@ -13,7 +13,8 @@ namespace CenturionCC.System.Audio
 
         public void PlayAtPosition(Vector3 pos, float vol)
         {
-            audioManager.PlayAudioAtPosition(audioData.Clip, pos, vol, audioData.Pitch);
+            audioManager.PlayAudioAtPosition(audioData.Clip, pos, vol, audioData.Pitch, audioData.DopplerLevel,
+                audioData.Spread, audioData.MinDistance, audioData.MaxDistance);
         }
     }
 }
