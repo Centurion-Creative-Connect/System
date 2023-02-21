@@ -1,9 +1,10 @@
-﻿using UdonSharp;
+﻿using System;
+using UdonSharp;
 using UnityEngine;
 
 namespace CenturionCC.System.Audio
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+    [Obsolete("Use ObjectMarker instead.")] [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class FootstepMarker : UdonSharpBehaviour
     {
         [SerializeField]

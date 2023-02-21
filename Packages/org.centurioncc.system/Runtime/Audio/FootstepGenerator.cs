@@ -16,7 +16,7 @@ namespace CenturionCC.System.Audio
     /// <seealso cref="FootstepMarker"/>
     /// <seealso cref="Utils.ObjectMarker"/>
     /// <seealso cref="PlayerManager.GetLocalPlayer()"/>
-    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+    [Obsolete("Use PlayerController instead.")] [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class FootstepGenerator : UdonSharpBehaviour
     {
         [SerializeField]
@@ -78,8 +78,8 @@ namespace CenturionCC.System.Audio
                 case FootstepType.Gravel:
                     player.SendCustomNetworkEvent(NetworkEventTarget.All,
                         isSlow
-                            ? "PlaySlowGroundFootstepAudio"
-                            : "PlayGroundFootstepAudio");
+                            ? "PlaySlowGravelFootstepAudio"
+                            : "PlayGravelFootstepAudio");
                     break;
                 case FootstepType.Wood:
                     player.SendCustomNetworkEvent(NetworkEventTarget.All,
@@ -90,15 +90,15 @@ namespace CenturionCC.System.Audio
                 case FootstepType.Iron:
                     player.SendCustomNetworkEvent(NetworkEventTarget.All,
                         isSlow
-                            ? "PlaySlowIronFootstepAudio"
-                            : "PlayIronFootstepAudio");
+                            ? "PlaySlowMetallicFootstepAudio"
+                            : "PlayMetallicFootstepAudio");
                     break;
                 case FootstepType.Fallback:
                 default:
                     player.SendCustomNetworkEvent(NetworkEventTarget.All,
                         isSlow
-                            ? "PlaySlowFallbackFootstepAudio"
-                            : "PlayFallbackFootstepAudio");
+                            ? "PlaySlowPrototypeFootstepAudio"
+                            : "PlayPrototypeFootstepAudio");
                     break;
             }
         }

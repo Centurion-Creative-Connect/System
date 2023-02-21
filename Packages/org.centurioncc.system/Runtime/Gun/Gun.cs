@@ -1194,19 +1194,19 @@ namespace CenturionCC.System.Gun
 
             if (otherName.StartsWith("steel") || otherName.EndsWith("steel"))
             {
-                Internal_PlayAudio(AudioData.Collision.IronAudio);
+                Internal_PlayAudio(AudioData.Collision.Get(ObjectType.Metallic));
             }
             else if (otherName.StartsWith("wood") || otherName.EndsWith("wood"))
             {
-                Internal_PlayAudio(AudioData.Collision.WoodAudio);
+                Internal_PlayAudio(AudioData.Collision.Get(ObjectType.Wood));
             }
             else if (otherName.StartsWith("sandbag") || otherName.EndsWith("sandbag"))
             {
-                Internal_PlayAudio(AudioData.Collision.ClothAudio);
+                Internal_PlayAudio(AudioData.Collision.Get(ObjectType.Gravel));
             }
             else
             {
-                Internal_PlayAudio(AudioData.Collision.FallbackAudio);
+                Internal_PlayAudio(AudioData.Collision.Get(ObjectType.Prototype));
             }
         }
 

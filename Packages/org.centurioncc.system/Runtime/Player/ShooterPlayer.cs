@@ -24,7 +24,7 @@ namespace CenturionCC.System.Player
             "K/D     : {5}\n" +
             "IsLWCol : {6}";
 
-        [SerializeField]
+        [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
         [SerializeField]
         private PlayerTag playerTag;
@@ -131,9 +131,6 @@ namespace CenturionCC.System.Player
 
         private void Start()
         {
-            if (playerManager == null)
-                playerManager = CenturionSystemReference.GetPlayerManager();
-
             _audioManager = playerManager.AudioManager;
             _footstepAudio = playerManager.FootstepAudio;
 
@@ -178,11 +175,8 @@ namespace CenturionCC.System.Player
 
         public void _FixedUpdate()
         {
-            if (!IsAssigned) return;
-
             var api = VrcPlayer;
-            if (api == null || !api.IsValid())
-                return;
+            if (api == null || !api.IsValid()) return;
 
             _EnsureInit();
 
@@ -375,57 +369,70 @@ namespace CenturionCC.System.Player
 
         #region PlayFootstepMethods
 
-        public void PlayFallbackFootstepAudio()
+        public void PlayPrototypeFootstepAudio()
         {
-            if (_footstepAudio)
-                _PlayFootstepAudio(_footstepAudio.FallbackAudio);
+            _PlayFootstepAudio(ObjectType.Prototype, false);
         }
 
-        public void PlaySlowFallbackFootstepAudio()
+        public void PlaySlowPrototypeFootstepAudio()
         {
-            if (_footstepAudio)
-                _PlayFootstepAudio(_footstepAudio.SlowFallbackAudio);
+            _PlayFootstepAudio(ObjectType.Prototype, true);
         }
 
-        public void PlayGroundFootstepAudio()
+        public void PlayGravelFootstepAudio()
         {
-            if (_footstepAudio)
-                _PlayFootstepAudio(_footstepAudio.GroundAudio);
+            _PlayFootstepAudio(ObjectType.Gravel, false);
         }
 
-        public void PlaySlowGroundFootstepAudio()
+        public void PlaySlowGravelFootstepAudio()
         {
-            if (_footstepAudio)
-                _PlayFootstepAudio(_footstepAudio.SlowGroundAudio);
+            _PlayFootstepAudio(ObjectType.Gravel, true);
         }
 
         public void PlayWoodFootstepAudio()
         {
-            if (_footstepAudio)
-                _PlayFootstepAudio(_footstepAudio.WoodAudio);
+            _PlayFootstepAudio(ObjectType.Wood, false);
         }
 
         public void PlaySlowWoodFootstepAudio()
         {
-            if (_footstepAudio)
-                _PlayFootstepAudio(_footstepAudio.SlowWoodAudio);
+            _PlayFootstepAudio(ObjectType.Wood, true);
         }
 
-        public void PlayIronFootstepAudio()
+        public void PlayMetallicFootstepAudio()
         {
-            if (_footstepAudio)
-                _PlayFootstepAudio(_footstepAudio.IronAudio);
+            _PlayFootstepAudio(ObjectType.Metallic, false);
         }
 
-        public void PlaySlowIronFootstepAudio()
+        public void PlaySlowMetallicFootstepAudio()
         {
-            if (_footstepAudio)
-                _PlayFootstepAudio(_footstepAudio.SlowIronAudio);
+            _PlayFootstepAudio(ObjectType.Metallic, true);
         }
 
-        private void _PlayFootstepAudio(AudioDataStore audioData)
+        public void PlayDirtFootstepAudio()
         {
-            _audioManager.PlayAudioAtPosition(audioData, transform.position);
+            _PlayFootstepAudio(ObjectType.Dirt, false);
+        }
+
+        public void PlaySlowDirtFootstepAudio()
+        {
+            _PlayFootstepAudio(ObjectType.Dirt, true);
+        }
+
+        public void PlayConcreteFootstepAudio()
+        {
+            _PlayFootstepAudio(ObjectType.Concrete, false);
+        }
+
+        public void PlaySlowConcreteFootstepAudio()
+        {
+            _PlayFootstepAudio(ObjectType.Concrete, true);
+        }
+
+        private void _PlayFootstepAudio(ObjectType type, bool isSlow)
+        {
+            if (_footstepAudio != null && VrcPlayer != null && Utilities.IsValid(VrcPlayer))
+                _audioManager.PlayAudioAtPosition(_footstepAudio.Get(type, isSlow), VrcPlayer.GetPosition());
         }
 
         #endregion

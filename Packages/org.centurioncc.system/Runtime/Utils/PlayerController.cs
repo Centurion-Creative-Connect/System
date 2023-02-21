@@ -214,17 +214,19 @@ namespace CenturionCC.System.Utils
             var format = isSlow ? "PlaySlow{0}FootstepAudio" : "Play{0}FootstepAudio";
             switch (type)
             {
-                case ObjectType.Dirt:
+                case ObjectType.Prototype:
+                default:
+                    return string.Format(format, "Prototype");
                 case ObjectType.Gravel:
-                    return string.Format(format, "Ground");
+                    return string.Format(format, "Gravel");
                 case ObjectType.Wood:
                     return string.Format(format, "Wood");
                 case ObjectType.Metallic:
-                    return string.Format(format, "Iron");
+                    return string.Format(format, "Metallic");
+                case ObjectType.Dirt:
+                    return string.Format(format, "Dirt");
                 case ObjectType.Concrete:
-                case ObjectType.Prototype:
-                default:
-                    return string.Format(format, "Fallback");
+                    return string.Format(format, "Concrete");
             }
         }
 
