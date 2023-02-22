@@ -204,7 +204,6 @@ namespace CenturionCC.System.Gun
             MainHandle.UnHolster(); // TODO: check this wont hurt something by syncing across players
             FireMode = 0;
             ShotCount = 0;
-            QueuedShotCount = 0;
 
             Trigger = TriggerState.Idle;
             State = GunState.Idle;
@@ -427,9 +426,6 @@ namespace CenturionCC.System.Gun
                 : 0F;
         [PublicAPI]
         public override float OptimizationRange => ParentManager != null ? ParentManager.optimizationRange : 0F;
-
-        [PublicAPI]
-        public override int MaxQueuedShotCount => ParentManager != null ? ParentManager.maxQueuedShotCount : 10;
 
         public override float RoundsPerSecond =>
             VariantData != null ? VariantData.MaxRoundsPerSecond : float.PositiveInfinity;

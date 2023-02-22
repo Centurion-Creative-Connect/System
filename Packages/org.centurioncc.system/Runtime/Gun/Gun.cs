@@ -29,31 +29,36 @@ namespace CenturionCC.System.Gun
         private FireMode _fireMode;
 
         private bool _isLocal;
-
         private bool _isPickedUp;
+
+        private int _lastShotCount;
         private bool _mainHandleIsPickedUp;
 
         private Vector3 _mainHandlePosOffset;
         private Quaternion _mainHandleRotOffset;
         private float _nextMainHandlePickupableTime;
         private float _nextSubHandlePickupableTime;
-
-        protected GunHandle _pivotHandle;
-
         [UdonSynced]
-        protected Vector3 _pivotPosOffset = Vector3.zero;
+        private Vector3 _shotPosition;
         [UdonSynced]
-        protected Quaternion _pivotRotOffset = Quaternion.identity;
-
-        [UdonSynced] [FieldChangeCallback(nameof(ShotCount))]
-        protected int _shotCount = -1;
-
+        private Quaternion _shotRotation;
+        [UdonSynced]
+        private long _shotTime;
 
         private bool _subHandleIsPickedUp;
 
         private Vector3 _subHandlePosOffset;
         private Quaternion _subHandleRotOffset;
         private TriggerState _trigger;
+
+        protected GunHandle pivotHandle;
+
+        [UdonSynced]
+        protected Vector3 pivotPosOffset = Vector3.zero;
+        [UdonSynced]
+        protected Quaternion pivotRotOffset = Quaternion.identity;
+        [UdonSynced] [FieldChangeCallback(nameof(ShotCount))]
+        protected int shotCount = -1;
 
 
         protected string Prefix => $"<color=olive>[{name}]</color> ";
@@ -88,7 +93,7 @@ namespace CenturionCC.System.Gun
             CustomHandle.target = Target;
             CustomHandle.transform.localPosition = Vector3.down * 50;
 
-            _pivotHandle = mainHandle;
+            pivotHandle = mainHandle;
 
             Internal_SetPivot(HandleType.MainHandle);
             Internal_UpdateHandlePickupable();
@@ -161,14 +166,37 @@ namespace CenturionCC.System.Gun
                 CollisionCount = 0;
         }
 
-        public virtual void _Update()
+        public override void OnDeserialization()
         {
-            if (QueuedShotCount > 0)
+            ProcessShotCountData();
+        }
+
+        public override void OnPostSerialization(SerializationResult result)
+        {
+            if (result.success)
+                ProcessShotCountData();
+        }
+
+        private void ProcessShotCountData()
+        {
+            if (ShotCount == _lastShotCount)
+                return;
+
+            Logger.LogVerbose(
+                $"{Prefix}Received new shot: {ShotCount}, {_shotPosition.ToString("2F")}, {_shotRotation.eulerAngles.ToString("2F")}");
+
+            if (ShotCount <= 0 || _lastShotCount == -1)
             {
-                --QueuedShotCount;
-                Internal_Shoot();
+                _lastShotCount = ShotCount;
+                return;
             }
 
+            _lastShotCount = ShotCount;
+            Internal_Shoot();
+        }
+
+        public virtual void _Update()
+        {
             if (IsOptimized && !IsLocal)
                 return;
 
@@ -259,8 +287,17 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public override void Shoot()
         {
+            _shotPosition = ShooterPosition;
+            _shotRotation = ShooterRotation;
+            _shotTime = DateTime.UtcNow.Ticks;
             ++ShotCount;
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
             RequestSerialization();
+
+#if UNITY_EDITOR
+            // ClientSim does not invoke serialization events, so just invoke it directly
+            OnDeserialization();
+#endif
         }
 
         [PublicAPI]
@@ -565,8 +602,7 @@ namespace CenturionCC.System.Gun
         public virtual int RequiredHolsterSize => requiredHolsterSize;
         [PublicAPI]
         public virtual float OptimizationRange => 45F;
-        [PublicAPI]
-        public virtual int MaxQueuedShotCount => 10;
+
         /// <summary>
         /// Max firing rate of this Gun.
         /// </summary>
@@ -588,7 +624,20 @@ namespace CenturionCC.System.Gun
         /// Last shot time of this Gun.
         /// </summary>
         [PublicAPI]
-        public virtual DateTime LastShotTime { get; protected set; }
+        public virtual DateTime LastShotTime
+        {
+            get
+            {
+                if (_shotTime < DateTime.MinValue.Ticks || _shotTime > DateTime.MaxValue.Ticks)
+                {
+                    Debug.Log($"{Prefix}ShotTime not set. returning min value");
+                    return DateTime.MinValue;
+                }
+
+                return new DateTime(_shotTime);
+            }
+            protected set => _shotTime = value.Ticks;
+        }
         /// <summary>
         /// Currently active <see cref="FireMode"/> of this Gun.
         /// </summary>
@@ -617,43 +666,12 @@ namespace CenturionCC.System.Gun
                     OnProcessStateChange(lastState, value);
             }
         }
-
         [PublicAPI]
         public virtual int ShotCount
         {
-            get => _shotCount;
-            protected set
-            {
-                if (value <= 0 || _shotCount == -1)
-                {
-                    Logger.LogVerbose($"{Prefix}Received new ShotCount: {value}");
-                    _shotCount = value;
-                    QueuedShotCount = 0;
-                    return;
-                }
-
-                var diff = value - _shotCount;
-                Logger.LogVerbose($"{Prefix}Received new ShotCount: {value}, Queueing {diff}");
-                QueuedShotCount += diff;
-                if (QueuedShotCount > MaxQueuedShotCount)
-                {
-                    var ignoredShots = QueuedShotCount - MaxQueuedShotCount;
-                    Logger.LogWarn($"{Prefix}Queued shots are suffering! ignoring {ignoredShots} shots!");
-                    QueuedShotCount = MaxQueuedShotCount;
-                }
-
-                if (QueuedShotCount < 0)
-                {
-                    Logger.LogWarn($"{Prefix}Queued shots underflow! resetting to 0!");
-                    QueuedShotCount = 0;
-                }
-
-                _shotCount = value;
-            }
+            get => shotCount;
+            protected set => shotCount = value;
         }
-        [PublicAPI]
-        public virtual int QueuedShotCount { get; protected set; }
-
         [PublicAPI] [CanBeNull]
         public virtual GunHolster TargetHolster { get; protected set; }
         [PublicAPI] [field: UdonSynced]
@@ -732,9 +750,9 @@ namespace CenturionCC.System.Gun
             if (CurrentHolder != null && Utilities.IsValid(CurrentHolder))
                 playerId = CurrentHolder.playerId;
 
-            var dataIndexOffset = (ShotCount - QueuedShotCount) * data.ProjectileCount;
-            var pos = ShooterPosition;
-            var rot = ShooterRotation;
+            var dataIndexOffset = ShotCount * data.ProjectileCount;
+            var pos = _shotPosition;
+            var rot = _shotRotation;
 
             for (int i = 0; i < data.ProjectileCount; i++)
             {
@@ -777,7 +795,7 @@ namespace CenturionCC.System.Gun
             if (IsLocal && HapticData != null && HapticData.Shooting)
                 HapticData.Shooting.PlayBothHand();
 
-            LastShotTime = DateTime.UtcNow;
+            LastShotTime = new DateTime(_shotTime);
             HasCocked = false;
         }
 
@@ -982,20 +1000,20 @@ namespace CenturionCC.System.Gun
             {
                 case HandleType.MainHandle:
                 {
-                    _pivotHandle = MainHandle;
-                    _pivotRotOffset = MainHandleRotationOffset;
-                    _pivotPosOffset = MainHandlePositionOffset;
+                    pivotHandle = MainHandle;
+                    pivotRotOffset = MainHandleRotationOffset;
+                    pivotPosOffset = MainHandlePositionOffset;
                     break;
                 }
                 case HandleType.SubHandle:
                 {
-                    _pivotHandle = SubHandle;
+                    pivotHandle = SubHandle;
                     // TODO: better look into this for more cleaner implementation
                     if (IsLocal)
                     {
                         Internal_UpdatePosition(PositionUpdateMethod.LookAt);
-                        _pivotRotOffset = Quaternion.Inverse(SubHandle.transform.rotation) * GetLookAtRotation();
-                        _pivotPosOffset = Target.InverseTransformPoint(SubHandle.transform.position);
+                        pivotRotOffset = Quaternion.Inverse(SubHandle.transform.rotation) * GetLookAtRotation();
+                        pivotPosOffset = Target.InverseTransformPoint(SubHandle.transform.position);
                         Networking.SetOwner(Networking.LocalPlayer, gameObject);
                         RequestSerialization();
                     }
@@ -1032,12 +1050,12 @@ namespace CenturionCC.System.Gun
                     position = mainHandleTransform.position + rotation * MainHandlePositionOffset * -1;
                     break;
                 case PositionUpdateMethod.PivotHandle:
-                    if (_pivotHandle == null)
+                    if (pivotHandle == null)
                         return;
 
-                    var pivotTransform = _pivotHandle.transform;
-                    rotation = pivotTransform.rotation * _pivotRotOffset;
-                    position = pivotTransform.position + rotation * _pivotPosOffset * -1;
+                    var pivotTransform = pivotHandle.transform;
+                    rotation = pivotTransform.rotation * pivotRotOffset;
+                    position = pivotTransform.position + rotation * pivotPosOffset * -1;
                     break;
             }
 
