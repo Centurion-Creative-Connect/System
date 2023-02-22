@@ -9,7 +9,7 @@ namespace CenturionCC.System.Utils
     /// </summary>
     /// <seealso cref="PlayerController"/>
     /// <seealso cref="System.Audio.FootstepGenerator"/>
-    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
     public class ObjectMarker : ObjectMarkerBase
     {
         [Tooltip("Object type which can be used to determine which effect is suitable for this object.\n" +

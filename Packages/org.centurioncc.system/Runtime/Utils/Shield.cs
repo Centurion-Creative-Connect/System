@@ -5,7 +5,7 @@ using VRC.SDKBase;
 
 namespace CenturionCC.System.Utils
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
     public class Shield : UdonSharpBehaviour
     {
         [SerializeField]

@@ -3,11 +3,11 @@ using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
-using VRC.Udon.Common;
+using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.Audio
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
     public class CollisionAudioPlayer : UdonSharpBehaviour
     {
         [SerializeField]
@@ -16,11 +16,6 @@ namespace CenturionCC.System.Audio
         private AudioManager audioManager;
 
         private int _collisionCount;
-        [UdonSynced]
-        private Vector3 _pos;
-
-        [UdonSynced]
-        private ObjectType _type;
 
         private void OnCollisionEnter(Collision collision)
         {
@@ -36,10 +31,7 @@ namespace CenturionCC.System.Audio
             if (objMarker == null || objMarker.Tags.ContainsString("NoCollisionAudio"))
                 return;
 
-            _pos = collision.GetContact(0).point;
-            _type = objMarker.ObjectType;
-
-            RequestSerialization();
+            SendCustomNetworkEvent(NetworkEventTarget.All, GetMethodName(objMarker.ObjectType));
         }
 
         private void OnCollisionExit(Collision other)
@@ -49,20 +41,60 @@ namespace CenturionCC.System.Audio
                 _collisionCount = 0;
         }
 
-        public override void OnPostSerialization(SerializationResult result)
+        private string GetMethodName(ObjectType type)
         {
-            if (result.success)
-                ProcessAudio();
+            const string methodBaseName = "Play{0}Audio";
+            switch (type)
+            {
+                default:
+                case ObjectType.Prototype:
+                    return string.Format(methodBaseName, "Prototype");
+                case ObjectType.Gravel:
+                    return string.Format(methodBaseName, "Gravel");
+                case ObjectType.Wood:
+                    return string.Format(methodBaseName, "Wood");
+                case ObjectType.Metallic:
+                    return string.Format(methodBaseName, "Metallic");
+                case ObjectType.Dirt:
+                    return string.Format(methodBaseName, "Dirt");
+                case ObjectType.Concrete:
+                    return string.Format(methodBaseName, "Concrete");
+            }
         }
 
-        public override void OnDeserialization()
+        public void PlayPrototypeAudio()
         {
-            ProcessAudio();
+            ProcessAudio(ObjectType.Prototype);
         }
 
-        private void ProcessAudio()
+        public void PlayGravelAudio()
         {
-            audioManager.PlayAudioAtPosition(collisionAudioStore.Get(_type), _pos);
+            ProcessAudio(ObjectType.Gravel);
+        }
+
+        public void PlayWoodAudio()
+        {
+            ProcessAudio(ObjectType.Wood);
+        }
+
+        public void PlayMetallicAudio()
+        {
+            ProcessAudio(ObjectType.Metallic);
+        }
+
+        public void PlayDirtAudio()
+        {
+            ProcessAudio(ObjectType.Dirt);
+        }
+
+        public void PlayConcreteAudio()
+        {
+            ProcessAudio(ObjectType.Concrete);
+        }
+
+        private void ProcessAudio(ObjectType type)
+        {
+            audioManager.PlayAudioAtPosition(collisionAudioStore.Get(type), transform.position);
         }
     }
 }
