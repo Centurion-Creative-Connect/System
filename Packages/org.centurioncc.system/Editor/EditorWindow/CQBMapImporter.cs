@@ -38,8 +38,13 @@ namespace CenturionCC.System.Editor.EditorWindow
                 foreach (var meshCol in go.GetComponents<MeshCollider>())
                     DestroyImmediate(meshCol);
                 go.AddComponent<MeshCollider>();
+
+#pragma warning disable CS0618
+                // Remove old FootstepMarker
                 foreach (var footstepMarker in go.GetComponentsInChildren<FootstepMarker>())
                     UdonSharpEditorUtility.DestroyImmediate(footstepMarker);
+#pragma warning restore CS0618
+
                 foreach (var objectMarker in go.GetComponentsInChildren<ObjectMarker>())
                     UdonSharpEditorUtility.DestroyImmediate(objectMarker);
 
