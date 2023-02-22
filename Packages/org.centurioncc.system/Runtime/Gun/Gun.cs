@@ -934,11 +934,17 @@ namespace CenturionCC.System.Gun
             if (handle.IsPickedUp)
             {
                 // If already picked up, check opposite hand's distance is not too close for being able to switch
-                var freeHandDistance =
-                    Vector3.Distance(
-                        handle.CurrentHand == VRC_Pickup.PickupHand.Left ? rightHandPos : leftHandPos,
-                        handlePos);
-                return freeHandDistance > FreeHandPickupProximity;
+                var freeHandDistance = Vector3.Distance(
+                    handle.CurrentHand == VRC_Pickup.PickupHand.Left ? rightHandPos : leftHandPos,
+                    handlePos
+                );
+                var result = freeHandDistance > FreeHandPickupProximity;
+                if (result && !handle.IsPickupable)
+                    Networking.LocalPlayer.PlayHapticEventInHand(
+                        handle.CurrentHand == VRC_Pickup.PickupHand.Left
+                            ? VRC_Pickup.PickupHand.Right
+                            : VRC_Pickup.PickupHand.Left, 0.4F, 0.2F, 0.2F);
+                return result;
             }
 
             // If not yet picked up, check closest hand's distance to ensure that handle is possible to pickup
