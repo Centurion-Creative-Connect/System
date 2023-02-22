@@ -1,9 +1,11 @@
-﻿using CenturionCC.System.Audio;
+﻿using System;
+using CenturionCC.System.Audio;
 using DerpyNewbie.Logger;
 using UdonSharp;
 
 namespace CenturionCC.System.Command
 {
+    [Obsolete("Use PlayerController with PlayerControllerCommand instead.")]
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class FootstepCommand : NewbieConsoleCommandHandler
     {
