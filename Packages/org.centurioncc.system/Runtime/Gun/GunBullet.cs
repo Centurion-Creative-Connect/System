@@ -158,16 +158,16 @@ namespace CenturionCC.System.Gun
 
         private void TrailRendererEmission(bool emit)
         {
-            if (trailRenderer && UseTrail)
+            if (trailRenderer)
             {
                 trailRenderer.Clear();
-                trailRenderer.emitting = emit;
+                trailRenderer.emitting = emit && UseTrail;
             }
 
-            if (debugTrailRenderer && UseDebugTrail)
+            if (debugTrailRenderer)
             {
                 debugTrailRenderer.Clear();
-                debugTrailRenderer.emitting = emit;
+                debugTrailRenderer.emitting = emit && UseDebugTrail;
             }
         }
     }
