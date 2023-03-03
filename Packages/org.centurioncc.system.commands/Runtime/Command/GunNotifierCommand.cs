@@ -1,4 +1,5 @@
 ﻿using CenturionCC.System.Gun;
+using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using UdonSharp;
 using UnityEngine;
@@ -8,7 +9,7 @@ namespace CenturionCC.System.Command
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class GunNotifierCommand : BoolCommandHandler
     {
-        [SerializeField]
+        [SerializeField] [NewbieInject] [HideInInspector]
         private GunManagerNotificationSender notificationSender;
 
         public override string Label => "GunNotification";
