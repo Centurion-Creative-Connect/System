@@ -9,8 +9,6 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
-#if !COMPILER_UDONSHARP && UNITY_EDITOR
-#endif
 
 namespace CenturionCC.System.Gun
 {
@@ -306,6 +304,12 @@ namespace CenturionCC.System.Gun
         {
             var result = base.CanShoot();
 
+            if (VariantData == null)
+            {
+                ParentManager.Invoke_OnShootCancelled(this, 1);
+                return ShotResult.Cancelled;
+            }
+
             if (FireMode == FireMode.Safety)
             {
                 ParentManager.Invoke_OnShootFailed(this, 12);
@@ -314,13 +318,13 @@ namespace CenturionCC.System.Gun
 
             if (ParentManager.useCollisionCheck)
             {
-                if (IsInWall)
+                if (IsInWall && VariantData.UseWallCheck)
                 {
                     ParentManager.Invoke_OnShootFailed(this, 100);
                     result = ShotResult.Failed;
                 }
 
-                if (IsInSafeZone)
+                if (IsInSafeZone && VariantData.UseSafeZoneCheck)
                 {
                     ParentManager.Invoke_OnShootCancelled(this, 101);
                     result = ShotResult.Cancelled;
@@ -428,6 +432,10 @@ namespace CenturionCC.System.Gun
         public override float OptimizationRange => ParentManager != null ? ParentManager.optimizationRange : 0F;
 
         public override float MaxHoldDistance => ParentManager != null ? ParentManager.maxHoldDistance : 0F;
+
+        public override bool IsInWall => VariantData != null && ParentManager != null
+            ? ParentManager.useCollisionCheck && VariantData.UseWallCheck && CollisionCount != 0
+            : CollisionCount != 0;
 
         public override float RoundsPerSecond =>
             VariantData != null ? VariantData.MaxRoundsPerSecond : float.PositiveInfinity;

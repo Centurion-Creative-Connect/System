@@ -41,6 +41,10 @@ namespace CenturionCC.System.Gun.DataStore
         [SerializeField]
         private bool useRePickupDelayForSubHandle;
         [SerializeField]
+        private bool useWallCheck = true;
+        [SerializeField]
+        private bool useSafeZoneCheck = true;
+        [SerializeField]
         private Transform modelOffset;
         [SerializeField]
         private Transform shooterOffset;
@@ -87,6 +91,8 @@ namespace CenturionCC.System.Gun.DataStore
         public bool IsDoubleHanded => isDoubleHanded;
         public bool UseRePickupDelayForMainHandle => useRePickupDelayForMainHandle;
         public bool UseRePickupDelayForSubHandle => useRePickupDelayForSubHandle;
+        public bool UseWallCheck => useWallCheck;
+        public bool UseSafeZoneCheck => useSafeZoneCheck;
         public Vector3 ModelPositionOffset =>
             modelOffset ? modelOffset.localPosition : Vector3.zero;
         public Quaternion ModelRotationOffset =>
