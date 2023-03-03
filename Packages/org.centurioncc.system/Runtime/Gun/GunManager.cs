@@ -40,6 +40,7 @@ namespace CenturionCC.System.Gun
         public int maxQueuedShotCount = 10;
         public float optimizationRange = 30F;
         public float handleRePickupDelay = 0.5F;
+        public float maxHoldDistance = 0.3F;
 
         public bool useDebugBulletTrail;
         public bool useBulletTrail = true;

@@ -444,6 +444,8 @@ namespace CenturionCC.System.Gun
         [SerializeField]
         protected bool isDoubleHanded = true;
         [SerializeField]
+        protected float maxHoldDistance = 0.3F;
+        [SerializeField]
         protected float roundsPerSecond = 4.5F;
         [SerializeField]
         protected int requiredHolsterSize = 100;
@@ -602,6 +604,12 @@ namespace CenturionCC.System.Gun
         public virtual int RequiredHolsterSize => requiredHolsterSize;
         [PublicAPI]
         public virtual float OptimizationRange => 45F;
+        /// <summary>
+        /// Maximum holdable distance of <see cref="SubHandle"/>. exceeding this will cause SubHandle to drop.
+        /// </summary>
+        /// <seealso cref="Internal_CheckForHandleDistance"/>
+        [PublicAPI]
+        public virtual float MaxHoldDistance => maxHoldDistance;
 
         /// <summary>
         /// Max firing rate of this Gun.
@@ -816,11 +824,11 @@ namespace CenturionCC.System.Gun
 
         protected void Internal_CheckForHandleDistance()
         {
-            if (!SubHandle.IsPickedUp) return;
+            if (SubHandle == null || !SubHandle.IsPickedUp) return;
 
             var localSubHandlePos = Target.worldToLocalMatrix.MultiplyPoint3x4(SubHandle.transform.position);
 
-            if (Vector3.Distance(localSubHandlePos, SubHandlePositionOffset) > .3F)
+            if (localSubHandlePos.z > SubHandlePositionOffset.z + MaxHoldDistance)
                 SubHandle.ForceDrop();
         }
 

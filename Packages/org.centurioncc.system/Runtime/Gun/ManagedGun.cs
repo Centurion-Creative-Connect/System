@@ -427,6 +427,8 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public override float OptimizationRange => ParentManager != null ? ParentManager.optimizationRange : 0F;
 
+        public override float MaxHoldDistance => ParentManager != null ? ParentManager.maxHoldDistance : 0F;
+
         public override float RoundsPerSecond =>
             VariantData != null ? VariantData.MaxRoundsPerSecond : float.PositiveInfinity;
 
