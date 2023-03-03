@@ -23,7 +23,7 @@ namespace CenturionCC.System.Command
         public override string Label => "EventLogger";
         public override string Usage =>
             "<command> <write|clear> <hit|shot> or <command> <writeVisual|clearVisual> or <command> <visualizeOnHit> [true|false]";
-        public override string Description => "Manipulate logs produced in EventLogger";
+        public override string Description => "Manipulate logs produced in EventLogger.";
 
         private void Start()
         {

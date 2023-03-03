@@ -29,7 +29,7 @@ namespace CenturionCC.System.Command
         public override string Label => "Teleport";
         public override string[] Aliases => new[] { "Tp" };
         public override string Usage => "<command> <toPlayer> or <command> <opponentPlayer> <toPlayer>";
-        public override string Description => "Teleports player to specified player";
+        public override string Description => "Teleports player to specified player.";
 
         private void Start()
         {

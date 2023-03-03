@@ -27,6 +27,7 @@ namespace CenturionCC.System.Command
         public override string[] Aliases => new[] { "Gun" };
         public override string Usage =>
             "<command> <reset|slowReset|reload|trail|optimizationRange|rePickupDelay|collisionCheck|debug|summon|list|info>";
+        public override string Description => "Perform gun related manipulation such as summon/reset/list etc.";
 
         private void Start()
         {

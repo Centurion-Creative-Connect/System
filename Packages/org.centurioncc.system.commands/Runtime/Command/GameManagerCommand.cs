@@ -14,6 +14,8 @@ namespace CenturionCC.System.Command
         public override string[] Aliases => new[] { "Game" };
         public override string Usage =>
             "<command> <canShoot|testHitRemote|testHitLocal|isMod|useHaptic|version|license>";
+        public override string Description =>
+            "Adjusts some game settings or prints out version/license of this project.";
 
         private void Start()
         {

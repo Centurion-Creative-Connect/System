@@ -16,6 +16,7 @@ namespace CenturionCC.System.Command
         public override string[] Aliases => new[] { "PC" };
         public override string Usage =>
             "<command> <walk|run|strafe|jump|gravity|maxWeight|useGunDir|gunDirUp|gunDirLow|groundSnap|groundSnapDistance|groundSnapForward> [value] OR <command> <info>";
+        public override string Description => "Adjust PlayerControllers properties in runtime.";
 
         public override void OnActionCommand(NewbieConsole console, string label, ref string[] vars,
             ref string[] envVars)

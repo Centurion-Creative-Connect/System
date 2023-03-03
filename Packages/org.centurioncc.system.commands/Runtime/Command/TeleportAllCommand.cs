@@ -29,7 +29,7 @@ namespace CenturionCC.System.Command
         public override string Label => "TeleportAll";
         public override string[] Aliases => new[] { "TpAll" };
         public override string Usage => "<command> [toPlayer]";
-        public override string Description => "Teleports all player to self or specified player";
+        public override string Description => "Teleports all player to self or specified player.";
 
         private void Start()
         {

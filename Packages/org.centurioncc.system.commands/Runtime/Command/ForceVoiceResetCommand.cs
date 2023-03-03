@@ -13,7 +13,7 @@ namespace CenturionCC.System.Command
 
         public override string Label => "ForceVoiceReset";
         public override string Usage => "<command>";
-        public override string Description => "Resets voice settings for users currently in instance";
+        public override string Description => "Resets voice settings for users currently in instance.";
 
         private void Start()
         {

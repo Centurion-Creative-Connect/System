@@ -15,6 +15,7 @@ namespace CenturionCC.System.Command
         public override string Label => "GunCamera";
         public override string[] Aliases => new[] { "GunCam" };
         public override string Usage => "<command> <enable|visible|invert|offset|pickup|update>";
+        public override string Description => "Enable or disable GunCamera, Customize them how you like.";
 
         public override string OnCommand(NewbieConsole console, string label, string[] vars, ref string[] envVars)
         {

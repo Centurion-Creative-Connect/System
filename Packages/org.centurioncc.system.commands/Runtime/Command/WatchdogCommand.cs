@@ -12,6 +12,8 @@ namespace CenturionCC.System.Command
         private WatchdogProc watchdogProc;
 
         public override string Label => "Watchdog";
+        public override string Usage => "<command> clear";
+        public override string Description => "Clears Watchdog crash screen (not recommended!)";
 
         public override void OnActionCommand(NewbieConsole console, string label, ref string[] vars,
             ref string[] envVars)

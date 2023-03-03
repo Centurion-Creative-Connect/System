@@ -12,6 +12,7 @@ namespace CenturionCC.System.Command
         public override string Label => "Notification";
         public override string[] Aliases => new[] { "Msg", "Pop" };
         public override string Usage => "<command> [info|warn|err] <msg>";
+        public override string Description => "Show notification with custom message.";
 
         private void Start()
         {

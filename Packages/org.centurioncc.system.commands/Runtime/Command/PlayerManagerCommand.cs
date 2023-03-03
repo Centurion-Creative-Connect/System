@@ -61,6 +61,7 @@ namespace CenturionCC.System.Command
                                         "   list [-non-joined]\n" +
                                         "   collider <show|collider name> [true|false]\n" +
                                         "   debug [true|false]\n";
+        public override string Description => "Perform player related manipulation such as add/remove etc.";
 
         private void Start()
         {
