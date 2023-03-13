@@ -1,5 +1,4 @@
-﻿using System;
-using CenturionCC.System.Audio;
+﻿using CenturionCC.System.Audio;
 using CenturionCC.System.Utils;
 using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
@@ -234,76 +233,12 @@ namespace CenturionCC.System.Player
 
         public void SubscribeCallback(UdonSharpBehaviour behaviour)
         {
-            if (behaviour == null)
-                return;
-
-            if (_eventCallbacks == null)
-            {
-                _eventCallbacks = new UdonSharpBehaviour[5];
-                _eventCallbackCount = 0;
-            }
-
-            _eventCallbacks = _AddBehaviour(_eventCallbackCount++, behaviour, _eventCallbacks);
+            CallbackUtil.AddBehaviour(behaviour, ref _eventCallbackCount, ref _eventCallbacks);
         }
 
         public void UnsubscribeCallback(UdonSharpBehaviour behaviour)
         {
-            if (behaviour == null)
-                return;
-
-            if (_eventCallbacks == null)
-            {
-                _eventCallbacks = new UdonSharpBehaviour[5];
-                _eventCallbackCount = 0;
-            }
-
-            var result = _RemoveBehaviour(behaviour, _eventCallbacks);
-            if (result == null) return;
-            --_eventCallbackCount;
-            _eventCallbacks = result;
-        }
-
-        /// <summary>
-        ///     Adds provided behaviour into provided array
-        /// </summary>
-        /// <param name="index">index of insert point</param>
-        /// <param name="item">an item to insert into <c>arr</c></param>
-        /// <param name="arr">an array which <c>item</c> gets inserted</param>
-        /// <returns>An array which <c>item</c> is inserted at <c>index</c>. Returns null when invalid params are provided!</returns>
-        private UdonSharpBehaviour[] _AddBehaviour(int index, UdonSharpBehaviour item, UdonSharpBehaviour[] arr)
-        {
-            if (arr == null || item == null || index < 0 || index > arr.Length + 5)
-                return null;
-
-            if (arr.Length <= index)
-            {
-                var newArr = new UdonSharpBehaviour[arr.Length + 5];
-                Array.Copy(arr, newArr, arr.Length);
-                arr = newArr;
-            }
-
-            Debug.Log($"add behaviour at {index} {item.name}");
-
-            arr[index] = item;
-            return arr;
-        }
-
-        /// <summary>
-        ///     Removes provided behaviour from provided array
-        /// </summary>
-        /// <param name="item">an item to remove</param>
-        /// <param name="arr">an array which <c>item</c> will get removed from</param>
-        /// <returns>An array which <c>item</c> is removed and items after <c>item</c> is moved to fill space</returns>
-        private UdonSharpBehaviour[] _RemoveBehaviour(UdonSharpBehaviour item, UdonSharpBehaviour[] arr)
-        {
-            if (item == null || arr == null)
-                return null;
-
-            var index = Array.IndexOf(arr, item);
-            if (index == -1)
-                return null;
-            Array.ConstrainedCopy(arr, index + 1, arr, index, arr.Length - 1 - index);
-            return arr;
+            CallbackUtil.RemoveBehaviour(behaviour, ref _eventCallbackCount, ref _eventCallbacks);
         }
 
         #endregion

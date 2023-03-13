@@ -1,5 +1,6 @@
 ﻿using CenturionCC.System.Gun.Behaviour;
 using CenturionCC.System.Gun.DataStore;
+using CenturionCC.System.Utils;
 using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
@@ -46,7 +47,10 @@ namespace CenturionCC.System.Gun
         public bool useBulletTrail = true;
         public bool useCollisionCheck = true;
         private WatchdogChildCallbackBase[] _childWdCallbacks;
-        private UdonSharpBehaviour[] _eventCallbacks = new UdonSharpBehaviour[0];
+        private int _eventCallbackCount;
+
+        private UdonSharpBehaviour[] _eventCallbacks;
+
         private bool _isDebugGunHandleVisible;
 
 
@@ -298,24 +302,12 @@ namespace CenturionCC.System.Gun
 
         public void SubscribeCallback(UdonSharpBehaviour behaviour)
         {
-            if (behaviour == null)
-                return;
-
-            if (_eventCallbacks == null)
-                _eventCallbacks = new UdonSharpBehaviour[0];
-
-            _eventCallbacks = _eventCallbacks.AddAsSet(behaviour);
+            CallbackUtil.AddBehaviour(behaviour, ref _eventCallbackCount, ref _eventCallbacks);
         }
 
         public void UnsubscribeCallback(UdonSharpBehaviour behaviour)
         {
-            if (behaviour == null)
-                return;
-
-            if (_eventCallbacks == null)
-                _eventCallbacks = new UdonSharpBehaviour[0];
-
-            _eventCallbacks = _eventCallbacks.RemoveItem(behaviour);
+            CallbackUtil.RemoveBehaviour(behaviour, ref _eventCallbackCount, ref _eventCallbacks);
         }
 
         #endregion
