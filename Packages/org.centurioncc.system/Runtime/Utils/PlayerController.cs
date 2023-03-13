@@ -28,6 +28,8 @@ namespace CenturionCC.System.Utils
         private PlayerManager playerManager;
 
         private bool _canRun = true;
+
+        private ObjectMarkerBase[] _currentPickupObjects = new ObjectMarkerBase[0];
         private ObjectMarkerBase _currentSurfaceObject;
 
         private Vector3 _footstepLastCheckedPosition;
@@ -38,8 +40,15 @@ namespace CenturionCC.System.Utils
         private bool _lastSurfaceNoFootstep;
 
         private float _lastSurfaceUpdatedTime;
+
+        private VRCPlayerApi _localPlayer;
         private Ray _ray;
         private Vector3 _vel;
+
+        private void Start()
+        {
+            _localPlayer = Networking.LocalPlayer;
+        }
 
         private void Update()
         {
@@ -78,7 +87,7 @@ namespace CenturionCC.System.Utils
 
         private void UpdateCurrentSurface()
         {
-            _ray = new Ray(Networking.LocalPlayer.GetPosition() + new Vector3(0f, .1F, 0F), Vector3.down);
+            _ray = new Ray(_localPlayer.GetPosition() + new Vector3(0f, .1F, 0F), Vector3.down);
             if (!Physics.Raycast(_ray, out _hit, 3, surfaceCheckingLayer))
                 return;
 
@@ -119,20 +128,23 @@ namespace CenturionCC.System.Utils
 
         private void UpdateFootstep()
         {
-            var currentPlayer = Networking.LocalPlayer;
-            var currentPlayerPos = currentPlayer.GetPosition();
+            var localPlayerPos = _localPlayer.GetPosition();
+
+            // Is total multiplier not zero?
+            if (TotalMultiplier == 0)
+                return;
 
             // Did player traveled one step distance?
-            if (Vector3.Distance(_footstepLastCheckedPosition, currentPlayerPos) <
+            if (Vector3.Distance(_footstepLastCheckedPosition, localPlayerPos) <
                 footstepDistance * TotalMultiplier) return;
 
             // Is player airborne?
-            if (!currentPlayer.IsPlayerGrounded())
+            if (!_localPlayer.IsPlayerGrounded())
                 return;
 
             var timeDiff = (Time.time - _footstepLastInvokedTime) * TotalMultiplier;
             _footstepLastInvokedTime = Time.time;
-            _footstepLastCheckedPosition = currentPlayerPos;
+            _footstepLastCheckedPosition = localPlayerPos;
 
             // Did player traveled fast enough to play footstep?
             if (footstepTime < timeDiff || _currentSurfaceObject == null) return;
@@ -148,8 +160,6 @@ namespace CenturionCC.System.Utils
 
         private void UpdateGroundSnap()
         {
-            var localPlayer = Networking.LocalPlayer;
-
             // If we've been applying ground snap for period of time, remove that effect by setting gravity to default.
             if (_isApplyingGroundSnap && _lastGroundSnapUpdatedTime < Time.timeSinceLevelLoad)
             {
@@ -158,7 +168,7 @@ namespace CenturionCC.System.Utils
                 _isApplyingGroundSnap = false;
             }
 
-            _vel = localPlayer.GetVelocity();
+            _vel = _localPlayer.GetVelocity();
 
             // We're going upwards, don't check ground.
             if (0.01F < _vel.y)
@@ -168,7 +178,7 @@ namespace CenturionCC.System.Utils
             }
 
             // Player is already airborne, don't check ground.
-            if (!localPlayer.IsPlayerGrounded() && !_isApplyingGroundSnap)
+            if (!_localPlayer.IsPlayerGrounded() && !_isApplyingGroundSnap)
             {
                 // Debug.Log("[PlayerController] GroundSnap: Not Grounded");
                 return;
@@ -177,7 +187,7 @@ namespace CenturionCC.System.Utils
             // Make it 2D normalized vector to easier use
             _vel = (new Vector3(_vel.x, 0F, _vel.z).normalized) * groundSnapForwardDistance;
 
-            _ray = new Ray(localPlayer.GetPosition() + Vector3.up + _vel, Vector3.down);
+            _ray = new Ray(_localPlayer.GetPosition() + Vector3.up + _vel, Vector3.down);
             if (!Physics.Raycast(_ray, out _hit, groundSnapMaxDistance + 1, playerGroundLayer))
             {
                 // Debug.DrawRay(_ray.origin, _ray.direction * (groundSnapMaxDistance + 1), Color.red, 5F);
@@ -203,7 +213,7 @@ namespace CenturionCC.System.Utils
 
             // Debug.DrawRay(_ray.origin, _ray.direction * _hit.distance, Color.green, 5F);
 
-            localPlayer.SetGravityStrength(100F);
+            _localPlayer.SetGravityStrength(100F);
             _lastGroundSnapUpdatedTime = Time.timeSinceLevelLoad + .5F;
             _isApplyingGroundSnap = true;
             // Debug.Log($"[PlayerController] GroundSnap: Begin: {_hit.distance}");
@@ -242,7 +252,7 @@ namespace CenturionCC.System.Utils
                       $"StrafeSpeed: {BaseStrafeSpeed}\n" +
                       $"JumpImpulse: {BaseJumpImpulse}\n" +
                       $"GravityStrength: {BaseGravityStrength}");
-            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            Networking.SetOwner(_localPlayer, gameObject);
             RequestSerialization();
         }
 
@@ -252,32 +262,21 @@ namespace CenturionCC.System.Utils
         [PublicAPI]
         public void UpdateLocalVrcPlayer()
         {
-            var localPlayer = Networking.LocalPlayer;
-            if (localPlayer == null || !localPlayer.IsValid())
+            if (_localPlayer == null || !_localPlayer.IsValid())
                 return;
 
-            Debug.Log($"[PlayerController] Applying actual properties: \n" +
-                      $"WalkSpeed  : {ActualWalkSpeed}\n" +
-                      $"RunSpeed   : {ActualRunSpeed}\n" +
-                      $"StrafeSpeed: {ActualStrafeSpeed}\n" +
-                      $"JumpImpulse: {ActualJumpImpulse}\n" +
-                      $"GravityStrength: {ActualGravityStrength}");
+            // Debug.Log($"[PlayerController] Applying actual properties: \n" +
+            //           $"WalkSpeed  : {ActualWalkSpeed}\n" +
+            //           $"RunSpeed   : {ActualRunSpeed}\n" +
+            //           $"StrafeSpeed: {ActualStrafeSpeed}\n" +
+            //           $"JumpImpulse: {ActualJumpImpulse}\n" +
+            //           $"GravityStrength: {ActualGravityStrength}");
 
-            localPlayer.SetWalkSpeed(ActualWalkSpeed);
-            localPlayer.SetRunSpeed(ActualRunSpeed);
-            localPlayer.SetStrafeSpeed(ActualStrafeSpeed);
-            localPlayer.SetJumpImpulse(ActualJumpImpulse);
-            localPlayer.SetGravityStrength(ActualGravityStrength);
-        }
-
-        /*
-         * Not concrete API, though for now it just works.
-         */
-
-        private void AddHoldingObject(float weightAddition)
-        {
-            PlayerWeight += weightAddition;
-            UpdateLocalVrcPlayer();
+            _localPlayer.SetWalkSpeed(ActualWalkSpeed);
+            _localPlayer.SetRunSpeed(ActualRunSpeed);
+            _localPlayer.SetStrafeSpeed(ActualStrafeSpeed);
+            _localPlayer.SetJumpImpulse(ActualJumpImpulse);
+            _localPlayer.SetGravityStrength(ActualGravityStrength);
         }
 
         /// <summary>
@@ -286,13 +285,8 @@ namespace CenturionCC.System.Utils
         /// <param name="anObject">an object which begin holding.</param>
         public void AddHoldingObject(ObjectMarkerBase anObject)
         {
-            AddHoldingObject(anObject.ObjectWeight);
-        }
-
-        private void RemoveHoldingObject(float weightSubtraction)
-        {
-            PlayerWeight -= weightSubtraction;
-            UpdateLocalVrcPlayer();
+            _currentPickupObjects = _currentPickupObjects.AddAsSet(anObject);
+            UpdateHoldingObjects();
         }
 
         /// <summary>
@@ -301,7 +295,24 @@ namespace CenturionCC.System.Utils
         /// <param name="anObject">an object which stopped holding.</param>
         public void RemoveHoldingObject(ObjectMarkerBase anObject)
         {
-            RemoveHoldingObject(anObject.ObjectWeight);
+            _currentPickupObjects = _currentPickupObjects.RemoveItem(anObject);
+            UpdateHoldingObjects();
+        }
+
+        /// <summary>
+        /// Update <see cref="PlayerWeight"/> by currently known held objects.
+        /// </summary>
+        /// <remarks>
+        /// This also updates current VrcPlayer. see <see cref="UpdateLocalVrcPlayer"/>.
+        /// </remarks>
+        /// <seealso cref="UpdateLocalVrcPlayer"/>
+        public void UpdateHoldingObjects()
+        {
+            var totalWeight = 0F;
+            foreach (var o in _currentPickupObjects)
+                if (o != null)
+                    totalWeight += o.ObjectWeight;
+            PlayerWeight = totalWeight;
         }
 
         /// <summary>
@@ -312,8 +323,8 @@ namespace CenturionCC.System.Utils
         /// </remarks>
         public void RemoveAllHoldingObject()
         {
-            PlayerWeight = 0;
-            UpdateLocalVrcPlayer();
+            _currentPickupObjects = new ObjectMarkerBase[0];
+            UpdateHoldingObjects();
         }
 
         #region Base
@@ -450,10 +461,7 @@ namespace CenturionCC.System.Utils
             get => playerWeight;
             protected set
             {
-                playerWeight = value;
-                if (playerWeight < 0)
-                    playerWeight = 0;
-
+                playerWeight = Mathf.Clamp(value, 0F, maximumCarryingWeightInKilogram);
                 UpdateLocalVrcPlayer();
             }
         }
