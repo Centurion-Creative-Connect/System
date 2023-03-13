@@ -11,21 +11,21 @@ namespace CenturionCC.System.Utils
     public class JerryCan : PlayerManagerCallbackBase
     {
         private const float PickupCooldownTime = 10F;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private NotificationUI notificationUI;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PlayerManager playerManager;
         [SerializeField]
         private VRCPickup pickup;
         [SerializeField]
         private TranslatableMessage dropMessage;
 
-        private NotificationUI _notificationUI;
-
         private void Start()
         {
             if (pickup == null)
                 pickup = (VRCPickup)GetComponent(typeof(VRCPickup));
-            if (_notificationUI == null)
-                _notificationUI = CenturionSystemReference.GetNotificationUI();
 
-            CenturionSystemReference.GetPlayerManager().SubscribeCallback(this);
+            playerManager.SubscribeCallback(this);
         }
 
         public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
@@ -37,8 +37,8 @@ namespace CenturionCC.System.Utils
         private void Drop()
         {
             pickup.Drop();
-            if (_notificationUI != null && dropMessage != null)
-                _notificationUI.ShowWarn(dropMessage.Message);
+            if (notificationUI != null && dropMessage != null)
+                notificationUI.ShowWarn(dropMessage.Message);
             SendCustomEventDelayedSeconds(nameof(MakePickupable), PickupCooldownTime);
         }
 
