@@ -8,6 +8,7 @@ using DerpyNewbie.Logger;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
+using VRC.Udon.Common;
 
 namespace CenturionCC.System.Player
 {
@@ -42,7 +43,7 @@ namespace CenturionCC.System.Player
 
         private bool _invokeOnDeathNextOnDeserialization;
         [NonSerialized] [UdonSynced] [FieldChangeCallback(nameof(SyncedDeaths))]
-        private int _syncedDeaths = -1;
+        private int _syncedDeaths;
         [NonSerialized] [UdonSynced] [FieldChangeCallback(nameof(SyncedLastAttackerPlayerId))]
         private int _syncedLastAttackerPlayerId = -1;
         [NonSerialized] [UdonSynced]
@@ -114,7 +115,7 @@ namespace CenturionCC.System.Player
                 var lastSyncedDeaths = _syncedDeaths;
                 _syncedDeaths = value;
 
-                if (lastSyncedDeaths <= 0 || lastSyncedDeaths == value)
+                if (lastSyncedDeaths < 0 || lastSyncedDeaths == value)
                     return;
 
                 _invokeOnDeathNextOnDeserialization = true;
@@ -148,9 +149,10 @@ namespace CenturionCC.System.Player
             CheckDiff();
         }
 
-        public override void OnPreSerialization()
+        public override void OnPostSerialization(SerializationResult result)
         {
-            CheckDiff();
+            if (result.success)
+                CheckDiff();
         }
 
         private void CheckDiff()
