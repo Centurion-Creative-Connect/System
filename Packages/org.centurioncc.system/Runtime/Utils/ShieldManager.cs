@@ -23,7 +23,7 @@ namespace CenturionCC.System.Utils
         [SerializeField] [HideInInspector] [NewbieInject]
         private NewbieLogger logger;
         [SerializeField] [HideInInspector] [NewbieInject]
-        private NotificationUI notification;
+        private NotificationProvider notification;
 
         [SerializeField]
         private TranslatableMessage shieldDroppedBecauseHit;

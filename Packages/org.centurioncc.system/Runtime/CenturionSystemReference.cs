@@ -1,4 +1,5 @@
-﻿using CenturionCC.System.Audio;
+﻿using System;
+using CenturionCC.System.Audio;
 using CenturionCC.System.Gun;
 using CenturionCC.System.Player;
 using CenturionCC.System.UI;
@@ -69,10 +70,15 @@ namespace CenturionCC.System
             return GetGameManager().audioManager;
         }
 
-        [PublicAPI]
-        public static NotificationUI GetNotificationUI()
+        public static NotificationProvider GetNotificationProvider()
         {
             return GetGameManager().notification;
+        }
+
+        [PublicAPI] [Obsolete("Use GetNotificationProvider() instead")]
+        public static NotificationUI GetNotificationUI()
+        {
+            return (NotificationUI)GetGameManager().notification;
         }
     }
 }

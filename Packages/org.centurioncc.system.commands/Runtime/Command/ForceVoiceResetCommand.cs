@@ -2,6 +2,7 @@
 using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using UdonSharp;
+using UnityEngine;
 using VRC.SDKBase;
 
 namespace CenturionCC.System.Command
@@ -9,16 +10,12 @@ namespace CenturionCC.System.Command
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class ForceVoiceResetCommand : ActionCommandHandler
     {
-        private NotificationUI _notification;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private NotificationProvider notification;
 
         public override string Label => "ForceVoiceReset";
         public override string Usage => "<command>";
         public override string Description => "Resets voice settings for users currently in instance.";
-
-        private void Start()
-        {
-            _notification = CenturionSystemReference.GetNotificationUI();
-        }
 
         public override void OnActionCommand(NewbieConsole console, string label, ref string[] vars,
             ref string[] envVars)
@@ -34,8 +31,8 @@ namespace CenturionCC.System.Command
             }
 
             console.Println("Successfully cleared customized player voices");
-            if (_notification)
-                _notification.ShowInfo("All player voices has been reset.");
+            if (notification)
+                notification.ShowInfo("All player voices has been reset.");
         }
     }
 }

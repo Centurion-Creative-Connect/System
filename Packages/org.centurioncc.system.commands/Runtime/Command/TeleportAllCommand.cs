@@ -11,6 +11,8 @@ namespace CenturionCC.System.Command
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class TeleportAllCommand : ActionCommandHandler
     {
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private NotificationProvider notification;
         [SerializeField]
         private TranslatableMessage willBeTeleportedMessage;
         [SerializeField]
@@ -19,7 +21,6 @@ namespace CenturionCC.System.Command
         private TranslatableMessage teleportDestinationNotFoundMessage;
 
         private NewbieConsole _console;
-        private NotificationUI _notification;
 
         [UdonSynced]
         private int _toPlayerId;
@@ -31,14 +32,9 @@ namespace CenturionCC.System.Command
         public override string Usage => "<command> [toPlayer]";
         public override string Description => "Teleports all player to self or specified player.";
 
-        private void Start()
-        {
-            _notification = CenturionSystemReference.GetNotificationUI();
-        }
-
         public void SendBeforeTeleportNotification()
         {
-            _notification.ShowInfo(willBeTeleportedMessage.Message);
+            notification.ShowInfo(willBeTeleportedMessage.Message);
         }
 
         public void TeleportAll()
@@ -52,7 +48,7 @@ namespace CenturionCC.System.Command
             var toPlayer = VRCPlayerApi.GetPlayerById(_toPlayerId);
             if (toPlayer == null || !toPlayer.IsValid())
             {
-                _notification.ShowError(teleportDestinationNotFoundMessage.Message);
+                notification.ShowError(teleportDestinationNotFoundMessage.Message);
                 _console.Println($"[TeleportAllCommand] Teleport destination player {_toPlayerId} not found!");
                 return;
             }
@@ -62,7 +58,7 @@ namespace CenturionCC.System.Command
                 toPlayer.GetRotation(),
                 VRC_SceneDescriptor.SpawnOrientation.AlignPlayerWithSpawnPoint,
                 false);
-            _notification.ShowInfo(string.Format(teleportSuccessfulMessage.Message, toPlayer.displayName));
+            notification.ShowInfo(string.Format(teleportSuccessfulMessage.Message, toPlayer.displayName));
             _console.Println(
                 $"[TeleportAllCommand] Successfully teleported you to {NewbieUtils.GetPlayerName(toPlayer)}");
         }

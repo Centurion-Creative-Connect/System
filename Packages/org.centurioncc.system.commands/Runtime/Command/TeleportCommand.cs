@@ -11,13 +11,14 @@ namespace CenturionCC.System.Command
     public class TeleportCommand : ActionCommandHandler
     {
         private const string PlayerNotFoundMessage = "<color=red>Player {0} does not exist.</color>";
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private NotificationProvider notification;
         [SerializeField]
         private TranslatableMessage onTeleportSuccessfulMessage;
 
         private NewbieConsole _console;
 
         private int _lastRequestVersion = -1;
-        private NotificationUI _notification;
 
         [UdonSynced]
         private int _opponentPlayerId;
@@ -33,7 +34,6 @@ namespace CenturionCC.System.Command
 
         private void Start()
         {
-            _notification = CenturionSystemReference.GetNotificationUI();
             _requestVersion = 0;
             _lastRequestVersion = 0;
         }
@@ -81,7 +81,7 @@ namespace CenturionCC.System.Command
                 VRC_SceneDescriptor.SpawnOrientation.AlignPlayerWithSpawnPoint,
                 false);
 
-            _notification.ShowInfo(
+            notification.ShowInfo(
                 string.Format(onTeleportSuccessfulMessage.Message,
                     toPlayer.displayName));
             _console.Println(

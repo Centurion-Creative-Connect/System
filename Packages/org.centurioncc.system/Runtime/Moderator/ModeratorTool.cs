@@ -29,7 +29,7 @@ namespace CenturionCC.System.Moderator
 
 
         private bool _isModeratorMode;
-        private NotificationUI _notification;
+        private NotificationProvider _notification;
         private PlayerManager _playerManager;
         private RoleProvider _roleManager;
 

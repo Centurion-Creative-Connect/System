@@ -15,7 +15,7 @@ namespace CenturionCC.System.Gun
         [SerializeField] [HideInInspector] [NewbieInject]
         private GameManager gameManager;
         [SerializeField] [HideInInspector] [NewbieInject]
-        private NotificationUI notificationUI;
+        private NotificationProvider notification;
         [Header("Messages")]
         [SerializeField]
         private TranslatableMessage onGunsResetMessage;
@@ -120,9 +120,9 @@ namespace CenturionCC.System.Gun
                 return;
 
             if (isWarn)
-                notificationUI.ShowWarn(m.Message);
+                notification.ShowWarn(m.Message);
             else
-                notificationUI.ShowInfo(m.Message);
+                notification.ShowInfo(m.Message);
         }
 
         private void SendNotification2(TranslatableMessage format, TranslatableMessage info)
@@ -132,7 +132,7 @@ namespace CenturionCC.System.Gun
 
             var infoMsg = info == null ? "Unknown" : info.Message;
 
-            notificationUI.ShowInfo(string.Format(format.Message, infoMsg));
+            notification.ShowInfo(string.Format(format.Message, infoMsg));
         }
 
         private void SendErrNotification(TranslatableMessage format, string info)
@@ -140,7 +140,7 @@ namespace CenturionCC.System.Gun
             if (format == null)
                 return;
 
-            notificationUI.ShowError(string.Format(format.Message, info));
+            notification.ShowError(string.Format(format.Message, info));
         }
     }
 }

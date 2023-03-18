@@ -31,7 +31,7 @@ namespace CenturionCC.System
         public EventLogger eventLogger;
         public FootstepGenerator footstep;
         public ModeratorTool moderatorTool;
-        public NotificationUI notification;
+        public NotificationProvider notification;
 
         public bool logHitLocation = true;
         public bool logShotLocation = true;
@@ -232,7 +232,7 @@ namespace CenturionCC.System
         [PublicAPI]
         public static NotificationUI GetNotificationUI()
         {
-            return GetGameManager().notification;
+            return (NotificationUI)GetGameManager().notification;
         }
     }
 }

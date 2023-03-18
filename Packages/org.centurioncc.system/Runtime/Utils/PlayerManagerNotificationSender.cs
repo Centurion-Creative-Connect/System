@@ -27,7 +27,7 @@ namespace CenturionCC.System.Utils
         private TranslatableMessage onTeamTagDisabledMessage;
 
         [SerializeField] [HideInInspector] [NewbieInject]
-        private NotificationUI notification;
+        private NotificationProvider notification;
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
 

@@ -12,7 +12,7 @@ namespace CenturionCC.System.Utils
     {
         private const float PickupCooldownTime = 10F;
         [SerializeField] [HideInInspector] [NewbieInject]
-        private NotificationUI notificationUI;
+        private NotificationProvider notificationProvider;
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
         [SerializeField]
@@ -37,8 +37,8 @@ namespace CenturionCC.System.Utils
         private void Drop()
         {
             pickup.Drop();
-            if (notificationUI != null && dropMessage != null)
-                notificationUI.ShowWarn(dropMessage.Message);
+            if (notificationProvider != null && dropMessage != null)
+                notificationProvider.ShowWarn(dropMessage.Message);
             SendCustomEventDelayedSeconds(nameof(MakePickupable), PickupCooldownTime);
         }
 
