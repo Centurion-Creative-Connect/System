@@ -17,6 +17,8 @@ namespace CenturionCC.System.Player
         [SerializeField]
         private Image staffTag;
         [SerializeField]
+        private Image creatorTag;
+        [SerializeField]
         private Image masterTag;
         [SerializeField]
         private Text debugText;
@@ -71,10 +73,13 @@ namespace CenturionCC.System.Player
             var staffTagType = GetStaffTagType();
             var shouldShowStaffTag = _playerManager.ShowStaffTag &&
                                      _player.Role.IsGameStaff() && isEitherInSpecialTeam;
+            var shouldShowCreatorTag = _playerManager.ShowCreatorTag &&
+                                       _player.Role.IsGameCreator() && isEitherInSpecialTeam;
 
             staffTag.gameObject.SetActive(shouldShowStaffTag && staffTagType == TagType.Staff);
             ownerTag.gameObject.SetActive(shouldShowStaffTag && staffTagType == TagType.Owner);
             devTag.gameObject.SetActive(shouldShowStaffTag && staffTagType == TagType.Dev);
+            creatorTag.gameObject.SetActive(shouldShowCreatorTag && staffTagType == TagType.Creator);
         }
 
         public void UpdatePositionAndRotation(Vector3 localHead, Vector3 localHeadForward, Vector3 followingHead)
@@ -95,6 +100,8 @@ namespace CenturionCC.System.Player
                     return TagType.Owner;
                 case "Developer":
                     return TagType.Dev;
+                case "Creator":
+                    return TagType.Creator;
                 default:
                     return TagType.Staff;
             }
@@ -117,6 +124,7 @@ namespace CenturionCC.System.Player
         Master,
         Staff,
         Dev,
-        Owner
+        Owner,
+        Creator
     }
 }

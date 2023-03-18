@@ -46,9 +46,10 @@ namespace CenturionCC.System.Player
 
         private int _localPlayerIndex = -1;
         private bool _showCollider;
+        [UdonSynced] [FieldChangeCallback(nameof(ShowCreatorTag))]
+        private bool _showCreatorTag;
         [UdonSynced] [FieldChangeCallback(nameof(ShowStaffTag))]
         private bool _showStaffTag = true;
-
         [UdonSynced] [FieldChangeCallback(nameof(ShowTeamTag))]
         private bool _showTeamTag;
 
@@ -142,6 +143,18 @@ namespace CenturionCC.System.Player
                 _showStaffTag = value;
                 if (shouldNotify)
                     Invoke_OnPlayerTagChanged(TagType.Staff, value);
+            }
+        }
+
+        public bool ShowCreatorTag
+        {
+            get => _showCreatorTag;
+            private set
+            {
+                var shouldNotify = _showCreatorTag != value;
+                _showCreatorTag = value;
+                if (shouldNotify)
+                    Invoke_OnPlayerTagChanged(TagType.Creator, value);
             }
         }
 
@@ -579,6 +592,18 @@ namespace CenturionCC.System.Player
             }
 
             ShowStaffTag = isOn;
+            RequestSerialization();
+        }
+
+        public void MasterOnly_SetCreatorTagShown(bool isOn)
+        {
+            if (!Networking.IsMaster)
+            {
+                Logger.LogError(string.Format(MustBeMasterError, nameof(MasterOnly_SetCreatorTagShown)));
+                return;
+            }
+
+            ShowCreatorTag = isOn;
             RequestSerialization();
         }
 

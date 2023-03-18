@@ -59,7 +59,7 @@ namespace CenturionCC.System.Command
                                         "   update\n" +
                                         "   localPlayer\n" +
                                         "   list [-non-joined]\n" +
-                                        "   collider <show|collider name> [true|false]\n" +
+                                        "   collider <collider name> [true|false]\n" +
                                         "   debug [true|false]\n";
         public override string Description => "Perform player related manipulation such as add/remove etc.";
 
@@ -289,6 +289,15 @@ namespace CenturionCC.System.Command
                             $"All to {_targetTeam}",
                             _requestVersion));
                         _playerMgr.MasterOnly_SetStaffTagShown(_targetTeam == 1);
+                        return;
+                    }
+                    case OpCreatorTagChange:
+                    {
+                        _console.Println(string.Format(ReceivedFormat,
+                            nameof(OpCreatorTagChange),
+                            $"All to {_targetTeam}",
+                            _requestVersion));
+                        _playerMgr.MasterOnly_SetCreatorTagShown(_targetTeam == 1);
                         return;
                     }
                     case OpTeamRegionChange:
@@ -612,6 +621,29 @@ namespace CenturionCC.System.Command
             );
         }
 
+        private bool HandleRequestShowCreatorTag(NewbieConsole console, string[] arguments)
+        {
+            if (!console.CurrentRole.HasPermission())
+            {
+                console.Println("You are not allowed to change creator tag on/off unless you're moderator!");
+                return true;
+            }
+
+            if (arguments.Length <= 1)
+            {
+                console.Println("<color=red>On/Off not specified</color>");
+                return true;
+            }
+
+            return SendGenericRequest
+            (
+                console,
+                OpCreatorTagChange, nameof(OpCreatorTagChange),
+                -1, $"All to {(ConsoleParser.TryParseBoolean(arguments[1], _playerMgr.ShowCreatorTag) ? 1 : 0)}",
+                _targetTeam = ConsoleParser.TryParseBoolean(arguments[1], _playerMgr.ShowCreatorTag) ? 1 : 0, true
+            );
+        }
+
         private bool HandleList(NewbieConsole console, string[] arguments)
         {
             if (arguments.Length >= 2 && (arguments[1].Equals("-n") || arguments[1].Equals("-non-joined")))
@@ -869,6 +901,10 @@ namespace CenturionCC.System.Command
                 case "stafftag":
                 case "showstafftag":
                     return HandleRequestShowStaffTag(console, vars);
+                case "ctag":
+                case "creatortag":
+                case "showcreatortag":
+                    return HandleRequestShowCreatorTag(console, vars);
                 case "ff":
                 case "friendlyfire":
                 case "allowfriendlyfire":
@@ -985,6 +1021,7 @@ namespace CenturionCC.System.Command
         private const int OpTeamTagChange = 13;
         private const int OpStaffTagChange = 14;
         private const int OpTeamRegionChange = 15;
+        private const int OpCreatorTagChange = 16;
 
         #endregion
     }

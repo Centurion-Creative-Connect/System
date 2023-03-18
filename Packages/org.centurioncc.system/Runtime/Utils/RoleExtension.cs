@@ -10,5 +10,8 @@ namespace CenturionCC.System.Utils
 
         public static bool IsGameStaff(this RoleData role) =>
             role != null && role.RoleProperties.ContainsItem("staff");
+
+        public static bool IsGameCreator(this RoleData role) =>
+            role != null && role.RoleProperties.ContainsItem("creator");
     }
 }
