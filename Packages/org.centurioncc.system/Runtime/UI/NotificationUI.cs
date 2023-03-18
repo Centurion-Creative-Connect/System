@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace CenturionCC.System.UI
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class NotificationUI : UdonSharpBehaviour
+    public class NotificationUI : NotificationProvider
     {
         [SerializeField]
         private HitDisplay notificationDisplay;
@@ -17,24 +17,28 @@ namespace CenturionCC.System.UI
         [SerializeField]
         private Text notificationText;
 
-        public void ShowInfo(string text)
+        // TODO: duration is ignored
+        public override void Show(NotificationLevel level, string message, float duration = 5F)
         {
-            Show(0, text);
-        }
+            int imageIndex = 0;
+            switch (level)
+            {
+                default:
+                case NotificationLevel.Info:
+                    imageIndex = 0;
+                    break;
+                case NotificationLevel.Warn:
+                    imageIndex = 1;
+                    break;
+                case NotificationLevel.Error:
+                    imageIndex = 2;
+                    break;
+                case NotificationLevel.Help:
+                    imageIndex = 3;
+                    break;
+            }
 
-        public void ShowWarn(string text)
-        {
-            Show(1, text);
-        }
-
-        public void ShowError(string text)
-        {
-            Show(2, text);
-        }
-
-        private void Show(int imageIndex, string text)
-        {
-            if (imageIndex < 0 || imageIndex > notificationIcons.Length)
+            if (imageIndex > notificationIcons.Length)
             {
                 Debug.LogError("[NotificationUI] Image index is out of range! falling back to index of 0");
                 imageIndex = 0;
@@ -42,7 +46,7 @@ namespace CenturionCC.System.UI
 
             var sprite = notificationIcons[imageIndex];
             notificationImage.sprite = sprite;
-            notificationText.text = text;
+            notificationText.text = message;
             notificationDisplay.Play();
         }
     }
