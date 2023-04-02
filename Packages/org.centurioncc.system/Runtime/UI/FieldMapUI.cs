@@ -1,4 +1,5 @@
 ﻿using CenturionCC.System.Utils;
+using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
 
@@ -7,6 +8,9 @@ namespace CenturionCC.System.UI
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class FieldMapUI : UdonSharpBehaviour
     {
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private WallManager wallManager;
+
         [SerializeField]
         private GameObject leftImage;
         [SerializeField]
@@ -16,18 +20,9 @@ namespace CenturionCC.System.UI
         [SerializeField]
         private GameObject downImage;
 
-        // Disable inconsistent naming warn for WallManager callback field
-        // ReSharper disable InconsistentNaming
-        public bool A00IsActive;
-        public bool A01IsActive;
-        public bool B00IsActive;
-        public bool B01IsActive;
-        // ReSharper restore InconsistentNaming
-
         private void Start()
         {
-            var wall = GameObject.Find("WallManager").GetComponent<WallManager>();
-            wall.SubscribeCallback(this);
+            wallManager.SubscribeCallback(this);
         }
 
         public void OnUIRefresh()
@@ -37,5 +32,13 @@ namespace CenturionCC.System.UI
             upImage.SetActive(B00IsActive);
             downImage.SetActive(B01IsActive);
         }
+
+        // Disable inconsistent naming warn for WallManager callback field
+        // ReSharper disable InconsistentNaming
+        public bool A00IsActive;
+        public bool A01IsActive;
+        public bool B00IsActive;
+        public bool B01IsActive;
+        // ReSharper restore InconsistentNaming
     }
 }
