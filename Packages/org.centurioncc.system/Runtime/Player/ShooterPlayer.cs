@@ -350,7 +350,7 @@ namespace CenturionCC.System.Player
 
         public override void OnDeath()
         {
-            if (IsLocal)
+            if (IsLocal && playerManager.LocalHitEffect != null)
                 playerManager.LocalHitEffect.Play();
             else
                 display.Play();
