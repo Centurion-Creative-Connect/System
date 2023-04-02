@@ -326,7 +326,7 @@ namespace CenturionCC.System.Gun
             Internal_UpdatePosition(
                 IsDoubleHandedGun && MainHandle.IsPickedUp && SubHandle.IsPickedUp
                     ? PositionUpdateMethod.LookAt
-                    : MainHandle.IsPickedUp
+                    : MainHandle.IsPickedUp || IsHolstered
                         ? PositionUpdateMethod.MainHandle
                         : IsPickedUp
                             ? PositionUpdateMethod.PivotHandle
