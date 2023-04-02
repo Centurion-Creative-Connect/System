@@ -117,6 +117,38 @@ namespace CenturionCC.System.Gun.Behaviour
             return Mathf.Clamp(signedAngle, twistMinAngle, twistMaxAngle);
         }
 
+        private void UpdateCustomHandlePosition(GunBase instance)
+        {
+            Vector3 targetPos;
+            switch (instance.State)
+            {
+                default:
+                case GunState.Idle:
+                case GunState.Unknown:
+                {
+                    targetPos = (requireTwist && idleTwistPosition != null
+                        ? idleTwistPosition.localPosition
+                        : cockingPosition.localPosition);
+                    break;
+                }
+                case GunState.InCockingTwisting:
+                {
+                    targetPos = (requireTwist && idleTwistPosition != null
+                        ? activeTwistPosition.localPosition
+                        : cockingPosition.localPosition);
+                    break;
+                }
+                case GunState.InCockingPull:
+                case GunState.InCockingPush:
+                {
+                    targetPos = cockingPosition.localPosition + new Vector3(0, 0, -cockingLength);
+                    break;
+                }
+            }
+
+            instance.CustomHandle.transform.localPosition = targetPos;
+        }
+
         #region StateCheckMethods
 
         private bool CanShoot(GunBase target)
@@ -145,22 +177,13 @@ namespace CenturionCC.System.Gun.Behaviour
         public override void OnGunPickup(GunBase instance)
         {
             Debug.Log("[CockingGunBehaviour] OnGunPickup");
-
-            // お祈り
-            if (requireTwist && idleTwistPosition != null)
-                instance.CustomHandle.transform.localPosition = idleTwistPosition.localPosition;
-            else
-                instance.CustomHandle.transform.localPosition = cockingPosition.localPosition;
+            UpdateCustomHandlePosition(instance);
         }
 
         public override void OnGunDrop(GunBase instance)
         {
             Debug.Log("[CockingGunBehaviour] OnGunDrop");
-            // お祈り
-            if (requireTwist && idleTwistPosition != null)
-                instance.CustomHandle.transform.localPosition = idleTwistPosition.localPosition;
-            else
-                instance.CustomHandle.transform.localPosition = cockingPosition.localPosition;
+            UpdateCustomHandlePosition(instance);
         }
 
         public override void OnGunUpdate(GunBase instance)
