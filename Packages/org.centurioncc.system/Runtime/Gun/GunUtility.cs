@@ -76,7 +76,7 @@ namespace CenturionCC.System.Gun
                 anim.SetFloat(CockingTwistParameter(), twistNormalized);
                 anim.SetInteger(StateParameter(), (int)next);
                 anim.SetBool(HasBulletParameter(), target.HasBulletInChamber);
-                anim.SetBool(HasCockedParameter(), next == GunState.Idle && target.HasBulletInChamber);
+                anim.SetBool(HasCockedParameter(), target.HasCocked);
             }
 
             if (curr != next)
@@ -126,7 +126,7 @@ namespace CenturionCC.System.Gun
                 anim.SetFloat(CockingProgressParameter(), progressNormalized);
                 anim.SetInteger(StateParameter(), (int)next);
                 anim.SetBool(HasBulletParameter(), target.HasBulletInChamber);
-                anim.SetBool(HasCockedParameter(), target.HasBulletInChamber && next == GunState.Idle);
+                anim.SetBool(HasCockedParameter(), target.HasCocked);
             }
 
             if (curr != next)
