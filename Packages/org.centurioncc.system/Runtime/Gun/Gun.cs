@@ -323,15 +323,19 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public override void UpdatePosition()
         {
-            Internal_UpdatePosition(
-                IsDoubleHandedGun && MainHandle.IsPickedUp && SubHandle.IsPickedUp
-                    ? PositionUpdateMethod.LookAt
-                    : MainHandle.IsPickedUp || IsHolstered
-                        ? PositionUpdateMethod.MainHandle
-                        : IsPickedUp
-                            ? PositionUpdateMethod.PivotHandle
-                            : PositionUpdateMethod.NotPickedUp
-            );
+            PositionUpdateMethod method;
+            if (IsDoubleHandedGun && MainHandle.IsPickedUp && SubHandle.IsPickedUp)
+                method = PositionUpdateMethod.LookAt;
+            else if (MainHandle.IsPickedUp)
+                method = PositionUpdateMethod.MainHandle;
+            else if (IsHolstered)
+                method = PositionUpdateMethod.Holstered;
+            else if (IsPickedUp)
+                method = PositionUpdateMethod.PivotHandle;
+            else
+                method = PositionUpdateMethod.NotPickedUp;
+
+            Internal_UpdatePosition(method);
         }
 
         [PublicAPI]
@@ -1057,6 +1061,7 @@ namespace CenturionCC.System.Gun
                     rotation = GetLookAtRotation();
                     position = MainHandle.transform.position + rotation * MainHandlePositionOffset * -1;
                     break;
+                case PositionUpdateMethod.Holstered:
                 case PositionUpdateMethod.MainHandle:
                     var mainHandleTransform = MainHandle.transform;
                     rotation = mainHandleTransform.rotation *
@@ -1075,7 +1080,12 @@ namespace CenturionCC.System.Gun
 
             Target.SetPositionAndRotation(position, rotation);
 
-            if (!Networking.IsOwner(gameObject) || method == PositionUpdateMethod.NotPickedUp) return;
+            var updateHandlePosition =
+                Networking.IsOwner(gameObject) &&
+                method != PositionUpdateMethod.NotPickedUp &&
+                method != PositionUpdateMethod.Holstered;
+
+            if (!updateHandlePosition) return;
 
             if (!MainHandle.IsPickedUp)
                 MainHandle.MoveToLocalPosition(MainHandlePositionOffset, MainHandleRotationOffset);
@@ -1417,9 +1427,10 @@ namespace CenturionCC.System.Gun
 
     public enum PositionUpdateMethod
     {
-        LookAt,
+        NotPickedUp,
         MainHandle,
+        LookAt,
         PivotHandle,
-        NotPickedUp
+        Holstered
     }
 }
