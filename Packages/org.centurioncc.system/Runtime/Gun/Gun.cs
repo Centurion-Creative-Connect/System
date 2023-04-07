@@ -1080,17 +1080,32 @@ namespace CenturionCC.System.Gun
 
             Target.SetPositionAndRotation(position, rotation);
 
-            var updateHandlePosition =
-                Networking.IsOwner(gameObject) &&
-                method != PositionUpdateMethod.NotPickedUp &&
-                method != PositionUpdateMethod.Holstered;
+            if (!Networking.IsOwner(gameObject))
+                return;
 
-            if (!updateHandlePosition) return;
-
-            if (!MainHandle.IsPickedUp)
-                MainHandle.MoveToLocalPosition(MainHandlePositionOffset, MainHandleRotationOffset);
-            if (!SubHandle.IsPickedUp)
-                SubHandle.MoveToLocalPosition(SubHandlePositionOffset, SubHandleRotationOffset);
+            switch (method)
+            {
+                case PositionUpdateMethod.PivotHandle:
+                case PositionUpdateMethod.MainHandle:
+                case PositionUpdateMethod.LookAt:
+                {
+                    if (!MainHandle.IsPickedUp)
+                        MainHandle.MoveToLocalPosition(MainHandlePositionOffset, MainHandleRotationOffset);
+                    if (!SubHandle.IsPickedUp)
+                        SubHandle.MoveToLocalPosition(SubHandlePositionOffset, SubHandleRotationOffset);
+                    break;
+                }
+                case PositionUpdateMethod.Holstered:
+                {
+                    SubHandle.MoveToLocalPosition(SubHandlePositionOffset, SubHandleRotationOffset);
+                    break;
+                }
+                default:
+                case PositionUpdateMethod.NotPickedUp:
+                {
+                    break;
+                }
+            }
         }
 
         protected void Internal_SetRelatedObjectsOwner(VRCPlayerApi api)
