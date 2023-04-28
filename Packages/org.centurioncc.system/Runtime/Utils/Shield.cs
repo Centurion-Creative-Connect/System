@@ -26,6 +26,7 @@ namespace CenturionCC.System.Utils
         [SerializeField]
         private bool dropShieldOnHit;
 
+        protected DropContext context;
         protected bool isHeldLocally;
 
         public virtual bool CanShootWhileCarrying => canShootWhileCarrying;
@@ -46,12 +47,15 @@ namespace CenturionCC.System.Utils
 
         public override void OnPickup()
         {
+            context = DropContext.UserInput;
+
             // Process ObjectMarker logic before anything
             playerController.AddHoldingObject(this);
 
             var invokeResult = shieldManager.Invoke_OnShieldPickup(this);
             if (!invokeResult)
             {
+                context = DropContext.PickupCancelled;
                 pickup.Drop();
                 return;
             }
@@ -77,11 +81,12 @@ namespace CenturionCC.System.Utils
             isHeldLocally = false;
             pickup.pickupable = true;
 
-            shieldManager.Invoke_OnShieldDrop(this);
+            shieldManager.Invoke_OnShieldDrop(this, context);
         }
 
-        public void Drop()
+        public void DropByHit()
         {
+            context = DropContext.Hit;
             pickup.Drop();
         }
 

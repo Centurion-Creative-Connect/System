@@ -1,8 +1,6 @@
 ﻿using CenturionCC.System.Gun;
 using CenturionCC.System.Player;
-using CenturionCC.System.UI;
 using DerpyNewbie.Common;
-using DerpyNewbie.Common.Role;
 using DerpyNewbie.Logger;
 using UdonSharp;
 using UnityEngine;
@@ -17,37 +15,26 @@ namespace CenturionCC.System.Utils
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
         [SerializeField] [HideInInspector] [NewbieInject]
-        private RoleManager roleManager;
-        [SerializeField] [HideInInspector] [NewbieInject]
         private GunManager gunManager;
         [SerializeField] [HideInInspector] [NewbieInject]
         private NewbieLogger logger;
-        [SerializeField] [HideInInspector] [NewbieInject]
-        private NotificationProvider notification;
-
-        [SerializeField]
-        private TranslatableMessage shieldDroppedBecauseHit;
-        [SerializeField]
-        private TranslatableMessage dropShieldOnHitEnabled;
-        [SerializeField]
-        private TranslatableMessage dropShieldOnHitDisabled;
 
         private Shield _currentlyHeldShield;
 
         [UdonSynced] [FieldChangeCallback(nameof(DropShieldOnHit))]
         private bool _dropShieldOnHit;
-        private int _eventCallbackCount;
 
-        private UdonSharpBehaviour[] _eventCallbacks;
+        private int _eventCallbackCount;
+        private UdonSharpBehaviour[] _eventCallbacks = new UdonSharpBehaviour[0];
 
         public bool DropShieldOnHit
         {
             get => _dropShieldOnHit;
             set
             {
+                if (_dropShieldOnHit != value)
+                    Invoke_OnDropShieldSettingChanged(value);
                 _dropShieldOnHit = value;
-                if (roleManager.GetPlayerRole().HasPermission())
-                    notification.ShowInfo(value ? dropShieldOnHitEnabled.Message : dropShieldOnHitDisabled.Message);
             }
         }
 
@@ -75,7 +62,7 @@ namespace CenturionCC.System.Utils
 
             if (_currentlyHeldShield != null)
             {
-                Invoke_OnShieldPickupCancelled(shield, 1);
+                Invoke_OnShieldPickupCancelled(shield, PickupCancelContext.AlreadyPickedUp);
                 return false;
             }
 
@@ -86,27 +73,27 @@ namespace CenturionCC.System.Utils
                 if (callback == null) continue;
                 if (((ShieldManagerCallbackBase)callback).OnShieldPickup(shield)) continue;
 
-                Invoke_OnShieldPickupCancelled(shield, 2);
+                Invoke_OnShieldPickupCancelled(shield, PickupCancelContext.Callback);
                 return false;
             }
 
             return true;
         }
 
-        private void Invoke_OnShieldPickupCancelled(Shield shield, int reasonId)
+        private void Invoke_OnShieldPickupCancelled(Shield shield, PickupCancelContext context)
         {
-            logger.Log($"{Prefix}Invoke_OnShieldPickupCancelled: {shield.name}, {reasonId}");
+            logger.Log($"{Prefix}Invoke_OnShieldPickupCancelled: {shield.name}, {context}");
 
             foreach (var callback in _eventCallbacks)
             {
                 if (callback == null) continue;
-                ((ShieldManagerCallbackBase)callback).OnShieldPickupCancelled(shield, reasonId);
+                ((ShieldManagerCallbackBase)callback).OnShieldPickupCancelled(shield, context);
             }
         }
 
-        public void Invoke_OnShieldDrop(Shield shield)
+        public void Invoke_OnShieldDrop(Shield shield, DropContext context)
         {
-            logger.Log($"{Prefix}Invoke_OnShieldDrop: {shield.name}");
+            logger.Log($"{Prefix}Invoke_OnShieldDrop: {shield.name}, {context}");
 
             if (_currentlyHeldShield == shield)
                 _currentlyHeldShield = null;
@@ -114,7 +101,18 @@ namespace CenturionCC.System.Utils
             foreach (var callback in _eventCallbacks)
             {
                 if (callback == null) continue;
-                ((ShieldManagerCallbackBase)callback).OnShieldDrop(shield);
+                ((ShieldManagerCallbackBase)callback).OnShieldDrop(shield, context);
+            }
+        }
+
+        public void Invoke_OnDropShieldSettingChanged(bool value)
+        {
+            logger.Log($"{Prefix}Invoke_OnDropShieldSettingChanged: {value}");
+
+            foreach (var callback in _eventCallbacks)
+            {
+                if (callback == null) continue;
+                ((ShieldManagerCallbackBase)callback).OnDropShieldSettingChanged(value);
             }
         }
 
@@ -141,17 +139,11 @@ namespace CenturionCC.System.Utils
 
         public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
-            if (!hitPlayer.IsLocal)
-                return;
-
-            if (_currentlyHeldShield == null)
+            if (!hitPlayer.IsLocal || _currentlyHeldShield == null)
                 return;
 
             if (DropShieldOnHit && _currentlyHeldShield.DropShieldOnHit)
-            {
-                _currentlyHeldShield.Drop();
-                notification.ShowWarn(shieldDroppedBecauseHit.Message);
-            }
+                _currentlyHeldShield.DropByHit();
         }
 
         public void OnTeamChanged(PlayerBase player, int oldTeam)
@@ -239,13 +231,8 @@ namespace CenturionCC.System.Utils
         /// Called when shield pickup was cancelled.
         /// </summary>
         /// <param name="shield">shield which was cancelled pickup</param>
-        /// <param name="reasonId">numeric id of the reason</param>
-        /// <remarks>
-        /// Currently set cancel reasons are:
-        /// 1 = Another shield was currently picked up.
-        /// 2 = Callback cancelled shield pickup.
-        /// </remarks>
-        public virtual void OnShieldPickupCancelled(Shield shield, int reasonId)
+        /// <param name="context">context of cancellation</param>
+        public virtual void OnShieldPickupCancelled(Shield shield, PickupCancelContext context)
         {
         }
 
@@ -253,8 +240,30 @@ namespace CenturionCC.System.Utils
         /// Called when shield was dropped.
         /// </summary>
         /// <param name="shield">shield which was dropped</param>
-        public virtual void OnShieldDrop(Shield shield)
+        /// <param name="context">context of dropping</param>
+        public virtual void OnShieldDrop(Shield shield, DropContext context)
         {
         }
+
+        /// <summary>
+        /// Called when <see cref="ShieldManager.DropShieldOnHit"/> was changed.
+        /// </summary>
+        /// <param name="nextDropShieldOnHit">updated value of <see cref="ShieldManager.DropShieldOnHit"/></param>
+        public virtual void OnDropShieldSettingChanged(bool nextDropShieldOnHit)
+        {
+        }
+    }
+
+    public enum PickupCancelContext
+    {
+        AlreadyPickedUp,
+        Callback,
+    }
+
+    public enum DropContext
+    {
+        UserInput,
+        PickupCancelled,
+        Hit
     }
 }
