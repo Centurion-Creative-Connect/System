@@ -38,6 +38,7 @@ namespace CenturionCC.System.Utils.Watchdog
         public Text errorMessageDisplayJp;
         public GameObject[] inactiveAfterError;
         public GameObject[] activeAfterError;
+        public CrashGlobalNotifier globalNotifier;
         private readonly string[] _errorHumorMessages =
         {
             "I crashed. :(",
@@ -99,6 +100,9 @@ namespace CenturionCC.System.Utils.Watchdog
                     string.Format(
                         ErrorMessageFormatJp,
                         errorDescription);
+
+            if (globalNotifier)
+                globalNotifier.NotifyGlobally(errorCode);
         }
 
         private void ActivateErrorObject(bool isError)
