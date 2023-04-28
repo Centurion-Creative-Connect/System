@@ -113,6 +113,8 @@ namespace CenturionCC.System.Audio
 
     public static class AudioHelper
     {
+        private const float DelayMultiplier = 3F;
+
         public static void PlayAudioSource(AudioSource source, AudioClip clip, float vol, float pit,
             float doppler, float spread, float minDist, float maxDist)
         {
@@ -125,7 +127,7 @@ namespace CenturionCC.System.Audio
             source.maxDistance = maxDist;
 
             // Delaying needed to stop AudioSource's cracking sound by re-using them
-            source.PlayDelayed(0.03F);
+            source.PlayDelayed(Time.inFixedTimeStep ? 0.1F : Time.smoothDeltaTime * DelayMultiplier);
         }
     }
 }
