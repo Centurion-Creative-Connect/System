@@ -9,6 +9,7 @@ namespace CenturionCC.System.Gun
     public class GunBulletRicochetHandler : RicochetHandler
     {
         private const float RicochetVolumeSpeedCoefficient = 3F;
+        private const float MinCollisionMagnitude = 0.05F;
         private const float MaxAudioDistance = 10F;
 
         [SerializeField]
@@ -28,6 +29,9 @@ namespace CenturionCC.System.Gun
         {
             var contact = collision.GetContact(0);
             if (Vector3.Distance(contact.point, _localPlayer.GetPosition()) > MaxAudioDistance)
+                return;
+
+            if (collision.impulse.magnitude < MinCollisionMagnitude)
                 return;
 
             var objMarker = collision.gameObject.GetComponent<ObjectMarkerBase>();
