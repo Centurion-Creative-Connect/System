@@ -1,4 +1,5 @@
-﻿using DerpyNewbie.Logger;
+﻿using DerpyNewbie.Common;
+using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
@@ -9,7 +10,7 @@ namespace CenturionCC.System.Utils
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class ExecuteCommandOnInteract : UdonSharpBehaviour
     {
-        [SerializeField]
+        [SerializeField] [HideInInspector] [NewbieInject]
         private NewbieConsole console;
 
         [SerializeField]
@@ -21,12 +22,6 @@ namespace CenturionCC.System.Utils
         private UdonSharpBehaviour relayCallback;
         [SerializeField]
         private string relayCallbackMethod;
-
-        private void Start()
-        {
-            if (console == null)
-                console = CenturionSystemReference.GetConsole();
-        }
 
         public override void Interact()
         {
