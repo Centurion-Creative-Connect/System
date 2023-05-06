@@ -1259,27 +1259,10 @@ namespace CenturionCC.System.Gun
                 return;
 
             var objMarker = other.GetComponent<ObjectMarkerBase>();
-            if (objMarker != null && objMarker.Tags.ContainsString("NoCollisionAudio"))
+            if (objMarker == null || objMarker.Tags.ContainsString("NoCollisionAudio"))
                 return;
 
-            var otherName = other.name.ToLower();
-
-            if (otherName.StartsWith("steel") || otherName.EndsWith("steel"))
-            {
-                Internal_PlayAudio(AudioData.Collision.Get(ObjectType.Metallic));
-            }
-            else if (otherName.StartsWith("wood") || otherName.EndsWith("wood"))
-            {
-                Internal_PlayAudio(AudioData.Collision.Get(ObjectType.Wood));
-            }
-            else if (otherName.StartsWith("sandbag") || otherName.EndsWith("sandbag"))
-            {
-                Internal_PlayAudio(AudioData.Collision.Get(ObjectType.Gravel));
-            }
-            else
-            {
-                Internal_PlayAudio(AudioData.Collision.Get(ObjectType.Prototype));
-            }
+            Internal_PlayAudio(AudioData.Collision.Get(objMarker.ObjectType));
         }
 
         #endregion
