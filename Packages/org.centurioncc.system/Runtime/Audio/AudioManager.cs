@@ -41,7 +41,9 @@ namespace CenturionCC.System.Audio
             var dist = Vector3.Distance(t.position, _localPlayer.GetPosition());
             if (dist > maxDistance + 10F)
             {
+#if CENTURIONSYSTEM_VERBOSE_LOGGING || CENTURIONSYSTEM_AUDIO_LOGGING
                 Debug.Log(string.Format(DroppingAudioBecauseTooFar, clip.name, t.position, dist));
+#endif
                 return;
             }
 
@@ -67,7 +69,9 @@ namespace CenturionCC.System.Audio
             var dist = Vector3.Distance(position, _localPlayer.GetPosition());
             if (dist > maxDistance + 10F)
             {
+#if CENTURIONSYSTEM_VERBOSE_LOGGING || CENTURIONSYSTEM_AUDIO_LOGGING
                 Debug.Log(string.Format(DroppingAudioBecauseTooFar, clip.name, position, dist));
+#endif
                 return;
             }
 
