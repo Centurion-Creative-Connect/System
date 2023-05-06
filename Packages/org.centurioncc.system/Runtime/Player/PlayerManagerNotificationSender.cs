@@ -1,11 +1,11 @@
-﻿using CenturionCC.System.Player;
-using CenturionCC.System.UI;
+﻿using CenturionCC.System.UI;
+using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-namespace CenturionCC.System.Utils
+namespace CenturionCC.System.Player
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PlayerManagerNotificationSender : PlayerManagerCallbackBase
