@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace CenturionCC.System.Audio
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)] [Obsolete("Use ObjectMarker to mark object instead")]
     public class AudioMarker : UdonSharpBehaviour
     {
         // TODO: refactor it to use enum instead of string const
@@ -13,7 +13,7 @@ namespace CenturionCC.System.Audio
         private const string OT_CLOTH = "cloth";
         private const string OT_IRON = "iron";
         private const string OT_DISABLE = "none";
-        
+
         // TODO: centralize these hint strings
         [NonSerialized]
         private const string HolderHintString = "Logics/System/Audio/AudioHolder/";
