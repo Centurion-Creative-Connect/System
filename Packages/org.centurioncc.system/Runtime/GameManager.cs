@@ -135,8 +135,6 @@ namespace CenturionCC.System
 
         public void OnShoot(ManagedGun instance, ProjectileBase projectile)
         {
-            logger.LogVerbose(
-                $"{_prefix}OnShoot: {(instance != null ? instance.name : "null")}, {(projectile != null ? projectile.name : "null")}");
             if (eventLogger && logShotLocation)
                 eventLogger.LogShot(instance, projectile);
         }
