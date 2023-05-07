@@ -1,4 +1,5 @@
 ﻿using CenturionCC.System.Utils.Watchdog;
+using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using UdonSharp;
 using UnityEngine;
@@ -8,7 +9,7 @@ namespace CenturionCC.System.Command
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class WatchdogCommand : ActionCommandHandler
     {
-        [SerializeField]
+        [SerializeField] [HideInInspector] [NewbieInject]
         private WatchdogProc watchdogProc;
 
         public override string Label => "Watchdog";

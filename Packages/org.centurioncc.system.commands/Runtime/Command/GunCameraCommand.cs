@@ -1,4 +1,5 @@
 ﻿using CenturionCC.System.Gun.GunCamera;
+using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using UdonSharp;
 using UnityEngine;
@@ -9,7 +10,7 @@ namespace CenturionCC.System.Command
     public class GunCameraCommand : NewbieConsoleCommandHandler
     {
         private const string ResultString = "{0}: {1}";
-        [SerializeField]
+        [SerializeField] [HideInInspector] [NewbieInject]
         private GunCamera instance;
 
         public override string Label => "GunCamera";
