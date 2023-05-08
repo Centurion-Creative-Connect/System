@@ -25,6 +25,8 @@ namespace CenturionCC.System.Player.PlayerExternal
         [SerializeField]
         private Image masterTag;
         private readonly Vector3 _nametagOffsetPosition = Vector3.up * 0.3F;
+        private bool _didSetup;
+        private bool _didStart;
         private VRCPlayerApi _localPlayer;
 
         private ExternalPlayerTagManager _tagManager;
@@ -36,6 +38,22 @@ namespace CenturionCC.System.Player.PlayerExternal
         {
             Debug.Log($"[{name}] Start");
             _localPlayer = Networking.LocalPlayer;
+            _didStart = true;
+            if (_didSetup)
+                updateManager.SubscribeUpdate(this);
+        }
+
+        private void OnEnable()
+        {
+            Debug.Log($"[{name}] OnEnable: {updateManager == null}");
+            if (_didStart)
+                updateManager.SubscribeUpdate(this);
+        }
+
+        private void OnDisable()
+        {
+            Debug.Log($"[{name}] OnDisable: {updateManager == null}");
+            updateManager.UnsubscribeUpdate(this);
         }
 
         private void OnDestroy()
@@ -48,7 +66,7 @@ namespace CenturionCC.System.Player.PlayerExternal
 
         public void _Update()
         {
-            if (!followingPlayer.IsValid())
+            if (!Utilities.IsValid(followingPlayer))
             {
                 DestroyThis();
                 return;
@@ -72,7 +90,7 @@ namespace CenturionCC.System.Player.PlayerExternal
             _tagManager = manager;
             followingPlayer = api;
             _localPlayer = Networking.LocalPlayer;
-            updateManager.SubscribeUpdate(this);
+            _didSetup = true;
         }
 
         public void SetTagOn(TagType type, bool isOn)
@@ -106,17 +124,7 @@ namespace CenturionCC.System.Player.PlayerExternal
             if (gameObject.activeSelf == IsVisible())
                 return;
 
-            var isVisible = IsVisible();
-            gameObject.SetActive(isVisible);
-            if (isVisible)
-            {
-                updateManager.UnsubscribeUpdate(this);
-                updateManager.SubscribeUpdate(this);
-            }
-            else
-            {
-                updateManager.UnsubscribeUpdate(this);
-            }
+            gameObject.SetActive(IsVisible());
         }
 
         public void SetTeamTagColor(Color color)
