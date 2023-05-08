@@ -6,7 +6,7 @@ using VRC.SDKBase;
 namespace CenturionCC.System.Player.MassPlayer
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class PlayerView : UdonSharpBehaviour
+    public class PlayerView : PlayerViewBase
     {
         [SerializeField]
         private PlayerCollider headCollider;
@@ -28,31 +28,48 @@ namespace CenturionCC.System.Player.MassPlayer
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
 
-        public PlayerModel playerModel;
+        private Transform _bodyTransform;
 
-        private Transform bodyTransform;
+        private Transform _headTransform;
+        private Transform _leftLowerLegTransform;
+        private Transform _leftUpperArmTransform;
+        private Transform _leftUpperLegTransform;
 
-        private Transform headTransform;
-        private Transform leftLowerLegTransform;
-        private Transform leftUpperArmTransform;
-        private Transform leftUpperLegTransform;
-        private Transform rightLowerLegTransform;
-        private Transform rightUpperArmTransform;
-        private Transform rightUpperLegTransform;
+        private PlayerBase _playerModel;
+        private Transform _rightLowerLegTransform;
+        private Transform _rightUpperArmTransform;
+        private Transform _rightUpperLegTransform;
+
+        public override PlayerBase PlayerModel
+        {
+            get => _playerModel;
+            set
+            {
+                if (_playerModel == value)
+                    return;
+
+                _playerModel = value;
+
+                var pcs = GetIterator();
+                foreach (var pc in pcs) pc.player = value;
+
+                UpdateView();
+            }
+        }
 
         private void Start()
         {
-            headTransform = headCollider.transform;
-            bodyTransform = bodyCollider.transform;
+            _headTransform = headCollider.transform;
+            _bodyTransform = bodyCollider.transform;
 
-            leftUpperArmTransform = leftUpperArmCollider.transform;
-            rightUpperArmTransform = rightUpperArmCollider.transform;
+            _leftUpperArmTransform = leftUpperArmCollider.transform;
+            _rightUpperArmTransform = rightUpperArmCollider.transform;
 
-            leftUpperLegTransform = leftUpperLegCollider.transform;
-            rightUpperLegTransform = rightUpperLegCollider.transform;
+            _leftUpperLegTransform = leftUpperLegCollider.transform;
+            _rightUpperLegTransform = rightUpperLegCollider.transform;
 
-            leftLowerLegTransform = leftLowerLegCollider.transform;
-            rightLowerLegTransform = rightLowerLegCollider.transform;
+            _leftLowerLegTransform = leftLowerLegCollider.transform;
+            _rightLowerLegTransform = rightLowerLegCollider.transform;
         }
 
         private PlayerCollider[] GetIterator()
@@ -66,22 +83,22 @@ namespace CenturionCC.System.Player.MassPlayer
             };
         }
 
-        public void UpdateView()
+        public override void UpdateView()
         {
             foreach (var playerCollider in GetIterator())
-                playerCollider.IsVisible = playerManager.IsDebug && playerModel != null && playerModel.IsAssigned;
+                playerCollider.IsVisible = playerManager.IsDebug && _playerModel != null && _playerModel.IsAssigned;
         }
 
-        public void UpdateCollider()
+        public override void UpdateCollider()
         {
-            if (playerModel == null)
+            if (_playerModel == null)
             {
                 MoveViewToOrigin();
                 MoveCollidersToOrigin();
                 return;
             }
 
-            var vrcPlayer = playerModel.cachedVrcPlayerApi;
+            var vrcPlayer = _playerModel.VrcPlayer;
             if (!Utilities.IsValid(vrcPlayer))
             {
                 MoveViewToOrigin();
@@ -89,6 +106,8 @@ namespace CenturionCC.System.Player.MassPlayer
                 return;
             }
 
+            // Utilities.IsValid will null-check vrcPlayer
+            // ReSharper disable once PossibleNullReferenceException
             var head = vrcPlayer.GetBonePosition(HumanBodyBones.Head);
             var neck = vrcPlayer.GetBonePosition(HumanBodyBones.Neck);
             var chest = vrcPlayer.GetBonePosition(HumanBodyBones.Chest);
@@ -106,35 +125,22 @@ namespace CenturionCC.System.Player.MassPlayer
 
             transform.SetPositionAndRotation(vrcPlayer.GetPosition(), vrcPlayer.GetRotation());
 
-            if (playerManager.IsStaffTeamId(playerModel.TeamId))
+            if (playerManager.IsStaffTeamId(_playerModel.TeamId))
             {
                 MoveCollidersToOrigin();
                 return;
             }
 
-            headTransform.SetPositionAndRotation(head, GetRotation(head, neck));
-            bodyTransform.SetPositionAndRotation(chest, GetRotation(chest, hips));
+            _headTransform.SetPositionAndRotation(head, GetRotation(head, neck));
+            _bodyTransform.SetPositionAndRotation(chest, GetRotation(chest, hips));
 
-            leftUpperArmTransform.SetPositionAndRotation(leftUpperArm, GetRotation(leftUpperArm, leftLowerArm));
-            leftUpperLegTransform.SetPositionAndRotation(leftUpperLeg, GetRotation(leftUpperLeg, leftLowerLeg));
-            leftLowerLegTransform.SetPositionAndRotation(leftLowerLeg, GetRotation(leftLowerLeg, leftFoot));
+            _leftUpperArmTransform.SetPositionAndRotation(leftUpperArm, GetRotation(leftUpperArm, leftLowerArm));
+            _leftUpperLegTransform.SetPositionAndRotation(leftUpperLeg, GetRotation(leftUpperLeg, leftLowerLeg));
+            _leftLowerLegTransform.SetPositionAndRotation(leftLowerLeg, GetRotation(leftLowerLeg, leftFoot));
 
-            rightUpperArmTransform.SetPositionAndRotation(rightUpperArm, GetRotation(rightUpperArm, rightLowerArm));
-            rightUpperLegTransform.SetPositionAndRotation(rightUpperLeg, GetRotation(rightUpperLeg, rightLowerLeg));
-            rightLowerLegTransform.SetPositionAndRotation(rightLowerLeg, GetRotation(rightLowerLeg, rightFoot));
-        }
-
-        public void SetPlayerModel(PlayerModel value)
-        {
-            if (playerModel == value)
-                return;
-
-            playerModel = value;
-
-            var pcs = GetIterator();
-            foreach (var pc in pcs) pc.player = value;
-
-            UpdateView();
+            _rightUpperArmTransform.SetPositionAndRotation(rightUpperArm, GetRotation(rightUpperArm, rightLowerArm));
+            _rightUpperLegTransform.SetPositionAndRotation(rightUpperLeg, GetRotation(rightUpperLeg, rightLowerLeg));
+            _rightLowerLegTransform.SetPositionAndRotation(rightLowerLeg, GetRotation(rightLowerLeg, rightFoot));
         }
 
         private static Quaternion GetRotation(Vector3 vec1, Vector3 vec2)
@@ -151,14 +157,14 @@ namespace CenturionCC.System.Player.MassPlayer
 
         private void MoveCollidersToOrigin()
         {
-            headTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            bodyTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            leftUpperArmTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            leftUpperLegTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            leftLowerLegTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            rightUpperArmTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            rightUpperLegTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            rightLowerLegTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            _headTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            _bodyTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            _leftUpperArmTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            _leftUpperLegTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            _leftLowerLegTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            _rightUpperArmTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            _rightUpperLegTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            _rightLowerLegTransform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
         }
     }
 }

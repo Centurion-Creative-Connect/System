@@ -18,7 +18,7 @@ namespace CenturionCC.System.Player.MassPlayer
         [SerializeField]
         private PlayerModel[] models;
         [SerializeField]
-        private PlayerView[] views;
+        private PlayerViewBase[] views;
         [SerializeField]
         private int sortStep = 5;
 
@@ -60,7 +60,7 @@ namespace CenturionCC.System.Player.MassPlayer
             {
                 var m = _distanceSortedModels[i];
                 r +=
-                    $"\n{i}: {m.name}, {(m.PlayerView != null ? m.PlayerView.name : null)}, {m.Position.ToString("F2")}, {NewbieUtils.GetPlayerName(m.PlayerId)}";
+                    $"\n{i}: {m.name}, {(m.playerView != null ? m.playerView.name : null)}, {m.Position.ToString("F2")}, {NewbieUtils.GetPlayerName(m.PlayerId)}";
             }
 
             return r;
@@ -98,12 +98,12 @@ namespace CenturionCC.System.Player.MassPlayer
                 if (index < viewCount)
                 {
                     var view = views[index];
-                    view.SetPlayerModel(modelAtIndex);
-                    modelAtIndex.PlayerView = view;
+                    view.PlayerModel = modelAtIndex;
+                    modelAtIndex.playerView = view;
                 }
                 else
                 {
-                    modelAtIndex.PlayerView = null;
+                    modelAtIndex.playerView = null;
                 }
             }
 
@@ -118,12 +118,12 @@ namespace CenturionCC.System.Player.MassPlayer
             {
                 if (i < views.Length)
                 {
-                    _distanceSortedModels[i].PlayerView = views[i];
-                    views[i].SetPlayerModel(_distanceSortedModels[i]);
+                    _distanceSortedModels[i].playerView = views[i];
+                    views[i].PlayerModel = _distanceSortedModels[i];
                 }
                 else
                 {
-                    _distanceSortedModels[i].PlayerView = null;
+                    _distanceSortedModels[i].playerView = null;
                 }
             }
         }

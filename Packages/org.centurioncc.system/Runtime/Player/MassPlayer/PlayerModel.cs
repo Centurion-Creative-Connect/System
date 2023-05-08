@@ -15,7 +15,7 @@ namespace CenturionCC.System.Player.MassPlayer
     public class PlayerModel : PlayerBase
     {
         [CanBeNull]
-        public PlayerView PlayerView;
+        public PlayerViewBase playerView;
         private AudioManager _audioManager;
         private RoleData _cachedRoleData;
 
@@ -160,10 +160,10 @@ namespace CenturionCC.System.Player.MassPlayer
 
         public override void UpdateView()
         {
-            if (PlayerView == null)
+            if (playerView == null)
                 return;
 
-            PlayerView.UpdateView();
+            playerView.UpdateView();
         }
 
         public override void Sync()
