@@ -1401,11 +1401,6 @@ namespace CenturionCC.System.Gun
                     b.OnTriggerUp(this);
                     break;
                 }
-                case HandleType.SubHandle:
-                {
-                    b.OnAction(this);
-                    break;
-                }
             }
         }
 
