@@ -21,9 +21,9 @@ namespace CenturionCC.System.UI.HeadUI
         private HeadUINotificationElement[] _elements = new HeadUINotificationElement[0];
 
         private HeadUINotificationElement _lastElement;
+        private int _lastId;
 
         private NotificationLevel _lastLevel;
-        private string _lastMessage;
 
         private void Start()
         {
@@ -44,11 +44,16 @@ namespace CenturionCC.System.UI.HeadUI
             _elements = _elements.RemoveItem(element);
         }
 
-        public override void Show(NotificationLevel level, string message, float duration = 5F)
+        public override void Show(NotificationLevel level, string message, float duration = 5F, int id = 0)
         {
-            Debug.Log($"[Notification] {message}");
+            if (id == 0)
+            {
+                id = message.GetHashCode();
+            }
 
-            if (_lastLevel == level && message == _lastMessage && _lastElement != null)
+            Debug.Log($"[Notification] {id}:{message}");
+
+            if (_lastLevel == level && id == _lastId && _lastElement != null)
             {
                 _lastElement.AddDuplicate();
                 return;
@@ -60,7 +65,7 @@ namespace CenturionCC.System.UI.HeadUI
             GetNotificationConfig(level, out var sprite, out var color);
             element.Setup(this, sprite, color, duration, smoothTime, maxSpeed, message);
 
-            _lastMessage = message;
+            _lastId = id;
             _lastLevel = level;
             _lastElement = element;
 
