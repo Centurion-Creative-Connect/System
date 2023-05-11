@@ -55,7 +55,7 @@ namespace CenturionCC.System.UI.HeadUI
 
             if (_lastLevel == level && id == _lastId && _lastElement != null)
             {
-                _lastElement.AddDuplicate();
+                _lastElement.AddDuplicate(message);
                 return;
             }
 
