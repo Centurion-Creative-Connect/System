@@ -16,7 +16,7 @@ namespace CenturionCC.System.UI
         [PublicAPI]
         public virtual void ShowHelp(string message, float duration = 5F, int id = 0)
         {
-            Show(NotificationLevel.Help, message);
+            Show(NotificationLevel.Help, message, duration, id);
         }
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace CenturionCC.System.UI
         [PublicAPI]
         public virtual void ShowInfo(string message, float duration = 5F, int id = 0)
         {
-            Show(NotificationLevel.Info, message);
+            Show(NotificationLevel.Info, message, duration, id);
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace CenturionCC.System.UI
         [PublicAPI]
         public virtual void ShowWarn(string message, float duration = 5F, int id = 0)
         {
-            Show(NotificationLevel.Warn, message);
+            Show(NotificationLevel.Warn, message, duration, id);
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace CenturionCC.System.UI
         [PublicAPI]
         public virtual void ShowError(string message, float duration = 5F, int id = 0)
         {
-            Show(NotificationLevel.Error, message);
+            Show(NotificationLevel.Error, message, duration, id);
         }
 
         /// <summary>
