@@ -70,12 +70,16 @@ namespace CenturionCC.System.UI
                                            "{4} 回BB弾が撃たれました!\n" +
                                            "  {5} 回はあなたが撃ったBB弾でした!\n";
 
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private RoleProvider roleProvider;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private GunManager gunManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PlayerManager playerManager;
+
         private bool _currentResetStatusImage;
 
-        private GameManager _gameManager;
-
         private DateTime _lastGunResetTime;
-        private RoleProvider _roleProvider;
         private bool _updateActiveModeratorsNextFrame;
         private bool _updatePlayerStatusNextFrame;
         private bool _updateStatisticsNextFrame;
@@ -83,17 +87,14 @@ namespace CenturionCC.System.UI
 
         private void Start()
         {
-            _gameManager = CenturionSystemReference.GetGameManager();
-            _roleProvider = _gameManager.roleProvider;
-
             foreach (var o in moderatorOnlyObjects)
             {
                 if (o == null) continue;
                 o.SetActive(false);
             }
 
-            _gameManager.guns.SubscribeCallback(this);
-            _gameManager.players.SubscribeCallback(this);
+            gunManager.SubscribeCallback(this);
+            playerManager.SubscribeCallback(this);
 
             SendCustomEventDelayedSeconds(nameof(UpdateToggleState), 5F);
             SendCustomEventDelayedSeconds(nameof(UpdateModeratorOnlyObjects), 5F);
@@ -151,7 +152,7 @@ namespace CenturionCC.System.UI
 
         public void UpdateModeratorOnlyObjects()
         {
-            var isMod = _gameManager.roleProvider.GetPlayerRole().HasPermission();
+            var isMod = roleProvider.GetPlayerRole().HasPermission();
             foreach (var o in moderatorOnlyObjects)
             {
                 if (o == null) continue;
@@ -161,20 +162,19 @@ namespace CenturionCC.System.UI
 
         public void UpdateToggleState()
         {
-            showTeamTagToggle.SetIsOnWithoutNotify(_gameManager.players.ShowTeamTag);
-            allowFriendlyFireToggle.SetIsOnWithoutNotify(_gameManager.players.AllowFriendlyFire);
+            showTeamTagToggle.SetIsOnWithoutNotify(playerManager.ShowTeamTag);
+            allowFriendlyFireToggle.SetIsOnWithoutNotify(playerManager.AllowFriendlyFire);
         }
 
         public void UpdatePlayerStatusText()
         {
-            var players = _gameManager.players;
             playerStatusText.text =
-                string.Format(playerStatusMessage, players.PlayerCount, players.ModeratorPlayerCount);
+                string.Format(playerStatusMessage, playerManager.PlayerCount, playerManager.ModeratorPlayerCount);
         }
 
         public void UpdateTeamStatusText()
         {
-            var p = _gameManager.players;
+            var p = playerManager;
             teamStatusText.text = string.Format(
                 teamStatusMessage,
                 p.NoneTeamPlayerCount + p.UndefinedTeamPlayerCount,
@@ -192,7 +192,7 @@ namespace CenturionCC.System.UI
 
         public void UpdateGunStatusText()
         {
-            gunStatusText.text = string.Format(gunStatusMessage, _gameManager.guns.OccupiedRemoteGunCount);
+            gunStatusText.text = string.Format(gunStatusMessage, gunManager.OccupiedRemoteGunCount);
         }
 
         public void UpdateResetStatusText()
@@ -240,12 +240,12 @@ namespace CenturionCC.System.UI
         {
             // TODO: not yet impl
             var message = "";
-            var modPlayers = _roleProvider.GetPlayersOf(_roleProvider.RoleOf("Staff"));
+            var modPlayers = roleProvider.GetPlayersOf(roleProvider.RoleOf("Staff"));
             foreach (var modPlayerApi in modPlayers)
             {
-                var player = _gameManager.players.GetPlayerById(modPlayerApi.playerId);
+                var player = playerManager.GetPlayerById(modPlayerApi.playerId);
                 message +=
-                    $"{(player == null ? NewbieUtils.GetPlayerName(modPlayerApi.playerId) : _gameManager.players.GetTeamColoredName(player))}\n";
+                    $"{(player == null ? NewbieUtils.GetPlayerName(modPlayerApi.playerId) : playerManager.GetTeamColoredName(player))}\n";
             }
 
             activeModeratorListText.text = message;

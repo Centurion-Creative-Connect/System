@@ -11,8 +11,9 @@ namespace CenturionCC.System.Command
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class GunManagerCommand : NewbieConsoleCommandHandler
     {
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private GunManager gunManager;
         private NewbieConsole _console;
-        private GunManager _gunManager;
 
         private int _lastRequestVersion;
         [UdonSynced]
@@ -28,11 +29,6 @@ namespace CenturionCC.System.Command
         public override string Usage =>
             "<command> <reset|slowReset|reload|trail|optimizationRange|rePickupDelay|collisionCheck|debug|summon|list|info>";
         public override string Description => "Perform gun related manipulation such as summon/reset/list etc.";
-
-        private void Start()
-        {
-            _gunManager = CenturionSystemReference.GetGunManager();
-        }
 
         public override void OnPreSerialization()
         {
@@ -60,8 +56,8 @@ namespace CenturionCC.System.Command
 
                 var destPos = player.GetRotation() * new Vector3(0F, 0.7F, 1F) + player.GetPosition();
                 var destRot = Quaternion.identity;
-                var variantData = _gunManager.GetVariantData(_targetVariantId);
-                _gunManager.MasterOnly_SpawnWithData(variantData, destPos, destRot);
+                var variantData = gunManager.GetVariantData(_targetVariantId);
+                gunManager.MasterOnly_SpawnWithData(variantData, destPos, destRot);
             }
         }
 
@@ -73,24 +69,24 @@ namespace CenturionCC.System.Command
                 msg = string.Join
                 (
                     "\n",
-                    GetVariantList(_gunManager),
-                    GetRemoteList(_gunManager)
+                    GetVariantList(gunManager),
+                    GetRemoteList(gunManager)
                 );
             else
                 switch (args[1])
                 {
                     case "variant":
-                        msg = GetVariantList(_gunManager);
+                        msg = GetVariantList(gunManager);
                         break;
                     case "instance":
-                        msg = GetRemoteList(_gunManager);
+                        msg = GetRemoteList(gunManager);
                         break;
                     default:
                         msg = string.Join
                         (
                             "\n",
-                            GetVariantList(_gunManager),
-                            GetRemoteList(_gunManager)
+                            GetVariantList(gunManager),
+                            GetRemoteList(gunManager)
                         );
                         break;
                 }
@@ -205,7 +201,7 @@ namespace CenturionCC.System.Command
             if (Networking.IsMaster && _console)
             {
                 _console.Println("[GunManagerCommand] Received slow reset request");
-                _gunManager.MasterOnly_SlowlyResetRemoteGuns();
+                gunManager.MasterOnly_SlowlyResetRemoteGuns();
             }
         }
 
@@ -214,7 +210,7 @@ namespace CenturionCC.System.Command
             if (Networking.IsMaster && _console)
             {
                 _console.Println("[GunManagerCommand] Received fast reset request");
-                _gunManager.MasterOnly_ResetRemoteGuns();
+                gunManager.MasterOnly_ResetRemoteGuns();
             }
         }
 
@@ -235,60 +231,60 @@ namespace CenturionCC.System.Command
                     SendCustomNetworkEvent(NetworkEventTarget.All, nameof(RequestSlowReset));
                     return ConsoleLiteral.GetNone();
                 case "reload":
-                    _gunManager.ReloadGuns();
+                    gunManager.ReloadGuns();
                     console.Println("<color=green>Reload complete</color>");
                     return ConsoleLiteral.GetNone();
                 case "trail":
                     if (vars.Length >= 2)
-                        _gunManager.useDebugBulletTrail =
-                            ConsoleParser.TryParseBoolean(vars[1], _gunManager.useDebugBulletTrail);
+                        gunManager.useDebugBulletTrail =
+                            ConsoleParser.TryParseBoolean(vars[1], gunManager.useDebugBulletTrail);
 
-                    console.Println($"UseTrail: {_gunManager.useDebugBulletTrail}");
-                    return ConsoleLiteral.Of(_gunManager.useDebugBulletTrail);
+                    console.Println($"UseTrail: {gunManager.useDebugBulletTrail}");
+                    return ConsoleLiteral.Of(gunManager.useDebugBulletTrail);
                 case "or":
                 case "optimization":
                 case "optimizationrange":
                     if (vars.Length >= 2)
-                        _gunManager.optimizationRange = ConsoleParser.TryParseFloat(vars[1]);
+                        gunManager.optimizationRange = ConsoleParser.TryParseFloat(vars[1]);
 
-                    console.Println($"OptimizationRange: {_gunManager.optimizationRange}");
-                    return ConsoleLiteral.Of(_gunManager.optimizationRange);
+                    console.Println($"OptimizationRange: {gunManager.optimizationRange}");
+                    return ConsoleLiteral.Of(gunManager.optimizationRange);
                 case "arc":
                 case "ricochetcount":
                 case "allowedricochetcount":
                     if (vars.Length >= 2)
                     {
-                        _gunManager.allowedRicochetCount = ConsoleParser.TryParseInt(vars[1]);
-                        Networking.SetOwner(Networking.LocalPlayer, _gunManager.gameObject);
-                        _gunManager.RequestSerialization();
+                        gunManager.allowedRicochetCount = ConsoleParser.TryParseInt(vars[1]);
+                        Networking.SetOwner(Networking.LocalPlayer, gunManager.gameObject);
+                        gunManager.RequestSerialization();
                     }
 
-                    console.Println($"AllowedRicochetCount: {_gunManager.allowedRicochetCount}");
-                    return ConsoleLiteral.Of(_gunManager.allowedRicochetCount);
+                    console.Println($"AllowedRicochetCount: {gunManager.allowedRicochetCount}");
+                    return ConsoleLiteral.Of(gunManager.allowedRicochetCount);
                 case "rep":
                 case "repickup":
                 case "repickupdelay":
                     if (vars.Length >= 2)
-                        _gunManager.handleRePickupDelay = ConsoleParser.TryParseFloat(vars[1]);
+                        gunManager.handleRePickupDelay = ConsoleParser.TryParseFloat(vars[1]);
 
-                    console.Println($"RePickupDelay: {_gunManager.handleRePickupDelay}");
-                    return ConsoleLiteral.Of(_gunManager.handleRePickupDelay);
+                    console.Println($"RePickupDelay: {gunManager.handleRePickupDelay}");
+                    return ConsoleLiteral.Of(gunManager.handleRePickupDelay);
                 case "cc":
                 case "collision":
                 case "collisioncheck":
                     if (vars.Length >= 2)
-                        _gunManager.useCollisionCheck =
-                            ConsoleParser.TryParseBoolean(vars[1], _gunManager.useCollisionCheck);
+                        gunManager.useCollisionCheck =
+                            ConsoleParser.TryParseBoolean(vars[1], gunManager.useCollisionCheck);
 
-                    console.Println($"CollisionCheck: {_gunManager.useCollisionCheck}");
-                    return ConsoleLiteral.Of(_gunManager.useCollisionCheck);
+                    console.Println($"CollisionCheck: {gunManager.useCollisionCheck}");
+                    return ConsoleLiteral.Of(gunManager.useCollisionCheck);
                 case "debug":
                     if (vars.Length >= 2)
-                        _gunManager.IsDebugGunHandleVisible =
-                            ConsoleParser.TryParseBoolean(vars[1], _gunManager.IsDebugGunHandleVisible);
+                        gunManager.IsDebugGunHandleVisible =
+                            ConsoleParser.TryParseBoolean(vars[1], gunManager.IsDebugGunHandleVisible);
 
-                    console.Println($"Debug: {_gunManager.IsDebugGunHandleVisible}");
-                    return ConsoleLiteral.Of(_gunManager.IsDebugGunHandleVisible);
+                    console.Println($"Debug: {gunManager.IsDebugGunHandleVisible}");
+                    return ConsoleLiteral.Of(gunManager.IsDebugGunHandleVisible);
                 case "su":
                 case "spawn":
                 case "summon":
@@ -320,7 +316,7 @@ namespace CenturionCC.System.Command
                     }
 
                     var index = ConsoleParser.TryParseByte(vars[1]);
-                    var variantData = _gunManager.GetVariantData(index);
+                    var variantData = gunManager.GetVariantData(index);
 
                     if (variantData == null)
                     {

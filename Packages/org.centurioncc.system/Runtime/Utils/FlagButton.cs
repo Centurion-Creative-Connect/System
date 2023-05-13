@@ -22,9 +22,6 @@ namespace CenturionCC.System.Utils
         {
             _audioSource = GetComponent<AudioSource>();
             _variableEvent = GetComponent<SendVariableSyncEvent>();
-            if (gameManager == null)
-                gameManager = CenturionSystemReference.GetGameManager();
-
             _variableEvent.SetCallback(this, nameof(PlayFlagAudio));
         }
 

@@ -1,23 +1,21 @@
 ﻿using CenturionCC.System.Utils;
+using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using UdonSharp;
+using UnityEngine;
 
 namespace CenturionCC.System.Command
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class WallCommand : BoolCommandHandler
     {
-        private WallManager _wall;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private WallManager wall;
 
         public override string Label => "WallManager";
         public override string[] Aliases => new[] { "Wall" };
         public override string Usage => "<command> <left|right|up|down> [value]";
         public override string Description => "Manipulates WallManager.";
-
-        private void Start()
-        {
-            _wall = CenturionSystemReference.GetGameManager().wall;
-        }
 
         public override bool OnBoolCommand(NewbieConsole console, string label, ref string[] vars, ref string[] envVars)
         {
@@ -41,12 +39,12 @@ namespace CenturionCC.System.Command
                 {
                     if (vars.Length >= 2)
                     {
-                        _wall.A00IsActive = ConsoleParser.TryParseBoolean(vars[1], _wall.A00IsActive);
-                        _wall.Sync();
+                        wall.A00IsActive = ConsoleParser.TryParseBoolean(vars[1], wall.A00IsActive);
+                        wall.Sync();
                     }
 
-                    console.Println($"left: {_wall.A00IsActive}");
-                    return _wall.A00IsActive;
+                    console.Println($"left: {wall.A00IsActive}");
+                    return wall.A00IsActive;
                 }
                 case "a01":
                 case "r":
@@ -54,12 +52,12 @@ namespace CenturionCC.System.Command
                 {
                     if (vars.Length >= 2)
                     {
-                        _wall.A01IsActive = ConsoleParser.TryParseBoolean(vars[1], _wall.A01IsActive);
-                        _wall.Sync();
+                        wall.A01IsActive = ConsoleParser.TryParseBoolean(vars[1], wall.A01IsActive);
+                        wall.Sync();
                     }
 
-                    console.Println($"right: {_wall.A01IsActive}");
-                    return _wall.A01IsActive;
+                    console.Println($"right: {wall.A01IsActive}");
+                    return wall.A01IsActive;
                 }
                 case "b00":
                 case "u":
@@ -67,12 +65,12 @@ namespace CenturionCC.System.Command
                 {
                     if (vars.Length >= 2)
                     {
-                        _wall.B00IsActive = ConsoleParser.TryParseBoolean(vars[1], _wall.B00IsActive);
-                        _wall.Sync();
+                        wall.B00IsActive = ConsoleParser.TryParseBoolean(vars[1], wall.B00IsActive);
+                        wall.Sync();
                     }
 
-                    console.Println($"up: {_wall.B00IsActive}");
-                    return _wall.B00IsActive;
+                    console.Println($"up: {wall.B00IsActive}");
+                    return wall.B00IsActive;
                 }
                 case "b01":
                 case "d":
@@ -80,17 +78,17 @@ namespace CenturionCC.System.Command
                 {
                     if (vars.Length >= 2)
                     {
-                        _wall.B01IsActive = ConsoleParser.TryParseBoolean(vars[1], _wall.B01IsActive);
-                        _wall.Sync();
+                        wall.B01IsActive = ConsoleParser.TryParseBoolean(vars[1], wall.B01IsActive);
+                        wall.Sync();
                     }
 
-                    console.Println($"down: {_wall.B01IsActive}");
-                    return _wall.B01IsActive;
+                    console.Println($"down: {wall.B01IsActive}");
+                    return wall.B01IsActive;
                 }
                 case "reload":
                 case "refresh":
                 {
-                    _wall.Refresh();
+                    wall.Refresh();
                     return true;
                 }
                 default:
