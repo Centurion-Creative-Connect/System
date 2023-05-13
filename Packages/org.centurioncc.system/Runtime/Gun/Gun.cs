@@ -40,6 +40,8 @@ namespace CenturionCC.System.Gun
         private float _nextSubHandlePickupableTime;
 
         private int _queuedShotCount;
+
+        private Rigidbody _rigidbody;
         [UdonSynced]
         private Vector3 _shotPosition;
         [UdonSynced]
@@ -67,6 +69,8 @@ namespace CenturionCC.System.Gun
 
         protected virtual void Start()
         {
+            _rigidbody = GetComponent<Rigidbody>();
+
             FireMode = AvailableFireModes.Length != 0 ? AvailableFireModes[0] : FireMode.Safety;
             Trigger = FireMode == FireMode.Safety ? TriggerState.Idle : TriggerState.Armed;
 
@@ -112,6 +116,9 @@ namespace CenturionCC.System.Gun
 
         protected virtual void OnTriggerEnter(Collider other)
         {
+            if (_rigidbody != null && other.attachedRigidbody == _rigidbody)
+                return;
+
             var otherName = other.name.ToLower();
             Logger.LogVerbose($"{Prefix}OnTriggerEnter: {otherName}");
 
@@ -142,6 +149,9 @@ namespace CenturionCC.System.Gun
 
         protected virtual void OnTriggerExit(Collider other)
         {
+            if (_rigidbody != null && other.attachedRigidbody == _rigidbody)
+                return;
+
             var otherName = other.name.ToLower();
 
             if (otherName.StartsWith("safezone"))
