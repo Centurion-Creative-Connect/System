@@ -1,4 +1,5 @@
-﻿using CenturionCC.System.Gun;
+﻿using System;
+using CenturionCC.System.Gun;
 using CenturionCC.System.Player;
 using DerpyNewbie.Common;
 using JetBrains.Annotations;
@@ -114,11 +115,27 @@ namespace CenturionCC.System.Utils
                 return;
             }
 
+            var head = _localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+            var headForward = head.rotation * Vector3.forward;
+            var utcNow = DateTime.UtcNow;
+
             _canRun = true;
             foreach (var gun in gunManager.LocalHeldGuns)
             {
-                var dot = Vector3.Dot(Vector3.up, gun.transform.forward);
-                if (dot < gunDirectionUpperBound && dot > gunDirectionLowerBound)
+                if (!gun.MainHandle.IsPickedUp)
+                    continue;
+
+                if (utcNow.Subtract(gun.LastShotTime).Seconds < gunShotCombatTagTime)
+                {
+                    _canRun = false;
+                    break;
+                }
+
+                var gunForward = gun.ShooterRotation * Vector3.forward;
+                var dot = Vector3.Dot(headForward, gunForward);
+
+                Debug.Log($"HeadDir vs GunForward: {dot:F2}");
+                if (dot > gunDirectionUpperBound)
                 {
                     _canRun = false;
                     break;
@@ -373,9 +390,9 @@ namespace CenturionCC.System.Utils
         [SerializeField]
         public bool checkGunDirectionToAllowRunning = false;
         [SerializeField] [Range(0, 1F)]
-        public float gunDirectionUpperBound = 0.7F;
-        [SerializeField] [Range(-1F, 0)]
-        public float gunDirectionLowerBound = -0.7F;
+        public float gunDirectionUpperBound = 0.88F;
+        [SerializeField]
+        public float gunShotCombatTagTime = 1F;
 
         #endregion
 
