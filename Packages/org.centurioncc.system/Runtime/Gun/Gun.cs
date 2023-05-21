@@ -1440,7 +1440,10 @@ namespace CenturionCC.System.Gun
                 OnGunDrop();
                 b.OnGunDrop(this);
                 if (TargetAnimator != null)
+                {
                     TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), false);
+                    TargetAnimator.SetFloat(GunUtility.TriggerProgressParameter(), 0F);
+                }
 
                 if (TargetHolster != null)
                 {
