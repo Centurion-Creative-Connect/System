@@ -43,7 +43,7 @@ namespace CenturionCC.System.Audio
                     _hasCache = true;
                 }
 
-                return _cachedIsClipsNull ? null : clips[Random.Range(0, _cachedClipsLength - 1)];
+                return _cachedIsClipsNull ? null : clips[Random.Range(0, _cachedClipsLength)];
             }
         }
         public float Volume => Random.Range(minVolume, maxVolume);
