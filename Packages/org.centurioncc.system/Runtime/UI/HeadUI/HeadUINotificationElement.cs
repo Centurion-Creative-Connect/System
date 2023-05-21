@@ -90,10 +90,19 @@ namespace CenturionCC.System.UI.HeadUI
             Destroy(gameObject);
         }
 
-        public void AddDuplicate()
+        public void AddDuplicate(string message)
         {
-            ++_duplicateCount;
             _lifeTime = 0F;
+            if (_originalMessage == message)
+            {
+                ++_duplicateCount;
+            }
+            else
+            {
+                _originalMessage = message;
+                _duplicateCount = 0;
+            }
+
             UpdateMessage();
         }
 
