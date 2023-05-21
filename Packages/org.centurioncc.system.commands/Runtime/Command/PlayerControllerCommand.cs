@@ -28,6 +28,7 @@ namespace CenturionCC.System.Command
             }
 
             var subLabel = vars[0].ToLower();
+            var hasValue = vars.Length >= 2;
 
             switch (subLabel)
             {
@@ -43,12 +44,11 @@ namespace CenturionCC.System.Command
                 case "groundsnapdistance":
                 case "groundsnapforward":
                 {
-                    OnFloatSetSubCommand(console, subLabel, vars);
+                    OnFloatSetSubCommand(console, subLabel, hasValue, vars);
                     return;
                 }
                 case "usegundir":
                 {
-                    var hasValue = vars.Length > 2;
                     if (hasValue)
                     {
                         var value = ConsoleParser.TryParseBoolean(vars[1], pc.checkGunDirectionToAllowRunning);
@@ -60,7 +60,6 @@ namespace CenturionCC.System.Command
                 }
                 case "groundsnap":
                 {
-                    var hasValue = vars.Length > 2;
                     if (hasValue)
                     {
                         var value = ConsoleParser.TryParseBoolean(vars[1], pc.snapPlayerToGroundOnSlopes);
@@ -104,10 +103,10 @@ namespace CenturionCC.System.Command
             }
         }
 
-        private void OnFloatSetSubCommand(NewbieConsole console, string subLabel, string[] vars)
+        private void OnFloatSetSubCommand(NewbieConsole console, string subLabel, bool hasValue, string[] vars)
         {
-            var hasValue = vars.Length >= 2 && !float.IsNaN(ConsoleParser.TryParseFloat(vars[1]));
             var value = float.NaN;
+            hasValue = hasValue && !float.IsNaN(ConsoleParser.TryParseFloat(vars[1]));
             if (hasValue)
                 value = ConsoleParser.TryParseFloat(vars[1]);
 
