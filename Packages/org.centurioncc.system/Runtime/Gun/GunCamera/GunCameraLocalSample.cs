@@ -12,12 +12,13 @@ namespace CenturionCC.System.Gun.GunCamera
         [SerializeField]
         private GunCameraDataStore gunCameraDataStore;
 
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private UpdateManager updateManager;
+
         private int _callFrameCounts;
 
         private Vector3 _resetPos;
         private Quaternion _resetRot;
-
-        private UpdateManager _updateManager;
 
         private void Start()
         {
@@ -25,22 +26,20 @@ namespace CenturionCC.System.Gun.GunCamera
             _resetPos = thisTransform.position;
             _resetRot = thisTransform.rotation;
 
-            _updateManager = CenturionSystemReference.GetUpdateManager();
-
-            gunCameraInstance.SetGunCamera(transform, gunCameraDataStore);
+            gunCameraInstance.SetGunCamera(thisTransform, gunCameraDataStore);
         }
 
         public override void OnPickup()
         {
             gunCameraInstance.SetGunCamera(transform, gunCameraDataStore);
             _callFrameCounts = 0;
-            _updateManager.UnsubscribeSlowFixedUpdate(this);
+            updateManager.UnsubscribeSlowFixedUpdate(this);
         }
 
         public override void OnDrop()
         {
-            _updateManager.UnsubscribeSlowFixedUpdate(this);
-            _updateManager.SubscribeSlowFixedUpdate(this);
+            updateManager.UnsubscribeSlowFixedUpdate(this);
+            updateManager.SubscribeSlowFixedUpdate(this);
         }
 
         public void _SlowFixedUpdate()
@@ -50,7 +49,7 @@ namespace CenturionCC.System.Gun.GunCamera
             if (_callFrameCounts > 120)
             {
                 _callFrameCounts = 0;
-                _updateManager.UnsubscribeSlowFixedUpdate(this);
+                updateManager.UnsubscribeSlowFixedUpdate(this);
                 _ResetPosition();
             }
         }

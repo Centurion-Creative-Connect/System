@@ -1,7 +1,9 @@
 ﻿using System;
 using CenturionCC.System.Audio;
+using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using UdonSharp;
+using UnityEngine;
 
 namespace CenturionCC.System.Command
 {
@@ -9,52 +11,48 @@ namespace CenturionCC.System.Command
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class FootstepCommand : NewbieConsoleCommandHandler
     {
-        private FootstepGenerator _footstep;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private FootstepGenerator footstep;
 
         public override string Label => "Footstep";
         public override string Description => "Read/Writes footstep sound settings";
 
         public override string Usage => "<command> <enable|step|pace|slow> [value] or <command> <apply>";
 
-        private void Start()
-        {
-            _footstep = CenturionSystemReference.GetGameManager().footstep;
-        }
-
         private float HandlePace(NewbieConsole console, string[] arguments)
         {
             if (arguments.Length >= 2)
-                _footstep.footstepLength = ConsoleParser.TryParseFloat(arguments[1]);
+                footstep.footstepLength = ConsoleParser.TryParseFloat(arguments[1]);
 
-            console.Println($"Len(pace): {_footstep.footstepLength}");
-            return _footstep.footstepLength;
+            console.Println($"Len(pace): {footstep.footstepLength}");
+            return footstep.footstepLength;
         }
 
         private float HandleStep(NewbieConsole console, string[] arguments)
         {
             if (arguments.Length >= 2)
-                _footstep.footstepTime = ConsoleParser.TryParseFloat(arguments[1]);
+                footstep.footstepTime = ConsoleParser.TryParseFloat(arguments[1]);
 
-            console.Println($"Time(step): {_footstep.footstepTime}");
-            return _footstep.footstepTime;
+            console.Println($"Time(step): {footstep.footstepTime}");
+            return footstep.footstepTime;
         }
 
         private float HandleSlow(NewbieConsole console, string[] arguments)
         {
             if (arguments.Length >= 2)
-                _footstep.slowFootstepThreshold = ConsoleParser.TryParseFloat(arguments[1]);
+                footstep.slowFootstepThreshold = ConsoleParser.TryParseFloat(arguments[1]);
 
-            console.Println($"Slow: {_footstep.slowFootstepThreshold}");
-            return _footstep.slowFootstepThreshold;
+            console.Println($"Slow: {footstep.slowFootstepThreshold}");
+            return footstep.slowFootstepThreshold;
         }
 
         private bool HandleEnable(NewbieConsole console, string[] arguments)
         {
             if (arguments.Length >= 2)
-                _footstep.PlayFootstep = ConsoleParser.TryParseBoolean(arguments[1], _footstep.PlayFootstep);
+                footstep.PlayFootstep = ConsoleParser.TryParseBoolean(arguments[1], footstep.PlayFootstep);
 
-            console.Println($"Enabled: {_footstep.PlayFootstep}");
-            return _footstep.PlayFootstep;
+            console.Println($"Enabled: {footstep.PlayFootstep}");
+            return footstep.PlayFootstep;
         }
 
         public override string OnCommand(NewbieConsole console, string label, string[] vars, ref string[] envVars)
@@ -78,7 +76,7 @@ namespace CenturionCC.System.Command
                 case "sl":
                     return ConsoleLiteral.Of(HandleSlow(console, vars));
                 case "apply":
-                    _footstep.Apply();
+                    footstep.Apply();
                     return ConsoleLiteral.GetNone();
                 default:
                     return console.PrintUsage(this);

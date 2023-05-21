@@ -1,4 +1,5 @@
 ﻿using System;
+using DerpyNewbie.Common;
 using DerpyNewbie.Common.UI;
 using DerpyNewbie.Logger;
 using UdonSharp;
@@ -20,7 +21,9 @@ namespace CenturionCC.System.Gun
         [SerializeField]
         private float summonTime = 5F;
 
-        private GunManager _gunManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private GunManager gunManager;
+
         private DateTime _lastSummonedTime;
         private PopUpImage _summoningPopUp;
 
@@ -28,8 +31,6 @@ namespace CenturionCC.System.Gun
         {
             if (summonPosition == null)
                 summonPosition = transform;
-            if (_gunManager == null)
-                _gunManager = CenturionSystemReference.GetGunManager();
             if (_summoningPopUp == null)
             {
                 var go = GameObject.Find(SummoningPopUpHint);
@@ -41,7 +42,7 @@ namespace CenturionCC.System.Gun
         public void Spawn()
         {
             SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(MasterOnly_TryToSpawn));
-            _gunManager.Logger.Log($"[GunSummoner-{gunVariationId}] Requested to spawn a gun as {gunVariationId}");
+            gunManager.Logger.Log($"[GunSummoner-{gunVariationId}] Requested to spawn a gun as {gunVariationId}");
             if (_summoningPopUp)
             {
                 var par = _summoningPopUp.transform.parent;
@@ -56,13 +57,13 @@ namespace CenturionCC.System.Gun
         {
             if (!Networking.IsMaster)
             {
-                _gunManager.Logger.LogError(
+                gunManager.Logger.LogError(
                     $"[GunSummoner-{gunVariationId}] You must be a master to execute {nameof(MasterOnly_TryToSpawn)}!");
                 return;
             }
 
-            var remote = _gunManager.MasterOnly_Spawn(gunVariationId, summonPosition.position, summonPosition.rotation);
-            _gunManager.Logger.Log(
+            var remote = gunManager.MasterOnly_Spawn(gunVariationId, summonPosition.position, summonPosition.rotation);
+            gunManager.Logger.Log(
                 remote
                     ? $"[GunSummoner-{gunVariationId}] Spawned {remote.name}"
                     : $"[GunSummoner-{gunVariationId}] Failed to spawn a gun");
@@ -72,7 +73,7 @@ namespace CenturionCC.System.Gun
         {
             if (DateTime.Now.Subtract(_lastSummonedTime).TotalSeconds < summonTime)
             {
-                _gunManager.Logger.LogWarn($"[GunSummoner-{gunVariationId}] You're trying to spawn a gun too fast!");
+                gunManager.Logger.LogWarn($"[GunSummoner-{gunVariationId}] You're trying to spawn a gun too fast!");
                 return;
             }
 

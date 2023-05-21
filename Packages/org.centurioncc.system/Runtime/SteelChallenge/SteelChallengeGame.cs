@@ -2,6 +2,7 @@
 using CenturionCC.System.Audio;
 using CenturionCC.System.Gun;
 using CenturionCC.System.Utils.Watchdog;
+using DerpyNewbie.Common;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
@@ -58,10 +59,15 @@ namespace CenturionCC.System.SteelChallenge
         private AudioDataStore hitSound;
         [SerializeField]
         private AudioDataStore startSignalSound;
+
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private AudioManager audioManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private GunManager gunManager;
+
         private readonly int _animatorGameState = Animator.StringToHash("GameState");
         private readonly int _animatorIsVR = Animator.StringToHash("IsVR");
 
-        private AudioManager _audioManager;
         [UdonSynced] [FieldChangeCallback(nameof(GameEndTimeCallback))]
         private long _gameEndTime;
         [UdonSynced]
@@ -69,7 +75,6 @@ namespace CenturionCC.System.SteelChallenge
 
         [UdonSynced] [FieldChangeCallback(nameof(RawGameState))]
         private int _gameState;
-        private GunManager _gunManager;
         private bool _hasFalseStart;
         private bool _hasFootFaults;
         private int _hitCount;
@@ -118,8 +123,6 @@ namespace CenturionCC.System.SteelChallenge
         {
             if (shootingBoxReference == null)
                 shootingBoxReference = transform;
-            _audioManager = CenturionSystemReference.GetAudioManager();
-            _gunManager = CenturionSystemReference.GetGunManager();
             _hitTimes = new DateTime[targets.Length];
             foreach (var target in targets)
                 target.game = this;
@@ -316,7 +319,7 @@ namespace CenturionCC.System.SteelChallenge
         private bool _IsReadyPose()
         {
             var p = Networking.LocalPlayer;
-            var isHoldingGun = _gunManager.IsHoldingGun;
+            var isHoldingGun = gunManager.IsHoldingGun;
             if (!p.IsUserInVR())
             {
                 var head = p.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).rotation.eulerAngles;
@@ -417,7 +420,7 @@ namespace CenturionCC.System.SteelChallenge
 
         private void _PlayAudio(AudioDataStore a, Vector3 p)
         {
-            _audioManager.PlayAudioAtPosition(a, p);
+            audioManager.PlayAudioAtPosition(a, p);
         }
 
         #endregion

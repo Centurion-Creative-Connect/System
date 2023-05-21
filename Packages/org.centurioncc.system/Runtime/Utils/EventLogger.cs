@@ -17,6 +17,10 @@ namespace CenturionCC.System.Utils
 
         [SerializeField]
         private GameObject visualizeObject;
+
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PrintableBase logger;
+
         private readonly string _prefix = "EventLogger::";
         [UdonSynced]
         private Vector3 _hitDamagerContactPoint;
@@ -30,19 +34,12 @@ namespace CenturionCC.System.Utils
         [UdonSynced]
         private int _hitPlayerId;
 
-        private PrintableBase _logger;
-
         [NonSerialized]
         public bool ShouldVisualizeOnLog;
 
         public string PersistentHitLogData { get; private set; } = "";
         public string TempHitLogData { get; private set; } = "";
         public string ShotLogData { get; private set; } = "";
-
-        private void Start()
-        {
-            _logger = CenturionSystemReference.GetLogger();
-        }
 
         public void LogHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint,
             bool isShooterDetection)
@@ -124,11 +121,11 @@ namespace CenturionCC.System.Utils
 
         public void Visualize()
         {
-            _logger.Log($"{_prefix}visualizing record...");
+            logger.Log($"{_prefix}visualizing record...");
             var records = CsvUtil.ParseCsvStringToRecords(TempHitLogData);
             foreach (var record in records)
             {
-                _logger.Log($"{_prefix}record: {record}");
+                logger.Log($"{_prefix}record: {record}");
                 var recordParsed = CsvUtil.ParseCsvRecordToData(record, TupleValueLength);
                 VisualizeLine(
                     CsvUtil.ParseVector3(recordParsed[0]),
@@ -139,24 +136,24 @@ namespace CenturionCC.System.Utils
                 );
             }
 
-            _logger.Log($"{_prefix}visualization complete");
+            logger.Log($"{_prefix}visualization complete");
         }
 
         public void RemoveVisualization()
         {
             for (var i = 0; i < transform.childCount; i++) Destroy(transform.GetChild(i).gameObject);
 
-            _logger.Log($"{_prefix}removed visualization");
+            logger.Log($"{_prefix}removed visualization");
         }
 
         public void WriteLog()
         {
-            _logger.Log($"{_prefix} -- Begin Hit Log --");
-            _logger.Log(PersistentHitLogData);
-            _logger.Log($"{_prefix} -- End Hit Log --");
-            _logger.Log($"{_prefix} -- Begin Shot Log --");
-            _logger.Log(ShotLogData);
-            _logger.Log($"{_prefix} -- End Shot Log --");
+            logger.Log($"{_prefix} -- Begin Hit Log --");
+            logger.Log(PersistentHitLogData);
+            logger.Log($"{_prefix} -- End Hit Log --");
+            logger.Log($"{_prefix} -- Begin Shot Log --");
+            logger.Log(ShotLogData);
+            logger.Log($"{_prefix} -- End Shot Log --");
         }
 
         public void ClearHitLog()
@@ -173,7 +170,7 @@ namespace CenturionCC.System.Utils
         {
             ClearHitLog();
             ClearShotLog();
-            _logger.Log($"{_prefix}cleared all log data");
+            logger.Log($"{_prefix}cleared all log data");
         }
 
         private void VisualizeLine(Vector3 v1, Vector3 v2, string hitPlayer, string shooterPlayer, DateTime time)

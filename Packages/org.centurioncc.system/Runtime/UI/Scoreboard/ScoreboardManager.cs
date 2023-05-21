@@ -17,13 +17,14 @@ namespace CenturionCC.System.UI.Scoreboard
         [SerializeField]
         private Transform redList;
 
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PlayerManager playerManager;
+
         private ScoreboardPlayerStats[] _generatedScoreboardElement = new ScoreboardPlayerStats[0];
-        private PlayerManager _playerMgr;
 
         private void Start()
         {
-            _playerMgr = CenturionSystemReference.GetPlayerManager();
-            _playerMgr.SubscribeCallback(this);
+            playerManager.SubscribeCallback(this);
         }
 
         public override void OnPlayerChanged(PlayerBase player, int oldId, int newId)

@@ -1280,7 +1280,7 @@ namespace CenturionCC.System.Gun
             if (AudioData == null || AudioData.Collision == null)
                 return;
 
-            if (CollisionCount < 1)
+            if (CollisionCount > 1)
                 return;
 
             var objMarker = other.GetComponent<ObjectMarkerBase>();
@@ -1440,7 +1440,10 @@ namespace CenturionCC.System.Gun
                 OnGunDrop();
                 b.OnGunDrop(this);
                 if (TargetAnimator != null)
+                {
                     TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), false);
+                    TargetAnimator.SetFloat(GunUtility.TriggerProgressParameter(), 0F);
+                }
 
                 if (TargetHolster != null)
                 {

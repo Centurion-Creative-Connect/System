@@ -18,7 +18,7 @@ namespace CenturionCC.System.UI
         private Text notificationText;
 
         // TODO: duration is ignored
-        public override void Show(NotificationLevel level, string message, float duration = 5F)
+        public override void Show(NotificationLevel level, string message, float duration = 5F, int id = 0)
         {
             int imageIndex = 0;
             switch (level)

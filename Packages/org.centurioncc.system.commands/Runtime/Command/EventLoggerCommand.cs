@@ -1,6 +1,8 @@
 ﻿using CenturionCC.System.Utils;
+using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using UdonSharp;
+using UnityEngine;
 
 namespace CenturionCC.System.Command
 {
@@ -18,17 +20,13 @@ namespace CenturionCC.System.Command
                                                    "   shot\n" +
                                                    "   all</color>";
 
-        private EventLogger _eventLogger;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private EventLogger eventLogger;
 
         public override string Label => "EventLogger";
         public override string Usage =>
             "<command> <write|clear> <hit|shot> or <command> <writeVisual|clearVisual> or <command> <visualizeOnHit> [true|false]";
         public override string Description => "Manipulate logs produced in EventLogger.";
-
-        private void Start()
-        {
-            _eventLogger = CenturionSystemReference.GetGameManager().eventLogger;
-        }
 
         private string HandleWrite(NewbieConsole console, string[] args)
         {
@@ -44,7 +42,7 @@ namespace CenturionCC.System.Command
                 {
                     var msg = string.Join("\n",
                         HitLogPrefix,
-                        _eventLogger.PersistentHitLogData,
+                        eventLogger.PersistentHitLogData,
                         HitLogSuffix);
 
                     console.Println(msg);
@@ -54,7 +52,7 @@ namespace CenturionCC.System.Command
                 {
                     var msg = string.Join("\n",
                         ShotLogPrefix,
-                        _eventLogger.ShotLogData,
+                        eventLogger.ShotLogData,
                         ShotLogSuffix);
 
                     console.Println(msg);
@@ -64,10 +62,10 @@ namespace CenturionCC.System.Command
                 {
                     var msg = string.Join("\n",
                         HitLogPrefix,
-                        _eventLogger.PersistentHitLogData,
+                        eventLogger.PersistentHitLogData,
                         HitLogSuffix,
                         ShotLogPrefix,
-                        _eventLogger.ShotLogData,
+                        eventLogger.ShotLogData,
                         ShotLogSuffix);
 
                     console.Println(msg);
@@ -93,20 +91,20 @@ namespace CenturionCC.System.Command
             {
                 case "hit":
                 {
-                    _eventLogger.ClearHitLog();
+                    eventLogger.ClearHitLog();
                     console.Println("<color=green>Cleared hit log</color>");
                     break;
                 }
                 case "shot":
                 {
-                    _eventLogger.ClearShotLog();
+                    eventLogger.ClearShotLog();
                     console.Println("<color=green>Cleared shot log</color>");
                     break;
                 }
                 case "all":
                 {
-                    _eventLogger.ClearHitLog();
-                    _eventLogger.ClearShotLog();
+                    eventLogger.ClearHitLog();
+                    eventLogger.ClearShotLog();
                     console.Println("<color=green>Cleared all event log</color>");
                     break;
                 }
@@ -122,12 +120,12 @@ namespace CenturionCC.System.Command
         {
             if (args.Length >= 2)
             {
-                var request = ConsoleParser.TryParseBoolean(args[1], _eventLogger.ShouldVisualizeOnLog);
-                _eventLogger.ShouldVisualizeOnLog = request;
+                var request = ConsoleParser.TryParseBoolean(args[1], eventLogger.ShouldVisualizeOnLog);
+                eventLogger.ShouldVisualizeOnLog = request;
             }
 
-            console.Println($"Should Visualize On Log: {_eventLogger.ShouldVisualizeOnLog}");
-            return _eventLogger.ShouldVisualizeOnLog;
+            console.Println($"Should Visualize On Log: {eventLogger.ShouldVisualizeOnLog}");
+            return eventLogger.ShouldVisualizeOnLog;
         }
 
         public override string OnCommand(NewbieConsole console, string label, string[] vars, ref string[] envVars)
@@ -146,11 +144,11 @@ namespace CenturionCC.System.Command
                     return ConsoleLiteral.GetNone();
                 case "wv":
                 case "writevisual":
-                    _eventLogger.Visualize();
+                    eventLogger.Visualize();
                     return ConsoleLiteral.GetNone();
                 case "cv":
                 case "clearvisual":
-                    _eventLogger.RemoveVisualization();
+                    eventLogger.RemoveVisualization();
                     return ConsoleLiteral.GetNone();
                 case "v":
                 case "visualizeonhit":
