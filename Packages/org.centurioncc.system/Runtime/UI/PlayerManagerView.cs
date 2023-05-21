@@ -1,5 +1,6 @@
 ﻿using CenturionCC.System.Player;
 using CenturionCC.System.Utils;
+using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using UdonSharp;
 using UnityEngine;
@@ -12,6 +13,9 @@ namespace CenturionCC.System.UI
     {
         [SerializeField]
         private NewbieConsole consoleInstance;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PlayerManager playerManager;
+
         public Button joinButton;
         public Button leaveButton;
         public Button resetButton;
@@ -37,7 +41,7 @@ namespace CenturionCC.System.UI
             resetButton.interactable = false;
             updateButton.interactable = false;
 
-            CenturionSystemReference.GetPlayerManager().SubscribeCallback(this);
+            playerManager.SubscribeCallback(this);
         }
 
         public void UpdateDisplay(bool hasLocalPlayer, int localPlayerIndex)

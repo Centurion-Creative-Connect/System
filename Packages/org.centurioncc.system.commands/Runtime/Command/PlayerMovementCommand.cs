@@ -2,92 +2,89 @@
 using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using UdonSharp;
+using UnityEngine;
 
 namespace CenturionCC.System.Command
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PlayerMovementCommand : NewbieConsoleCommandHandler
     {
-        private PlayerMovement _movement;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PlayerMovement movement;
 
         public override string Label => "PlayerMovement";
         public override string[] Aliases => new[] { "Movement" };
         public override string Usage => "<command> <jump|run|walk|strafe|gravity|info|update|reset|apply> [value]";
         public override string Description => "Manipulate player's movement speed.";
 
-        private void Start()
-        {
-            _movement = CenturionSystemReference.GetGameManager().movement;
-        }
-
         private void PrintInfo(NewbieConsole console)
         {
             console.Println(
-                $"Jump: {_movement.jumpImpulse}, " +
-                $"Run: {_movement.runSpeed}, " +
-                $"Walk: {_movement.walkSpeed}, " +
-                $"Strafe: {_movement.strafeSpeed}, " +
-                $"Gravity: {_movement.gravityStrength}");
+                $"Jump: {movement.jumpImpulse}, " +
+                $"Run: {movement.runSpeed}, " +
+                $"Walk: {movement.walkSpeed}, " +
+                $"Strafe: {movement.strafeSpeed}, " +
+                $"Gravity: {movement.gravityStrength}");
         }
 
         private float HandleGravity(NewbieConsole console, string[] arguments)
         {
             if (arguments.Length >= 2)
             {
-                _movement.gravityStrength = ConsoleParser.TryParseFloat(arguments[1]);
-                _movement.UpdateSetting();
+                movement.gravityStrength = ConsoleParser.TryParseFloat(arguments[1]);
+                movement.UpdateSetting();
             }
 
-            console.Println($"Gravity: {_movement.gravityStrength}");
-            return _movement.gravityStrength;
+            console.Println($"Gravity: {movement.gravityStrength}");
+            return movement.gravityStrength;
         }
 
         private float HandleJump(NewbieConsole console, string[] arguments)
         {
             if (arguments.Length >= 2)
             {
-                _movement.jumpImpulse = ConsoleParser.TryParseFloat(arguments[1]);
-                _movement.UpdateSetting();
+                movement.jumpImpulse = ConsoleParser.TryParseFloat(arguments[1]);
+                movement.UpdateSetting();
             }
 
-            console.Println($"Jump: {_movement.jumpImpulse}");
-            return _movement.jumpImpulse;
+            console.Println($"Jump: {movement.jumpImpulse}");
+            return movement.jumpImpulse;
         }
 
         private float HandleStrafe(NewbieConsole console, string[] arguments)
         {
             if (arguments.Length >= 2)
             {
-                _movement.strafeSpeed = ConsoleParser.TryParseFloat(arguments[1]);
-                _movement.UpdateSetting();
+                movement.strafeSpeed = ConsoleParser.TryParseFloat(arguments[1]);
+                movement.UpdateSetting();
             }
 
-            console.Println($"Strafe: {_movement.strafeSpeed}");
-            return _movement.strafeSpeed;
+            console.Println($"Strafe: {movement.strafeSpeed}");
+            return movement.strafeSpeed;
         }
 
         private float HandleRun(NewbieConsole console, string[] arguments)
         {
             if (arguments.Length >= 2)
             {
-                _movement.runSpeed = ConsoleParser.TryParseFloat(arguments[1]);
-                _movement.UpdateSetting();
+                movement.runSpeed = ConsoleParser.TryParseFloat(arguments[1]);
+                movement.UpdateSetting();
             }
 
-            console.Println($"Run: {_movement.runSpeed}");
-            return _movement.runSpeed;
+            console.Println($"Run: {movement.runSpeed}");
+            return movement.runSpeed;
         }
 
         private float HandleWalk(NewbieConsole console, string[] arguments)
         {
             if (arguments.Length >= 2)
             {
-                _movement.walkSpeed = ConsoleParser.TryParseFloat(arguments[1]);
-                _movement.UpdateSetting();
+                movement.walkSpeed = ConsoleParser.TryParseFloat(arguments[1]);
+                movement.UpdateSetting();
             }
 
-            console.Println($"Walk: {_movement.walkSpeed}");
-            return _movement.walkSpeed;
+            console.Println($"Walk: {movement.walkSpeed}");
+            return movement.walkSpeed;
         }
 
         public override string OnCommand(NewbieConsole console, string label, string[] vars, ref string[] envVars)
@@ -116,12 +113,12 @@ namespace CenturionCC.System.Command
                 case "gravity":
                     return ConsoleLiteral.Of(HandleGravity(console, vars));
                 case "reset":
-                    _movement.ResetSetting();
+                    movement.ResetSetting();
                     console.Println("Successfully reset settings");
                     return ConsoleLiteral.GetNone();
                 case "u":
                 case "update":
-                    _movement.UpdateSetting();
+                    movement.UpdateSetting();
                     console.Println("Successfully updated settings");
                     return ConsoleLiteral.GetNone();
                 case "a":
@@ -132,7 +129,7 @@ namespace CenturionCC.System.Command
                         return ConsoleLiteral.GetNone();
                     }
 
-                    _movement.ApplySetting();
+                    movement.ApplySetting();
                     console.Println("Successfully applied settings");
                     return ConsoleLiteral.GetNone();
                 default:

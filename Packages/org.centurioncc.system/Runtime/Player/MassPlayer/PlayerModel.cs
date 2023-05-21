@@ -14,6 +14,9 @@ namespace CenturionCC.System.Player.MassPlayer
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class PlayerModel : PlayerBase
     {
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PlayerManager playerManager;
+
         [CanBeNull]
         public PlayerViewBase playerView;
         private AudioManager _audioManager;
@@ -21,7 +24,6 @@ namespace CenturionCC.System.Player.MassPlayer
 
         private FootstepAudioStore _footstepAudio;
         private bool _invokeOnDeathNextOnDeserialization;
-        private PlayerManager _playerManager;
         [UdonSynced] [FieldChangeCallback(nameof(SyncedDeaths))]
         private int _syncedDeaths;
         [UdonSynced]
@@ -43,9 +45,9 @@ namespace CenturionCC.System.Player.MassPlayer
 
                 _syncedPlayerId = value;
                 cachedVrcPlayerApi = VRCPlayerApi.GetPlayerById(value);
-                _cachedRoleData = _playerManager.RoleManager.GetPlayerRole(cachedVrcPlayerApi);
+                _cachedRoleData = playerManager.RoleManager.GetPlayerRole(cachedVrcPlayerApi);
 
-                _playerManager.Invoke_OnPlayerChanged(this, lastPlayerId, lastRole.HasPermission(), lastAssigned);
+                playerManager.Invoke_OnPlayerChanged(this, lastPlayerId, lastRole.HasPermission(), lastAssigned);
                 if (Networking.IsMaster && lastPlayerId != value)
                     SetTeam(0);
 
@@ -63,7 +65,7 @@ namespace CenturionCC.System.Player.MassPlayer
                 _syncedTeamId = value;
 
                 if (lastTeam != _syncedTeamId)
-                    _playerManager.Invoke_OnTeamChanged(this, lastTeam);
+                    playerManager.Invoke_OnTeamChanged(this, lastTeam);
 
                 UpdateView();
             }
@@ -107,9 +109,8 @@ namespace CenturionCC.System.Player.MassPlayer
 
         private void Start()
         {
-            _playerManager = CenturionSystemReference.GetPlayerManager();
-            _audioManager = _playerManager.AudioManager;
-            _footstepAudio = _playerManager.FootstepAudio;
+            _audioManager = playerManager.AudioManager;
+            _footstepAudio = playerManager.FootstepAudio;
         }
 
         public int ChildKeepAlive(WatchdogProc wd, int nonce)
@@ -132,17 +133,17 @@ namespace CenturionCC.System.Player.MassPlayer
             if (!_invokeOnDeathNextOnDeserialization) return;
 
             _invokeOnDeathNextOnDeserialization = false;
-            var attacker = _playerManager.GetPlayerById(SyncedLastAttackerPlayerId);
+            var attacker = playerManager.GetPlayerById(SyncedLastAttackerPlayerId);
             if (attacker == null)
             {
-                _playerManager.Logger.LogError(
+                playerManager.Logger.LogError(
                     $"[Player]{Index}: Failed to get attacker {SyncedLastAttackerPlayerId} for {NewbieUtils.GetPlayerName(VrcPlayer)}!");
                 return;
             }
 
             ++attacker.Kills;
 
-            _playerManager.Invoke_OnKilled(attacker, this);
+            playerManager.Invoke_OnKilled(attacker, this);
             UpdateView();
         }
 
@@ -187,54 +188,54 @@ namespace CenturionCC.System.Player.MassPlayer
             SyncedDeaths = 0;
             Kills = 0;
 
-            _playerManager.Invoke_OnResetPlayerStats(this);
+            playerManager.Invoke_OnResetPlayerStats(this);
         }
 
         public override void OnDamage(PlayerCollider playerCollider, DamageData data, Vector3 contactPoint)
         {
             if (playerCollider == null || data == null)
             {
-                _playerManager.Logger.LogError(
+                playerManager.Logger.LogError(
                     $"[Player]OnDamage: PlayerCollider or DamageData were null! will not check!");
                 return;
             }
 
             if (!data.ShouldApplyDamage)
             {
-                _playerManager.Logger.LogVerbose(
+                playerManager.Logger.LogVerbose(
                     $"[Player]OnDamage: Will ignore damage because ShouldApplyDamage == false");
                 return;
             }
 
-            var attacker = _playerManager.GetPlayerById(data.DamagerPlayerId);
+            var attacker = playerManager.GetPlayerById(data.DamagerPlayerId);
 
             if (attacker == null)
             {
-                _playerManager.Logger.LogVerbose(
+                playerManager.Logger.LogVerbose(
                     $"[Player]OnDamage: Will ignore damage to {NewbieUtils.GetPlayerName(VrcPlayer)} because attacker is null");
                 return;
             }
 
             if (PlayerId == attacker.PlayerId)
             {
-                _playerManager.Logger.LogVerbose(
+                playerManager.Logger.LogVerbose(
                     $"[Player]OnDamage: Will ignore damage to {NewbieUtils.GetPlayerName(VrcPlayer)} because self shooting");
                 return;
             }
 
             if (!IsLocal && !attacker.IsLocal)
             {
-                _playerManager.Logger.LogVerbose(
+                playerManager.Logger.LogVerbose(
                     $"[Player]OnDamage: Will ignore damage to {NewbieUtils.GetPlayerName(VrcPlayer)} because neither of players are local player");
                 return;
             }
 
             if (TeamId == attacker.TeamId)
             {
-                _playerManager.Invoke_OnFriendlyFire(attacker, this);
-                if (TeamId != 0 && !_playerManager.AllowFriendlyFire)
+                playerManager.Invoke_OnFriendlyFire(attacker, this);
+                if (TeamId != 0 && !playerManager.AllowFriendlyFire)
                 {
-                    _playerManager.Logger.LogVerbose(
+                    playerManager.Logger.LogVerbose(
                         $"[Player]OnDamage: Will ignore damage to {NewbieUtils.GetPlayerName(VrcPlayer)} because attacker {NewbieUtils.GetPlayerName(attacker.VrcPlayer)} is in same team");
                     return;
                 }
@@ -242,7 +243,7 @@ namespace CenturionCC.System.Player.MassPlayer
 
             if (Networking.GetNetworkDateTime().Subtract(LastDiedDateTime).TotalSeconds < 5F)
             {
-                _playerManager.Logger.LogVerbose(
+                playerManager.Logger.LogVerbose(
                     $"[Player]Will ignore damage to {NewbieUtils.GetPlayerName(VrcPlayer)} because that player has been hit recently");
                 return;
             }
@@ -254,7 +255,7 @@ namespace CenturionCC.System.Player.MassPlayer
 
             Sync();
 
-            _playerManager.Invoke_OnHitDetection(playerCollider, data, contactPoint,
+            playerManager.Invoke_OnHitDetection(playerCollider, data, contactPoint,
                 data.DamagerPlayerId == Networking.LocalPlayer.playerId);
         }
 

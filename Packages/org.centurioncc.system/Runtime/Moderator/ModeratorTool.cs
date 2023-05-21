@@ -25,31 +25,29 @@ namespace CenturionCC.System.Moderator
         [Header("Anti-Cheat Pitch")]
         public float pitchDetection = -10F;
         public int pitchDetectionWarnCount = 20;
-        private GunManager _gunManager;
 
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private GunManager gunManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private NotificationProvider notification;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PlayerManager playerManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private RoleProvider roleManager;
 
         private bool _isModeratorMode;
-        private NotificationProvider _notification;
-        private PlayerManager _playerManager;
-        private RoleProvider _roleManager;
 
         public bool IsModeratorMode
         {
             get => _isModeratorMode;
             // Ensure non-moderator cannot enable moderator mode
-            set => _isModeratorMode = _roleManager.GetPlayerRole().HasPermission() && value;
+            set => _isModeratorMode = roleManager.GetPlayerRole().HasPermission() && value;
         }
 
         private void Start()
         {
-            var game = CenturionSystemReference.GetGameManager();
-            _playerManager = game.players;
-            _gunManager = game.guns;
-            _notification = game.notification;
-            _roleManager = game.roleProvider;
-
             // _gunManager.SubscribeCallback(this);
-            _playerManager.SubscribeCallback(this);
+            playerManager.SubscribeCallback(this);
         }
 
         private void CheckShot(ManagedGun instance)
@@ -61,7 +59,7 @@ namespace CenturionCC.System.Moderator
                 return;
 
             var holderPlayerId = holder.playerId;
-            var player = _playerManager.GetPlayerById(holderPlayerId);
+            var player = playerManager.GetPlayerById(holderPlayerId);
 
             if (player == null)
                 return;
@@ -108,7 +106,7 @@ namespace CenturionCC.System.Moderator
 
             var damageType = "Unknown";
 
-            foreach (var gun in _gunManager.ManagedGunInstances)
+            foreach (var gun in gunManager.ManagedGunInstances)
             {
                 if (gun != null && gun.CurrentHolder != null && gun.CurrentHolder.playerId == firedPlayer.PlayerId)
                     damageType = gun.WeaponName;
@@ -131,7 +129,7 @@ namespace CenturionCC.System.Moderator
                 }
             }
 
-            _notification.ShowInfo(string.Format
+            notification.ShowInfo(string.Format
             (
                 "Staff Only: Hit Info\n{0} => {1}: {2}",
                 NewbieUtils.GetPlayerName(firedVrcPlayer),

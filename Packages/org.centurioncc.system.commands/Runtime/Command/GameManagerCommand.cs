@@ -1,6 +1,8 @@
 ﻿using CenturionCC.System.Utils;
+using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using UdonSharp;
+using UnityEngine;
 using VRC.SDKBase;
 
 namespace CenturionCC.System.Command
@@ -8,7 +10,8 @@ namespace CenturionCC.System.Command
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class GameManagerCommand : NewbieConsoleCommandHandler
     {
-        private GameManager _gameManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private GameManager gameManager;
 
         public override string Label => "GameManager";
         public override string[] Aliases => new[] { "Game" };
@@ -16,11 +19,6 @@ namespace CenturionCC.System.Command
             "<command> <canShoot|testHitRemote|testHitLocal|isMod|useHaptic|version|license>";
         public override string Description =>
             "Adjusts some game settings or prints out version/license of this project.";
-
-        private void Start()
-        {
-            _gameManager = CenturionSystemReference.GetGameManager();
-        }
 
         public override string OnCommand(NewbieConsole console, string label, string[] vars, ref string[] envVars)
         {
@@ -30,13 +28,13 @@ namespace CenturionCC.System.Command
             {
                 case "canshoot":
                 {
-                    console.Println($"CanShoot: {_gameManager.CanShoot()}");
-                    return ConsoleLiteral.Of(_gameManager.CanShoot());
+                    console.Println($"CanShoot: {gameManager.CanShoot()}");
+                    return ConsoleLiteral.Of(gameManager.CanShoot());
                 }
                 case "testhitremote":
                 {
                     console.Println("Playing onDeath for all players except local");
-                    foreach (var player in _gameManager.players.GetPlayers())
+                    foreach (var player in gameManager.players.GetPlayers())
                         if (player != null && player.IsAssigned && !player.IsLocal)
                             player.OnDeath();
                     return ConsoleLiteral.GetNone();
@@ -44,7 +42,7 @@ namespace CenturionCC.System.Command
                 case "testhitlocal":
                 {
                     console.Println("Playing onDeath for local player if exist");
-                    var localPlayer = _gameManager.players.GetLocalPlayer();
+                    var localPlayer = gameManager.players.GetLocalPlayer();
                     if (localPlayer != null)
                         localPlayer.OnDeath();
                     return ConsoleLiteral.GetNone();
@@ -54,17 +52,17 @@ namespace CenturionCC.System.Command
                 case "ismod":
                 case "ismoderator":
                 {
-                    console.Println($"IsModerator: {_gameManager.roleProvider.GetPlayerRole().HasPermission()}");
-                    return ConsoleLiteral.Of(_gameManager.roleProvider.GetPlayerRole().HasPermission());
+                    console.Println($"IsModerator: {gameManager.roleProvider.GetPlayerRole().HasPermission()}");
+                    return ConsoleLiteral.Of(gameManager.roleProvider.GetPlayerRole().HasPermission());
                 }
                 case "modmode":
                 {
                     if (vars.Length >= 2 && console.CurrentRole.HasPermission())
-                        _gameManager.moderatorTool.IsModeratorMode =
-                            ConsoleParser.TryParseBoolean(vars[1], _gameManager.moderatorTool.IsModeratorMode);
+                        gameManager.moderatorTool.IsModeratorMode =
+                            ConsoleParser.TryParseBoolean(vars[1], gameManager.moderatorTool.IsModeratorMode);
 
-                    console.Println($"ModMode: {_gameManager.moderatorTool.IsModeratorMode}");
-                    return ConsoleLiteral.Of(_gameManager.moderatorTool.IsModeratorMode);
+                    console.Println($"ModMode: {gameManager.moderatorTool.IsModeratorMode}");
+                    return ConsoleLiteral.Of(gameManager.moderatorTool.IsModeratorMode);
                 }
                 case "rc":
                 case "arc":
@@ -73,23 +71,23 @@ namespace CenturionCC.System.Command
                 {
                     if (vars.Length >= 2 && console.CurrentRole.HasPermission())
                     {
-                        _gameManager.guns.allowedRicochetCount = ConsoleParser.TryParseInt(vars[1]);
-                        Networking.SetOwner(Networking.LocalPlayer, _gameManager.gameObject);
-                        _gameManager.RequestSerialization();
+                        gameManager.guns.allowedRicochetCount = ConsoleParser.TryParseInt(vars[1]);
+                        Networking.SetOwner(Networking.LocalPlayer, gameManager.gameObject);
+                        gameManager.RequestSerialization();
                     }
 
-                    console.Println($"AllowedRicochetCount: {_gameManager.guns.allowedRicochetCount}");
-                    return ConsoleLiteral.Of(_gameManager.guns.allowedRicochetCount);
+                    console.Println($"AllowedRicochetCount: {gameManager.guns.allowedRicochetCount}");
+                    return ConsoleLiteral.Of(gameManager.guns.allowedRicochetCount);
                 }
                 case "haptic":
                 case "usehaptic":
                 {
                     if (vars.Length >= 2)
-                        _gameManager.hitEffect.useHaptic =
-                            ConsoleParser.TryParseBoolean(vars[1], _gameManager.hitEffect.useHaptic);
+                        gameManager.hitEffect.useHaptic =
+                            ConsoleParser.TryParseBoolean(vars[1], gameManager.hitEffect.useHaptic);
 
-                    console.Println($"UseHaptic: {_gameManager.hitEffect.useHaptic}");
-                    return ConsoleLiteral.Of(_gameManager.hitEffect.useHaptic);
+                    console.Println($"UseHaptic: {gameManager.hitEffect.useHaptic}");
+                    return ConsoleLiteral.Of(gameManager.hitEffect.useHaptic);
                 }
                 case "version":
                 {
