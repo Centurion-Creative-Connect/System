@@ -11,26 +11,16 @@ Airsoft game system made for Centurion VR Survival Game Field.
 
 ## How to Import
 
-### Import using Unity Package Manager
+### Import using VCC
+1. Open this [link](https://centurion-creative-connect.github.io/vpm-repos/) and add repository to your VCC.
+2. Add Centurion System package from Centurion Creative Connect repos
+3. Done!
 
-#### Requirements
-
-- VRChat SDK - Base `3.1.x` or later
-- VRChat SDK - Worlds `3.1.x` or later
-- UdonSharp `1.1.x` or later
-- [NewbieCommons](https://github.com/DerpyNewbie/NewbieCommons) `0.2.x`
-- [NewbieLogger](https://github.com/DerpyNewbie/NewbieLogger) `0.1.x`
-
-#### Installation
-
-1. Make sure [Git](https://git-scm.com/) is installed on your PC
-2. Open Unity Package Manager
-3. Press the upper left `+` button
-4. Import packages by pressing `Add package from git URL` and pasting these URLs
-    1. `https://github.com/Centurion-Creative-Connect/System.git?path=/Packages/org.centurioncc.system`
-    2. `https://github.com/Centurion-Creative-Connect/System.git?path=/Packages/org.centurioncc.system.commands`
-5. Setup layers and collision matrix from the menu (`Centurion-Utils/Setup Layers`)
-6. Done!
+### Import using unitypackage
+1. Open [latest releases](https://github.com/Centurion-Creative-Connect/System/releases/latest).
+2. Download unitypackage in assets.
+3. Import downloaded unitypackage.
+4. Done!
 
 ## FAQ
 
