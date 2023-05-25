@@ -32,8 +32,6 @@ namespace CenturionCC.System.Player
         private int staffTeamId = 255;
         [SerializeField]
         private Color staffTeamColor = new Color(0.172549F, 0.4733055F, 0.8117647F, 1F);
-        [SerializeField]
-        private LocalHitEffect localHitEffect;
 
         private bool _alwaysUseLightweightCollider;
 
@@ -66,8 +64,6 @@ namespace CenturionCC.System.Player
         public RoleProvider RoleManager => manager.roleProvider;
 
         public FootstepAudioStore FootstepAudio => footstepAudio;
-
-        public LocalHitEffect LocalHitEffect => localHitEffect;
 
         [field: UdonSynced] [field: FieldChangeCallback(nameof(AllowFriendlyFire))]
         public bool AllowFriendlyFire { get; private set; }

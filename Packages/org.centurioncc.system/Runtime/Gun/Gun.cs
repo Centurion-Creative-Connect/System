@@ -176,7 +176,7 @@ namespace CenturionCC.System.Gun
 
             _shotPosition = ShooterPosition;
             _shotRotation = ShooterRotation;
-            _shotTime = DateTime.UtcNow.Ticks;
+            _shotTime = Networking.GetNetworkDateTime().Ticks;
             ++ShotCount;
             --QueuedShotCount;
         }
@@ -650,7 +650,7 @@ namespace CenturionCC.System.Gun
 
 
         /// <summary>
-        /// Last shot time of this Gun.
+        /// Last shot time of this Gun. (based on Network DateTime)
         /// </summary>
         [PublicAPI]
         public virtual DateTime LastShotTime
@@ -1205,7 +1205,7 @@ namespace CenturionCC.System.Gun
                 return ShotResult.Failed;
             }
 
-            if (DateTime.UtcNow.Subtract(LastShotTime).TotalSeconds < SecondsPerRound)
+            if (Networking.GetNetworkDateTime().Subtract(LastShotTime).TotalSeconds < SecondsPerRound)
             {
                 return ShotResult.Paused;
             }
