@@ -1,4 +1,5 @@
 ﻿using System;
+using CenturionCC.System.Player;
 using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
@@ -9,14 +10,12 @@ using VRC.SDKBase;
 namespace CenturionCC.System.Utils
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class LocalHitEffect : UdonSharpBehaviour
+    public class LocalHitEffect : PlayerManagerCallbackBase
     {
         private const float HapticDuration = 0.02F;
 
         [SerializeField]
         public bool useHaptic;
-        [SerializeField]
-        public float localPlayerHitDuration = 1F;
 
         [SerializeField]
         private AudioSource hitSound;
@@ -32,6 +31,8 @@ namespace CenturionCC.System.Utils
         [FormerlySerializedAs("_updateManager")]
         [SerializeField] [HideInInspector] [NewbieInject]
         private UpdateManager updateManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PlayerManager playerManager;
 
         [NonSerialized]
         private float _currentTime;
@@ -57,6 +58,16 @@ namespace CenturionCC.System.Utils
             _hapticSamples = new float[_hapticPackSize];
 
             hapticSource.GetData(_hapticSamples, 0);
+
+            playerManager.SubscribeCallback(this);
+        }
+
+        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
+        {
+            if (!hitPlayer.IsLocal)
+                return;
+
+            Play();
         }
 
         public void _Update()
