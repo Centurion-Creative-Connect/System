@@ -311,8 +311,9 @@ namespace CenturionCC.System.Gun
             Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
             RequestSerialization();
 
-#if UNITY_EDITOR && !COMPILER_UDONSHARP
+#if UNITY_EDITOR
             // ClientSim does not invoke serialization events, so just invoke it directly
+            OnPreSerialization();
             OnDeserialization();
 #endif
         }
