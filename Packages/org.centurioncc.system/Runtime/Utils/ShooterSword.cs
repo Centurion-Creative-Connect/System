@@ -1,4 +1,5 @@
-﻿using UdonSharp;
+﻿using System;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 
@@ -7,20 +8,21 @@ namespace CenturionCC.System.Utils
     [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
     public class ShooterSword : DamageData
     {
-        public override bool ShouldApplyDamage => _shouldApplyDamage;
-        public override int DamagerPlayerId => Networking.LocalPlayer.playerId;
-        public override Vector3 DamageOriginPosition => transform.position;
-        public override Quaternion DamageOriginRotation => transform.rotation;
-        public override string DamageType => "Sword";
-
         [SerializeField]
         private bool requireTriggerToDamage = true;
         [SerializeField]
         private bool hideMeshRendererOnPickup;
         [SerializeField]
         private MeshRenderer meshRenderer;
+        private DateTime _originTime = default;
 
         private bool _shouldApplyDamage;
+        public override bool ShouldApplyDamage => _shouldApplyDamage;
+        public override int DamagerPlayerId => Networking.LocalPlayer.playerId;
+        public override Vector3 DamageOriginPosition => transform.position;
+        public override Quaternion DamageOriginRotation => transform.rotation;
+        public override DateTime DamageOriginTime => _originTime;
+        public override string DamageType => "Sword";
 
         private void Start()
         {
@@ -31,6 +33,7 @@ namespace CenturionCC.System.Utils
         {
             Debug.Log($"[ShooterSword-{name}] EnableDamage");
             _shouldApplyDamage = true;
+            _originTime = Networking.GetNetworkDateTime();
         }
 
         public void DisableDamage()

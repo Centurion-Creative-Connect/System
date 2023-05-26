@@ -1,4 +1,5 @@
-﻿using UdonSharp;
+﻿using System;
+using UdonSharp;
 using UnityEngine;
 
 namespace CenturionCC.System.Utils
@@ -9,6 +10,7 @@ namespace CenturionCC.System.Utils
         public abstract int DamagerPlayerId { get; }
         public abstract Vector3 DamageOriginPosition { get; }
         public abstract Quaternion DamageOriginRotation { get; }
+        public abstract DateTime DamageOriginTime { get; }
         public abstract string DamageType { get; }
     }
 }
