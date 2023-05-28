@@ -1,0 +1,16 @@
+﻿using CenturionCC.System.Utils;
+using UnityEngine;
+
+namespace CenturionCC.System.Player
+{
+    public abstract class DamageDataResolverBase : PlayerManagerCallbackBase
+    {
+        public override void OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint,
+            bool isShooterDetection)
+        {
+            Resolve(playerCollider, damageData, contactPoint);
+        }
+
+        public abstract void Resolve(PlayerCollider collider, DamageData damageData, Vector3 contactPoint);
+    }
+}
