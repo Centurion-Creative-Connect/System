@@ -23,11 +23,7 @@ namespace CenturionCC.System.Player.MassPlayer
         private RoleData _cachedRoleData;
 
         private FootstepAudioStore _footstepAudio;
-        private bool _invokeOnDeathNextOnDeserialization;
-        [UdonSynced] [FieldChangeCallback(nameof(SyncedDeaths))]
-        private int _syncedDeaths;
-        [UdonSynced]
-        private long _syncedLastDiedTimeTicks = 0;
+        private long _lastHitDetectionTimeTick;
         [UdonSynced] [FieldChangeCallback(nameof(SyncedPlayerId))]
         private int _syncedPlayerId = -1;
         [UdonSynced] [FieldChangeCallback(nameof(SyncedTeamId))]
@@ -71,33 +67,9 @@ namespace CenturionCC.System.Player.MassPlayer
             }
         }
 
-        public int SyncedDeaths
-        {
-            get => _syncedDeaths;
-            protected set
-            {
-                var lastSyncedDeaths = _syncedDeaths;
-                _syncedDeaths = value;
-
-                if (lastSyncedDeaths < 0 || lastSyncedDeaths == value || value == 0)
-                    return;
-
-                _invokeOnDeathNextOnDeserialization = true;
-            }
-        }
-
-        [field: UdonSynced]
-        [field: FieldChangeCallback(nameof(SyncedLastAttackerPlayerId))]
-        public int SyncedLastAttackerPlayerId { get; protected set; } = -1;
-
-        public override long LastDiedTimeTicks => _syncedLastDiedTimeTicks;
+        public override long LastDiedTimeTicks => _lastHitDetectionTimeTick;
         public override int PlayerId => SyncedPlayerId;
         public override int TeamId => SyncedTeamId;
-        public override int Deaths
-        {
-            get => SyncedDeaths;
-            set => SyncedDeaths = value;
-        }
 
         public override bool IsAssigned => VrcPlayer != null && VrcPlayer.IsValid();
         public override VRCPlayerApi VrcPlayer => cachedVrcPlayerApi;
@@ -116,35 +88,6 @@ namespace CenturionCC.System.Player.MassPlayer
         public int ChildKeepAlive(WatchdogProc wd, int nonce)
         {
             return nonce;
-        }
-
-        public override void OnDeserialization()
-        {
-            CheckDiff();
-        }
-
-        public override void OnPreSerialization()
-        {
-            CheckDiff();
-        }
-
-        private void CheckDiff()
-        {
-            if (!_invokeOnDeathNextOnDeserialization) return;
-
-            _invokeOnDeathNextOnDeserialization = false;
-            var attacker = playerManager.GetPlayerById(SyncedLastAttackerPlayerId);
-            if (attacker == null)
-            {
-                playerManager.Logger.LogError(
-                    $"[Player]{Index}: Failed to get attacker {SyncedLastAttackerPlayerId} for {NewbieUtils.GetPlayerName(VrcPlayer)}!");
-                return;
-            }
-
-            ++attacker.Kills;
-
-            playerManager.Invoke_OnKilled(attacker, this);
-            UpdateView();
         }
 
         public override void SetPlayer(int vrcPlayerId)
@@ -185,7 +128,7 @@ namespace CenturionCC.System.Player.MassPlayer
 
         public override void ResetStats()
         {
-            SyncedDeaths = 0;
+            Deaths = 0;
             Kills = 0;
 
             playerManager.Invoke_OnResetPlayerStats(this);
@@ -241,19 +184,13 @@ namespace CenturionCC.System.Player.MassPlayer
                 }
             }
 
-            if (Networking.GetNetworkDateTime().Subtract(LastDiedDateTime).TotalSeconds < 5F)
+            var networkNow = Networking.GetNetworkDateTime();
+            if (networkNow.Subtract(LastDiedDateTime).TotalSeconds > 10F)
             {
+                _lastHitDetectionTimeTick = networkNow.Ticks;
                 playerManager.Logger.LogVerbose(
-                    $"[Player]Will ignore damage to {NewbieUtils.GetPlayerName(VrcPlayer)} because that player has been hit recently");
-                return;
+                    $"[Player]OnDamage: Updated last hit detection time tick for {NewbieUtils.GetPlayerName(VrcPlayer)}");
             }
-
-
-            ++SyncedDeaths;
-            SyncedLastAttackerPlayerId = attacker.PlayerId;
-            _syncedLastDiedTimeTicks = Networking.GetNetworkDateTime().Ticks;
-
-            Sync();
 
             playerManager.Invoke_OnHitDetection(playerCollider, data, contactPoint,
                 data.DamagerPlayerId == Networking.LocalPlayer.playerId);
