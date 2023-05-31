@@ -16,6 +16,8 @@ namespace CenturionCC.System.Player.External.PlayerTag
         private Image teamTagImage;
         [SerializeField]
         private Image staffTagImage;
+        [SerializeField]
+        private Image ownerTagImage;
 
         [Header("Sprites")]
         [SerializeField]
@@ -59,6 +61,9 @@ namespace CenturionCC.System.Player.External.PlayerTag
                 case TagType.Staff:
                     staffTagImage.gameObject.SetActive(isOn);
                     break;
+                case TagType.Owner:
+                    ownerTagImage.gameObject.SetActive(isOn);
+                    break;
             }
 
             if (gameObject.activeSelf == IsVisible())
@@ -83,7 +88,7 @@ namespace CenturionCC.System.Player.External.PlayerTag
 
         private bool IsVisible()
         {
-            return teamTagImage.IsActive() && staffTagImage.IsActive();
+            return teamTagImage.IsActive() && staffTagImage.IsActive() && ownerTagImage.IsActive();
         }
     }
 }
