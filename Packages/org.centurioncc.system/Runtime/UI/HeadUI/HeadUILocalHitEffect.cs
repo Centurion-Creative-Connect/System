@@ -125,8 +125,8 @@ namespace CenturionCC.System.UI.HeadUI
             Debug.Log("[LocalHitEffect] Play");
             if (_isPlaying)
             {
-                Debug.LogError("[LocalHitEffect] Still playing!");
-                return;
+                Debug.LogError("[LocalHitEffect] Still playing but reset!");
+                lastHitEffectPlayEndTime = Networking.GetNetworkDateTime();
             }
 
             if (hitSound)
