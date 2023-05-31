@@ -314,13 +314,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: hideOtherTeamsTag
+      Data: showOtherTeamsTag
     - Name: $v
       Entry: 7
       Data: 22|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: hideOtherTeamsTag
+      Data: showOtherTeamsTag
     - Name: <UserType>k__BackingField
       Entry: 7
       Data: 23|System.RuntimeType, mscorlib
@@ -371,8 +371,7 @@ MonoBehaviour:
       Data: 27|UnityEngine.TooltipAttribute, UnityEngine.CoreModule
     - Name: tooltip
       Entry: 1
-      Data: Hides team tag if local player is not in the same team with remote player
-        (excluding special teams)
+      Data: Shows team tag even if local player is not in same team as remote
     - Name: 
       Entry: 8
       Data: 
@@ -393,13 +392,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: hideStaffTagWhileInTeam
+      Data: showStaffTagWhileInTeam
     - Name: $v
       Entry: 7
       Data: 28|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: hideStaffTagWhileInTeam
+      Data: showStaffTagWhileInTeam
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 23
@@ -435,7 +434,7 @@ MonoBehaviour:
       Data: 31|UnityEngine.TooltipAttribute, UnityEngine.CoreModule
     - Name: tooltip
       Entry: 1
-      Data: Hides staff tag if staff player is not in special team
+      Data: Shows staff tag even if staff player is not in special team
     - Name: 
       Entry: 8
       Data: 

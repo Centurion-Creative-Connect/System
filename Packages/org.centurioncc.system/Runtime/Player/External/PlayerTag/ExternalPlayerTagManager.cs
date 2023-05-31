@@ -21,6 +21,14 @@ namespace CenturionCC.System.Player.External.PlayerTag
         [SerializeField]
         private GameObject sourceRemotePlayerTag;
 
+        [Header("Settings")]
+        [SerializeField]
+        [Tooltip("Shows team tag even if local player is not in same team as remote")]
+        private bool showOtherTeamsTag = false;
+        [SerializeField]
+        [Tooltip("Shows staff tag even if staff player is not in special team")]
+        private bool showStaffTagWhileInTeam = false;
+
         private ExternalPlayerTagBase[] _remotePlayerTags = new ExternalPlayerTagBase[0];
 
         private void Start()
@@ -106,9 +114,9 @@ namespace CenturionCC.System.Player.External.PlayerTag
             var taggedPlayerTeamId = taggedPlayer != null ? taggedPlayer.TeamId : 0;
             var inSameTeam = localPlayerTeamId == taggedPlayerTeamId;
             var showAlways = localPlayerInSpecialTeam || playerManager.IsSpecialTeamId(taggedPlayerTeamId);
-            var showTeam = playerManager.ShowTeamTag && (showAlways || inSameTeam);
-            var showStaff = playerManager.ShowStaffTag && showAlways;
-            var showCreator = playerManager.ShowCreatorTag && showAlways;
+            var showTeam = playerManager.ShowTeamTag && (showOtherTeamsTag || showAlways || inSameTeam);
+            var showStaff = playerManager.ShowStaffTag && (showStaffTagWhileInTeam || showAlways);
+            var showCreator = playerManager.ShowCreatorTag && (showStaffTagWhileInTeam || showAlways);
 
             playerTag.SetTagOn(TagType.Team, showTeam);
             playerTag.SetTeamTag(taggedPlayerTeamId, playerManager.GetTeamColor(taggedPlayerTeamId));
