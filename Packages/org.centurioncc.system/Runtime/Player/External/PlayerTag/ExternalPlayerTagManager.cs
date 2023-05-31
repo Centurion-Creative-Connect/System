@@ -63,29 +63,7 @@ namespace CenturionCC.System.Player.External.PlayerTag
             var localPlayerTeamId = localPlayer != null ? localPlayer.TeamId : 0;
             var localPlayerInSpecialTeam = playerManager.IsSpecialTeamId(localPlayerTeamId);
 
-            var taggedPlayerTeamId = player.TeamId;
-            var taggedPlayerRole = player.Role;
-            var inSameTeam = localPlayerTeamId == taggedPlayerTeamId;
-
-            var showAlways = localPlayerInSpecialTeam ||
-                             playerManager.IsSpecialTeamId(taggedPlayerTeamId);
-
-            var showTeam = playerManager.ShowTeamTag && (showAlways || inSameTeam);
-            var showStaff = playerManager.ShowStaffTag && showAlways;
-            var showCreator = playerManager.ShowCreatorTag && showAlways;
-
-            playerTag.SetTagOn(TagType.Team, showTeam);
-            playerTag.SetTeamTag(taggedPlayerTeamId, playerManager.GetTeamColor(taggedPlayerTeamId));
-
-            // Need to update role-specific tags since they should not be shown when playing game as team player
-            playerTag.SetTagOn(GetStaffTagType(taggedPlayerRole),
-                showStaff && taggedPlayerRole.IsGameStaff());
-            playerTag.SetTagOn(TagType.Master,
-                showStaff && player.VrcPlayer != null && Utilities.IsValid(player.VrcPlayer) &&
-                player.VrcPlayer.isMaster);
-
-            playerTag.SetTagOn(TagType.Creator,
-                showCreator && taggedPlayerRole.IsGameCreator());
+            UpdateTag(playerTag, localPlayerTeamId, localPlayerInSpecialTeam);
         }
 
         public override void OnLocalPlayerChanged(PlayerBase playerNullable, int index)
@@ -101,115 +79,44 @@ namespace CenturionCC.System.Player.External.PlayerTag
             var localPlayerTeamId = localPlayer != null ? localPlayer.TeamId : 0;
             var localPlayerInSpecialTeam = playerManager.IsSpecialTeamId(localPlayerTeamId);
 
-            switch (type)
+            foreach (var playerTag in _remotePlayerTags)
             {
-                case TagType.Team:
-                {
-                    foreach (var playerTag in _remotePlayerTags)
-                    {
-                        var taggedPlayerApi = playerTag.followingPlayer;
-                        if (!Utilities.IsValid(taggedPlayerApi))
-                            continue;
-
-                        var taggedPlayer = playerManager.GetPlayerById(taggedPlayerApi.playerId);
-                        var taggedPlayerRole = roleManager.GetPlayerRole(taggedPlayerApi);
-                        var taggedPlayerTeamId = taggedPlayer != null ? taggedPlayer.TeamId : 0;
-                        var inSameTeam = localPlayerTeamId == taggedPlayerTeamId;
-                        var showAlways = localPlayerInSpecialTeam ||
-                                         playerManager.IsSpecialTeamId(taggedPlayerTeamId);
-                        var showTeam = playerManager.ShowTeamTag && (showAlways || inSameTeam);
-                        var showStaff = playerManager.ShowStaffTag && showAlways;
-                        var showCreator = playerManager.ShowCreatorTag && showAlways;
-
-                        playerTag.SetTagOn(TagType.Team, showTeam);
-                        playerTag.SetTeamTag(taggedPlayerTeamId, playerManager.GetTeamColor(taggedPlayerTeamId));
-
-                        // Need to update role-specific tags since they should not be shown when playing game as team player
-                        playerTag.SetTagOn(GetStaffTagType(taggedPlayerRole),
-                            showStaff && taggedPlayerRole.IsGameStaff());
-                        playerTag.SetTagOn(TagType.Master,
-                            showStaff && taggedPlayerApi.isMaster);
-
-                        playerTag.SetTagOn(TagType.Creator,
-                            showCreator && taggedPlayerRole.IsGameCreator());
-                    }
-
-                    break;
-                }
-                case TagType.Staff:
-                {
-                    foreach (var playerTag in _remotePlayerTags)
-                    {
-                        var taggedPlayerApi = playerTag.followingPlayer;
-                        if (!Utilities.IsValid(taggedPlayerApi))
-                            continue;
-
-                        var taggedPlayer = playerManager.GetPlayerById(taggedPlayerApi.playerId);
-                        var taggedPlayerTeamId = taggedPlayer != null ? taggedPlayer.TeamId : 0;
-                        var taggedPlayerRole = roleManager.GetPlayerRole(taggedPlayerApi);
-                        var shouldShowSpecial = isOn &&
-                                                (localPlayerInSpecialTeam ||
-                                                 playerManager.IsSpecialTeamId(taggedPlayerTeamId));
-
-                        playerTag.SetTagOn(GetStaffTagType(taggedPlayerRole),
-                            shouldShowSpecial && taggedPlayerRole.IsGameStaff());
-                        playerTag.SetTagOn(TagType.Master,
-                            shouldShowSpecial && taggedPlayerApi.isMaster);
-                    }
-
-                    break;
-                }
-                case TagType.Creator:
-                {
-                    foreach (var playerTag in _remotePlayerTags)
-                    {
-                        var taggedPlayerApi = playerTag.followingPlayer;
-                        if (!Utilities.IsValid(taggedPlayerApi))
-                            continue;
-
-                        var taggedPlayer = playerManager.GetPlayerById(taggedPlayerApi.playerId);
-                        var taggedPlayerTeamId = taggedPlayer != null ? taggedPlayer.TeamId : 0;
-                        var taggedPlayerRole = roleManager.GetPlayerRole(taggedPlayerApi);
-                        var shouldShowSpecial = isOn &&
-                                                (localPlayerInSpecialTeam ||
-                                                 playerManager.IsSpecialTeamId(taggedPlayerTeamId));
-
-                        playerTag.SetTagOn(TagType.Creator,
-                            shouldShowSpecial && taggedPlayerRole.IsGameCreator());
-                    }
-
-                    break;
-                }
+                UpdateTag(playerTag, localPlayerTeamId, localPlayerInSpecialTeam);
             }
         }
 
         private void SetupTag(VRCPlayerApi taggedPlayerApi)
         {
             var playerTag = GetOrCreatePlayerTag(taggedPlayerApi);
-            var taggedPlayer = playerManager.GetPlayerById(taggedPlayerApi.playerId);
-            var taggedPlayerTeamId = taggedPlayer != null ? taggedPlayer.TeamId : 0;
-            var taggedPlayerRole = roleManager.GetPlayerRole(taggedPlayerApi);
-
             var localPlayer = playerManager.GetLocalPlayer();
             var localPlayerTeamId = localPlayer != null ? localPlayer.TeamId : 0;
             var localPlayerInSpecialTeam = playerManager.IsSpecialTeamId(localPlayerTeamId);
 
-            var shouldShowTeam = playerManager.ShowTeamTag && (localPlayerInSpecialTeam ||
-                                                               playerManager.IsSpecialTeamId(taggedPlayerTeamId) ||
-                                                               localPlayerTeamId == taggedPlayerTeamId);
+            UpdateTag(playerTag, localPlayerTeamId, localPlayerInSpecialTeam);
+        }
 
-            playerTag.SetTagOn(TagType.Team, shouldShowTeam);
+        private void UpdateTag(ExternalPlayerTagBase playerTag, int localPlayerTeamId, bool localPlayerInSpecialTeam)
+        {
+            var taggedPlayerApi = playerTag.followingPlayer;
+            if (!Utilities.IsValid(taggedPlayerApi))
+                return;
+
+            var taggedPlayer = playerManager.GetPlayerById(taggedPlayerApi.playerId);
+            var taggedPlayerRole = roleManager.GetPlayerRole(taggedPlayerApi);
+            var taggedPlayerTeamId = taggedPlayer != null ? taggedPlayer.TeamId : 0;
+            var inSameTeam = localPlayerTeamId == taggedPlayerTeamId;
+            var showAlways = localPlayerInSpecialTeam || playerManager.IsSpecialTeamId(taggedPlayerTeamId);
+            var showTeam = playerManager.ShowTeamTag && (showAlways || inSameTeam);
+            var showStaff = playerManager.ShowStaffTag && showAlways;
+            var showCreator = playerManager.ShowCreatorTag && showAlways;
+
+            playerTag.SetTagOn(TagType.Team, showTeam);
             playerTag.SetTeamTag(taggedPlayerTeamId, playerManager.GetTeamColor(taggedPlayerTeamId));
 
-            var shouldShowSpecial = localPlayerInSpecialTeam || playerManager.IsSpecialTeamId(taggedPlayerTeamId);
-            var shouldShowStaff = shouldShowSpecial && playerManager.ShowStaffTag;
+            playerTag.SetTagOn(GetStaffTagType(taggedPlayerRole), showStaff && taggedPlayerRole.IsGameStaff());
+            playerTag.SetTagOn(TagType.Master, showStaff && taggedPlayerApi.isMaster);
 
-            playerTag.SetTagOn(GetStaffTagType(taggedPlayerRole), shouldShowStaff && taggedPlayerRole.IsGameStaff());
-            playerTag.SetTagOn(TagType.Master, shouldShowStaff && taggedPlayerApi.isMaster);
-
-            var shouldShowCreator = shouldShowSpecial && playerManager.ShowCreatorTag;
-
-            playerTag.SetTagOn(TagType.Creator, shouldShowCreator && taggedPlayerRole.IsGameCreator());
+            playerTag.SetTagOn(TagType.Creator, showCreator && taggedPlayerRole.IsGameCreator());
         }
 
         private TagType GetStaffTagType(RoleData role)
