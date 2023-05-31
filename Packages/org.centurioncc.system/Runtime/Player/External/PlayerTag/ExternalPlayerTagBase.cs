@@ -2,7 +2,7 @@
 using UnityEngine;
 using VRC.SDKBase;
 
-namespace CenturionCC.System.Player.PlayerExternal
+namespace CenturionCC.System.Player.External.PlayerTag
 {
     public abstract class ExternalPlayerTagBase : UdonSharpBehaviour
     {

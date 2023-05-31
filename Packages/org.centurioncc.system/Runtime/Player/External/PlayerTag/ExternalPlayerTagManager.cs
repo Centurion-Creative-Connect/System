@@ -7,7 +7,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 
-namespace CenturionCC.System.Player.PlayerExternal
+namespace CenturionCC.System.Player.External.PlayerTag
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class ExternalPlayerTagManager : PlayerManagerCallbackBase
