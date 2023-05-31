@@ -75,7 +75,7 @@ namespace CenturionCC.System.Player.External.PlayerTag
         public override void SetTeamTag(int teamId, Color teamColor)
         {
             var spriteIndex = teamId;
-            if (teamId <= 0 || teamId < teamSprites.Length)
+            if (teamId < 0 || teamId >= teamSprites.Length)
                 spriteIndex = 0;
 
             var sprite = teamSprites[spriteIndex];
@@ -88,7 +88,8 @@ namespace CenturionCC.System.Player.External.PlayerTag
 
         private bool IsVisible()
         {
-            return teamTagImage.IsActive() && staffTagImage.IsActive() && ownerTagImage.IsActive();
+            return teamTagImage.gameObject.activeSelf || staffTagImage.gameObject.activeSelf ||
+                   ownerTagImage.gameObject.activeSelf;
         }
     }
 }
