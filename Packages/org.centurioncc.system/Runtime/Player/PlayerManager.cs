@@ -18,12 +18,20 @@ namespace CenturionCC.System.Player
         private const string Prefix = "[<color=orange>PlayerManager</color>] ";
         private const string MustBeMasterError =
             Prefix + "<color=red>You must be an master to execute this method</color>: {0}";
+
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private UpdateManager updateManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PrintableBase logger;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private AudioManager audioManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private RoleProvider roleProvider;
+
         [SerializeField]
         private bool autoAddPlayerAtJoin = true;
         [SerializeField]
         private PlayerBase[] playerInstancePool;
-        [SerializeField]
-        private GameManager manager;
         [SerializeField]
         private FootstepAudioStore footstepAudio;
         [SerializeField]
@@ -55,13 +63,13 @@ namespace CenturionCC.System.Player
         private bool _useBaseCollider;
         private bool _useLightweightCollider;
 
-        public UpdateManager UpdateManager => manager.updateManager;
+        public UpdateManager UpdateManager => updateManager;
 
-        public PrintableBase Logger => manager.logger;
+        public PrintableBase Logger => logger;
 
-        public AudioManager AudioManager => manager.audioManager;
+        public AudioManager AudioManager => audioManager;
 
-        public RoleProvider RoleManager => manager.roleProvider;
+        public RoleProvider RoleManager => roleProvider;
 
         public FootstepAudioStore FootstepAudio => footstepAudio;
 
@@ -156,12 +164,6 @@ namespace CenturionCC.System.Player
 
         private void Start()
         {
-            if (!manager)
-            {
-                Debug.LogError($"{Prefix}GameManager instance not found!");
-                return;
-            }
-
             if (playerInstancePool == null || playerInstancePool.Length <= 0)
             {
                 Logger.Log($"{Prefix}Getting ShooterPlayer instances");
