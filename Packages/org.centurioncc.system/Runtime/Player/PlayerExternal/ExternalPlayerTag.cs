@@ -7,7 +7,7 @@ using VRC.SDKBase;
 namespace CenturionCC.System.Player.PlayerExternal
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class ExternalPlayerTag : UdonSharpBehaviour
+    public class ExternalPlayerTag : ExternalPlayerTagBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private UpdateManager updateManager;
@@ -31,8 +31,6 @@ namespace CenturionCC.System.Player.PlayerExternal
 
         private ExternalPlayerTagManager _tagManager;
         private Transform _transform;
-
-        public VRCPlayerApi followingPlayer;
 
         private void Start()
         {
@@ -83,7 +81,7 @@ namespace CenturionCC.System.Player.PlayerExternal
                 DestroyThis();
         }
 
-        public void Setup(ExternalPlayerTagManager manager, VRCPlayerApi api)
+        public override void Setup(ExternalPlayerTagManager manager, VRCPlayerApi api)
         {
             gameObject.SetActive(true);
             _transform = transform;
@@ -93,7 +91,7 @@ namespace CenturionCC.System.Player.PlayerExternal
             _didSetup = true;
         }
 
-        public void SetTagOn(TagType type, bool isOn)
+        public override void SetTagOn(TagType type, bool isOn)
         {
             switch (type)
             {
@@ -127,9 +125,9 @@ namespace CenturionCC.System.Player.PlayerExternal
             gameObject.SetActive(IsVisible());
         }
 
-        public void SetTeamTagColor(Color color)
+        public override void SetTeamTag(int teamId, Color teamColor)
         {
-            teamTag.color = color;
+            teamTag.color = teamColor;
         }
 
         public bool IsVisible()
@@ -137,12 +135,6 @@ namespace CenturionCC.System.Player.PlayerExternal
             return teamTag.gameObject.activeSelf || masterTag.gameObject.activeSelf ||
                    creatorTag.gameObject.activeSelf || staffTag.gameObject.activeSelf ||
                    devTag.gameObject.activeSelf || ownerTag.gameObject.activeSelf;
-        }
-
-        public void DestroyThis()
-        {
-            Debug.Log($"[{name}] Self-Destroying");
-            Destroy(gameObject);
         }
     }
 }

@@ -21,7 +21,7 @@ namespace CenturionCC.System.Player.PlayerExternal
         [SerializeField]
         private GameObject sourceRemotePlayerTag;
 
-        private ExternalPlayerTag[] _remotePlayerTags = new ExternalPlayerTag[0];
+        private ExternalPlayerTagBase[] _remotePlayerTags = new ExternalPlayerTagBase[0];
 
         private void Start()
         {
@@ -50,7 +50,7 @@ namespace CenturionCC.System.Player.PlayerExternal
                 return;
 
             var playerTag = GetOrCreatePlayerTag(player.VrcPlayer);
-            playerTag.SetTeamTagColor(playerManager.GetTeamColor(player.TeamId));
+            playerTag.SetTeamTag(player.TeamId, playerManager.GetTeamColor(player.TeamId));
 
             if (player.IsLocal)
             {
@@ -75,7 +75,7 @@ namespace CenturionCC.System.Player.PlayerExternal
             var showCreator = playerManager.ShowCreatorTag && showAlways;
 
             playerTag.SetTagOn(TagType.Team, showTeam);
-            playerTag.SetTeamTagColor(playerManager.GetTeamColor(taggedPlayerTeamId));
+            playerTag.SetTeamTag(taggedPlayerTeamId, playerManager.GetTeamColor(taggedPlayerTeamId));
 
             // Need to update role-specific tags since they should not be shown when playing game as team player
             playerTag.SetTagOn(GetStaffTagType(taggedPlayerRole),
@@ -122,7 +122,7 @@ namespace CenturionCC.System.Player.PlayerExternal
                         var showCreator = playerManager.ShowCreatorTag && showAlways;
 
                         playerTag.SetTagOn(TagType.Team, showTeam);
-                        playerTag.SetTeamTagColor(playerManager.GetTeamColor(taggedPlayerTeamId));
+                        playerTag.SetTeamTag(taggedPlayerTeamId, playerManager.GetTeamColor(taggedPlayerTeamId));
 
                         // Need to update role-specific tags since they should not be shown when playing game as team player
                         playerTag.SetTagOn(GetStaffTagType(taggedPlayerRole),
@@ -199,7 +199,7 @@ namespace CenturionCC.System.Player.PlayerExternal
                                                                localPlayerTeamId == taggedPlayerTeamId);
 
             playerTag.SetTagOn(TagType.Team, shouldShowTeam);
-            playerTag.SetTeamTagColor(playerManager.GetTeamColor(taggedPlayerTeamId));
+            playerTag.SetTeamTag(taggedPlayerTeamId, playerManager.GetTeamColor(taggedPlayerTeamId));
 
             var shouldShowSpecial = localPlayerInSpecialTeam || playerManager.IsSpecialTeamId(taggedPlayerTeamId);
             var shouldShowStaff = shouldShowSpecial && playerManager.ShowStaffTag;
@@ -225,7 +225,7 @@ namespace CenturionCC.System.Player.PlayerExternal
             }
         }
 
-        private ExternalPlayerTag GetOrCreatePlayerTag(VRCPlayerApi api)
+        private ExternalPlayerTagBase GetOrCreatePlayerTag(VRCPlayerApi api)
         {
             foreach (var playerTag in _remotePlayerTags)
                 if (playerTag.followingPlayer == api)
@@ -234,26 +234,26 @@ namespace CenturionCC.System.Player.PlayerExternal
             return CreatePlayerTag(api);
         }
 
-        private ExternalPlayerTag CreatePlayerTag(VRCPlayerApi api)
+        private ExternalPlayerTagBase CreatePlayerTag(VRCPlayerApi api)
         {
             Debug.Log($"[ExternalPlayerTagManager] Create player tag for '{api.playerId}'");
             var obj = Instantiate(sourceRemotePlayerTag, transform);
             obj.name = $"ExternalPlayerTag_{api.playerId}";
-            var playerTag = obj.GetComponent<ExternalPlayerTag>();
+            var playerTag = obj.GetComponent<ExternalPlayerTagBase>();
             playerTag.Setup(this, api);
             _remotePlayerTags = _remotePlayerTags.AddAsList(playerTag);
 
             return playerTag;
         }
 
-        public void RemovePlayerTag(ExternalPlayerTag playerTag)
+        public void RemovePlayerTag(ExternalPlayerTagBase playerTag)
         {
             Debug.Log(
                 $"[ExternalPlayerTagManager] Removing player tag {(playerTag != null ? playerTag.name : "null")}");
             _remotePlayerTags = _remotePlayerTags.RemoveItem(playerTag);
         }
 
-        private void DestroyPlayerTag(ExternalPlayerTag playerTag)
+        private void DestroyPlayerTag(ExternalPlayerTagBase playerTag)
         {
             Debug.Log(
                 $"[ExternalPlayerTagManager] Destroying player tag '{(playerTag != null ? playerTag.name : "null")}'");
@@ -263,7 +263,7 @@ namespace CenturionCC.System.Player.PlayerExternal
 
         public void ClearTag()
         {
-            var playerTags = new ExternalPlayerTag[_remotePlayerTags.Length];
+            var playerTags = new ExternalPlayerTagBase[_remotePlayerTags.Length];
             Array.Copy(_remotePlayerTags, playerTags, _remotePlayerTags.Length);
             foreach (var playerTag in playerTags)
                 DestroyPlayerTag(playerTag);
