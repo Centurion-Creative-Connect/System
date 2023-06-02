@@ -41,6 +41,13 @@ namespace CenturionCC.System.Player
         [SerializeField]
         private Color staffTeamColor = new Color(0.172549F, 0.4733055F, 0.8117647F, 1F);
 
+        [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowTeamTag))]
+        private bool showTeamTag = true;
+        [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowStaffTag))]
+        private bool showStaffTag = true;
+        [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowCreatorTag))]
+        private bool showCreatorTag;
+
         private bool _alwaysUseLightweightCollider;
 
         private WatchdogChildCallbackBase[] _callbacks;
@@ -52,12 +59,6 @@ namespace CenturionCC.System.Player
 
         private int _localPlayerIndex = -1;
         private bool _showCollider;
-        [UdonSynced] [FieldChangeCallback(nameof(ShowCreatorTag))]
-        private bool _showCreatorTag;
-        [UdonSynced] [FieldChangeCallback(nameof(ShowStaffTag))]
-        private bool _showStaffTag = true;
-        [UdonSynced] [FieldChangeCallback(nameof(ShowTeamTag))]
-        private bool _showTeamTag;
 
         private bool _useAdditionalCollider;
         private bool _useBaseCollider;
@@ -128,11 +129,11 @@ namespace CenturionCC.System.Player
 
         public bool ShowTeamTag
         {
-            get => _showTeamTag;
+            get => showTeamTag;
             private set
             {
-                var shouldNotify = _showTeamTag != value;
-                _showTeamTag = value;
+                var shouldNotify = showTeamTag != value;
+                showTeamTag = value;
                 if (shouldNotify)
                     Invoke_OnPlayerTagChanged(TagType.Team, value);
             }
@@ -140,11 +141,11 @@ namespace CenturionCC.System.Player
 
         public bool ShowStaffTag
         {
-            get => _showStaffTag;
+            get => showStaffTag;
             private set
             {
-                var shouldNotify = _showStaffTag != value;
-                _showStaffTag = value;
+                var shouldNotify = showStaffTag != value;
+                showStaffTag = value;
                 if (shouldNotify)
                     Invoke_OnPlayerTagChanged(TagType.Staff, value);
             }
@@ -152,11 +153,11 @@ namespace CenturionCC.System.Player
 
         public bool ShowCreatorTag
         {
-            get => _showCreatorTag;
+            get => showCreatorTag;
             private set
             {
-                var shouldNotify = _showCreatorTag != value;
-                _showCreatorTag = value;
+                var shouldNotify = showCreatorTag != value;
+                showCreatorTag = value;
                 if (shouldNotify)
                     Invoke_OnPlayerTagChanged(TagType.Creator, value);
             }
