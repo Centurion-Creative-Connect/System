@@ -48,21 +48,24 @@ namespace CenturionCC.System.Player
         [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowCreatorTag))]
         private bool showCreatorTag;
 
-        private bool _alwaysUseLightweightCollider;
+        [SerializeField]
+        private bool isDebug;
+
+        [SerializeField]
+        private bool useBaseCollider = true;
+        [SerializeField]
+        private bool useAdditionalCollider = true;
+        [SerializeField]
+        private bool useLightweightCollider = true;
+        [SerializeField]
+        private bool alwaysUseLightweightCollider = false;
 
         private WatchdogChildCallbackBase[] _callbacks;
         private int _eventCallbackCount;
         private UdonSharpBehaviour[] _eventCallbacks = new UdonSharpBehaviour[5];
-        private bool _isDebug;
 
         private bool _isTeamPlayerCountsDirty;
-
         private int _localPlayerIndex = -1;
-        private bool _showCollider;
-
-        private bool _useAdditionalCollider;
-        private bool _useBaseCollider;
-        private bool _useLightweightCollider;
 
         public UpdateManager UpdateManager => updateManager;
 
@@ -79,50 +82,50 @@ namespace CenturionCC.System.Player
 
         public bool UseBaseCollider
         {
-            get => _useBaseCollider;
+            get => useBaseCollider;
             set
             {
-                _useBaseCollider = value;
+                useBaseCollider = value;
                 UpdateAllPlayerView();
             }
         }
 
         public bool UseAdditionalCollider
         {
-            get => _useAdditionalCollider;
+            get => useAdditionalCollider;
             set
             {
-                _useAdditionalCollider = value;
+                useAdditionalCollider = value;
                 UpdateAllPlayerView();
             }
         }
 
         public bool UseLightweightCollider
         {
-            get => _useLightweightCollider;
+            get => useLightweightCollider;
             set
             {
-                _useLightweightCollider = value;
+                useLightweightCollider = value;
                 UpdateAllPlayerView();
             }
         }
 
         public bool AlwaysUseLightweightCollider
         {
-            get => _alwaysUseLightweightCollider;
+            get => alwaysUseLightweightCollider;
             set
             {
-                _alwaysUseLightweightCollider = value;
+                alwaysUseLightweightCollider = value;
                 UpdateAllPlayerView();
             }
         }
 
         public bool IsDebug
         {
-            get => _isDebug;
+            get => isDebug;
             set
             {
-                _isDebug = value;
+                isDebug = value;
                 UpdateAllPlayerView();
             }
         }
@@ -187,11 +190,6 @@ namespace CenturionCC.System.Player
             for (var i = 0; i < playerInstancePool.Length; i++)
                 callbacks[i] = (WatchdogChildCallbackBase)(UdonSharpBehaviour)playerInstancePool[i];
             _callbacks = callbacks;
-
-            UseBaseCollider = true;
-            UseAdditionalCollider = true;
-            UseLightweightCollider = true;
-            AlwaysUseLightweightCollider = false;
 
             Logger.LogVerbose($"{Prefix}Start complete");
         }
