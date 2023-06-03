@@ -165,6 +165,11 @@ namespace CenturionCC.System.Utils.Watchdog
                 return "Gun couldn't get GunBullet from pool";
             }
 
+            if (code == 943)
+            {
+                return "LocalHitEffect did not play correctly";
+            }
+
             return "Unknown";
         }
 
