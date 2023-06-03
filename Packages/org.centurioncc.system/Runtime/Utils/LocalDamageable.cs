@@ -6,10 +6,10 @@ using VRC.SDKBase;
 namespace CenturionCC.System.Utils
 {
     [RequireComponent(typeof(Collider))] [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class LocalDamagable : DamageData
+    public class LocalDamageable : DamageData
     {
         [SerializeField]
-        private string damageType = "LocalDamagable";
+        private string damageType = "LocalDamageable";
         [SerializeField] [NewbieInject] [HideInInspector]
         private GameManager gameManager;
 
