@@ -28,12 +28,15 @@ namespace CenturionCC.System.Player
         [SerializeField] [HideInInspector] [NewbieInject]
         private RoleProvider roleProvider;
 
+        [Header("Base Settings")]
         [SerializeField]
         private bool autoAddPlayerAtJoin = true;
         [SerializeField]
         private PlayerBase[] playerInstancePool;
         [SerializeField]
         private FootstepAudioStore footstepAudio;
+
+        [Header("Team Settings")]
         [SerializeField]
         private Color[] teamColors;
         [SerializeField]
@@ -41,6 +44,7 @@ namespace CenturionCC.System.Player
         [SerializeField]
         private Color staffTeamColor = new Color(0.172549F, 0.4733055F, 0.8117647F, 1F);
 
+        [Header("Tag Settings")]
         [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowTeamTag))]
         private bool showTeamTag = true;
         [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowStaffTag))]
@@ -48,9 +52,11 @@ namespace CenturionCC.System.Player
         [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowCreatorTag))]
         private bool showCreatorTag;
 
+        [Header("Debug Settings")]
         [SerializeField]
         private bool isDebug;
 
+        [Header("Deprecated Settings")]
         [SerializeField]
         private bool useBaseCollider = true;
         [SerializeField]
