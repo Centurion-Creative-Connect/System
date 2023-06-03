@@ -160,6 +160,46 @@ namespace CenturionCC.System.Gun.Behaviour
 
         #endregion
 
+#if !COMPILER_UDONSHARP
+
+        private void OnDrawGizmosSelected()
+        {
+            DrawGizmos();
+            if (requireTwist)
+                DrawTwistGizmos();
+        }
+
+        private void DrawGizmos()
+        {
+            var cockingPos = cockingPosition.position;
+            GizmosUtil.SetColor(Color.cyan, 0.8F);
+            GizmosUtil.DrawArrow(cockingPos, cockingPos + (cockingLength * transform.forward) * -1, 0.01F);
+        }
+
+        private void DrawTwistGizmos()
+        {
+            GizmosUtil.SetColor(Color.green, 0.5F);
+            GizmosUtil.DrawWireSphere(idleTwistPosition.position, 0.01F);
+            GizmosUtil.DrawWireSphere(activeTwistPosition.position, 0.01F);
+
+            var cockingPos = cockingPosition.position;
+            var toOffset = cockingLength * transform.forward * -1;
+            var twistOffset = activeTwistPosition.position - cockingPos;
+            var twistOffsetCockingPos = cockingPos + twistOffset;
+            GizmosUtil.SetColor(Color.blue, 0.8F);
+            // TODO: make twist offset pos properly based on cockingPosition transform
+            GizmosUtil.DrawArrow(twistOffsetCockingPos, twistOffsetCockingPos + toOffset, 0.01F);
+
+            var segments = Mathf.RoundToInt(twistMaxAngle / 2);
+            if (Mathf.RoundToInt(twistMaxAngle / segments) >= 0)
+            {
+                GizmosUtil.DrawWireArc(cockingPos, twistOffset.magnitude, twistMaxAngle, segments,
+                    Quaternion.Euler(twistAngleOffset - twistMinAngle, -90, -90), cockingPos);
+            }
+        }
+
+#endif
+
 
         #region GunBehaviourBase
 
