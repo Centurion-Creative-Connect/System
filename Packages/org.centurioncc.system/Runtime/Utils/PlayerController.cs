@@ -478,8 +478,11 @@ namespace CenturionCC.System.Utils
         }
 
         [PublicAPI]
+        public float CustomEffectMultiplier { get; set; } = 1F;
+
+        [PublicAPI]
         public float TotalMultiplier => (1 - (PlayerWeight / maximumCarryingWeightInKilogram)) *
-                                        EnvironmentEffectMultiplier;
+                                        EnvironmentEffectMultiplier * CustomEffectMultiplier;
 
         [PublicAPI]
         public bool CanRun => _canRun;
