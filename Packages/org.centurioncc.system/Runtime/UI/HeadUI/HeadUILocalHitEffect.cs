@@ -64,15 +64,17 @@ namespace CenturionCC.System.UI.HeadUI
         private float[] _hapticSamples;
 
         private bool _isPlaying;
-
-        [NonSerialized]
-        private DateTime _lastLocalPlayerHitTime;
         [NonSerialized]
         private int _lastSpriteIndex;
         private float _posSmoothTime;
 
         private Vector2 _posTarget;
         private Vector2 _posVelocity;
+
+        [NonSerialized]
+        public DateTime lastHitEffectPlayBeginTime;
+        [NonSerialized]
+        public DateTime lastHitEffectPlayEndTime;
 
         private void Start()
         {
@@ -101,6 +103,7 @@ namespace CenturionCC.System.UI.HeadUI
                 _currentTime = 0F;
                 SetAlpha(0F);
                 updateManager.UnsubscribeUpdate(this);
+                lastHitEffectPlayEndTime = Networking.GetNetworkDateTime();
             }
 
             rectTransform.anchoredPosition = Vector2.SmoothDamp(
@@ -122,8 +125,8 @@ namespace CenturionCC.System.UI.HeadUI
             Debug.Log("[LocalHitEffect] Play");
             if (_isPlaying)
             {
-                Debug.LogError("[LocalHitEffect] Still playing!");
-                return;
+                Debug.LogError("[LocalHitEffect] Still playing but reset!");
+                lastHitEffectPlayEndTime = Networking.GetNetworkDateTime();
             }
 
             if (hitSound)
@@ -137,6 +140,7 @@ namespace CenturionCC.System.UI.HeadUI
 
             _currentTime = 0F;
             _isPlaying = true;
+            lastHitEffectPlayBeginTime = Networking.GetNetworkDateTime();
 
             updateManager.UnsubscribeUpdate(this);
             updateManager.SubscribeUpdate(this);
