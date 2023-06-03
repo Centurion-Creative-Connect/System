@@ -18,14 +18,25 @@ namespace CenturionCC.System.Player
         private const string Prefix = "[<color=orange>PlayerManager</color>] ";
         private const string MustBeMasterError =
             Prefix + "<color=red>You must be an master to execute this method</color>: {0}";
+
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private UpdateManager updateManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PrintableBase logger;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private AudioManager audioManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private RoleProvider roleProvider;
+
+        [Header("Base Settings")]
         [SerializeField]
         private bool autoAddPlayerAtJoin = true;
         [SerializeField]
         private PlayerBase[] playerInstancePool;
         [SerializeField]
-        private GameManager manager;
-        [SerializeField]
         private FootstepAudioStore footstepAudio;
+
+        [Header("Team Settings")]
         [SerializeField]
         private Color[] teamColors;
         [SerializeField]
@@ -33,35 +44,42 @@ namespace CenturionCC.System.Player
         [SerializeField]
         private Color staffTeamColor = new Color(0.172549F, 0.4733055F, 0.8117647F, 1F);
 
-        private bool _alwaysUseLightweightCollider;
+        [Header("Tag Settings")]
+        [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowTeamTag))]
+        private bool showTeamTag = true;
+        [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowStaffTag))]
+        private bool showStaffTag = true;
+        [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowCreatorTag))]
+        private bool showCreatorTag;
+
+        [Header("Debug Settings")]
+        [SerializeField]
+        private bool isDebug;
+
+        [Header("Deprecated Settings")]
+        [SerializeField]
+        private bool useBaseCollider = true;
+        [SerializeField]
+        private bool useAdditionalCollider = true;
+        [SerializeField]
+        private bool useLightweightCollider = true;
+        [SerializeField]
+        private bool alwaysUseLightweightCollider = false;
 
         private WatchdogChildCallbackBase[] _callbacks;
         private int _eventCallbackCount;
         private UdonSharpBehaviour[] _eventCallbacks = new UdonSharpBehaviour[5];
-        private bool _isDebug;
 
         private bool _isTeamPlayerCountsDirty;
-
         private int _localPlayerIndex = -1;
-        private bool _showCollider;
-        [UdonSynced] [FieldChangeCallback(nameof(ShowCreatorTag))]
-        private bool _showCreatorTag;
-        [UdonSynced] [FieldChangeCallback(nameof(ShowStaffTag))]
-        private bool _showStaffTag = true;
-        [UdonSynced] [FieldChangeCallback(nameof(ShowTeamTag))]
-        private bool _showTeamTag;
 
-        private bool _useAdditionalCollider;
-        private bool _useBaseCollider;
-        private bool _useLightweightCollider;
+        public UpdateManager UpdateManager => updateManager;
 
-        public UpdateManager UpdateManager => manager.updateManager;
+        public PrintableBase Logger => logger;
 
-        public PrintableBase Logger => manager.logger;
+        public AudioManager AudioManager => audioManager;
 
-        public AudioManager AudioManager => manager.audioManager;
-
-        public RoleProvider RoleManager => manager.roleProvider;
+        public RoleProvider RoleManager => roleProvider;
 
         public FootstepAudioStore FootstepAudio => footstepAudio;
 
@@ -70,61 +88,61 @@ namespace CenturionCC.System.Player
 
         public bool UseBaseCollider
         {
-            get => _useBaseCollider;
+            get => useBaseCollider;
             set
             {
-                _useBaseCollider = value;
+                useBaseCollider = value;
                 UpdateAllPlayerView();
             }
         }
 
         public bool UseAdditionalCollider
         {
-            get => _useAdditionalCollider;
+            get => useAdditionalCollider;
             set
             {
-                _useAdditionalCollider = value;
+                useAdditionalCollider = value;
                 UpdateAllPlayerView();
             }
         }
 
         public bool UseLightweightCollider
         {
-            get => _useLightweightCollider;
+            get => useLightweightCollider;
             set
             {
-                _useLightweightCollider = value;
+                useLightweightCollider = value;
                 UpdateAllPlayerView();
             }
         }
 
         public bool AlwaysUseLightweightCollider
         {
-            get => _alwaysUseLightweightCollider;
+            get => alwaysUseLightweightCollider;
             set
             {
-                _alwaysUseLightweightCollider = value;
+                alwaysUseLightweightCollider = value;
                 UpdateAllPlayerView();
             }
         }
 
         public bool IsDebug
         {
-            get => _isDebug;
+            get => isDebug;
             set
             {
-                _isDebug = value;
+                isDebug = value;
                 UpdateAllPlayerView();
             }
         }
 
         public bool ShowTeamTag
         {
-            get => _showTeamTag;
+            get => showTeamTag;
             private set
             {
-                var shouldNotify = _showTeamTag != value;
-                _showTeamTag = value;
+                var shouldNotify = showTeamTag != value;
+                showTeamTag = value;
                 if (shouldNotify)
                     Invoke_OnPlayerTagChanged(TagType.Team, value);
             }
@@ -132,11 +150,11 @@ namespace CenturionCC.System.Player
 
         public bool ShowStaffTag
         {
-            get => _showStaffTag;
+            get => showStaffTag;
             private set
             {
-                var shouldNotify = _showStaffTag != value;
-                _showStaffTag = value;
+                var shouldNotify = showStaffTag != value;
+                showStaffTag = value;
                 if (shouldNotify)
                     Invoke_OnPlayerTagChanged(TagType.Staff, value);
             }
@@ -144,11 +162,11 @@ namespace CenturionCC.System.Player
 
         public bool ShowCreatorTag
         {
-            get => _showCreatorTag;
+            get => showCreatorTag;
             private set
             {
-                var shouldNotify = _showCreatorTag != value;
-                _showCreatorTag = value;
+                var shouldNotify = showCreatorTag != value;
+                showCreatorTag = value;
                 if (shouldNotify)
                     Invoke_OnPlayerTagChanged(TagType.Creator, value);
             }
@@ -156,12 +174,6 @@ namespace CenturionCC.System.Player
 
         private void Start()
         {
-            if (!manager)
-            {
-                Debug.LogError($"{Prefix}GameManager instance not found!");
-                return;
-            }
-
             if (playerInstancePool == null || playerInstancePool.Length <= 0)
             {
                 Logger.Log($"{Prefix}Getting ShooterPlayer instances");
@@ -184,11 +196,6 @@ namespace CenturionCC.System.Player
             for (var i = 0; i < playerInstancePool.Length; i++)
                 callbacks[i] = (WatchdogChildCallbackBase)(UdonSharpBehaviour)playerInstancePool[i];
             _callbacks = callbacks;
-
-            UseBaseCollider = true;
-            UseAdditionalCollider = true;
-            UseLightweightCollider = true;
-            AlwaysUseLightweightCollider = false;
 
             Logger.LogVerbose($"{Prefix}Start complete");
         }
