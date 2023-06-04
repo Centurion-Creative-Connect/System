@@ -50,9 +50,12 @@ namespace CenturionCC.System.Player.External.PlayerTag
                 return;
             }
 
+            var trackingData = cachedLocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+            var forwardVec = (trackingData.rotation * Vector3.forward) * .1F;
             cachedTransform.position =
-                followingPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position + NameTagOffset;
-            cachedTransform.LookAt(cachedLocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position);
+                followingPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position + NameTagOffset +
+                forwardVec;
+            cachedTransform.LookAt(trackingData.position);
         }
 
         public virtual void Setup(ExternalPlayerTagManager manager, VRCPlayerApi api)
