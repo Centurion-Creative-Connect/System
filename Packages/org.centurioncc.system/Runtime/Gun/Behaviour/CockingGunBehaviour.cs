@@ -160,7 +160,7 @@ namespace CenturionCC.System.Gun.Behaviour
 
         #endregion
 
-#if !COMPILER_UDONSHARP
+#if !COMPILER_UDONSHARP && UNITY_EDITOR
 
         private void OnDrawGizmosSelected()
         {
