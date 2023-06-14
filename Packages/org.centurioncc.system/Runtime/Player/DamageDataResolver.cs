@@ -171,9 +171,9 @@ namespace CenturionCC.System.Player
         [NotNull]
         public ResolverDataSyncer GetAvailableSyncer(ResolverDataSyncer except = null)
         {
-            var rndSyncer = GetAvailableSyncerRandom(except);
-            if (rndSyncer != null)
-                return rndSyncer;
+            var oldestSyncer = GetAvailableSyncerOldest(except);
+            if (oldestSyncer != null)
+                return oldestSyncer;
 
             // Fallback
             foreach (var syncer in syncers)
@@ -196,6 +196,22 @@ namespace CenturionCC.System.Player
             }
 
             return null;
+        }
+
+        [CanBeNull]
+        public ResolverDataSyncer GetAvailableSyncerOldest(ResolverDataSyncer except = null)
+        {
+            float usedTime = 0;
+            ResolverDataSyncer oldestSyncer = null;
+            foreach (var s in syncers)
+            {
+                if (!s.IsAvailable || s == except || s.LastUsedTime > usedTime)
+                    continue;
+                oldestSyncer = s;
+                usedTime = s.LastUsedTime;
+            }
+
+            return oldestSyncer;
         }
 
         private DateTime GetStoredLastKilledTime(int playerId)

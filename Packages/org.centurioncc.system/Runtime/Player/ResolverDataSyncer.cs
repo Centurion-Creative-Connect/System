@@ -52,6 +52,8 @@ namespace CenturionCC.System.Player
         public bool IsAvailable => _hasSent && Result != HitResult.None;
         public int ResendCount { get; private set; }
 
+        public float LastUsedTime { get; private set; }
+
         public override void OnPreSerialization()
         {
             ApplyLocal();
@@ -59,6 +61,7 @@ namespace CenturionCC.System.Player
 
         public override void OnPostSerialization(SerializationResult result)
         {
+            LastUsedTime = Time.realtimeSinceStartup;
             _hasSent = result.success;
             if (!_hasSent)
             {
@@ -72,6 +75,7 @@ namespace CenturionCC.System.Player
 
         public override void OnDeserialization(DeserializationResult result)
         {
+            LastUsedTime = Time.realtimeSinceStartup;
             if (!_hasSent)
                 resolver.RequestResend(this);
 
@@ -82,6 +86,8 @@ namespace CenturionCC.System.Player
 
         public void Resend(ResolverDataSyncer other)
         {
+            LastUsedTime = Time.realtimeSinceStartup;
+
             _localVictimId = other._localVictimId;
             _localAttackerId = other._localAttackerId;
             _localOriginPos = other._localOriginPos;
@@ -97,6 +103,8 @@ namespace CenturionCC.System.Player
 
         public void SendReply(HitResult result)
         {
+            LastUsedTime = Time.realtimeSinceStartup;
+
             _localResult = result;
 
             RequestSync();
@@ -113,6 +121,8 @@ namespace CenturionCC.System.Player
             HitResult result
         )
         {
+            LastUsedTime = Time.realtimeSinceStartup;
+
             _localVictimId = victimId;
             _localAttackerId = attackerId;
             _localOriginPos = originPos;
