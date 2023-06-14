@@ -49,11 +49,32 @@ namespace CenturionCC.System.Player
 
         public override void Resolve(PlayerCollider pCol, DamageData damageData, Vector3 contactPoint)
         {
+            if (pCol == null || damageData == null)
+            {
+                logger.LogVerbose(
+                    $"{Prefix}Will not resolve because PlayerCollider or DamageData were null");
+                return;
+            }
+
+            if (!damageData.ShouldApplyDamage)
+            {
+                logger.LogVerbose(
+                    $"{Prefix}Will not resolve because ShouldApplyDamage == false");
+                return;
+            }
+
             var victimId = pCol.player.PlayerId;
             var attackerId = damageData.DamagerPlayerId;
+
+            if (victimId == attackerId)
+            {
+                logger.LogVerbose($"{Prefix}Will not resolve because because self shooting");
+                return;
+            }
+
             if (victimId != _local.playerId && attackerId != _local.playerId)
             {
-                logger.LogError($"{Prefix}Will not resolve because data was not associated with local player");
+                logger.LogVerbose($"{Prefix}Will not resolve because data was not associated with local player");
                 return;
             }
 
@@ -76,6 +97,25 @@ namespace CenturionCC.System.Player
                 return;
             }
 
+            var victim = pCol.player;
+            var killType = KillType.Default;
+            if (attacker.TeamId == victim.TeamId && victim.TeamId != 0)
+            {
+                killType = KillType.FriendlyFire;
+
+                if (!attacker.IsLocal)
+                {
+                    logger.LogVerbose($"{Prefix}Will not resolve because non-local friendly fire");
+                    return;
+                }
+
+                if (!playerManager.AllowFriendlyFire)
+                {
+                    logger.LogVerbose($"{Prefix}Will not resolve because friendly fire");
+                    return;
+                }
+            }
+
             var syncer = GetAvailableSyncer();
             var resolveRequest = victimId == _local.playerId
                 ? ResolveRequest.SelfResolved
@@ -91,7 +131,8 @@ namespace CenturionCC.System.Player
                 damageData.DamageOriginTime,
                 damageData.DamageType,
                 resolveRequest,
-                resolveRequest == ResolveRequest.SelfResolved ? HitResult.Hit : HitResult.None
+                resolveRequest == ResolveRequest.SelfResolved ? HitResult.Hit : HitResult.None,
+                killType
             );
 
             SetStoredLastKilledTime(victimId, Networking.GetNetworkDateTime());
@@ -150,7 +191,14 @@ namespace CenturionCC.System.Player
             Invoke_ResolvedCallback(requester);
 
             if (result == HitResult.Hit)
-                playerManager.Invoke_OnKilled(attacker, victim);
+            {
+                if (requester.Type == KillType.FriendlyFire)
+                {
+                    playerManager.Invoke_OnFriendlyFire(attacker, victim);
+                }
+
+                playerManager.Invoke_OnKilled(attacker, victim, requester.Type);
+            }
         }
 
         public override void RequestResend(ResolverDataSyncer requester)
@@ -238,7 +286,7 @@ namespace CenturionCC.System.Player
             }
         }
 
-        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
+        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
         {
             SetStoredLastKilledTime(hitPlayer.PlayerId, Networking.GetNetworkDateTime());
         }

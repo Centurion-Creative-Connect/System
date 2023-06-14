@@ -1,4 +1,5 @@
-﻿using CenturionCC.System.Utils;
+﻿using System;
+using CenturionCC.System.Utils;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
@@ -64,14 +65,22 @@ namespace CenturionCC.System.Player
         {
         }
 
-
-        /// <summary>
-        /// Called when <see cref="PlayerBase"/>'s <see cref="PlayerBase.Kills"/> and <see cref="PlayerBase.Deaths"/> were changed.
-        /// </summary>
-        /// <param name="firedPlayer">Player who updated <see cref="PlayerBase.Kills"/></param>
-        /// <param name="hitPlayer">Player who updated <see cref="PlayerBase.Deaths"/></param>
+        [Obsolete("Use OnKilled(PlayerBase, PlayerBase, KillType) callback instead.")]
         public virtual void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
+        }
+
+        /// <summary>
+        /// Called when <paramref name="hitPlayer"/> has been killed by <paramref name="firedPlayer"/>
+        /// </summary>
+        /// <param name="firedPlayer">player who has attacked <paramref name="hitPlayer"/></param>
+        /// <param name="hitPlayer">player who has been attacked by <paramref name="firedPlayer"/></param>
+        /// <param name="type">kill type of this event</param>
+        public virtual void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
+        {
+#pragma warning disable CS0618
+            OnKilled(firedPlayer, hitPlayer);
+#pragma warning restore CS0618
         }
 
         /// <summary>

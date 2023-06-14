@@ -22,6 +22,7 @@ namespace CenturionCC.System.Player
 
         private ResolveRequest _localRequest;
         private HitResult _localResult;
+        private KillType _localType;
         private int _localVictimId;
         private string _localWeaponType;
 
@@ -48,6 +49,8 @@ namespace CenturionCC.System.Player
         public ResolveRequest Request { get; private set; }
         [field: UdonSynced]
         public HitResult Result { get; private set; } = HitResult.Fail;
+        [field: UdonSynced]
+        public KillType Type { get; private set; }
 
         public bool IsAvailable => _hasSent && Result != HitResult.None;
         public int ResendCount { get; private set; }
@@ -96,6 +99,8 @@ namespace CenturionCC.System.Player
             _localWeaponType = other._localWeaponType;
             _localRequest = other._localRequest;
             _localResult = other._localResult;
+            _localType = other._localType;
+
             ResendCount = ++other.ResendCount;
 
             RequestSync();
@@ -118,7 +123,8 @@ namespace CenturionCC.System.Player
             DateTime originTime,
             string weaponType,
             ResolveRequest request,
-            HitResult result
+            HitResult result,
+            KillType type
         )
         {
             LastUsedTime = Time.realtimeSinceStartup;
@@ -132,6 +138,7 @@ namespace CenturionCC.System.Player
 
             _localRequest = request;
             _localResult = result;
+            _localType = type;
             ResendCount = 0;
 
             RequestSync();
@@ -149,6 +156,7 @@ namespace CenturionCC.System.Player
 
             Request = _localRequest;
             Result = _localResult;
+            Type = _localType;
         }
 
         public void ApplyGlobal()

@@ -1,4 +1,5 @@
 ﻿using CenturionCC.System.Utils;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace CenturionCC.System.Player
@@ -10,7 +11,11 @@ namespace CenturionCC.System.Player
             Resolve(playerCollider, damageData, contactPoint);
         }
 
-        public abstract void Resolve(PlayerCollider collider, DamageData damageData, Vector3 contactPoint);
+        public abstract void Resolve(
+            [CanBeNull] PlayerCollider collider,
+            [CanBeNull] DamageData damageData,
+            Vector3 contactPoint
+        );
 
         public abstract void RequestResolve(ResolverDataSyncer requester);
 

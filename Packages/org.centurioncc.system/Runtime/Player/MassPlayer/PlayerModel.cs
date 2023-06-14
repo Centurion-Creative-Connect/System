@@ -136,54 +136,6 @@ namespace CenturionCC.System.Player.MassPlayer
 
         public override void OnDamage(PlayerCollider playerCollider, DamageData data, Vector3 contactPoint)
         {
-            if (playerCollider == null || data == null)
-            {
-                playerManager.Logger.LogError(
-                    $"[Player]OnDamage: PlayerCollider or DamageData were null! will not check!");
-                return;
-            }
-
-            if (!data.ShouldApplyDamage)
-            {
-                playerManager.Logger.LogVerbose(
-                    $"[Player]OnDamage: Will ignore damage because ShouldApplyDamage == false");
-                return;
-            }
-
-            var attacker = playerManager.GetPlayerById(data.DamagerPlayerId);
-
-            if (attacker == null)
-            {
-                playerManager.Logger.LogVerbose(
-                    $"[Player]OnDamage: Will ignore damage to {NewbieUtils.GetPlayerName(VrcPlayer)} because attacker is null");
-                return;
-            }
-
-            if (PlayerId == attacker.PlayerId)
-            {
-                playerManager.Logger.LogVerbose(
-                    $"[Player]OnDamage: Will ignore damage to {NewbieUtils.GetPlayerName(VrcPlayer)} because self shooting");
-                return;
-            }
-
-            if (!IsLocal && !attacker.IsLocal)
-            {
-                playerManager.Logger.LogVerbose(
-                    $"[Player]OnDamage: Will ignore damage to {NewbieUtils.GetPlayerName(VrcPlayer)} because neither of players are local player");
-                return;
-            }
-
-            if (TeamId == attacker.TeamId)
-            {
-                playerManager.Invoke_OnFriendlyFire(attacker, this);
-                if (TeamId != 0 && !playerManager.AllowFriendlyFire)
-                {
-                    playerManager.Logger.LogVerbose(
-                        $"[Player]OnDamage: Will ignore damage to {NewbieUtils.GetPlayerName(VrcPlayer)} because attacker {NewbieUtils.GetPlayerName(attacker.VrcPlayer)} is in same team");
-                    return;
-                }
-            }
-
             var networkNow = Networking.GetNetworkDateTime();
             if (networkNow.Subtract(LastDiedDateTime).TotalSeconds > 10F)
             {

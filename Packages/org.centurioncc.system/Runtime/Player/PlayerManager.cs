@@ -1,4 +1,5 @@
-﻿using CenturionCC.System.Audio;
+﻿using System;
+using CenturionCC.System.Audio;
 using CenturionCC.System.Utils;
 using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
@@ -1007,12 +1008,6 @@ namespace CenturionCC.System.Player
 
         public void Invoke_OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint)
         {
-            if (playerCollider == null || damageData == null)
-            {
-                Logger.LogWarn($"{Prefix}Invoke_OnHitDetection called without actual data.");
-                return;
-            }
-
             Logger.Log($"{Prefix}Invoke_OnHitDetection: " +
                        $"{(playerCollider != null ? playerCollider.name : "null")}, " +
                        $"{(damageData != null ? damageData.DamageType : "null")}");
@@ -1023,11 +1018,18 @@ namespace CenturionCC.System.Player
                 ((PlayerManagerCallbackBase)callback).OnHitDetection(
                     playerCollider,
                     damageData,
-                    contactPoint);
+                    contactPoint
+                );
             }
         }
 
+        [Obsolete]
         public void Invoke_OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
+        {
+            Invoke_OnKilled(firedPlayer, hitPlayer, KillType.Default);
+        }
+
+        public void Invoke_OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
         {
             if (firedPlayer == null || hitPlayer == null)
             {
@@ -1043,7 +1045,8 @@ namespace CenturionCC.System.Player
             foreach (var callback in _eventCallbacks)
             {
                 if (callback == null) continue;
-                ((PlayerManagerCallbackBase)callback).OnKilled(firedPlayer, hitPlayer);
+
+                ((PlayerManagerCallbackBase)callback).OnKilled(firedPlayer, hitPlayer, type);
             }
         }
 
@@ -1062,5 +1065,11 @@ namespace CenturionCC.System.Player
         }
 
         #endregion
+    }
+
+    public enum KillType
+    {
+        Default,
+        FriendlyFire
     }
 }
