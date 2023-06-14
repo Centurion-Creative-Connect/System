@@ -12,5 +12,9 @@ namespace CenturionCC.System.Player
         }
 
         public abstract void Resolve(PlayerCollider collider, DamageData damageData, Vector3 contactPoint);
+
+        public abstract void RequestResolve(ResolverDataSyncer requester);
+
+        public abstract void RequestResend(ResolverDataSyncer requester);
     }
 }

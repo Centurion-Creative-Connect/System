@@ -11,7 +11,7 @@ namespace CenturionCC.System.Player
     public class ResolverDataSyncer : UdonSharpBehaviour
     {
         [NewbieInject] [HideInInspector] [SerializeField]
-        private DamageDataResolver resolver;
+        private DamageDataResolverBase resolver;
 
         private bool _hasSent = true;
 

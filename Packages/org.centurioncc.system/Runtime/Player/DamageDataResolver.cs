@@ -98,7 +98,7 @@ namespace CenturionCC.System.Player
             logger.LogVerbose($"{Prefix}Sending request {GetSyncerInfo(syncer)}");
         }
 
-        public void RequestResolve(ResolverDataSyncer requester)
+        public override void RequestResolve(ResolverDataSyncer requester)
         {
             logger.LogVerbose($"{Prefix}Resolving {GetSyncerInfo(requester)}");
 
@@ -153,7 +153,7 @@ namespace CenturionCC.System.Player
                 playerManager.Invoke_OnKilled(attacker, victim);
         }
 
-        public void RequestResend(ResolverDataSyncer requester)
+        public override void RequestResend(ResolverDataSyncer requester)
         {
             logger.LogWarn($"{Prefix}Requesting resend {GetSyncerInfo(requester)}");
             if (requester.ResendCount > MaxResendCount)
