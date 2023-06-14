@@ -5,8 +5,7 @@ namespace CenturionCC.System.Player
 {
     public abstract class DamageDataResolverBase : PlayerManagerCallbackBase
     {
-        public override void OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint,
-            bool isShooterDetection)
+        public override void OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint)
         {
             Resolve(playerCollider, damageData, contactPoint);
         }

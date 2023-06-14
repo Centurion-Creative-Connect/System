@@ -1005,8 +1005,7 @@ namespace CenturionCC.System.Player
             }
         }
 
-        public void Invoke_OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint,
-            bool isShooterDetection)
+        public void Invoke_OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint)
         {
             if (playerCollider == null || damageData == null)
             {
@@ -1016,8 +1015,7 @@ namespace CenturionCC.System.Player
 
             Logger.Log($"{Prefix}Invoke_OnHitDetection: " +
                        $"{(playerCollider != null ? playerCollider.name : "null")}, " +
-                       $"{(damageData != null ? damageData.DamageType : "null")} , " +
-                       $"{isShooterDetection}");
+                       $"{(damageData != null ? damageData.DamageType : "null")}");
 
             foreach (var callback in _eventCallbacks)
             {
@@ -1025,8 +1023,7 @@ namespace CenturionCC.System.Player
                 ((PlayerManagerCallbackBase)callback).OnHitDetection(
                     playerCollider,
                     damageData,
-                    contactPoint,
-                    isShooterDetection);
+                    contactPoint);
             }
         }
 

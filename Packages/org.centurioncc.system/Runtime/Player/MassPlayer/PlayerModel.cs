@@ -192,8 +192,7 @@ namespace CenturionCC.System.Player.MassPlayer
                     $"[Player]OnDamage: Updated last hit detection time tick for {NewbieUtils.GetPlayerName(VrcPlayer)}");
             }
 
-            playerManager.Invoke_OnHitDetection(playerCollider, data, contactPoint,
-                data.DamagerPlayerId == Networking.LocalPlayer.playerId);
+            playerManager.Invoke_OnHitDetection(playerCollider, data, contactPoint);
         }
 
         public override void OnDeath()

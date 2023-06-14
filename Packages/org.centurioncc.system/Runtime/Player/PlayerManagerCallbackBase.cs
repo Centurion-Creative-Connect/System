@@ -52,14 +52,15 @@ namespace CenturionCC.System.Player
         }
 
         /// <summary>
-        /// Called when <see cref="VRC.SDKBase.Networking.LocalPlayer" /> has damaged <see cref="PlayerCollider" />
+        /// Called when <see cref="VRC.SDKBase.Networking.LocalPlayer"/> has hit <see cref="PlayerCollider"/>
         /// </summary>
-        /// <param name="playerCollider">which collider got hit by <see cref="DamageData" /></param>
-        /// <param name="damageData">which damager was applied for <see cref="PlayerCollider" /></param>
+        /// <param name="playerCollider">which collider got hit by <see cref="DamageData"/></param>
+        /// <param name="damageData">which damager was applied for <see cref="PlayerCollider"/></param>
         /// <param name="contactPoint">contact point of collision</param>
-        /// <param name="isShooterDetection">if collision was detected by damager holder. should always be true</param>
-        public virtual void OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint,
-            bool isShooterDetection)
+        public virtual void OnHitDetection(
+            [CanBeNull] PlayerCollider playerCollider,
+            [CanBeNull] DamageData damageData,
+            Vector3 contactPoint)
         {
         }
 

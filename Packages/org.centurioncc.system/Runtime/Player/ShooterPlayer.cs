@@ -345,7 +345,7 @@ namespace CenturionCC.System.Player
 
             Sync();
 
-            playerManager.Invoke_OnHitDetection(playerCollider, data, contactPoint, attacker.IsLocal);
+            playerManager.Invoke_OnHitDetection(playerCollider, data, contactPoint);
         }
 
         public override void OnDeath()
