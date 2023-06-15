@@ -93,7 +93,8 @@ namespace CenturionCC.System.Player
 
             if (hitResult != HitResult.Hit)
             {
-                logger.LogVerbose($"{Prefix}Will not resolve because calculated result was {GetResultName(hitResult)}");
+                logger.LogVerbose(
+                    $"{Prefix}Will not resolve because calculated result was {ResolverDataSyncer.GetResultName(hitResult)}");
                 return;
             }
 
@@ -131,20 +132,20 @@ namespace CenturionCC.System.Player
                 damageData.DamageOriginTime,
                 damageData.DamageType,
                 resolveRequest,
-                resolveRequest == ResolveRequest.SelfResolved ? HitResult.Hit : HitResult.None,
+                resolveRequest == ResolveRequest.SelfResolved ? HitResult.Hit : HitResult.Waiting,
                 killType
             );
 
             SetStoredLastKilledTime(victimId, Networking.GetNetworkDateTime());
-            logger.LogVerbose($"{Prefix}Sending request {GetSyncerInfo(syncer)}");
+            logger.Log($"{Prefix}Sending request {syncer.GetLocalInfo()}");
         }
 
         public override void RequestResolve(ResolverDataSyncer requester)
         {
-            logger.LogVerbose($"{Prefix}Resolving {GetSyncerInfo(requester)}");
+            logger.Log($"{Prefix}Resolving {requester.GetGlobalInfo()}");
 
             // Request must be specified.
-            if (requester.Request == ResolveRequest.None)
+            if (requester.Request == ResolveRequest.Unassigned)
             {
                 logger.LogError($"{Prefix}Tried to resolve requester with no request specified");
                 return;
@@ -154,17 +155,17 @@ namespace CenturionCC.System.Player
             var victim = playerManager.GetPlayerById(requester.VictimId);
             var result = requester.Result;
 
-            if (result == HitResult.None)
+            if (result == HitResult.Waiting)
             {
                 // No self-replying
                 if (requester.SenderId == _local.playerId)
                 {
-                    logger.LogVerbose($"{Prefix}Tried to self-reply. aborting!");
+                    logger.LogWarn($"{Prefix}Tried to self-reply. aborting!");
                     return;
                 }
 
                 // Check for errors
-                if (requester.Request == ResolveRequest.None || requester.Request == ResolveRequest.SelfResolved)
+                if (requester.Request == ResolveRequest.Unassigned || requester.Request == ResolveRequest.SelfResolved)
                 {
                     logger.LogError($"{Prefix}Tried to resolve invalid state requester. resetting!");
                     requester.MakeAvailable();
@@ -175,7 +176,7 @@ namespace CenturionCC.System.Player
                 if ((requester.Request == ResolveRequest.ToVictim && requester.VictimId != _local.playerId) ||
                     (requester.Request == ResolveRequest.ToAttacker && requester.AttackerId != _local.playerId))
                 {
-                    logger.LogVerbose($"{Prefix}Tried to resolve non-local request. aborting!");
+                    logger.Log($"{Prefix}Tried to resolve non-local request. aborting!");
                     return;
                 }
 
@@ -184,8 +185,8 @@ namespace CenturionCC.System.Player
                     attacker.LastDiedDateTime,
                     GetStoredLastKilledTime(requester.VictimId)
                 ));
-                logger.LogVerbose(
-                    $"{Prefix}Sending reply with {GetResultName(result)}. full: {GetSyncerInfo(requester)}");
+                logger.Log(
+                    $"{Prefix}Sending reply with {ResolverDataSyncer.GetResultName(result)}. full: {requester.GetLocalInfo()}");
             }
 
             Invoke_ResolvedCallback(requester);
@@ -203,7 +204,7 @@ namespace CenturionCC.System.Player
 
         public override void RequestResend(ResolverDataSyncer requester)
         {
-            logger.LogWarn($"{Prefix}Requesting resend {GetSyncerInfo(requester)}");
+            logger.LogWarn($"{Prefix}Requesting resend {requester.GetLocalInfo()}");
             if (requester.ResendCount > MaxResendCount)
             {
                 logger.LogError(
@@ -213,7 +214,7 @@ namespace CenturionCC.System.Player
 
             var resendSyncer = GetAvailableSyncer(requester);
             resendSyncer.Resend(requester);
-            logger.LogVerbose($"{Prefix}Resending with {GetSyncerInfo(resendSyncer)}");
+            logger.Log($"{Prefix}Resending with {requester.GetLocalInfo()}");
         }
 
         [NotNull]
@@ -223,6 +224,7 @@ namespace CenturionCC.System.Player
             if (oldestSyncer != null)
                 return oldestSyncer;
 
+            logger.LogError($"{Prefix}Couldn't get available syncer by oldest query, falling back!");
             // Fallback
             foreach (var syncer in syncers)
                 if (syncer.IsAvailable && syncer != except)
@@ -312,70 +314,5 @@ namespace CenturionCC.System.Player
 
             return HitResult.Hit;
         }
-
-        private static string GetSyncerInfo(ResolverDataSyncer syncer)
-        {
-            return $"{syncer.name}, " +
-                   $"{syncer.SenderId}/" +
-                   $"{syncer.AttackerId}->" +
-                   $"{syncer.VictimId}@" +
-                   $"{syncer.OriginTimeTicks}:" +
-                   $"{GetRequestName(syncer.Request)}:" +
-                   $"{GetResultName(syncer.Result)}|" +
-                   $"{syncer.ResendCount}";
-        }
-
-        private static string GetRequestName(ResolveRequest r)
-        {
-            switch (r)
-            {
-                case ResolveRequest.None:
-                    return "None";
-                case ResolveRequest.ToAttacker:
-                    return "ByAttacker";
-                case ResolveRequest.ToVictim:
-                    return "ByVictim";
-                case ResolveRequest.SelfResolved:
-                    return "SelfResolved";
-                default:
-                    return "Unknown";
-            }
-        }
-
-        private static string GetResultName(HitResult r)
-        {
-            switch (r)
-            {
-                case HitResult.None:
-                    return "None";
-                case HitResult.Hit:
-                    return "Hit";
-                case HitResult.Fail:
-                    return "Fail";
-                case HitResult.FailByAttackerDead:
-                    return "FailByAttackerDead";
-                case HitResult.FailByVictimDead:
-                    return "FailByVictimDead";
-                default:
-                    return "Unknown";
-            }
-        }
-    }
-
-    public enum ResolveRequest
-    {
-        None,
-        ToAttacker,
-        ToVictim,
-        SelfResolved,
-    }
-
-    public enum HitResult
-    {
-        None,
-        Hit,
-        Fail,
-        FailByAttackerDead,
-        FailByVictimDead
     }
 }

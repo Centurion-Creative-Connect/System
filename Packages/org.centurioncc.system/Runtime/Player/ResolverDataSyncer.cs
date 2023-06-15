@@ -46,13 +46,13 @@ namespace CenturionCC.System.Player
         public string WeaponType { get; private set; }
 
         [field: UdonSynced]
-        public ResolveRequest Request { get; private set; }
+        public ResolveRequest Request { get; private set; } = ResolveRequest.Unassigned;
         [field: UdonSynced]
-        public HitResult Result { get; private set; } = HitResult.Fail;
+        public HitResult Result { get; private set; } = HitResult.Unassigned;
         [field: UdonSynced]
-        public KillType Type { get; private set; }
+        public KillType Type { get; private set; } = KillType.Default;
 
-        public bool IsAvailable => _hasSent && Result != HitResult.None;
+        public bool IsAvailable => _hasSent && Result != HitResult.Waiting;
         public int ResendCount { get; private set; }
 
         public float LastUsedTime { get; private set; }
@@ -73,7 +73,8 @@ namespace CenturionCC.System.Player
             }
 
             ResendCount = 0;
-            resolver.RequestResolve(this);
+            if (Result != HitResult.Waiting)
+                resolver.RequestResolve(this);
         }
 
         public override void OnDeserialization(DeserializationResult result)
@@ -178,6 +179,32 @@ namespace CenturionCC.System.Player
             Result = HitResult.Fail;
         }
 
+        public string GetGlobalInfo()
+        {
+            return $"{name}, " +
+                   $"{SenderId}/" +
+                   $"{AttackerId}->" +
+                   $"{VictimId}@" +
+                   $"{OriginTime}:" +
+                   $"{GetRequestName(Request)}:" +
+                   $"{GetResultName(Result)}:" +
+                   $"{GetKillTypeName(Type)}|" +
+                   $"{ResendCount}";
+        }
+
+        public string GetLocalInfo()
+        {
+            return $"{name}, " +
+                   $"{(_hasSent ? $"{SenderId}" : $"{Networking.LocalPlayer.playerId}?")}/" +
+                   $"{_localAttackerId}->" +
+                   $"{_localVictimId}@" +
+                   $"{_localOriginTime}:" +
+                   $"{GetRequestName(_localRequest)}:" +
+                   $"{GetResultName(_localResult)}:" +
+                   $"{GetKillTypeName(_localType)}|" +
+                   $"{ResendCount}";
+        }
+
         private void RequestSync()
         {
             if (!Networking.IsOwner(gameObject))
@@ -185,5 +212,104 @@ namespace CenturionCC.System.Player
             _hasSent = false;
             RequestSerialization();
         }
+
+        public static string GetRequestName(ResolveRequest r)
+        {
+            switch (r)
+            {
+                case ResolveRequest.Unassigned:
+                    return "Unassigned";
+                case ResolveRequest.ToAttacker:
+                    return "ByAttacker";
+                case ResolveRequest.ToVictim:
+                    return "ByVictim";
+                case ResolveRequest.SelfResolved:
+                    return "SelfResolved";
+                default:
+                    return "Unknown";
+            }
+        }
+
+        public static string GetResultName(HitResult r)
+        {
+            switch (r)
+            {
+                case HitResult.Unassigned:
+                    return "Unassigned";
+                case HitResult.Waiting:
+                    return "Waiting";
+                case HitResult.Hit:
+                    return "Hit";
+                case HitResult.Fail:
+                    return "Fail";
+                case HitResult.FailByAttackerDead:
+                    return "FailByAttackerDead";
+                case HitResult.FailByVictimDead:
+                    return "FailByVictimDead";
+                default:
+                    return "Unknown";
+            }
+        }
+
+        public static string GetKillTypeName(KillType r)
+        {
+            switch (r)
+            {
+                case KillType.Default:
+                    return "Default";
+                case KillType.FriendlyFire:
+                    return "FriendlyFire";
+                default:
+                    return "Unknown";
+            }
+        }
+    }
+
+    public enum ResolveRequest : sbyte
+    {
+        /// <summary>
+        /// Initial state before syncer is receiving or sending data
+        /// </summary>
+        Unassigned = -2,
+        /// <summary>
+        /// Requesting to attacker to resolve
+        /// </summary>
+        ToAttacker = 1,
+        /// <summary>
+        /// Requesting to victim to resolve
+        /// </summary>
+        ToVictim = 2,
+        /// <summary>
+        /// Has resolved locally, and broadcasting a result
+        /// </summary>
+        SelfResolved = 3,
+    }
+
+    public enum HitResult : sbyte
+    {
+        /// <summary>
+        /// Initial state before syncer is receiving or sending data
+        /// </summary>
+        Unassigned = -2,
+        /// <summary>
+        /// Waiting for resolving
+        /// </summary>
+        Waiting = -1,
+        /// <summary>
+        /// Success result
+        /// </summary>
+        Hit = 0,
+        /// <summary>
+        /// Failed result
+        /// </summary>
+        Fail = 1,
+        /// <summary>
+        /// Failed result because attacker was already dead
+        /// </summary>
+        FailByAttackerDead = 2,
+        /// <summary>
+        /// Failed result because victim was already dead
+        /// </summary>
+        FailByVictimDead = 3
     }
 }
