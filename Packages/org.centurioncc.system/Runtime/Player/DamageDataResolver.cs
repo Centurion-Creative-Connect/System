@@ -249,8 +249,8 @@ namespace CenturionCC.System.Player
         [CanBeNull]
         public ResolverDataSyncer GetAvailableSyncerOldest(ResolverDataSyncer except = null)
         {
-            float usedTime = 0;
-            ResolverDataSyncer oldestSyncer = null;
+            var oldestSyncer = syncers[0];
+            var usedTime = oldestSyncer.LastUsedTime;
             foreach (var s in syncers)
             {
                 if (!s.IsAvailable || s == except || s.LastUsedTime > usedTime)
