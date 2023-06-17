@@ -128,7 +128,10 @@ namespace CenturionCC.System.Gun
 
         private void Internal_SetVariantData(GunVariantDataStore data, bool refreshHandleOffset)
         {
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             Logger.LogVerbose($"{Prefix}Internal_SetVariantData: {data.UniqueId}");
+#endif
+
             // Set unique id
             _variantDataUniqueId = data.UniqueId;
 
@@ -188,7 +191,10 @@ namespace CenturionCC.System.Gun
 
         private void Internal_ResetVariantData()
         {
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             Logger.LogVerbose($"{Prefix}ResetVariantData");
+#endif
+
             if (Behaviour != null)
                 Behaviour.Dispose(this);
 
