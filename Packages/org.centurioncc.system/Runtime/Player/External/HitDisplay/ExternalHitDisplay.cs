@@ -5,7 +5,7 @@ using VRC.SDKBase;
 namespace CenturionCC.System.Player.External.HitDisplay
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class ExternalHitDisplay : UdonSharpBehaviour
+    public class ExternalHitDisplay : ExternalHitDisplayBase
     {
         [SerializeField]
         private float stoppingHeight = 0.7F;
@@ -43,8 +43,15 @@ namespace CenturionCC.System.Player.External.HitDisplay
             _transform.LookAt(_localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position);
         }
 
-        public void Play(VRCPlayerApi followingPlayer)
+        public override void Play(PlayerBase player)
         {
+            var followingPlayer = player.VrcPlayer;
+            if (followingPlayer == null || !Utilities.IsValid(followingPlayer))
+            {
+                DestroyThis();
+                return;
+            }
+
             _followingPlayer = followingPlayer;
             var headPos = followingPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
             var playerPos = followingPlayer.GetPosition();
