@@ -125,6 +125,7 @@ namespace CenturionCC.System.Player
                     : ResolveRequest.ToAttacker;
 
             syncer.Send(
+                UnityEngine.Random.Range(10000, int.MaxValue),
                 victimId,
                 attackerId,
                 damageData.DamageOriginPosition,

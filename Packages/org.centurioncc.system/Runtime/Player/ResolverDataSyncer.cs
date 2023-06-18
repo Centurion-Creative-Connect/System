@@ -23,6 +23,7 @@ namespace CenturionCC.System.Player
         {
             LastUsedTime = Time.realtimeSinceStartup;
 
+            _localEventId = other._localEventId;
             _localVictimId = other._localVictimId;
             _localAttackerId = other._localAttackerId;
             _localOriginPos = other._localOriginPos;
@@ -48,6 +49,7 @@ namespace CenturionCC.System.Player
         }
 
         public void Send(
+            int eventId,
             int victimId,
             int attackerId,
             Vector3 originPos,
@@ -61,6 +63,7 @@ namespace CenturionCC.System.Player
         {
             LastUsedTime = Time.realtimeSinceStartup;
 
+            _localEventId = eventId;
             _localVictimId = victimId;
             _localAttackerId = attackerId;
             _localOriginPos = originPos;
@@ -71,6 +74,7 @@ namespace CenturionCC.System.Player
             _localRequest = request;
             _localResult = result;
             _localType = type;
+
             ResendCount = 0;
 
             RequestSync();
@@ -79,6 +83,8 @@ namespace CenturionCC.System.Player
         public void ApplyLocal()
         {
             SenderId = Networking.LocalPlayer.playerId;
+
+            EventId = _localEventId;
             VictimId = _localVictimId;
             AttackerId = _localAttackerId;
             OriginPosition = _localOriginPos;
@@ -93,6 +99,7 @@ namespace CenturionCC.System.Player
 
         public void ApplyGlobal()
         {
+            _localEventId = EventId;
             _localVictimId = VictimId;
             _localAttackerId = AttackerId;
             _localOriginPos = OriginPosition;
@@ -110,9 +117,15 @@ namespace CenturionCC.System.Player
             Result = HitResult.Unassigned;
         }
 
+        public string GetShortEventId()
+        {
+            return (EventId % 10000).ToString().PadLeft(5, '0');
+        }
+
         public string GetGlobalInfo()
         {
-            return $"{name}, " +
+            return $"{name}:" +
+                   $"{GetShortEventId()}," +
                    $"{SenderId}/" +
                    $"{AttackerId}->" +
                    $"{VictimId}@" +
@@ -125,7 +138,8 @@ namespace CenturionCC.System.Player
 
         public string GetLocalInfo()
         {
-            return $"{name}, " +
+            return $"{name}:" +
+                   $"{GetShortEventId()}," +
                    $"{(_hasSent ? $"{SenderId}" : $"{Networking.LocalPlayer.playerId}?")}/" +
                    $"{_localAttackerId}->" +
                    $"{_localVictimId}@" +
@@ -146,6 +160,7 @@ namespace CenturionCC.System.Player
 
         #region LocalProperties
 
+        private int _localEventId;
         private int _localAttackerId;
         private Vector3 _localHitPos;
         private Vector3 _localOriginPos;
@@ -161,6 +176,8 @@ namespace CenturionCC.System.Player
 
         #region GlobalProperties
 
+        [field: UdonSynced]
+        public int EventId { get; private set; }
         [field: UdonSynced]
         public int SenderId { get; private set; }
         [field: UdonSynced]
