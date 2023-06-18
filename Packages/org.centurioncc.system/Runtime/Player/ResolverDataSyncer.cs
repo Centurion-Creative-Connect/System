@@ -15,78 +15,9 @@ namespace CenturionCC.System.Player
 
         private bool _hasSent = true;
 
-        private int _localAttackerId;
-        private Vector3 _localHitPos;
-        private Vector3 _localOriginPos;
-        private DateTime _localOriginTime;
-
-        private ResolveRequest _localRequest;
-        private HitResult _localResult;
-        private KillType _localType;
-        private int _localVictimId;
-        private string _localWeaponType;
-
-        [field: UdonSynced]
-        public int SenderId { get; private set; }
-        [field: UdonSynced]
-        public int VictimId { get; private set; }
-        [field: UdonSynced]
-        public int AttackerId { get; private set; }
-        [field: UdonSynced]
-        public Vector3 OriginPosition { get; private set; }
-        [field: UdonSynced]
-        public Vector3 HitPosition { get; private set; }
-        [field: UdonSynced]
-        public long OriginTimeTicks { get; private set; }
-        public DateTime OriginTime =>
-            DateTime.MinValue.Ticks < OriginTimeTicks && DateTime.MaxValue.Ticks > OriginTimeTicks
-                ? new DateTime(OriginTimeTicks)
-                : DateTime.MinValue;
-        [field: UdonSynced]
-        public string WeaponType { get; private set; }
-
-        [field: UdonSynced]
-        public ResolveRequest Request { get; private set; } = ResolveRequest.Unassigned;
-        [field: UdonSynced]
-        public HitResult Result { get; private set; } = HitResult.Unassigned;
-        [field: UdonSynced]
-        public KillType Type { get; private set; } = KillType.Default;
-
         public bool IsAvailable => _hasSent && Result != HitResult.Waiting;
         public int ResendCount { get; private set; }
-
         public float LastUsedTime { get; private set; }
-
-        public override void OnPreSerialization()
-        {
-            ApplyLocal();
-        }
-
-        public override void OnPostSerialization(SerializationResult result)
-        {
-            LastUsedTime = Time.realtimeSinceStartup;
-            _hasSent = result.success;
-            if (!_hasSent)
-            {
-                RequestSync();
-                return;
-            }
-
-            ResendCount = 0;
-            if (Result != HitResult.Waiting)
-                resolver.RequestResolve(this);
-        }
-
-        public override void OnDeserialization(DeserializationResult result)
-        {
-            LastUsedTime = Time.realtimeSinceStartup;
-            if (!_hasSent)
-                resolver.RequestResend(this);
-
-            ApplyGlobal();
-
-            resolver.RequestResolve(this);
-        }
 
         public void Resend(ResolverDataSyncer other)
         {
@@ -176,7 +107,7 @@ namespace CenturionCC.System.Player
         public void MakeAvailable()
         {
             _hasSent = true;
-            Result = HitResult.Fail;
+            Result = HitResult.Unassigned;
         }
 
         public string GetGlobalInfo()
@@ -212,6 +143,88 @@ namespace CenturionCC.System.Player
             _hasSent = false;
             RequestSerialization();
         }
+
+        #region LocalProperties
+
+        private int _localAttackerId;
+        private Vector3 _localHitPos;
+        private Vector3 _localOriginPos;
+        private DateTime _localOriginTime;
+
+        private ResolveRequest _localRequest;
+        private HitResult _localResult;
+        private KillType _localType;
+        private int _localVictimId;
+        private string _localWeaponType;
+
+        #endregion
+
+        #region GlobalProperties
+
+        [field: UdonSynced]
+        public int SenderId { get; private set; }
+        [field: UdonSynced]
+        public int VictimId { get; private set; }
+        [field: UdonSynced]
+        public int AttackerId { get; private set; }
+        [field: UdonSynced]
+        public Vector3 OriginPosition { get; private set; }
+        [field: UdonSynced]
+        public Vector3 HitPosition { get; private set; }
+        [field: UdonSynced]
+        public long OriginTimeTicks { get; private set; }
+        public DateTime OriginTime =>
+            DateTime.MinValue.Ticks < OriginTimeTicks && DateTime.MaxValue.Ticks > OriginTimeTicks
+                ? new DateTime(OriginTimeTicks)
+                : DateTime.MinValue;
+        [field: UdonSynced]
+        public string WeaponType { get; private set; }
+
+        [field: UdonSynced]
+        public ResolveRequest Request { get; private set; } = ResolveRequest.Unassigned;
+        [field: UdonSynced]
+        public HitResult Result { get; private set; } = HitResult.Unassigned;
+        [field: UdonSynced]
+        public KillType Type { get; private set; } = KillType.Default;
+
+        #endregion
+
+        #region NetworkingEvents
+
+        public override void OnPreSerialization()
+        {
+            ApplyLocal();
+        }
+
+        public override void OnPostSerialization(SerializationResult result)
+        {
+            LastUsedTime = Time.realtimeSinceStartup;
+            _hasSent = result.success;
+            if (!_hasSent)
+            {
+                RequestSync();
+                return;
+            }
+
+            ResendCount = 0;
+            if (Result != HitResult.Waiting)
+                resolver.RequestResolve(this);
+        }
+
+        public override void OnDeserialization(DeserializationResult result)
+        {
+            LastUsedTime = Time.realtimeSinceStartup;
+            if (!_hasSent)
+                resolver.RequestResend(this);
+
+            ApplyGlobal();
+
+            resolver.RequestResolve(this);
+        }
+
+        #endregion
+
+        #region GetReadableEnumNames
 
         public static string GetRequestName(ResolveRequest r)
         {
@@ -263,6 +276,8 @@ namespace CenturionCC.System.Player
                     return "Unknown";
             }
         }
+
+        #endregion
     }
 
     public enum ResolveRequest : sbyte
