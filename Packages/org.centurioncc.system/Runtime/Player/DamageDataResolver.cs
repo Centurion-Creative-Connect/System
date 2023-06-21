@@ -149,6 +149,7 @@ namespace CenturionCC.System.Player
             if (requester.Request == ResolveRequest.Unassigned)
             {
                 logger.LogError($"{Prefix}Tried to resolve requester with no request specified");
+                Invoke_ResolveAbortedCallback(requester, "NO_REQUEST");
                 return;
             }
 
@@ -162,6 +163,7 @@ namespace CenturionCC.System.Player
                 if (requester.SenderId == _local.playerId)
                 {
                     logger.LogWarn($"{Prefix}Tried to self-reply. aborting!");
+                    Invoke_ResolveAbortedCallback(requester, "SELF_REPLY");
                     return;
                 }
 
@@ -169,6 +171,7 @@ namespace CenturionCC.System.Player
                 if (requester.Request == ResolveRequest.Unassigned || requester.Request == ResolveRequest.SelfResolved)
                 {
                     logger.LogError($"{Prefix}Tried to resolve invalid state requester. resetting!");
+                    Invoke_ResolveAbortedCallback(requester, "INVALID_STATE");
                     requester.MakeAvailable();
                     return;
                 }
@@ -178,6 +181,7 @@ namespace CenturionCC.System.Player
                     (requester.Request == ResolveRequest.ToAttacker && requester.AttackerId != _local.playerId))
                 {
                     logger.Log($"{Prefix}Tried to resolve non-local request. aborting!");
+                    Invoke_ResolveAbortedCallback(requester, "REQUEST_NON_LOCAL");
                     return;
                 }
 
@@ -186,8 +190,14 @@ namespace CenturionCC.System.Player
                     attacker.LastDiedDateTime,
                     GetStoredLastKilledTime(requester.VictimId)
                 ));
+                if (result == HitResult.Hit)
+                {
+                    SetStoredLastKilledTime(requester.VictimId, Networking.GetNetworkDateTime());
+                }
+
                 logger.Log(
                     $"{Prefix}Sending reply with {ResolverDataSyncer.GetResultName(result)}. full: {requester.GetLocalInfo()}");
+                return;
             }
 
             Invoke_ResolvedCallback(requester);
@@ -286,6 +296,15 @@ namespace CenturionCC.System.Player
             {
                 if (callback != null)
                     ((DamageDataResolverCallback)callback).OnResolved(syncer);
+            }
+        }
+
+        private void Invoke_ResolveAbortedCallback(ResolverDataSyncer syncer, string reason)
+        {
+            foreach (var callback in _callbacks)
+            {
+                if (callback != null)
+                    ((DamageDataResolverCallback)callback).OnResolveAborted(syncer, reason);
             }
         }
 

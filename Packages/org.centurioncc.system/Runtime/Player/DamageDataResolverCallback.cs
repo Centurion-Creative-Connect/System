@@ -7,5 +7,9 @@ namespace CenturionCC.System.Player
         public virtual void OnResolved(ResolverDataSyncer syncer)
         {
         }
+
+        public virtual void OnResolveAborted(ResolverDataSyncer syncer, string reason)
+        {
+        }
     }
 }
