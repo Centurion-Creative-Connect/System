@@ -225,7 +225,7 @@ namespace CenturionCC.System.Player
 
             var resendSyncer = GetAvailableSyncer(requester);
             resendSyncer.Resend(requester);
-            logger.Log($"{Prefix}Resending with {requester.GetLocalInfo()}");
+            logger.Log($"{Prefix}Resending with {resendSyncer.GetLocalInfo()}");
         }
 
         [NotNull]
