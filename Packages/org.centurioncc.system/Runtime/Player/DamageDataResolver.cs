@@ -206,6 +206,9 @@ namespace CenturionCC.System.Player
 
             if (result == HitResult.Hit)
             {
+                ++attacker.Kills;
+                ++victim.Deaths;
+
                 if (requester.Type == KillType.FriendlyFire)
                 {
                     playerManager.Invoke_OnFriendlyFire(attacker, victim);
