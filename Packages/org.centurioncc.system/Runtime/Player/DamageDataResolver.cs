@@ -87,7 +87,7 @@ namespace CenturionCC.System.Player
 
             var hitResult = ComputeHitResultFromDateTime(
                 damageData.DamageOriginTime,
-                attacker.LastDiedDateTime,
+                GetStoredLastKilledTime(attackerId),
                 GetStoredLastKilledTime(victimId)
             );
 
@@ -187,7 +187,7 @@ namespace CenturionCC.System.Player
 
                 requester.SendReply(result = ComputeHitResultFromDateTime(
                     requester.OriginTime,
-                    attacker.LastDiedDateTime,
+                    GetStoredLastKilledTime(requester.AttackerId),
                     GetStoredLastKilledTime(requester.VictimId)
                 ));
                 if (result == HitResult.Hit)
