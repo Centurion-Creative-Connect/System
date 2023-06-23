@@ -1067,7 +1067,7 @@ namespace CenturionCC.System.Player
         #endregion
     }
 
-    public enum KillType : byte
+    public enum KillType : sbyte
     {
         Default,
         FriendlyFire

@@ -22,14 +22,15 @@ namespace CenturionCC.System.Player
         [SerializeField]
         private ResolverDataSyncer[] syncers;
 
-        private readonly DataDictionary _lastKilledTimeDict = new DataDictionary();
+        private readonly DataDictionary _lastKilledTimeStore = new DataDictionary();
+        private readonly DataDictionary _resolvedEvents = new DataDictionary();
         private int _callbackCount;
 
         private UdonSharpBehaviour[] _callbacks = new UdonSharpBehaviour[1];
 
         private VRCPlayerApi _local;
 
-        public int MaxResendCount { get; set; } = 5;
+        public int MaxResendCount { get; set; } = 2;
 
         private void Start()
         {
@@ -125,7 +126,7 @@ namespace CenturionCC.System.Player
                     : ResolveRequest.ToAttacker;
 
             syncer.Send(
-                UnityEngine.Random.Range(10000, int.MaxValue),
+                GetValidEventId(),
                 victimId,
                 attackerId,
                 damageData.DamageOriginPosition,
@@ -200,6 +201,7 @@ namespace CenturionCC.System.Player
                 return;
             }
 
+            AddResolvedEventId(requester);
             Invoke_ResolvedCallback(requester);
 
             if (result == HitResult.Hit)
@@ -277,17 +279,46 @@ namespace CenturionCC.System.Player
 
         private DateTime GetStoredLastKilledTime(int playerId)
         {
-            return _lastKilledTimeDict.TryGetValue(new DataToken(playerId), out var lastKilledTimeToken)
+            return _lastKilledTimeStore.TryGetValue(new DataToken(playerId), TokenType.Long,
+                out var lastKilledTimeToken)
                 ? new DateTime(lastKilledTimeToken.Long)
                 : DateTime.MinValue;
         }
 
         private void SetStoredLastKilledTime(int playerId, DateTime time)
         {
-            _lastKilledTimeDict.SetValue(
-                new DataToken(playerId),
-                new DataToken(time.Ticks)
+            _lastKilledTimeStore.SetValue(
+                playerId,
+                time.Ticks
             );
+        }
+
+        private void AddResolvedEventId(ResolverDataSyncer syncer)
+        {
+            var key = (DataToken)$"{syncer.EventId}";
+            if (_resolvedEvents.ContainsKey(key))
+            {
+                var duplicateCount = 1;
+                while (_resolvedEvents.ContainsKey($"{syncer.EventId}-{duplicateCount}"))
+                    ++duplicateCount;
+
+                key = new DataToken($"{syncer.EventId}-{duplicateCount}");
+                logger.LogError(
+                    $"{Prefix}Duplicated EventId found ({syncer.EventId}), Recording as {key.String}");
+            }
+
+            _resolvedEvents.SetValue(key, syncer.AsDataToken());
+        }
+
+        private int GetValidEventId()
+        {
+            var eventId = UnityEngine.Random.Range(0x10000, int.MaxValue);
+            while (_resolvedEvents.ContainsKey($"{eventId}"))
+            {
+                eventId = UnityEngine.Random.Range(0x10000, int.MaxValue);
+            }
+
+            return eventId;
         }
 
         private void Invoke_ResolvedCallback(ResolverDataSyncer syncer)
@@ -333,6 +364,18 @@ namespace CenturionCC.System.Player
                 return HitResult.FailByVictimDead;
 
             return HitResult.Hit;
+        }
+
+        public void PrintEventsJson()
+        {
+            if (VRCJson.TrySerializeToJson(new DataToken(_resolvedEvents), JsonExportType.Beautify, out var result))
+            {
+                logger.Log(result.String);
+            }
+            else
+            {
+                logger.LogError($"{Prefix}Could not serialize to JSON: {result.Error}");
+            }
         }
     }
 }

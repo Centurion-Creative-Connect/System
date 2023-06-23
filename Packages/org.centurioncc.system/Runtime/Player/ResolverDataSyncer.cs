@@ -297,6 +297,42 @@ namespace CenturionCC.System.Player
         #endregion
     }
 
+    public static class ResolverDataSyncerExtensions
+    {
+        public static DataToken AsDataToken(this ResolverDataSyncer syncer)
+        {
+            // U# does not support list collection initializer yet
+            // ReSharper disable once UseObjectOrCollectionInitializer
+            var damageData = new DataDictionary();
+            damageData.Add("time", syncer.OriginTime.ToString("s"));
+            damageData.Add("position", AsDataToken(syncer.OriginPosition));
+            damageData.Add("hitPosition", AsDataToken(syncer.HitPosition));
+            damageData.Add("weaponName", syncer.WeaponType);
+
+            // ReSharper disable once UseObjectOrCollectionInitializer
+            var syncerData = new DataDictionary();
+            syncerData.Add("senderId", syncer.SenderId);
+            syncerData.Add("attackerId", syncer.AttackerId);
+            syncerData.Add("victimId", syncer.VictimId);
+            syncerData.Add("request", (sbyte)syncer.Request);
+            syncerData.Add("result", (sbyte)syncer.Result);
+            syncerData.Add("type", (sbyte)syncer.Type);
+            syncerData.Add("damageData", damageData);
+
+            return new DataToken(syncerData);
+        }
+
+        private static DataToken AsDataToken(Vector3 value)
+        {
+            // ReSharper disable once UseObjectOrCollectionInitializer
+            var reference = new DataDictionary();
+            reference.Add("x", value.x);
+            reference.Add("y", value.y);
+            reference.Add("z", value.z);
+            return new DataToken(reference);
+        }
+    }
+
     public enum ResolveRequest : sbyte
     {
         /// <summary>
