@@ -2,6 +2,7 @@
 using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Data;
 using VRC.SDKBase;
 using VRC.Udon.Common;
 
@@ -12,6 +13,7 @@ namespace CenturionCC.System.Player
     {
         [NewbieInject] [HideInInspector] [SerializeField]
         private DamageDataResolverBase resolver;
+        private bool _hasResolved = false;
 
         private bool _hasSent = true;
 
@@ -21,9 +23,12 @@ namespace CenturionCC.System.Player
 
         public void Resend(ResolverDataSyncer other)
         {
+            _hasResolved = other._hasResolved;
+
             LastUsedTime = Time.realtimeSinceStartup;
 
             _localEventId = other._localEventId;
+            _localSenderId = other._localSenderId;
             _localVictimId = other._localVictimId;
             _localAttackerId = other._localAttackerId;
             _localOriginPos = other._localOriginPos;
@@ -41,6 +46,8 @@ namespace CenturionCC.System.Player
 
         public void SendReply(HitResult result)
         {
+            _hasResolved = false;
+
             LastUsedTime = Time.realtimeSinceStartup;
 
             _localResult = result;
@@ -61,9 +68,12 @@ namespace CenturionCC.System.Player
             KillType type
         )
         {
+            _hasResolved = false;
+
             LastUsedTime = Time.realtimeSinceStartup;
 
             _localEventId = eventId;
+            _localSenderId = Networking.LocalPlayer.playerId;
             _localVictimId = victimId;
             _localAttackerId = attackerId;
             _localOriginPos = originPos;
@@ -82,9 +92,8 @@ namespace CenturionCC.System.Player
 
         public void ApplyLocal()
         {
-            SenderId = Networking.LocalPlayer.playerId;
-
             EventId = _localEventId;
+            SenderId = _localSenderId;
             VictimId = _localVictimId;
             AttackerId = _localAttackerId;
             OriginPosition = _localOriginPos;
@@ -100,6 +109,7 @@ namespace CenturionCC.System.Player
         public void ApplyGlobal()
         {
             _localEventId = EventId;
+            _localSenderId = SenderId;
             _localVictimId = VictimId;
             _localAttackerId = AttackerId;
             _localOriginPos = OriginPosition;
@@ -114,12 +124,18 @@ namespace CenturionCC.System.Player
         public void MakeAvailable()
         {
             _hasSent = true;
+            _hasResolved = false;
             Result = HitResult.Unassigned;
         }
 
         public string GetShortEventId()
         {
-            return (EventId % 10000).ToString().PadLeft(5, '0');
+            return (EventId % 0x10000).ToString("X5");
+        }
+
+        public string GetShortLocalEventId()
+        {
+            return (_localEventId % 0x10000).ToString("X5");
         }
 
         public string GetGlobalInfo()
@@ -139,7 +155,7 @@ namespace CenturionCC.System.Player
         public string GetLocalInfo()
         {
             return $"{name}:" +
-                   $"{GetShortEventId()}," +
+                   $"{GetShortLocalEventId()}," +
                    $"{(_hasSent ? $"{SenderId}" : $"{Networking.LocalPlayer.playerId}?")}/" +
                    $"{_localAttackerId}->" +
                    $"{_localVictimId}@" +
@@ -161,6 +177,7 @@ namespace CenturionCC.System.Player
         #region LocalProperties
 
         private int _localEventId;
+        private int _localSenderId;
         private int _localAttackerId;
         private Vector3 _localHitPos;
         private Vector3 _localOriginPos;
@@ -219,23 +236,39 @@ namespace CenturionCC.System.Player
             _hasSent = result.success;
             if (!_hasSent)
             {
+                Debug.LogError(
+                    $"[ResolverDataSyncer-{name}] Failed to send data@PostSerialization, Requesting sync again!");
                 RequestSync();
                 return;
             }
 
-            ResendCount = 0;
-            if (Result != HitResult.Waiting)
+            if (!_hasResolved)
+            {
+                // Set flag before requesting resolve, because resolve may call ResolverDataSyncer#SendReply
+                _hasResolved = true;
                 resolver.RequestResolve(this);
+            }
         }
 
         public override void OnDeserialization(DeserializationResult result)
         {
+            var previousTime = LastUsedTime;
             LastUsedTime = Time.realtimeSinceStartup;
-            if (!_hasSent)
+
+            // TODO: test resending
+            var mayHaveOverwritten = _localResult == HitResult.Waiting ||
+                                     (previousTime + 1F > LastUsedTime && _localResult == HitResult.Hit);
+            if (!_hasSent &&
+                _localSenderId == Networking.LocalPlayer.playerId &&
+                SenderId != _localSenderId &&
+                EventId != _localEventId &&
+                mayHaveOverwritten)
                 resolver.RequestResend(this);
 
             ApplyGlobal();
 
+            // Set flag before requesting resolve, because resolve may call ResolverDataSyncer#SendReply
+            _hasResolved = true;
             resolver.RequestResolve(this);
         }
 
