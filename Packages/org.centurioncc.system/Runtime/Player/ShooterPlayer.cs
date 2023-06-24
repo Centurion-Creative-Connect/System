@@ -40,8 +40,6 @@ namespace CenturionCC.System.Player
         private FootstepAudioStore _footstepAudio;
         private bool _hasCheckedInit;
 
-        private long _lastHitDetectionTimeTick;
-
         [NonSerialized] [UdonSynced] [FieldChangeCallback(nameof(SyncedPlayerId))]
         private int _syncedPlayerId = -1;
         [NonSerialized] [UdonSynced] [FieldChangeCallback(nameof(SyncedTeamId))]
@@ -50,11 +48,7 @@ namespace CenturionCC.System.Player
         public override VRCPlayerApi VrcPlayer => _cachedVrcPlayerApi;
 
         public override int PlayerId => SyncedPlayerId;
-
         public override int TeamId => SyncedTeamId;
-
-        public override long LastDiedTimeTicks => _lastHitDetectionTimeTick;
-
         public override bool IsAssigned => VrcPlayer != null && VrcPlayer.IsValid();
 
         public int SyncedPlayerId
@@ -77,7 +71,6 @@ namespace CenturionCC.System.Player
                 UpdateView();
             }
         }
-
         public int SyncedTeamId
         {
             get => _syncedTeamId;

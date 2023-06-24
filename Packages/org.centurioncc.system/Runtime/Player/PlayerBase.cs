@@ -27,13 +27,18 @@ namespace CenturionCC.System.Player
         public virtual int Deaths { get; set; }
 
         [PublicAPI]
-        public virtual long LastDiedTimeTicks { get; }
+        public virtual long PreviousDiedTimeTicks { get; set; }
 
         [PublicAPI]
-        public virtual DateTime LastDiedDateTime =>
-            DateTime.MinValue.Ticks < LastDiedTimeTicks && DateTime.MaxValue.Ticks > LastDiedTimeTicks
-                ? new DateTime(LastDiedTimeTicks)
-                : DateTime.MinValue;
+        public virtual DateTime PreviousDiedTime
+        {
+            get =>
+                DateTime.MinValue.Ticks < PreviousDiedTimeTicks &&
+                DateTime.MaxValue.Ticks > PreviousDiedTimeTicks
+                    ? new DateTime(PreviousDiedTimeTicks)
+                    : DateTime.MinValue;
+            set => PreviousDiedTimeTicks = value.Ticks;
+        }
 
         [PublicAPI]
         public virtual bool IsAssigned => PlayerId != -1;

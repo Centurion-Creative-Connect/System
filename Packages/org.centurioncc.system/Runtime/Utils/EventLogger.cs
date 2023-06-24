@@ -55,11 +55,11 @@ namespace CenturionCC.System.Utils
 
             if ((_hitPlayerId != localPlayerId && damageData.DamagerPlayerId != localPlayerId) ||
                 _hitPlayerId == damageData.DamagerPlayerId ||
-                Networking.GetNetworkDateTime().Subtract(hitPlayer.LastDiedDateTime).TotalSeconds < 5F)
+                Networking.GetNetworkDateTime().Subtract(hitPlayer.PreviousDiedTime).TotalSeconds < 5F)
                 return;
 
             _hitPlayerId = playerCollider.player.PlayerId;
-            _hitDamagerDateTimeLong = playerCollider.player.LastDiedTimeTicks;
+            _hitDamagerDateTimeLong = playerCollider.player.PreviousDiedTimeTicks;
             _hitDamagerPlayerId = damageData.DamagerPlayerId;
             _hitDamagerOriginPos = damageData.DamageOriginPosition;
             _hitDamagerContactPoint = contactPoint;

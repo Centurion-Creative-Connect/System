@@ -3,7 +3,6 @@ using CenturionCC.System.Utils;
 using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
 using DerpyNewbie.Common.Role;
-using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
@@ -23,7 +22,6 @@ namespace CenturionCC.System.Player.MassPlayer
         private RoleData _cachedRoleData;
 
         private FootstepAudioStore _footstepAudio;
-        private long _lastHitDetectionTimeTick;
         [UdonSynced] [FieldChangeCallback(nameof(SyncedPlayerId))]
         private int _syncedPlayerId = -1;
         [UdonSynced] [FieldChangeCallback(nameof(SyncedTeamId))]
@@ -50,7 +48,6 @@ namespace CenturionCC.System.Player.MassPlayer
                 UpdateView();
             }
         }
-
         public int SyncedTeamId
         {
             get => _syncedTeamId;
@@ -67,7 +64,6 @@ namespace CenturionCC.System.Player.MassPlayer
             }
         }
 
-        public override long LastDiedTimeTicks => _lastHitDetectionTimeTick;
         public override int PlayerId => SyncedPlayerId;
         public override int TeamId => SyncedTeamId;
 
