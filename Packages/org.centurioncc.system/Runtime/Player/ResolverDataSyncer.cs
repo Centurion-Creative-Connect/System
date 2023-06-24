@@ -31,9 +31,10 @@ namespace CenturionCC.System.Player
             _localSenderId = other._localSenderId;
             _localVictimId = other._localVictimId;
             _localAttackerId = other._localAttackerId;
-            _localOriginPos = other._localOriginPos;
+            _localActivatedPos = other._localActivatedPos;
             _localHitPos = other._localHitPos;
-            _localOriginTime = other._localOriginTime;
+            _localActivatedTime = other._localActivatedTime;
+            _localHitTime = other._localHitTime;
             _localWeaponType = other._localWeaponType;
             _localRequest = other._localRequest;
             _localResult = other._localResult;
@@ -61,7 +62,8 @@ namespace CenturionCC.System.Player
             int attackerId,
             Vector3 originPos,
             Vector3 hitPos,
-            DateTime originTime,
+            DateTime activatedTime,
+            DateTime hitTime,
             string weaponType,
             ResolveRequest request,
             HitResult result,
@@ -76,9 +78,10 @@ namespace CenturionCC.System.Player
             _localSenderId = Networking.LocalPlayer.playerId;
             _localVictimId = victimId;
             _localAttackerId = attackerId;
-            _localOriginPos = originPos;
+            _localActivatedPos = originPos;
             _localHitPos = hitPos;
-            _localOriginTime = originTime;
+            _localActivatedTime = activatedTime;
+            _localHitTime = hitTime;
             _localWeaponType = weaponType;
 
             _localRequest = request;
@@ -96,9 +99,10 @@ namespace CenturionCC.System.Player
             SenderId = _localSenderId;
             VictimId = _localVictimId;
             AttackerId = _localAttackerId;
-            OriginPosition = _localOriginPos;
+            ActivatedPosition = _localActivatedPos;
             HitPosition = _localHitPos;
-            OriginTimeTicks = _localOriginTime.Ticks;
+            ActivatedTimeTicks = _localActivatedTime.Ticks;
+            HitTimeTicks = _localHitTime.Ticks;
             WeaponType = _localWeaponType;
 
             Request = _localRequest;
@@ -112,9 +116,10 @@ namespace CenturionCC.System.Player
             _localSenderId = SenderId;
             _localVictimId = VictimId;
             _localAttackerId = AttackerId;
-            _localOriginPos = OriginPosition;
+            _localActivatedPos = ActivatedPosition;
             _localHitPos = HitPosition;
-            _localOriginTime = OriginTime;
+            _localActivatedTime = ActivatedTime;
+            _localHitTime = HitTime;
             _localWeaponType = WeaponType;
 
             _localRequest = Request;
@@ -145,7 +150,8 @@ namespace CenturionCC.System.Player
                    $"{SenderId}/" +
                    $"{AttackerId}->" +
                    $"{VictimId}@" +
-                   $"{OriginTime}:" +
+                   $"{ActivatedTime:s}/" +
+                   $"{HitTime:s}:" +
                    $"{GetRequestName(Request)}:" +
                    $"{GetResultName(Result)}:" +
                    $"{GetKillTypeName(Type)}|" +
@@ -159,7 +165,8 @@ namespace CenturionCC.System.Player
                    $"{(_hasSent ? $"{SenderId}" : $"{Networking.LocalPlayer.playerId}?")}/" +
                    $"{_localAttackerId}->" +
                    $"{_localVictimId}@" +
-                   $"{_localOriginTime}:" +
+                   $"{_localActivatedTime:s}/" +
+                   $"{_localHitTime:s}:" +
                    $"{GetRequestName(_localRequest)}:" +
                    $"{GetResultName(_localResult)}:" +
                    $"{GetKillTypeName(_localType)}|" +
@@ -179,9 +186,10 @@ namespace CenturionCC.System.Player
         private int _localEventId;
         private int _localSenderId;
         private int _localAttackerId;
+        private Vector3 _localActivatedPos;
         private Vector3 _localHitPos;
-        private Vector3 _localOriginPos;
-        private DateTime _localOriginTime;
+        private DateTime _localActivatedTime;
+        private DateTime _localHitTime;
 
         private ResolveRequest _localRequest;
         private HitResult _localResult;
@@ -202,14 +210,20 @@ namespace CenturionCC.System.Player
         [field: UdonSynced]
         public int AttackerId { get; private set; }
         [field: UdonSynced]
-        public Vector3 OriginPosition { get; private set; }
+        public Vector3 ActivatedPosition { get; private set; }
         [field: UdonSynced]
         public Vector3 HitPosition { get; private set; }
         [field: UdonSynced]
-        public long OriginTimeTicks { get; private set; }
-        public DateTime OriginTime =>
-            DateTime.MinValue.Ticks < OriginTimeTicks && DateTime.MaxValue.Ticks > OriginTimeTicks
-                ? new DateTime(OriginTimeTicks)
+        public long ActivatedTimeTicks { get; private set; }
+        public DateTime ActivatedTime =>
+            DateTime.MinValue.Ticks < ActivatedTimeTicks && DateTime.MaxValue.Ticks > ActivatedTimeTicks
+                ? new DateTime(ActivatedTimeTicks)
+                : DateTime.MinValue;
+        [field: UdonSynced]
+        public long HitTimeTicks { get; private set; }
+        public DateTime HitTime =>
+            DateTime.MinValue.Ticks < HitTimeTicks && DateTime.MaxValue.Ticks > HitTimeTicks
+                ? new DateTime(HitTimeTicks)
                 : DateTime.MinValue;
         [field: UdonSynced]
         public string WeaponType { get; private set; }
@@ -337,8 +351,9 @@ namespace CenturionCC.System.Player
             // U# does not support list collection initializer yet
             // ReSharper disable once UseObjectOrCollectionInitializer
             var damageData = new DataDictionary();
-            damageData.Add("time", syncer.OriginTime.ToString("s"));
-            damageData.Add("position", AsDataToken(syncer.OriginPosition));
+            damageData.Add("activatedTime", syncer.ActivatedTime.ToString("s"));
+            damageData.Add("hitTime", syncer.HitTime.ToString("s"));
+            damageData.Add("activatedPosition", AsDataToken(syncer.ActivatedPosition));
             damageData.Add("hitPosition", AsDataToken(syncer.HitPosition));
             damageData.Add("weaponName", syncer.WeaponType);
 

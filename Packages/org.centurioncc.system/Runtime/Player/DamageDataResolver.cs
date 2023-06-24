@@ -22,7 +22,6 @@ namespace CenturionCC.System.Player
         [SerializeField]
         private ResolverDataSyncer[] syncers;
 
-        private readonly DataDictionary _lastKilledTimeStore = new DataDictionary();
         private readonly DataDictionary _resolvedEvents = new DataDictionary();
         private int _callbackCount;
 
@@ -88,13 +87,13 @@ namespace CenturionCC.System.Player
 
             var hitResult = ComputeHitResultFromDateTime(
                 damageData.DamageOriginTime,
-                GetStoredLastKilledTime(attackerId),
-                GetStoredLastKilledTime(victimId)
+                GetAssumedDiedTime(attackerId),
+                GetAssumedDiedTime(victimId)
             );
 
             if (hitResult != HitResult.Hit)
             {
-                logger.LogVerbose(
+                logger.LogWarn(
                     $"{Prefix}Will not resolve because calculated result was {ResolverDataSyncer.GetResultName(hitResult)}");
                 return;
             }
@@ -124,6 +123,7 @@ namespace CenturionCC.System.Player
                 : attackerId == _local.playerId
                     ? ResolveRequest.ToVictim
                     : ResolveRequest.ToAttacker;
+            var hitTime = Networking.GetNetworkDateTime();
 
             syncer.Send(
                 GetValidEventId(),
@@ -132,13 +132,14 @@ namespace CenturionCC.System.Player
                 damageData.DamageOriginPosition,
                 contactPoint,
                 damageData.DamageOriginTime,
+                hitTime,
                 damageData.DamageType,
                 resolveRequest,
                 resolveRequest == ResolveRequest.SelfResolved ? HitResult.Hit : HitResult.Waiting,
                 killType
             );
 
-            SetStoredLastKilledTime(victimId, Networking.GetNetworkDateTime());
+            SetAssumedDiedTime(victimId, hitTime);
             logger.Log($"{Prefix}Sending request {syncer.GetLocalInfo()}");
         }
 
@@ -187,14 +188,11 @@ namespace CenturionCC.System.Player
                 }
 
                 requester.SendReply(result = ComputeHitResultFromDateTime(
-                    requester.OriginTime,
-                    GetStoredLastKilledTime(requester.AttackerId),
-                    GetStoredLastKilledTime(requester.VictimId)
+                    requester.ActivatedTime,
+                    GetAssumedDiedTime(requester.AttackerId),
+                    GetAssumedDiedTime(requester.VictimId)
                 ));
-                if (result == HitResult.Hit)
-                {
-                    SetStoredLastKilledTime(requester.VictimId, Networking.GetNetworkDateTime());
-                }
+                if (result == HitResult.Hit) SetConfirmedDiedTime(requester.VictimId, requester.HitTime);
 
                 logger.Log(
                     $"{Prefix}Sending reply with {ResolverDataSyncer.GetResultName(result)}. full: {requester.GetLocalInfo()}");
@@ -204,17 +202,26 @@ namespace CenturionCC.System.Player
             AddResolvedEventId(requester);
             Invoke_ResolvedCallback(requester);
 
-            if (result == HitResult.Hit)
+            switch (result)
             {
-                ++attacker.Kills;
-                ++victim.Deaths;
-
-                if (requester.Type == KillType.FriendlyFire)
+                case HitResult.Hit:
                 {
-                    playerManager.Invoke_OnFriendlyFire(attacker, victim);
-                }
+                    SetConfirmedDiedTime(requester.VictimId, requester.HitTime);
+                    ++attacker.Kills;
+                    ++victim.Deaths;
 
-                playerManager.Invoke_OnKilled(attacker, victim, requester.Type);
+                    if (requester.Type == KillType.FriendlyFire) playerManager.Invoke_OnFriendlyFire(attacker, victim);
+
+                    playerManager.Invoke_OnKilled(attacker, victim, requester.Type);
+                    break;
+                }
+                case HitResult.Fail:
+                case HitResult.FailByAttackerDead:
+                case HitResult.FailByVictimDead:
+                {
+                    RevertAssumedDiedTime(requester.VictimId);
+                    break;
+                }
             }
         }
 
@@ -234,7 +241,7 @@ namespace CenturionCC.System.Player
         }
 
         [NotNull]
-        public ResolverDataSyncer GetAvailableSyncer(ResolverDataSyncer except = null)
+        private ResolverDataSyncer GetAvailableSyncer(ResolverDataSyncer except = null)
         {
             var oldestSyncer = GetAvailableSyncerOldest(except);
             if (oldestSyncer != null)
@@ -251,7 +258,7 @@ namespace CenturionCC.System.Player
         }
 
         [CanBeNull]
-        public ResolverDataSyncer GetAvailableSyncerRandom(ResolverDataSyncer except = null, int maxRetryCount = 5)
+        private ResolverDataSyncer GetAvailableSyncerRandom(ResolverDataSyncer except = null, int maxRetryCount = 5)
         {
             while (maxRetryCount >= 0)
             {
@@ -265,7 +272,7 @@ namespace CenturionCC.System.Player
         }
 
         [CanBeNull]
-        public ResolverDataSyncer GetAvailableSyncerOldest(ResolverDataSyncer except = null)
+        private ResolverDataSyncer GetAvailableSyncerOldest(ResolverDataSyncer except = null)
         {
             var oldestSyncer = syncers[0];
             var usedTime = oldestSyncer.LastUsedTime;
@@ -278,22 +285,6 @@ namespace CenturionCC.System.Player
             }
 
             return oldestSyncer;
-        }
-
-        private DateTime GetStoredLastKilledTime(int playerId)
-        {
-            return _lastKilledTimeStore.TryGetValue(new DataToken(playerId), TokenType.Long,
-                out var lastKilledTimeToken)
-                ? new DateTime(lastKilledTimeToken.Long)
-                : DateTime.MinValue;
-        }
-
-        private void SetStoredLastKilledTime(int playerId, DateTime time)
-        {
-            _lastKilledTimeStore.SetValue(
-                playerId,
-                time.Ticks
-            );
         }
 
         private void AddResolvedEventId(ResolverDataSyncer syncer)
@@ -316,10 +307,7 @@ namespace CenturionCC.System.Player
         private int GetValidEventId()
         {
             var eventId = UnityEngine.Random.Range(0x10000, int.MaxValue);
-            while (_resolvedEvents.ContainsKey($"{eventId}"))
-            {
-                eventId = UnityEngine.Random.Range(0x10000, int.MaxValue);
-            }
+            while (_resolvedEvents.ContainsKey($"{eventId}")) eventId = UnityEngine.Random.Range(0x10000, int.MaxValue);
 
             return eventId;
         }
@@ -327,24 +315,15 @@ namespace CenturionCC.System.Player
         private void Invoke_ResolvedCallback(ResolverDataSyncer syncer)
         {
             foreach (var callback in _callbacks)
-            {
                 if (callback != null)
                     ((DamageDataResolverCallback)callback).OnResolved(syncer);
-            }
         }
 
         private void Invoke_ResolveAbortedCallback(ResolverDataSyncer syncer, string reason)
         {
             foreach (var callback in _callbacks)
-            {
                 if (callback != null)
                     ((DamageDataResolverCallback)callback).OnResolveAborted(syncer, reason);
-            }
-        }
-
-        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
-        {
-            SetStoredLastKilledTime(hitPlayer.PlayerId, Networking.GetNetworkDateTime());
         }
 
         public static HitResult ComputeHitResultFromDateTime(
@@ -372,13 +351,51 @@ namespace CenturionCC.System.Player
         public void PrintEventsJson()
         {
             if (VRCJson.TrySerializeToJson(new DataToken(_resolvedEvents), JsonExportType.Beautify, out var result))
-            {
                 logger.Log(result.String);
-            }
             else
-            {
                 logger.LogError($"{Prefix}Could not serialize to JSON: {result.Error}");
-            }
         }
+
+        #region DiedTimeGetterSetter
+
+        private readonly DataDictionary _confirmedDiedTimeDict = new DataDictionary();
+        private readonly DataDictionary _assumedDiedTimeDict = new DataDictionary();
+
+        private DateTime GetConfirmedDiedTime(int playerId)
+        {
+            return _confirmedDiedTimeDict.TryGetValue(new DataToken(playerId), TokenType.Long,
+                out var timeToken)
+                ? new DateTime(timeToken.Long)
+                : DateTime.MinValue;
+        }
+
+        private DateTime GetAssumedDiedTime(int playerId)
+        {
+            return _assumedDiedTimeDict.TryGetValue(new DataToken(playerId), TokenType.Long,
+                out var timeToken)
+                ? new DateTime(timeToken.Long)
+                : DateTime.MinValue;
+        }
+
+        private void SetConfirmedDiedTime(int playerId, DateTime time)
+        {
+            var playerIdToken = new DataToken(playerId);
+            var timeToken = new DataToken(time.Ticks);
+
+            _confirmedDiedTimeDict.SetValue(playerIdToken, timeToken);
+            _assumedDiedTimeDict.SetValue(playerIdToken, timeToken);
+        }
+
+        private void SetAssumedDiedTime(int playerId, DateTime time)
+        {
+            _assumedDiedTimeDict.SetValue(playerId, time.Ticks);
+        }
+
+        private void RevertAssumedDiedTime(int playerId)
+        {
+            _assumedDiedTimeDict.SetValue(playerId, GetConfirmedDiedTime(playerId).Ticks);
+        }
+
+        #endregion
     }
 }
