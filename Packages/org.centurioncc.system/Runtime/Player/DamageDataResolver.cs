@@ -29,6 +29,9 @@ namespace CenturionCC.System.Player
 
         private VRCPlayerApi _local;
 
+        [PublicAPI]
+        public double InvincibleDuration { get; set; } = 10D;
+        [PublicAPI]
         public int MaxResendCount { get; set; } = 2;
 
         private void Start()
@@ -326,26 +329,24 @@ namespace CenturionCC.System.Player
                     ((DamageDataResolverCallback)callback).OnResolveAborted(syncer, reason);
         }
 
-        public static HitResult ComputeHitResultFromDateTime(
+        [PublicAPI]
+        public HitResult ComputeHitResultFromDateTime(
             DateTime originTime,
             DateTime attackerDiedTime,
             DateTime victimDiedTime
         )
         {
-            var sinceVictimDiedFromNow = Networking.GetNetworkDateTime().Subtract(victimDiedTime).TotalSeconds;
-            var sinceVictimDied = originTime.Subtract(victimDiedTime).TotalSeconds;
-            var sinceAttackerDied = originTime.Subtract(attackerDiedTime).TotalSeconds;
+            return IsInInvincibleDuration(originTime, attackerDiedTime)
+                ? HitResult.FailByAttackerDead
+                : IsInInvincibleDuration(originTime, victimDiedTime)
+                    ? HitResult.FailByVictimDead
+                    : HitResult.Hit;
+        }
 
-            Debug.Log(
-                $"{Prefix}sinceVicDiedNow: {sinceVictimDiedFromNow:F2}, sinceVicDied: {sinceVictimDied:F2}, sinceAtkDied: {sinceAttackerDied:F2}");
-
-            const double invincibleDuration = 10D;
-            if (sinceAttackerDied < invincibleDuration)
-                return HitResult.FailByAttackerDead;
-            if (sinceVictimDied < invincibleDuration || sinceVictimDiedFromNow < invincibleDuration)
-                return HitResult.FailByVictimDead;
-
-            return HitResult.Hit;
+        [PublicAPI]
+        public bool IsInInvincibleDuration(DateTime now, DateTime diedTime)
+        {
+            return now.Subtract(diedTime).TotalSeconds < InvincibleDuration;
         }
 
         [PublicAPI]
