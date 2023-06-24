@@ -192,7 +192,7 @@ namespace CenturionCC.System.Player
                     GetAssumedDiedTime(requester.AttackerId),
                     GetAssumedDiedTime(requester.VictimId)
                 ));
-                if (result == HitResult.Hit) SetConfirmedDiedTime(requester.VictimId, requester.HitTime);
+                if (result == HitResult.Hit) SetConfirmedDiedTime(victim, requester.HitTime);
 
                 logger.Log(
                     $"{Prefix}Sending reply with {ResolverDataSyncer.GetResultName(result)}. full: {requester.GetLocalInfo()}");
@@ -206,7 +206,7 @@ namespace CenturionCC.System.Player
             {
                 case HitResult.Hit:
                 {
-                    SetConfirmedDiedTime(requester.VictimId, requester.HitTime);
+                    SetConfirmedDiedTime(victim, requester.HitTime);
                     ++attacker.Kills;
                     ++victim.Deaths;
 
@@ -377,13 +377,14 @@ namespace CenturionCC.System.Player
                 : DateTime.MinValue;
         }
 
-        private void SetConfirmedDiedTime(int playerId, DateTime time)
+        private void SetConfirmedDiedTime(PlayerBase player, DateTime time)
         {
-            var playerIdToken = new DataToken(playerId);
+            var playerIdToken = new DataToken(player.PlayerId);
             var timeToken = new DataToken(time.Ticks);
 
             _confirmedDiedTimeDict.SetValue(playerIdToken, timeToken);
             _assumedDiedTimeDict.SetValue(playerIdToken, timeToken);
+            player.PreviousDiedTime = time;
         }
 
         private void SetAssumedDiedTime(int playerId, DateTime time)

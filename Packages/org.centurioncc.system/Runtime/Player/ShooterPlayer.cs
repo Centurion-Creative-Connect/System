@@ -4,7 +4,6 @@ using CenturionCC.System.Utils;
 using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
 using DerpyNewbie.Common.Role;
-using DerpyNewbie.Logger;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -212,14 +211,6 @@ namespace CenturionCC.System.Player
 
         public override void OnDamage(PlayerCollider playerCollider, DamageData data, Vector3 contactPoint)
         {
-            var networkNow = Networking.GetNetworkDateTime();
-            if (networkNow.Subtract(LastDiedDateTime).TotalSeconds > 10F)
-            {
-                _lastHitDetectionTimeTick = networkNow.Ticks;
-                playerManager.Logger.LogVerbose(
-                    $"[Player]OnDamage: Updated last hit detection time tick for {NewbieUtils.GetPlayerName(VrcPlayer)}");
-            }
-
             playerManager.Invoke_OnHitDetection(playerCollider, data, contactPoint);
         }
 
