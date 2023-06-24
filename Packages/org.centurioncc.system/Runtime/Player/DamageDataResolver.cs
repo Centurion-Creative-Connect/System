@@ -348,6 +348,12 @@ namespace CenturionCC.System.Player
             return HitResult.Hit;
         }
 
+        [PublicAPI]
+        public DataDictionary GetResolvedEvents()
+        {
+            return _resolvedEvents.DeepClone();
+        }
+
         public void PrintEventsJson()
         {
             if (VRCJson.TrySerializeToJson(new DataToken(_resolvedEvents), JsonExportType.Beautify, out var result))
@@ -361,7 +367,8 @@ namespace CenturionCC.System.Player
         private readonly DataDictionary _confirmedDiedTimeDict = new DataDictionary();
         private readonly DataDictionary _assumedDiedTimeDict = new DataDictionary();
 
-        private DateTime GetConfirmedDiedTime(int playerId)
+        [PublicAPI]
+        public DateTime GetConfirmedDiedTime(int playerId)
         {
             return _confirmedDiedTimeDict.TryGetValue(new DataToken(playerId), TokenType.Long,
                 out var timeToken)
@@ -369,7 +376,8 @@ namespace CenturionCC.System.Player
                 : DateTime.MinValue;
         }
 
-        private DateTime GetAssumedDiedTime(int playerId)
+        [PublicAPI]
+        public DateTime GetAssumedDiedTime(int playerId)
         {
             return _assumedDiedTimeDict.TryGetValue(new DataToken(playerId), TokenType.Long,
                 out var timeToken)
