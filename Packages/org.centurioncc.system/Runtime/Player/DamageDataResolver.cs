@@ -378,12 +378,9 @@ namespace CenturionCC.System.Player
             return _resolvedEvents.DeepClone();
         }
 
-        public void PrintEventsJson()
+        public bool GetEventsJson(JsonExportType exportType, out DataToken jsonToken)
         {
-            if (VRCJson.TrySerializeToJson(new DataToken(_resolvedEvents), JsonExportType.Beautify, out var result))
-                logger.Log(result.String);
-            else
-                logger.LogError($"{Prefix}Could not serialize to JSON: {result.Error}");
+            return VRCJson.TrySerializeToJson(new DataToken(_resolvedEvents), exportType, out jsonToken);
         }
 
         public void PauseProcessing()
