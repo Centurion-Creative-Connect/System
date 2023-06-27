@@ -363,9 +363,9 @@ namespace CenturionCC.System.Player
             syncerData.Add("senderId", syncer.SenderId);
             syncerData.Add("attackerId", syncer.AttackerId);
             syncerData.Add("victimId", syncer.VictimId);
-            syncerData.Add("request", (sbyte)syncer.Request);
-            syncerData.Add("result", (sbyte)syncer.Result);
-            syncerData.Add("type", (sbyte)syncer.Type);
+            syncerData.Add("request", new DataToken((sbyte)syncer.Request));
+            syncerData.Add("result", new DataToken((sbyte)syncer.Result));
+            syncerData.Add("type", new DataToken((sbyte)syncer.Type));
             syncerData.Add("damageData", damageData);
 
             return new DataToken(syncerData);
