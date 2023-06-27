@@ -301,8 +301,6 @@ namespace CenturionCC.System.Player
                     return "ByAttacker";
                 case ResolveRequest.ToVictim:
                     return "ByVictim";
-                case ResolveRequest.SelfResolved:
-                    return "SelfResolved";
                 default:
                     return "Unknown";
             }
@@ -395,11 +393,7 @@ namespace CenturionCC.System.Player
         /// <summary>
         /// Requesting to victim to resolve
         /// </summary>
-        ToVictim = 2,
-        /// <summary>
-        /// Has resolved locally, and broadcasting a result
-        /// </summary>
-        SelfResolved = 3,
+        ToVictim = 2
     }
 
     public enum HitResult : sbyte

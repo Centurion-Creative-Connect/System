@@ -129,11 +129,9 @@ namespace CenturionCC.System.Player
             }
 
             var syncer = GetAvailableSyncer();
-            var resolveRequest = victimId == _local.playerId
-                ? ResolveRequest.SelfResolved
-                : attackerId == _local.playerId
-                    ? ResolveRequest.ToVictim
-                    : ResolveRequest.ToAttacker;
+            var resolveRequest = attackerId == _local.playerId
+                ? ResolveRequest.ToVictim
+                : ResolveRequest.ToAttacker;
             var hitTime = Networking.GetNetworkDateTime();
 
             syncer.Send(
@@ -146,7 +144,7 @@ namespace CenturionCC.System.Player
                 hitTime,
                 damageData.DamageType,
                 resolveRequest,
-                resolveRequest == ResolveRequest.SelfResolved ? HitResult.Hit : HitResult.Waiting,
+                HitResult.Waiting,
                 killType
             );
 
@@ -189,7 +187,7 @@ namespace CenturionCC.System.Player
                 }
 
                 // Check for errors
-                if (requester.Request == ResolveRequest.Unassigned || requester.Request == ResolveRequest.SelfResolved)
+                if (requester.Request == ResolveRequest.Unassigned)
                 {
                     logger.LogError($"{Prefix}Tried to resolve invalid state requester. resetting!");
                     Invoke_ResolveAbortedCallback(requester, "INVALID_STATE");
