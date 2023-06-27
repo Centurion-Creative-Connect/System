@@ -221,26 +221,21 @@ namespace CenturionCC.System.Player
             AddResolvedEventId(requester);
             Invoke_ResolvedCallback(requester);
 
-            switch (result)
+            if (result == HitResult.Hit)
             {
-                case HitResult.Hit:
-                {
-                    SetConfirmedDiedTime(victim, requester.HitTime);
-                    ++attacker.Kills;
-                    ++victim.Deaths;
+                SetConfirmedDiedTime(victim, requester.HitTime);
+                ++attacker.Kills;
+                ++victim.Deaths;
 
-                    if (requester.Type == KillType.FriendlyFire) playerManager.Invoke_OnFriendlyFire(attacker, victim);
+                if (requester.Type == KillType.FriendlyFire) playerManager.Invoke_OnFriendlyFire(attacker, victim);
 
-                    playerManager.Invoke_OnKilled(attacker, victim, requester.Type);
-                    break;
-                }
-                case HitResult.Fail:
-                case HitResult.FailByAttackerDead:
-                case HitResult.FailByVictimDead:
-                {
-                    RevertAssumedDiedTime(requester.VictimId);
-                    break;
-                }
+                playerManager.Invoke_OnKilled(attacker, victim, requester.Type);
+            }
+            else if (result == HitResult.Fail ||
+                     result == HitResult.FailByAttackerDead ||
+                     result == HitResult.FailByVictimDead)
+            {
+                RevertAssumedDiedTime(requester.VictimId);
             }
         }
 
