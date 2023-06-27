@@ -124,6 +124,7 @@ namespace CenturionCC.System.Player
 
             _localRequest = Request;
             _localResult = Result;
+            _localType = Type;
         }
 
         public void MakeAvailable()
