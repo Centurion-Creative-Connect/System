@@ -33,6 +33,8 @@ namespace CenturionCC.System.Player
         public double InvincibleDuration { get; set; } = 10D;
         [PublicAPI]
         public int MaxResendCount { get; set; } = 2;
+        [PublicAPI]
+        public bool ResolvingPaused { get; private set; }
 
         private void Start()
         {
@@ -52,6 +54,12 @@ namespace CenturionCC.System.Player
 
         public override void Resolve(PlayerCollider pCol, DamageData damageData, Vector3 contactPoint)
         {
+            if (ResolvingPaused)
+            {
+                logger.LogError($"{Prefix}Will not resolve because processing was paused");
+                return;
+            }
+
             if (pCol == null || damageData == null)
             {
                 logger.LogVerbose(
@@ -148,6 +156,14 @@ namespace CenturionCC.System.Player
 
         public override void RequestResolve(ResolverDataSyncer requester)
         {
+            if (ResolvingPaused)
+            {
+                logger.LogError(
+                    $"{Prefix}{requester.GetGlobalInfo()} has requested resolve, but resolver is currently paused");
+                Invoke_ResolveAbortedCallback(requester, "PAUSED");
+                return;
+            }
+
             logger.Log($"{Prefix}Resolving {requester.GetGlobalInfo()}");
 
             // Request must be specified.
@@ -230,6 +246,13 @@ namespace CenturionCC.System.Player
 
         public override void RequestResend(ResolverDataSyncer requester)
         {
+            if (ResolvingPaused)
+            {
+                logger.LogError(
+                    $"{Prefix}{requester.GetGlobalInfo()} has requested resend, but resolver is currently paused");
+                return;
+            }
+
             logger.LogWarn($"{Prefix}Requesting resend {requester.GetLocalInfo()}");
             if (requester.ResendCount > MaxResendCount)
             {
@@ -361,6 +384,33 @@ namespace CenturionCC.System.Player
                 logger.Log(result.String);
             else
                 logger.LogError($"{Prefix}Could not serialize to JSON: {result.Error}");
+        }
+
+        public void PauseProcessing()
+        {
+            if (ResolvingPaused)
+            {
+                logger.LogError($"{Prefix}Tried to pause resolver, but it's already paused!");
+                return;
+            }
+
+            ResolvingPaused = true;
+            logger.LogWarn($"{Prefix}Paused process!");
+        }
+
+        public void ContinueProcessing()
+        {
+            if (!ResolvingPaused)
+            {
+                logger.LogError($"{Prefix}Tried to continue resolver, but it's not paused!");
+                return;
+            }
+
+            foreach (var syncer in syncers)
+                syncer.MakeAvailable();
+
+            ResolvingPaused = false;
+            logger.Log($"{Prefix}Continuing process!");
         }
 
         #region DiedTimeGetterSetter
