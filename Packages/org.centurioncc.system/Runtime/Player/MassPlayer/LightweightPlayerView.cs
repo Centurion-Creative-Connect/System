@@ -38,6 +38,11 @@ namespace CenturionCC.System.Player.MassPlayer
             _transform = transform;
         }
 
+        public override PlayerCollider[] GetColliders()
+        {
+            return new[] { lwCollider };
+        }
+
         public override void UpdateView()
         {
             lwCollider.IsVisible = playerManager.IsDebug && _playerModel != null && _playerModel.IsAssigned;
