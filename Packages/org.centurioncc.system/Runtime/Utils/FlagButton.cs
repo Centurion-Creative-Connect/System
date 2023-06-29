@@ -1,5 +1,6 @@
 ﻿using System;
 using CenturionCC.System.Player;
+using CenturionCC.System.UI;
 using DerpyNewbie.Common;
 using DerpyNewbie.Common.Invoker;
 using DerpyNewbie.Logger;
@@ -16,6 +17,8 @@ namespace CenturionCC.System.Utils
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private PrintableBase logger;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private NotificationProvider notification;
         [SerializeField] [HideInInspector] [NewbieInject]
         private DamageDataResolver resolver;
         [SerializeField]
@@ -57,6 +60,8 @@ namespace CenturionCC.System.Utils
             {
                 logger.LogWarn(
                     $"[Flag] flag button was pressed at {transform.parent.name} but i'm in invincible duration!");
+                // TODO: make it translatable message
+                notification.ShowWarn("ヒット直後にフラッグを鳴らすことはできません");
                 return;
             }
 
