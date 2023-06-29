@@ -1,4 +1,5 @@
-﻿using DerpyNewbie.Common;
+﻿using System;
+using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -19,6 +20,7 @@ namespace CenturionCC.System.Utils
         public override int DamagerPlayerId => _localPlayer.playerId;
         public override Vector3 DamageOriginPosition => transform.position;
         public override Quaternion DamageOriginRotation => transform.rotation;
+        public override DateTime DamageOriginTime => Networking.GetNetworkDateTime();
         public override string DamageType => damageType;
 
         private void Start()

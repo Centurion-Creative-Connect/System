@@ -829,7 +829,7 @@ namespace CenturionCC.System.Gun
                     velocity,
                     torque,
                     drag,
-                    WeaponName, playerId,
+                    WeaponName, LastShotTime, playerId,
                     trailTime, trailGradient
                 );
 
@@ -849,7 +849,6 @@ namespace CenturionCC.System.Gun
             if (IsLocal && HapticData != null && HapticData.Shooting)
                 HapticData.Shooting.PlayBothHand();
 
-            LastShotTime = new DateTime(_shotTime);
             HasCocked = false;
         }
 

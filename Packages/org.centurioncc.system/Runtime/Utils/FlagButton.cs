@@ -1,9 +1,12 @@
-﻿using DerpyNewbie.Common;
+﻿using System;
+using CenturionCC.System.Player;
+using DerpyNewbie.Common;
 using DerpyNewbie.Common.Invoker;
 using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDKBase;
 
 namespace CenturionCC.System.Utils
 {
@@ -12,9 +15,14 @@ namespace CenturionCC.System.Utils
     public class FlagButton : PickupEventSenderCallback
     {
         [SerializeField] [HideInInspector] [NewbieInject]
-        private GameManager gameManager;
+        private PrintableBase logger;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private DamageDataResolver resolver;
+        [SerializeField]
+        private float resolverWaitDuration = 0.1F;
         public float delay = 2F;
         private AudioSource _audioSource;
+        private DateTime _lastInteractTime;
         private float _lastPlayedTime;
         private SendVariableSyncEvent _variableEvent;
 
@@ -27,28 +35,34 @@ namespace CenturionCC.System.Utils
 
         public override void Interact()
         {
-            _TryPlayFlagAudio();
+            _DelayedExecute();
         }
 
         public override void OnPickupUseDownRelayed()
         {
-            _TryPlayFlagAudio();
+            _DelayedExecute();
+        }
+
+        private void _DelayedExecute()
+        {
+            _lastInteractTime = Networking.GetNetworkDateTime();
+            SendCustomEventDelayedSeconds(nameof(_TryPlayFlagAudio), resolverWaitDuration);
         }
 
         [PublicAPI]
         public void _TryPlayFlagAudio()
         {
-            if (gameManager.IsInAntiZombieTime())
+            var diedTime = resolver.GetAssumedDiedTime(Networking.LocalPlayer.playerId);
+            if (resolver.IsInInvincibleDuration(_lastInteractTime, diedTime))
             {
-                gameManager.logger.LogWarn(
-                    $"[Flag] flag button was pressed at {transform.parent.name} but i'm in anti-zombie time!");
+                logger.LogWarn(
+                    $"[Flag] flag button was pressed at {transform.parent.name} but i'm in invincible duration!");
                 return;
             }
 
             if (_lastPlayedTime + delay > Time.timeSinceLevelLoad)
             {
-                gameManager.logger.LogWarn(
-                    $"[Flag] flag button was pressed at {transform.parent.name} but i'm in delay time!");
+                logger.LogWarn($"[Flag] flag button was pressed at {transform.parent.name} but i'm in delay time!");
                 return;
             }
 
@@ -57,12 +71,7 @@ namespace CenturionCC.System.Utils
 
         public void PlayFlagAudio()
         {
-            Internal_PlayFlagAudio();
-        }
-
-        private void Internal_PlayFlagAudio()
-        {
-            gameManager.logger.Log($"[Flag] flag at {transform.parent.name} is now playing!");
+            logger.Log($"[Flag] flag at {transform.parent.name} is now playing!");
             _audioSource.Play();
             _lastPlayedTime = Time.timeSinceLevelLoad;
         }

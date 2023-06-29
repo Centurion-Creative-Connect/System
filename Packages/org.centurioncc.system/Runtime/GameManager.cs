@@ -32,16 +32,13 @@ namespace CenturionCC.System
         public FootstepGenerator footstep;
         public ModeratorTool moderatorTool;
         public NotificationProvider notification;
+        [NewbieInject]
+        public DamageDataResolver resolver;
 
         public bool logHitLocation = true;
         public bool logShotLocation = true;
 
-        public float localPlayerHitDuration = 1F;
-        public float antiZombieTime = 5F;
-
         private readonly string _prefix = "<color=yellow>GameManager</color>::";
-
-        private DateTime _lastLocalPlayerHitTime;
 
         private void Start()
         {
@@ -116,7 +113,8 @@ namespace CenturionCC.System
 
         public bool IsInAntiZombieTime()
         {
-            return DateTime.Now.Subtract(_lastLocalPlayerHitTime).TotalSeconds < antiZombieTime;
+            return resolver != null && resolver.IsInInvincibleDuration(Networking.GetNetworkDateTime(),
+                resolver.GetAssumedDiedTime(Networking.LocalPlayer.playerId));
         }
 
         [Obsolete("Use NewbieUtils.GetPlayerName() instead")]
@@ -164,8 +162,6 @@ namespace CenturionCC.System
 
         public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
-            if (hitPlayer.IsLocal)
-                _lastLocalPlayerHitTime = DateTime.Now;
         }
 
         public void OnTeamChanged(PlayerBase player, int oldTeam)
