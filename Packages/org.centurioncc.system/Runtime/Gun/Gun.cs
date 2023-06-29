@@ -113,7 +113,10 @@ namespace CenturionCC.System.Gun
         protected virtual void OnTriggerEnter(Collider other)
         {
             var otherName = other.name.ToLower();
+
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             Logger.LogVerbose($"{Prefix}OnTriggerEnter: {otherName}");
+#endif
 
             if (otherName.StartsWith("safezone"))
             {
@@ -202,8 +205,10 @@ namespace CenturionCC.System.Gun
             if (ShotCount == _lastShotCount)
                 return;
 
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             Logger.LogVerbose(
                 $"{Prefix}Received new shot: {ShotCount}:{QueuedShotCount}, {_shotPosition.ToString("2F")}, {_shotRotation.eulerAngles.ToString("2F")}");
+#endif
 
             if (ShotCount <= 0 || _lastShotCount == -1)
             {
@@ -311,8 +316,9 @@ namespace CenturionCC.System.Gun
             Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
             RequestSerialization();
 
-#if UNITY_EDITOR && !COMPILER_UDONSHARP
+#if UNITY_EDITOR
             // ClientSim does not invoke serialization events, so just invoke it directly
+            OnPreSerialization();
             OnDeserialization();
 #endif
         }
@@ -1399,11 +1405,6 @@ namespace CenturionCC.System.Gun
                     if (Trigger == TriggerState.Fired || FireMode.ShouldStopOnTriggerUp())
                         Trigger = TriggerState.Armed;
                     b.OnTriggerUp(this);
-                    break;
-                }
-                case HandleType.SubHandle:
-                {
-                    b.OnAction(this);
                     break;
                 }
             }
