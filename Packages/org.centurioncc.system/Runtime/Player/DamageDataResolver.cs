@@ -204,11 +204,25 @@ namespace CenturionCC.System.Player
                     return;
                 }
 
-                requester.SendReply(result = ComputeHitResultFromDateTime(
+                var assumedResult = ComputeHitResultFromDateTime(
                     requester.ActivatedTime,
                     GetAssumedDiedTime(requester.AttackerId),
                     GetAssumedDiedTime(requester.VictimId)
-                ));
+                );
+
+                result = ComputeHitResultFromDateTime(
+                    requester.ActivatedTime,
+                    GetConfirmedDiedTime(requester.AttackerId),
+                    GetConfirmedDiedTime(requester.VictimId)
+                );
+
+                if (assumedResult != result)
+                {
+                    logger.LogWarn(
+                        $"{Prefix}assumed result: {ResolverDataSyncer.GetResultName(assumedResult)} != confirmed result {ResolverDataSyncer.GetResultName(result)}");
+                }
+
+                requester.SendReply(result);
                 if (result == HitResult.Hit) SetConfirmedDiedTime(victim, requester.HitTime);
 
                 logger.Log(
@@ -362,7 +376,8 @@ namespace CenturionCC.System.Player
         [PublicAPI]
         public bool IsInInvincibleDuration(DateTime now, DateTime diedTime)
         {
-            return now.Subtract(diedTime).TotalSeconds < InvincibleDuration;
+            var diff = now.Subtract(diedTime).TotalSeconds;
+            return diff < InvincibleDuration && diff > 0;
         }
 
         [PublicAPI]
