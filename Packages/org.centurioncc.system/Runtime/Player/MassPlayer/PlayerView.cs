@@ -50,7 +50,7 @@ namespace CenturionCC.System.Player.MassPlayer
 
                 _playerModel = value;
 
-                var pcs = GetIterator();
+                var pcs = GetColliders();
                 foreach (var pc in pcs) pc.player = value;
 
                 UpdateView();
@@ -72,7 +72,7 @@ namespace CenturionCC.System.Player.MassPlayer
             _rightLowerLegTransform = rightLowerLegCollider.transform;
         }
 
-        private PlayerCollider[] GetIterator()
+        public override PlayerCollider[] GetColliders()
         {
             return new[]
             {
@@ -85,7 +85,7 @@ namespace CenturionCC.System.Player.MassPlayer
 
         public override void UpdateView()
         {
-            foreach (var playerCollider in GetIterator())
+            foreach (var playerCollider in GetColliders())
                 playerCollider.IsVisible = playerManager.IsDebug && _playerModel != null && _playerModel.IsAssigned;
         }
 
