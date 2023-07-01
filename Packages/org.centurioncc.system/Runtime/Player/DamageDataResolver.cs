@@ -175,6 +175,12 @@ namespace CenturionCC.System.Player
             var attacker = playerManager.GetPlayerById(requester.AttackerId);
             var victim = playerManager.GetPlayerById(requester.VictimId);
             var result = requester.Result;
+            if (attacker == null || victim == null)
+            {
+                logger.LogError($"{Prefix}Tried to resolve requester with invalid attacker or victim");
+                Invoke_ResolveAbortedCallback(requester, "INVALID_PLAYER");
+                return;
+            }
 
             if (result == HitResult.Waiting)
             {
