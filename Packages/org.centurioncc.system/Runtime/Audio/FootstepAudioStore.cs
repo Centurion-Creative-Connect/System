@@ -1,5 +1,4 @@
-﻿using System;
-using CenturionCC.System.Utils;
+﻿using CenturionCC.System.Utils;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
@@ -48,26 +47,6 @@ namespace CenturionCC.System.Audio
         [SerializeField]
         private AudioDataStore slowConcrete;
 
-        [Obsolete]
-        public AudioDataStore FallbackAudio => fallback;
-        [Obsolete]
-        public AudioDataStore SlowFallbackAudio => slowFallback != null ? slowFallback : FallbackAudio;
-
-        [Obsolete]
-        public AudioDataStore GroundAudio => gravel != null ? gravel : FallbackAudio;
-        [Obsolete]
-        public AudioDataStore SlowGroundAudio => slowGravel != null ? slowGravel : SlowFallbackAudio;
-
-        [Obsolete]
-        public AudioDataStore WoodAudio => wood != null ? wood : FallbackAudio;
-        [Obsolete]
-        public AudioDataStore SlowWoodAudio => slowWood != null ? slowWood : SlowFallbackAudio;
-
-        [Obsolete]
-        public AudioDataStore IronAudio => metallic != null ? metallic : FallbackAudio;
-        [Obsolete]
-        public AudioDataStore SlowIronAudio => slowMetallic != null ? slowMetallic : SlowFallbackAudio;
-
         [PublicAPI] [CanBeNull]
         public AudioDataStore Get(ObjectType type, bool isSlow = false)
         {
@@ -95,7 +74,7 @@ namespace CenturionCC.System.Audio
                     break;
             }
 
-            return result != null ? result : isSlow ? slowFallback : fallback;
+            return result != null ? result : isSlow && slowFallback != null ? slowFallback : fallback;
         }
     }
 }
