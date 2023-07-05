@@ -1,7 +1,6 @@
 ﻿using System;
 using CenturionCC.System.Audio;
 using CenturionCC.System.Gun;
-using CenturionCC.System.Moderator;
 using CenturionCC.System.Player;
 using CenturionCC.System.UI;
 using CenturionCC.System.Utils;
@@ -26,7 +25,6 @@ namespace CenturionCC.System
         public AudioManager audioManager;
         public PlayerMovement movement;
         public PrintableBase logger;
-        public ModeratorTool moderatorTool;
         public NotificationProvider notification;
 
         public float antiZombieTime = 5F;
