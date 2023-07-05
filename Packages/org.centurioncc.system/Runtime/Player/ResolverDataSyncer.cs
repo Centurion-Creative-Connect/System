@@ -1,4 +1,5 @@
 ﻿using System;
+using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
@@ -181,6 +182,15 @@ namespace CenturionCC.System.Player
             _hasSent = false;
             RequestSerialization();
         }
+
+        #region WatchdogProc
+
+        public int ChildKeepAlive(WatchdogProc wd, int nonce)
+        {
+            return nonce;
+        }
+
+        #endregion
 
         #region LocalProperties
 
