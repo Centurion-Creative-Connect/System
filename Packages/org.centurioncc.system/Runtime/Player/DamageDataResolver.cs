@@ -1,5 +1,6 @@
 ﻿using System;
 using CenturionCC.System.Utils;
+using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using JetBrains.Annotations;
@@ -23,11 +24,13 @@ namespace CenturionCC.System.Player
         private ResolverDataSyncer[] syncers;
 
         private readonly DataDictionary _resolvedEvents = new DataDictionary();
-        private int _callbackCount;
 
+        private int _callbackCount;
         private UdonSharpBehaviour[] _callbacks = new UdonSharpBehaviour[1];
 
         private VRCPlayerApi _local;
+
+        private WatchdogChildCallbackBase[] _watchdogChild;
 
         [PublicAPI]
         public double InvincibleDuration { get; set; } = 10D;
@@ -38,6 +41,10 @@ namespace CenturionCC.System.Player
 
         private void Start()
         {
+            _watchdogChild = new WatchdogChildCallbackBase[syncers.Length];
+            for (int i = 0; i < _watchdogChild.Length; i++)
+                _watchdogChild[i] = (WatchdogChildCallbackBase)(UdonSharpBehaviour)syncers[i];
+
             _local = Networking.LocalPlayer;
             playerManager.SubscribeCallback(this);
         }
@@ -465,6 +472,20 @@ namespace CenturionCC.System.Player
         private void RevertAssumedDiedTime(int playerId)
         {
             _assumedDiedTimeDict.SetValue(playerId, GetConfirmedDiedTime(playerId).Ticks);
+        }
+
+        #endregion
+
+        #region WatchdogProc
+
+        public int KeepAlive(WatchdogProc wd, int nonce)
+        {
+            return nonce;
+        }
+
+        public WatchdogChildCallbackBase[] GetChildren()
+        {
+            return _watchdogChild;
         }
 
         #endregion
