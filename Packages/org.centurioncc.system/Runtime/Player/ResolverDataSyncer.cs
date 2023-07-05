@@ -361,9 +361,9 @@ namespace CenturionCC.System.Player
             syncerData.Add("senderId", syncer.SenderId);
             syncerData.Add("attackerId", syncer.AttackerId);
             syncerData.Add("victimId", syncer.VictimId);
-            syncerData.Add("request", new DataToken((sbyte)syncer.Request));
-            syncerData.Add("result", new DataToken((sbyte)syncer.Result));
-            syncerData.Add("type", new DataToken((sbyte)syncer.Type));
+            syncerData.Add("request", new DataToken(syncer.Request));
+            syncerData.Add("result", new DataToken(syncer.Result));
+            syncerData.Add("type", new DataToken(syncer.Type));
             syncerData.Add("damageData", damageData);
 
             return new DataToken(syncerData);
@@ -380,7 +380,7 @@ namespace CenturionCC.System.Player
         }
     }
 
-    public enum ResolveRequest : sbyte
+    public enum ResolveRequest
     {
         /// <summary>
         /// Initial state before syncer is receiving or sending data
@@ -396,7 +396,7 @@ namespace CenturionCC.System.Player
         ToVictim = 2
     }
 
-    public enum HitResult : sbyte
+    public enum HitResult
     {
         /// <summary>
         /// Initial state before syncer is receiving or sending data
