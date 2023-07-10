@@ -808,7 +808,7 @@ namespace CenturionCC.System.Player
         public PlayerBase GetPlayerById(int playerId)
         {
             foreach (var player in GetPlayers())
-                if (player != null && player.PlayerId == playerId)
+                if (player != null && player.IsAssigned && player.PlayerId == playerId)
                     return player;
 
             return null;
