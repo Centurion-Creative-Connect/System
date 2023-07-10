@@ -26,6 +26,9 @@ namespace VRC.PackageManagement.PackageMaker
 
         private static string _projectDir;
         private Button _actionButton;
+        private TextField _authorEmailField;
+        private TextField _authorNameField;
+        private TextField _authorUrlField;
         private TextField _packageIDField;
         // VisualElements
         private VisualElement _rootView;
@@ -58,6 +61,7 @@ namespace VRC.PackageManagement.PackageMaker
             // Create Target Asset folder and register for drag and drop events
             _rootView.Add(CreateTargetFolderElement());
             _rootView.Add(CreatePackageIDElement());
+            _rootView.Add(CreateAuthorElement());
             _rootView.Add(CreateTargetVRCPackageElement());
             _rootView.Add(CreateActionButton());
 
@@ -73,6 +77,9 @@ namespace VRC.PackageManagement.PackageMaker
 
             _packageIDField.SetValueWithoutNotify(_windowData.packageID);
             _targetVRCPackageField.SetValueWithoutNotify(_windowData.relatedPackage);
+            _authorEmailField.SetValueWithoutNotify(_windowData.authorEmail);
+            _authorNameField.SetValueWithoutNotify(_windowData.authorName);
+            _authorUrlField.SetValueWithoutNotify(_windowData.authorUrl);
 
             RefreshActionButtonState();
         }
@@ -135,7 +142,9 @@ namespace VRC.PackageManagement.PackageMaker
         {
             _actionButton.SetEnabled(
                 StringIsValidAssetFolder(_windowData.targetAssetFolder) &&
-                !string.IsNullOrWhiteSpace(_windowData.packageID)
+                !string.IsNullOrWhiteSpace(_windowData.packageID) &&
+                _authorNameField.value != null &&
+                IsValidEmail(_authorEmailField.value)
             );
         }
 
@@ -208,6 +217,57 @@ namespace VRC.PackageManagement.PackageMaker
             });
 
             return box;
+        }
+
+        private VisualElement CreateAuthorElement()
+        {
+            // Construct author fields
+            _authorNameField = new TextField("Author Name");
+            _authorEmailField = new TextField("Author Email");
+            _authorUrlField = new TextField("Author URL (optional)");
+
+            // Save name to window data and toggle the Action Button if its status changed
+            _authorNameField.RegisterValueChangedCallback((evt) =>
+            {
+                _windowData.authorName = evt.newValue;
+                Debug.Log($"Window author name is {evt.newValue}");
+                RefreshActionButtonState();
+            });
+
+            // Save email to window data if valid and toggle the Action Button if its status changed
+            _authorEmailField.RegisterValueChangedCallback((evt) =>
+            {
+                // Only save email if it appears valid
+                if (IsValidEmail(evt.newValue))
+                {
+                    _windowData.authorEmail = evt.newValue;
+                }
+
+                RefreshActionButtonState();
+            });
+
+            // Save url to window data, doesn't affect action button state
+            _authorUrlField.RegisterValueChangedCallback((evt) => { _windowData.authorUrl = evt.newValue; });
+
+            // Add new fields to layout
+            var box = new Box();
+            box.Add(_authorNameField);
+            box.Add(_authorEmailField);
+            box.Add(_authorUrlField);
+            return box;
+        }
+
+        private bool IsValidEmail(string evtNewValue)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(evtNewValue);
+                return addr.Address == evtNewValue;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private void OnPackageIDChanged(ChangeEvent<string> evt)
@@ -343,7 +403,21 @@ namespace VRC.PackageManagement.PackageMaker
             }
 
             string parentDir = new DirectoryInfo(targetDir)?.Parent.FullName;
-            Core.Utilities.CreateStarterPackage(_windowData.packageID, parentDir, packageType);
+            var packageDir = Core.Utilities.CreateStarterPackage(_windowData.packageID, parentDir, packageType);
+
+            // Modify manifest to add author
+            // Todo: add support for passing author into CreateStarterPackage
+            var manifest =
+                VRCPackageManifest.GetManifestAtPath(Path.Combine(packageDir, VRCPackageManifest.Filename)) as
+                    VRCPackageManifest;
+            manifest.author = new Author()
+            {
+                email = _windowData.authorEmail,
+                name = _windowData.authorName,
+                url = _windowData.authorUrl
+            };
+            manifest.Save();
+
             var allFiles = GetAllFiles(corePath).ToList();
             MoveFilesToPackageDir(allFiles, corePath, targetDir);
 

@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 using VRC.PackageManagement.Core;
 using VRC.PackageManagement.Core.Types;
 using VRC.PackageManagement.Core.Types.Packages;
-using Version = VRC.PackageManagement.Core.Types.VPMVersion.Version;
+using VRC.PackageManagement.Core.Types.VPMVersion;
 
 namespace VRC.PackageManagement.Resolver
 {
@@ -24,58 +24,6 @@ namespace VRC.PackageManagement.Resolver
         private static bool _isUpdating;
         private static Color _colorPositive = Color.green;
         private static Color _colorNegative = new Color(1, 0.3f, 0.3f);
-
-
-        [MenuItem("VRChat SDK/Utilities/Package Resolver")]
-        public static void ShowWindow()
-        {
-            ResolverWindow wnd = GetWindow<ResolverWindow>();
-            wnd.titleContent = new GUIContent("Package Resolver");
-        }
-
-        public static void Refresh()
-        {
-            if (_rootView == null || string.IsNullOrWhiteSpace(Resolver.ProjectDir)) return;
-
-            _manifestInfo.SetEnabled(!_isUpdating);
-            _refreshButton.SetEnabled(!_isUpdating);
-            _manifestLabel.text = (_isUpdating ? "Working ..." : "Required Packages");
-            _manifestInfo.Clear();
-            _manifestInfo.Add(_manifestLabel);
-
-            bool needsResolve = VPMProjectManifest.ResolveIsNeeded(Resolver.ProjectDir);
-            string resolveStatus = needsResolve ? "Please press  \"Resolve\" to Download them." : "All of them are in the project.";
-            
-            // check for vpm dependencies
-            if (!Resolver.VPMManifestExists())
-            {
-                TextElement noManifestText = new TextElement();
-                noManifestText.text = "No VPM Manifest";
-                noManifestText.style.color = _colorNegative;
-                _manifestInfo.Add(noManifestText);
-            }
-            else
-            {
-                var manifest = VPMProjectManifest.Load(Resolver.ProjectDir);
-                var project = new UnityProject(Resolver.ProjectDir);
-                
-                // Here is where we detect if all dependencies are installed
-                var allDependencies = (manifest.locked != null && manifest.locked.Count > 0)
-                    ? manifest.locked
-                    : manifest.dependencies;
-
-                foreach (var pair in allDependencies)
-                {
-                    var id = pair.Key;
-                    var version = pair.Value.version;
-                    IVRCPackage package = project.VPMProvider.GetPackage(id, version);
-                    _manifestInfo.Add(CreateDependencyRow(id, version, project, (package != null)));
-                }
-
-            }
-            _resolveButton.SetEnabled(needsResolve);
-            Resolver.ForceRefresh();
-        }
 
         /// <summary>
         /// Unity calls the CreateGUI method automatically when the window needs to display
@@ -135,7 +83,62 @@ namespace VRC.PackageManagement.Resolver
             Refresh();
         }
 
-        private static VisualElement CreateDependencyRow(string id, string version, UnityProject project, bool havePackage)
+
+        [MenuItem("VRChat SDK/Utilities/Package Resolver")]
+        public static void ShowWindow()
+        {
+            ResolverWindow wnd = GetWindow<ResolverWindow>();
+            wnd.titleContent = new GUIContent("Package Resolver");
+        }
+
+        public static void Refresh()
+        {
+            if (_rootView == null || string.IsNullOrWhiteSpace(Resolver.ProjectDir)) return;
+
+            _manifestInfo.SetEnabled(!_isUpdating);
+            _refreshButton.SetEnabled(!_isUpdating);
+            _manifestLabel.text = (_isUpdating ? "Working ..." : "Required Packages");
+            _manifestInfo.Clear();
+            _manifestInfo.Add(_manifestLabel);
+
+            bool needsResolve = VPMProjectManifest.ResolveIsNeeded(Resolver.ProjectDir);
+            string resolveStatus = needsResolve
+                ? "Please press  \"Resolve\" to Download them."
+                : "All of them are in the project.";
+
+            // check for vpm dependencies
+            if (!Resolver.VPMManifestExists())
+            {
+                TextElement noManifestText = new TextElement();
+                noManifestText.text = "No VPM Manifest";
+                noManifestText.style.color = _colorNegative;
+                _manifestInfo.Add(noManifestText);
+            }
+            else
+            {
+                var manifest = VPMProjectManifest.Load(Resolver.ProjectDir);
+                var project = new UnityProject(Resolver.ProjectDir);
+
+                // Here is where we detect if all dependencies are installed
+                var allDependencies = (manifest.locked != null && manifest.locked.Count > 0)
+                    ? manifest.locked
+                    : manifest.dependencies;
+
+                foreach (var pair in allDependencies)
+                {
+                    var id = pair.Key;
+                    var version = pair.Value.version;
+                    IVRCPackage package = project.VPMProvider.GetPackage(id, version);
+                    _manifestInfo.Add(CreateDependencyRow(id, version, project, (package != null)));
+                }
+            }
+
+            _resolveButton.SetEnabled(needsResolve);
+            Resolver.ForceRefresh();
+        }
+
+        private static VisualElement CreateDependencyRow(string id, string version, UnityProject project,
+            bool havePackage)
         {
             // Table
 
@@ -211,7 +214,8 @@ namespace VRC.PackageManagement.Resolver
                     {
                         dialogMsg.Insert(0, "This will update multiple packages:\n\n");
                         dialogMsg.AppendLine("\nAre you sure?");
-                        if (EditorUtility.DisplayDialog("Package Has Dependencies", dialogMsg.ToString(), "OK", "Cancel"))
+                        if (EditorUtility.DisplayDialog("Package Has Dependencies", dialogMsg.ToString(), "OK",
+                                "Cancel"))
                             OnUpdatePackageClicked(project, package);
                     }
                     else
@@ -219,7 +223,6 @@ namespace VRC.PackageManagement.Resolver
                         OnUpdatePackageClicked(project, package);
                     }
                 }
-
             });
             column4.Add(updateButton);
 
@@ -272,10 +275,10 @@ namespace VRC.PackageManagement.Resolver
             button.style.color = color;
             color.a = 0.25f;
             button.style.borderRightColor =
-            button.style.borderLeftColor =
-            button.style.borderTopColor =
-            button.style.borderBottomColor =
-            color;
+                button.style.borderLeftColor =
+                    button.style.borderTopColor =
+                        button.style.borderBottomColor =
+                            color;
         }
 
         private static async void OnUpdatePackageClicked(UnityProject project, IVRCPackage package)
@@ -287,6 +290,5 @@ namespace VRC.PackageManagement.Resolver
             _isUpdating = false;
             Refresh();
         }
-
     }
 }
