@@ -103,8 +103,10 @@ namespace CenturionCC.System.Player
                 return;
             }
 
+            var hitTime = Networking.GetNetworkDateTime();
             var hitResult = ComputeHitResultFromDateTime(
                 damageData.DamageOriginTime,
+                hitTime,
                 GetAssumedDiedTime(attackerId),
                 GetAssumedDiedTime(victimId)
             );
@@ -139,7 +141,6 @@ namespace CenturionCC.System.Player
             var resolveRequest = attackerId == _local.playerId
                 ? ResolveRequest.ToVictim
                 : ResolveRequest.ToAttacker;
-            var hitTime = Networking.GetNetworkDateTime();
 
             syncer.Send(
                 GetValidEventId(),
@@ -219,12 +220,14 @@ namespace CenturionCC.System.Player
 
                 var assumedResult = ComputeHitResultFromDateTime(
                     requester.ActivatedTime,
+                    requester.HitTime,
                     GetAssumedDiedTime(requester.AttackerId),
                     GetAssumedDiedTime(requester.VictimId)
                 );
 
                 result = ComputeHitResultFromDateTime(
                     requester.ActivatedTime,
+                    requester.HitTime,
                     GetConfirmedDiedTime(requester.AttackerId),
                     GetConfirmedDiedTime(requester.VictimId)
                 );
@@ -374,16 +377,20 @@ namespace CenturionCC.System.Player
 
         [PublicAPI]
         public HitResult ComputeHitResultFromDateTime(
-            DateTime originTime,
+            DateTime damageOriginatedTime,
+            DateTime hitTime,
             DateTime attackerDiedTime,
             DateTime victimDiedTime
         )
         {
-            return IsInInvincibleDuration(originTime, attackerDiedTime)
-                ? HitResult.FailByAttackerDead
-                : IsInInvincibleDuration(originTime, victimDiedTime)
-                    ? HitResult.FailByVictimDead
-                    : HitResult.Hit;
+            return
+                damageOriginatedTime > hitTime
+                    ? HitResult.Fail // Hit Time should not be earlier than originated time
+                    : IsInInvincibleDuration(damageOriginatedTime, attackerDiedTime)
+                        ? HitResult.FailByAttackerDead // Attacker should be alive at originated time
+                        : IsInInvincibleDuration(hitTime, victimDiedTime)
+                            ? HitResult.FailByVictimDead // Victim should be alive at hit time
+                            : HitResult.Hit;
         }
 
         [PublicAPI]
