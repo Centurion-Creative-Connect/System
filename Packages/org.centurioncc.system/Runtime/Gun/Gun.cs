@@ -177,6 +177,12 @@ namespace CenturionCC.System.Gun
             if (QueuedShotCount <= 0)
                 return;
 
+            if (CanShoot() == ShotResult.Cancelled)
+            {
+                QueuedShotCount = 0;
+                return;
+            }
+
             _shotPosition = ShooterPosition;
             _shotRotation = ShooterRotation;
             _shotTime = Networking.GetNetworkDateTime().Ticks;
