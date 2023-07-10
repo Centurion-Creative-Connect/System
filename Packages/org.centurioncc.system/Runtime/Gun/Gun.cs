@@ -869,7 +869,7 @@ namespace CenturionCC.System.Gun
                 Internal_PlayAudio(AudioData.EmptyShooting);
         }
 
-        protected void Internal_PlayAudio(AudioDataStore audioStore)
+        protected virtual void Internal_PlayAudio(AudioDataStore audioStore)
         {
             AudioManager.PlayAudioAtTransform(audioStore, Target);
         }
