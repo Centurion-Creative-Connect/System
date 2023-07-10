@@ -390,7 +390,7 @@ namespace CenturionCC.System.Player
         public bool IsInInvincibleDuration(DateTime now, DateTime diedTime)
         {
             var diff = now.Subtract(diedTime).TotalSeconds;
-            return diff < InvincibleDuration && diff > 0;
+            return diff < InvincibleDuration && diff >= 0;
         }
 
         [PublicAPI]
