@@ -22,9 +22,7 @@ namespace CenturionCC.System.SteelChallenge
         private void Start()
         {
             // Don't subscribe to update events if not desired (for perf reasons)
-            if (!doPopUpForNewPlayer) return;
-
-            updateManager.SubscribeSlowUpdate(this);
+            if (doPopUpForNewPlayer) updateManager.SubscribeSlowUpdate(this);
             helpPanel.SetActive(false);
         }
 
