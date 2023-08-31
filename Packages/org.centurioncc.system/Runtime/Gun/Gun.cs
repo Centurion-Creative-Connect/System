@@ -1174,6 +1174,14 @@ namespace CenturionCC.System.Gun
                 TargetAnimator.SetInteger(GunUtility.SelectorTypeParameter(), (int)fireMode);
         }
 
+        protected bool Internal_IsHeldBy(VRCPlayerApi api)
+        {
+            var playerId = api.SafeGetPlayerId();
+            return MainHandle != null && MainHandle.CurrentPlayer.SafeGetPlayerId() == playerId ||
+                   SubHandle != null && SubHandle.CurrentPlayer.SafeGetPlayerId() == playerId ||
+                   CustomHandle != null && CustomHandle.CurrentPlayer.SafeGetPlayerId() == playerId;
+        }
+
         #endregion
 
         #region CustomizableMethods
@@ -1345,18 +1353,28 @@ namespace CenturionCC.System.Gun
                 return;
             }
 
-            if (MainHandle.IsPickedUp ^
+            // OnHandlePickup is only called locally, thus setting isLocal here is appropriate
+            _isLocal = true;
+            if (PlayerController != null)
+            {
+                PlayerController.AddHoldingObject(this);
+            }
+
+            if (TargetAnimator != null)
+            {
+                TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), true);
+                TargetAnimator.SetFloat(GunUtility.TriggerProgressParameter(), 0F);
+            }
+
+            // When only one handle is picked up at this time
+            if ((MainHandle != null && MainHandle.IsPickedUp) ^
                 (SubHandle != null && SubHandle.IsPickedUp) ^
                 (CustomHandle != null && CustomHandle.IsPickedUp))
             {
-                _isLocal = true;
                 Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
-                if (TargetAnimator != null)
-                    TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), true);
+
                 OnGunPickup();
                 b.OnGunPickup(this);
-                if (PlayerController != null)
-                    PlayerController.AddHoldingObject(this);
             }
 
             OnGunHandlePickup(instance);
@@ -1427,7 +1445,6 @@ namespace CenturionCC.System.Gun
             OnGunHandleDrop(instance);
             b.OnHandleDrop(this, instance);
 
-
             switch (handleType)
             {
                 case HandleType.MainHandle:
@@ -1438,18 +1455,28 @@ namespace CenturionCC.System.Gun
                     break;
             }
 
-            // When dropped entirely
+            if (!Internal_IsHeldBy(Networking.LocalPlayer))
+            {
+                _isLocal = false;
+
+                if (TargetAnimator != null)
+                {
+                    TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), false);
+                    TargetAnimator.SetFloat(GunUtility.TriggerProgressParameter(), 0F);
+                }
+
+                if (PlayerController != null)
+                {
+                    PlayerController.RemoveHoldingObject(this);
+                }
+            }
+
             if (!(MainHandle.IsPickedUp ||
                   (SubHandle != null && SubHandle.IsPickedUp) ||
                   (CustomHandle != null && CustomHandle.IsPickedUp)))
             {
                 OnGunDrop();
                 b.OnGunDrop(this);
-                if (TargetAnimator != null)
-                {
-                    TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), false);
-                    TargetAnimator.SetFloat(GunUtility.TriggerProgressParameter(), 0F);
-                }
 
                 if (TargetHolster != null)
                 {
@@ -1459,11 +1486,6 @@ namespace CenturionCC.System.Gun
                     Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
                     RequestSerialization();
                 }
-
-                if (PlayerController != null)
-                    PlayerController.RemoveHoldingObject(this);
-
-                _isLocal = false;
             }
 
             Internal_UpdateIsPickedUpState();
