@@ -17,6 +17,8 @@ namespace CenturionCC.System.Player
         private const string Prefix = "[<color=cyan>DamageDataResolver</color>] ";
 
         [NewbieInject] [HideInInspector] [SerializeField]
+        private FeatureFlags featureFlags;
+        [NewbieInject] [HideInInspector] [SerializeField]
         private PrintableBase logger;
         [NewbieInject] [HideInInspector] [SerializeField]
         private PlayerManager playerManager;
@@ -90,10 +92,22 @@ namespace CenturionCC.System.Player
                 return;
             }
 
-            if (victimId != _local.playerId && attackerId != _local.playerId)
+            // TODO: featureFlags
+            if (featureFlags.useVictimRequest)
             {
-                logger.LogVerbose($"{Prefix}Will not resolve because data was not associated with local player");
-                return;
+                if (victimId != _local.playerId && attackerId != _local.playerId)
+                {
+                    logger.LogVerbose($"{Prefix}Will not resolve because data was not associated with local player");
+                    return;
+                }
+            }
+            else
+            {
+                if (attackerId != _local.playerId)
+                {
+                    logger.LogVerbose($"{Prefix}Will not resolve because attacker is not local player");
+                    return;
+                }
             }
 
             var attacker = playerManager.GetPlayerById(attackerId);
@@ -104,12 +118,27 @@ namespace CenturionCC.System.Player
             }
 
             var hitTime = Networking.GetNetworkDateTime();
-            var hitResult = ComputeHitResultFromDateTime(
-                damageData.DamageOriginTime,
-                hitTime,
-                GetAssumedDiedTime(attackerId),
-                GetAssumedDiedTime(victimId)
-            );
+            HitResult hitResult;
+
+            // TODO: featureFlags
+            if (featureFlags.useConditionalResultCheck)
+            {
+                hitResult = ComputeHitResultFromDateTime(
+                    damageData.DamageOriginTime,
+                    hitTime,
+                    GetAssumedDiedTime(attackerId),
+                    GetConfirmedDiedTime(victimId)
+                );
+            }
+            else
+            {
+                hitResult = ComputeHitResultFromDateTime(
+                    damageData.DamageOriginTime,
+                    hitTime,
+                    GetConfirmedDiedTime(attackerId),
+                    GetConfirmedDiedTime(victimId)
+                );
+            }
 
             if (hitResult != HitResult.Hit)
             {
@@ -137,7 +166,18 @@ namespace CenturionCC.System.Player
                 }
             }
 
-            var syncer = GetAvailableSyncer();
+            ResolverDataSyncer syncer;
+
+            // TODO: featureFlags
+            if (featureFlags.makeSyncerPlayerIdDependent)
+            {
+                syncer = GetPlayerDependentSyncer(victim);
+            }
+            else
+            {
+                syncer = GetAvailableSyncer();
+            }
+
             var resolveRequest = attackerId == _local.playerId
                 ? ResolveRequest.ToVictim
                 : ResolveRequest.ToAttacker;
@@ -170,6 +210,13 @@ namespace CenturionCC.System.Player
                 return;
             }
 
+            // Do not self reply
+            if (requester.SenderId == _local.playerId && requester.Result == HitResult.Waiting)
+            {
+                Invoke_ResolveAbortedCallback(requester, "SELF_REPLY");
+                return;
+            }
+
             logger.Log($"{Prefix}Resolving {requester.GetGlobalInfo()}");
 
             // Request must be specified.
@@ -192,14 +239,6 @@ namespace CenturionCC.System.Player
 
             if (result == HitResult.Waiting)
             {
-                // No self-replying
-                if (requester.SenderId == _local.playerId)
-                {
-                    logger.LogWarn($"{Prefix}Tried to self-reply. aborting!");
-                    Invoke_ResolveAbortedCallback(requester, "SELF_REPLY");
-                    return;
-                }
-
                 // Check for errors
                 if (requester.Request == ResolveRequest.Unassigned)
                 {
@@ -225,12 +264,29 @@ namespace CenturionCC.System.Player
                     GetAssumedDiedTime(requester.VictimId)
                 );
 
-                result = ComputeHitResultFromDateTime(
-                    requester.ActivatedTime,
-                    requester.HitTime,
-                    GetConfirmedDiedTime(requester.AttackerId),
-                    GetConfirmedDiedTime(requester.VictimId)
-                );
+                // TODO: featureFlags
+                if (featureFlags.useConditionalResultCheck)
+                {
+                    result = ComputeHitResultFromDateTime(
+                        requester.ActivatedTime,
+                        requester.HitTime,
+                        requester.Request == ResolveRequest.ToAttacker
+                            ? GetAssumedDiedTime(requester.AttackerId)
+                            : GetConfirmedDiedTime(requester.AttackerId),
+                        requester.Request == ResolveRequest.ToVictim
+                            ? GetAssumedDiedTime(requester.VictimId)
+                            : GetConfirmedDiedTime(requester.VictimId)
+                    );
+                }
+                else
+                {
+                    result = ComputeHitResultFromDateTime(
+                        requester.ActivatedTime,
+                        requester.HitTime,
+                        GetConfirmedDiedTime(requester.AttackerId),
+                        GetConfirmedDiedTime(requester.VictimId)
+                    );
+                }
 
                 if (assumedResult != result)
                 {
@@ -304,6 +360,12 @@ namespace CenturionCC.System.Player
 
             logger.LogError($"{Prefix}Couldn't get available syncer. returning 0!");
             return syncers[0];
+        }
+
+        private ResolverDataSyncer GetPlayerDependentSyncer(PlayerBase victim)
+        {
+            var index = victim.Index % syncers.Length;
+            return syncers[index];
         }
 
         [CanBeNull]

@@ -629,7 +629,9 @@ MonoBehaviour:
   gunVariationId: 0
   summonPosition: {fileID: 0}
   summonTime: 5
+  staffOnly: 0
   gunManager: {fileID: 2428846941591081302}
+  roleProvider: {fileID: 0}
 --- !u!1001 &169334351
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1049,7 +1051,9 @@ MonoBehaviour:
   gunVariationId: 4
   summonPosition: {fileID: 1985469245}
   summonTime: 5
+  staffOnly: 0
   gunManager: {fileID: 2428846941591081302}
+  roleProvider: {fileID: 0}
 --- !u!114 &211927786
 MonoBehaviour:
   m_ObjectHideFlags: 2
@@ -2404,7 +2408,9 @@ MonoBehaviour:
   gunVariationId: 0
   summonPosition: {fileID: 0}
   summonTime: 5
+  staffOnly: 0
   gunManager: {fileID: 2428846941591081302}
+  roleProvider: {fileID: 0}
 --- !u!1 &669977915 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2428846940943522926, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
@@ -3713,7 +3719,7 @@ PrefabInstance:
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: NetworkIDs.Array.size
-      value: 469
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
@@ -10276,18 +10282,21 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 905604436}
   updateManager: {fileID: 1172751848}
+  hitEffect: {fileID: 0}
   players: {fileID: 392230535}
   guns: {fileID: 2428846941591081302}
+  wall: {fileID: 0}
   audioManager: {fileID: 769008500}
+  roleProvider: {fileID: 0}
   movement: {fileID: 0}
   logger: {fileID: 21636226}
   eventLogger: {fileID: 0}
+  footstep: {fileID: 0}
   moderatorTool: {fileID: 0}
   notification: {fileID: 0}
-  antiZombieTime: 5
-  gameRules: []
-  respawnOnHit: 0
-  hasDied: 0
+  resolver: {fileID: 0}
+  logHitLocation: 1
+  logShotLocation: 1
 --- !u!114 &905604436
 MonoBehaviour:
   m_ObjectHideFlags: 2
@@ -10751,7 +10760,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1162393130}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.003, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1328940237}
@@ -10828,7 +10837,7 @@ MonoBehaviour:
   environmentEffectMultiplier: 1
   checkGunDirectionToAllowRunning: 0
   gunDirectionUpperBound: 0.7
-  gunDirectionLowerBound: -0.7
+  gunShotCombatTagTime: 1
   playFootstepSound: 1
   footstepDistance: 1
   footstepTime: 0.9
@@ -11444,7 +11453,9 @@ MonoBehaviour:
   gunVariationId: 1
   summonPosition: {fileID: 1528804642}
   summonTime: 5
+  staffOnly: 0
   gunManager: {fileID: 2428846941591081302}
+  roleProvider: {fileID: 0}
 --- !u!1 &1268961277 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2428846942490877608, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
@@ -12259,7 +12270,9 @@ MonoBehaviour:
   gunVariationId: 0
   summonPosition: {fileID: 0}
   summonTime: 5
+  staffOnly: 0
   gunManager: {fileID: 2428846941591081302}
+  roleProvider: {fileID: 0}
 --- !u!1 &1540226984 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2428846942216351485, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
@@ -13480,7 +13493,9 @@ MonoBehaviour:
   gunVariationId: 3
   summonPosition: {fileID: 664239524}
   summonTime: 5
+  staffOnly: 0
   gunManager: {fileID: 2428846941591081302}
+  roleProvider: {fileID: 0}
 --- !u!65 &1720150535
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13910,7 +13925,9 @@ MonoBehaviour:
   gunVariationId: 2
   summonPosition: {fileID: 166697119}
   summonTime: 5
+  staffOnly: 0
   gunManager: {fileID: 2428846941591081302}
+  roleProvider: {fileID: 0}
 --- !u!1 &1752360453 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2428846941990713168, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
@@ -14300,7 +14317,9 @@ MonoBehaviour:
   gunVariationId: 0
   summonPosition: {fileID: 0}
   summonTime: 5
+  staffOnly: 0
   gunManager: {fileID: 2428846941591081302}
+  roleProvider: {fileID: 0}
 --- !u!1 &1996705745
 GameObject:
   m_ObjectHideFlags: 0
@@ -15294,7 +15313,9 @@ MonoBehaviour:
   gunVariationId: 0
   summonPosition: {fileID: 314294961}
   summonTime: 5
+  staffOnly: 0
   gunManager: {fileID: 2428846941591081302}
+  roleProvider: {fileID: 0}
 --- !u!114 &223843614831706308
 MonoBehaviour:
   m_ObjectHideFlags: 2

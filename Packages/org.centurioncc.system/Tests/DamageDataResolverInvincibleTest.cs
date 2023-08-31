@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace CenturionCC.System.Tests
 {
-    public class DamageDataResolverTest
+    public class DamageDataResolverInvincibleTest
     {
         private DamageDataResolver _instance;
 

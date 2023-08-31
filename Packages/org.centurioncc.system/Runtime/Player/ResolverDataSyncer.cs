@@ -360,20 +360,22 @@ namespace CenturionCC.System.Player
             // U# does not support list collection initializer yet
             // ReSharper disable once UseObjectOrCollectionInitializer
             var damageData = new DataDictionary();
-            damageData.Add("activatedTime", syncer.ActivatedTime.ToString("s"));
-            damageData.Add("hitTime", syncer.HitTime.ToString("s"));
+            damageData.Add("activatedTime", syncer.ActivatedTime.ToString("O"));
+            damageData.Add("hitTime", syncer.HitTime.ToString("O"));
             damageData.Add("activatedPosition", AsDataToken(syncer.ActivatedPosition));
             damageData.Add("hitPosition", AsDataToken(syncer.HitPosition));
             damageData.Add("weaponName", syncer.WeaponType);
 
             // ReSharper disable once UseObjectOrCollectionInitializer
             var syncerData = new DataDictionary();
+            syncerData.Add("eventId", syncer.EventId);
+            syncerData.Add("lastUsedTime", syncer.LastUsedTime);
             syncerData.Add("senderId", syncer.SenderId);
             syncerData.Add("attackerId", syncer.AttackerId);
             syncerData.Add("victimId", syncer.VictimId);
-            syncerData.Add("request", new DataToken(syncer.Request));
-            syncerData.Add("result", new DataToken(syncer.Result));
-            syncerData.Add("type", new DataToken(syncer.Type));
+            syncerData.Add("request", ResolverDataSyncer.GetRequestName(syncer.Request));
+            syncerData.Add("result", ResolverDataSyncer.GetResultName(syncer.Result));
+            syncerData.Add("type", ResolverDataSyncer.GetKillTypeName(syncer.Type));
             syncerData.Add("damageData", damageData);
 
             return new DataToken(syncerData);
