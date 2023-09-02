@@ -1472,7 +1472,7 @@ namespace CenturionCC.System.Gun
                 }
             }
 
-            if (!(MainHandle.IsPickedUp ||
+            if (!((MainHandle != null && MainHandle.IsPickedUp) ||
                   (SubHandle != null && SubHandle.IsPickedUp) ||
                   (CustomHandle != null && CustomHandle.IsPickedUp)))
             {
