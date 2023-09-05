@@ -28,4 +28,4 @@ jobs:
           cat response
       - name: Check response
         run: |
-          [[ $(tail -n 1 response) == "200" ]]
+          [[ $(tail -n 1 response) == "204" ]]
