@@ -20,4 +20,12 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.ACTIONS_KEY }}"\
             -H "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/Centurion-Creative-Connect/vpm-repos/actions/workflows/build-listing.yml/dispatches \
-            -d '{"ref":"main"}'
+            -d '{"ref":"main"}' \
+            -w '\n%{response_code}'\
+            > response
+      - name: Log response
+        run: |
+          cat response
+      - name: Check response
+        run: |
+          [[ $(tail -n 1 response) == "204" ]]
