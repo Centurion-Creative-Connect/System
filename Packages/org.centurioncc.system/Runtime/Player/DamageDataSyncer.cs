@@ -10,21 +10,21 @@ using VRC.Udon.Common;
 namespace CenturionCC.System.Player
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-    public class ResolverDataSyncer : UdonSharpBehaviour
+    public class DamageDataSyncer : UdonSharpBehaviour
     {
         [NewbieInject] [HideInInspector] [SerializeField]
-        private DamageDataResolverBase resolver;
-        private bool _hasResolved = false;
+        private DamageDataSyncerManager manager;
+        private bool _hasProcessed = false;
 
         private bool _hasSent = true;
 
-        public bool IsAvailable => _hasSent && Result != HitResult.Waiting;
+        public bool IsAvailable => _hasSent && Result != SyncResult.Sending;
         public int ResendCount { get; private set; }
         public float LastUsedTime { get; private set; }
 
-        public void Resend(ResolverDataSyncer other)
+        public void Resend(DamageDataSyncer other)
         {
-            _hasResolved = other._hasResolved;
+            _hasProcessed = other._hasProcessed;
 
             LastUsedTime = Time.realtimeSinceStartup;
 
@@ -37,7 +37,6 @@ namespace CenturionCC.System.Player
             _localActivatedTime = other._localActivatedTime;
             _localHitTime = other._localHitTime;
             _localWeaponType = other._localWeaponType;
-            _localRequest = other._localRequest;
             _localResult = other._localResult;
             _localType = other._localType;
 
@@ -46,9 +45,9 @@ namespace CenturionCC.System.Player
             RequestSync();
         }
 
-        public void SendReply(HitResult result)
+        public void UpdateResult(SyncResult result)
         {
-            _hasResolved = false;
+            _hasProcessed = false;
 
             LastUsedTime = Time.realtimeSinceStartup;
 
@@ -66,12 +65,11 @@ namespace CenturionCC.System.Player
             DateTime activatedTime,
             DateTime hitTime,
             string weaponType,
-            ResolveRequest request,
-            HitResult result,
+            SyncResult result,
             KillType type
         )
         {
-            _hasResolved = false;
+            _hasProcessed = false;
 
             LastUsedTime = Time.realtimeSinceStartup;
 
@@ -85,7 +83,6 @@ namespace CenturionCC.System.Player
             _localHitTime = hitTime;
             _localWeaponType = weaponType;
 
-            _localRequest = request;
             _localResult = result;
             _localType = type;
 
@@ -106,7 +103,6 @@ namespace CenturionCC.System.Player
             HitTimeTicks = _localHitTime.Ticks;
             WeaponType = _localWeaponType;
 
-            Request = _localRequest;
             Result = _localResult;
             Type = _localType;
         }
@@ -123,7 +119,6 @@ namespace CenturionCC.System.Player
             _localHitTime = HitTime;
             _localWeaponType = WeaponType;
 
-            _localRequest = Request;
             _localResult = Result;
             _localType = Type;
         }
@@ -131,8 +126,8 @@ namespace CenturionCC.System.Player
         public void MakeAvailable()
         {
             _hasSent = true;
-            _hasResolved = false;
-            Result = HitResult.Unassigned;
+            _hasProcessed = false;
+            Result = SyncResult.Unassigned;
         }
 
         public string GetShortEventId()
@@ -154,7 +149,6 @@ namespace CenturionCC.System.Player
                    $"{VictimId}@" +
                    $"{ActivatedTime:s}/" +
                    $"{HitTime:s}:" +
-                   $"{GetRequestName(Request)}:" +
                    $"{GetResultName(Result)}:" +
                    $"{GetKillTypeName(Type)}|" +
                    $"{ResendCount}";
@@ -169,7 +163,6 @@ namespace CenturionCC.System.Player
                    $"{_localVictimId}@" +
                    $"{_localActivatedTime:s}/" +
                    $"{_localHitTime:s}:" +
-                   $"{GetRequestName(_localRequest)}:" +
                    $"{GetResultName(_localResult)}:" +
                    $"{GetKillTypeName(_localType)}|" +
                    $"{ResendCount}";
@@ -202,8 +195,7 @@ namespace CenturionCC.System.Player
         private DateTime _localActivatedTime;
         private DateTime _localHitTime;
 
-        private ResolveRequest _localRequest;
-        private HitResult _localResult;
+        private SyncResult _localResult;
         private KillType _localType;
         private int _localVictimId;
         private string _localWeaponType;
@@ -238,11 +230,8 @@ namespace CenturionCC.System.Player
                 : DateTime.MinValue;
         [field: UdonSynced]
         public string WeaponType { get; private set; }
-
         [field: UdonSynced]
-        public ResolveRequest Request { get; private set; } = ResolveRequest.Unassigned;
-        [field: UdonSynced]
-        public HitResult Result { get; private set; } = HitResult.Unassigned;
+        public SyncResult Result { get; private set; } = SyncResult.Unassigned;
         [field: UdonSynced]
         public KillType Type { get; private set; } = KillType.Default;
 
@@ -267,11 +256,11 @@ namespace CenturionCC.System.Player
                 return;
             }
 
-            if (!_hasResolved)
+            if (!_hasProcessed)
             {
                 // Set flag before requesting resolve, because resolve may call ResolverDataSyncer#SendReply
-                _hasResolved = true;
-                resolver.RequestResolve(this);
+                _hasProcessed = true;
+                manager.Receive(this);
             }
         }
 
@@ -281,57 +270,36 @@ namespace CenturionCC.System.Player
             LastUsedTime = Time.realtimeSinceStartup;
 
             // TODO: test resending
-            var mayHaveOverwritten = _localResult == HitResult.Waiting ||
-                                     (previousTime + 1F > LastUsedTime && _localResult == HitResult.Hit);
+            var mayHaveOverwritten = _localResult == SyncResult.Sending ||
+                                     (previousTime + 1F > LastUsedTime && _localResult == SyncResult.Received);
             if (!_hasSent &&
                 _localSenderId == Networking.LocalPlayer.playerId &&
                 SenderId != _localSenderId &&
                 EventId != _localEventId &&
                 mayHaveOverwritten)
-                resolver.RequestResend(this);
+                manager.RequestResend(this);
 
             ApplyGlobal();
 
             // Set flag before requesting resolve, because resolve may call ResolverDataSyncer#SendReply
-            _hasResolved = true;
-            resolver.RequestResolve(this);
+            _hasProcessed = true;
+            manager.Receive(this);
         }
 
         #endregion
 
         #region GetReadableEnumNames
 
-        public static string GetRequestName(ResolveRequest r)
+        public static string GetResultName(SyncResult r)
         {
             switch (r)
             {
-                case ResolveRequest.Unassigned:
+                case SyncResult.Unassigned:
                     return "Unassigned";
-                case ResolveRequest.ToAttacker:
-                    return "ByAttacker";
-                case ResolveRequest.ToVictim:
-                    return "ByVictim";
-                default:
-                    return "Unknown";
-            }
-        }
-
-        public static string GetResultName(HitResult r)
-        {
-            switch (r)
-            {
-                case HitResult.Unassigned:
-                    return "Unassigned";
-                case HitResult.Waiting:
+                case SyncResult.Sending:
                     return "Waiting";
-                case HitResult.Hit:
-                    return "Hit";
-                case HitResult.Fail:
-                    return "Fail";
-                case HitResult.FailByAttackerDead:
-                    return "FailByAttackerDead";
-                case HitResult.FailByVictimDead:
-                    return "FailByVictimDead";
+                case SyncResult.Received:
+                    return "Processed";
                 default:
                     return "Unknown";
             }
@@ -355,7 +323,7 @@ namespace CenturionCC.System.Player
 
     public static class ResolverDataSyncerExtensions
     {
-        public static DataToken AsDataToken(this ResolverDataSyncer syncer)
+        public static DataToken AsDataToken(this DamageDataSyncer syncer)
         {
             // U# does not support list collection initializer yet
             // ReSharper disable once UseObjectOrCollectionInitializer
@@ -371,7 +339,6 @@ namespace CenturionCC.System.Player
             syncerData.Add("senderId", syncer.SenderId);
             syncerData.Add("attackerId", syncer.AttackerId);
             syncerData.Add("victimId", syncer.VictimId);
-            syncerData.Add("request", new DataToken(syncer.Request));
             syncerData.Add("result", new DataToken(syncer.Result));
             syncerData.Add("type", new DataToken(syncer.Type));
             syncerData.Add("damageData", damageData);
@@ -390,47 +357,19 @@ namespace CenturionCC.System.Player
         }
     }
 
-    public enum ResolveRequest
+    public enum SyncResult
     {
         /// <summary>
         /// Initial state before syncer is receiving or sending data
         /// </summary>
         Unassigned = -2,
         /// <summary>
-        /// Requesting to attacker to resolve
+        /// Waiting for data to be received
         /// </summary>
-        ToAttacker = 1,
+        Sending = 1,
         /// <summary>
-        /// Requesting to victim to resolve
+        /// Waiting for next data
         /// </summary>
-        ToVictim = 2
-    }
-
-    public enum HitResult
-    {
-        /// <summary>
-        /// Initial state before syncer is receiving or sending data
-        /// </summary>
-        Unassigned = -2,
-        /// <summary>
-        /// Waiting for resolving
-        /// </summary>
-        Waiting = -1,
-        /// <summary>
-        /// Success result
-        /// </summary>
-        Hit = 0,
-        /// <summary>
-        /// Failed result
-        /// </summary>
-        Fail = 1,
-        /// <summary>
-        /// Failed result because attacker was already dead
-        /// </summary>
-        FailByAttackerDead = 2,
-        /// <summary>
-        /// Failed result because victim was already dead
-        /// </summary>
-        FailByVictimDead = 3
+        Received = 0,
     }
 }

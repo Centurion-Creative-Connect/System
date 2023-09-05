@@ -34,6 +34,8 @@ namespace CenturionCC.System
         public NotificationProvider notification;
         [NewbieInject]
         public DamageDataResolver resolver;
+        [NewbieInject]
+        public DamageDataSyncerManager syncer;
 
         public bool logHitLocation = true;
         public bool logShotLocation = true;
@@ -71,27 +73,6 @@ namespace CenturionCC.System
         public WatchdogChildCallbackBase[] GetChildren()
         {
             return null;
-        }
-
-        [Obsolete("Use PlayerBase.OnDeath() directly.")]
-        public void PlayHitLocal(PlayerBase player)
-        {
-            PlayOnDeath(player);
-        }
-
-        [Obsolete("Use PlayerBase.OnDeath() directly.")]
-        public void PlayHitRemote(PlayerBase player)
-        {
-            PlayOnDeath(player);
-        }
-
-        [Obsolete("Use PlayerBase.OnDeath() directly.")]
-        private void PlayOnDeath(PlayerBase player)
-        {
-            logger.LogVerbose(
-                $"{_prefix}PlayOnDeath: {(player != null ? NewbieUtils.GetPlayerName(player.VrcPlayer) : "Dummy (shooter player null)")}");
-            if (player != null)
-                player.OnDeath();
         }
 
         public bool CanShoot()

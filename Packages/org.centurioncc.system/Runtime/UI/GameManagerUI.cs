@@ -164,20 +164,6 @@ namespace CenturionCC.System.UI
             strafeSpeedField.text = $"{pm.strafeSpeed}";
         }
 
-        public void PlayHitLocal()
-        {
-            var localPlayer = manager.players.GetLocalPlayer();
-            if (localPlayer != null)
-                localPlayer.OnDeath();
-        }
-
-        public void PlayHitRemote()
-        {
-            var remotePlayer = manager.players.GetPlayer(GetIntFromField(remoteIdField));
-            if (remotePlayer != null)
-                remotePlayer.OnDeath();
-        }
-
         private bool CheckToggle(Toggle toggle, bool lastValue)
         {
             if (!toggle) return false;

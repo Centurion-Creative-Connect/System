@@ -22,10 +22,13 @@ namespace CenturionCC.System.Player.MassPlayer
         private RoleData _cachedRoleData;
 
         private FootstepAudioStore _footstepAudio;
+        [UdonSynced] [FieldChangeCallback(nameof(SyncedHasDied))]
+        private bool _syncedHasDied;
         [UdonSynced] [FieldChangeCallback(nameof(SyncedPlayerId))]
         private int _syncedPlayerId = -1;
         [UdonSynced] [FieldChangeCallback(nameof(SyncedTeamId))]
         private int _syncedTeamId;
+
         public VRCPlayerApi cachedVrcPlayerApi;
 
         public int SyncedPlayerId
@@ -63,9 +66,19 @@ namespace CenturionCC.System.Player.MassPlayer
                 UpdateView();
             }
         }
+        public bool SyncedHasDied
+        {
+            get => _syncedHasDied;
+            protected set
+            {
+                _syncedHasDied = value;
+                UpdateView();
+            }
+        }
 
         public override int PlayerId => SyncedPlayerId;
         public override int TeamId => SyncedTeamId;
+        public override bool HasDied => SyncedHasDied;
 
         public override bool IsAssigned => VrcPlayer != null && VrcPlayer.IsValid();
         public override VRCPlayerApi VrcPlayer => cachedVrcPlayerApi;
@@ -135,8 +148,24 @@ namespace CenturionCC.System.Player.MassPlayer
             playerManager.Invoke_OnHitDetection(playerCollider, data, contactPoint);
         }
 
-        public override void OnDeath()
+        public override void Kill()
         {
+            SyncedHasDied = true;
+            if (IsLocal)
+                Sync();
+        }
+
+        public override void Revive()
+        {
+            SyncedHasDied = false;
+            if (IsLocal)
+                Sync();
+        }
+
+        public override void OnHitDataUpdated()
+        {
+            Kill();
+            playerManager.Invoke_OnKilled(playerManager.GetPlayerById(LastHitData.AttackerId), this, LastHitData.Type);
         }
 
         #region PlayFootstepMethods
