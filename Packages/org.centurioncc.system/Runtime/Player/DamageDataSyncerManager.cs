@@ -164,7 +164,7 @@ namespace CenturionCC.System.Player
             }
 
             AddResolvedEventId(requester);
-            Invoke_OnDeserializationCallback(requester);
+            Invoke_OnReceiveCallback(requester);
         }
 
         public void RequestResend(DamageDataSyncer requester)
@@ -223,18 +223,11 @@ namespace CenturionCC.System.Player
             return eventId;
         }
 
-        private void Invoke_OnPreSerializationCallback(DamageDataSyncer syncer)
+        private void Invoke_OnReceiveCallback(DamageDataSyncer syncer)
         {
             foreach (var callback in _callbacks)
                 if (callback != null)
-                    ((DamageDataSyncerManagerCallback)callback).OnSyncerPreSerialization(syncer);
-        }
-
-        private void Invoke_OnDeserializationCallback(DamageDataSyncer syncer)
-        {
-            foreach (var callback in _callbacks)
-                if (callback != null)
-                    ((DamageDataSyncerManagerCallback)callback).OnSyncerDeserialized(syncer);
+                    ((DamageDataSyncerManagerCallback)callback).OnSyncerReceived(syncer);
         }
 
         [PublicAPI]

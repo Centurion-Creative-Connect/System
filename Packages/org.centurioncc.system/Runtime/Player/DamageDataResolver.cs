@@ -80,7 +80,7 @@ namespace CenturionCC.System.Player
             SetAssumedDiedTime(victimId, Networking.GetNetworkDateTime());
         }
 
-        public override void OnSyncerDeserialized(DamageDataSyncer syncer)
+        public override void OnSyncerReceived(DamageDataSyncer syncer)
         {
             if (syncer.VictimId != _local.playerId)
                 return;
