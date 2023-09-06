@@ -115,5 +115,13 @@ namespace CenturionCC.System.Player
         public virtual void OnResetPlayerStats(PlayerBase player)
         {
         }
+
+        /// <summary>
+        /// Called when <see cref="PlayerBase.HasDied"/> was set to false.
+        /// </summary>
+        /// <param name="player">a player which changed <see cref="PlayerBase.HasDied"/></param>
+        public virtual void OnPlayerRevived(PlayerBase player)
+        {
+        }
     }
 }
