@@ -1062,6 +1062,24 @@ namespace CenturionCC.System.Player
             }
         }
 
+        public void Invoke_OnPlayerRevived(PlayerBase revivedPlayer)
+        {
+            if (revivedPlayer == null)
+            {
+                Logger.LogWarn($"{Prefix}Invoke_OnPlayerRevived called without actual player.");
+                return;
+            }
+
+            Logger.Log($"{Prefix}Invoke_OnPlayerRevived: {NewbieUtils.GetPlayerName(revivedPlayer.VrcPlayer)}");
+
+            foreach (var callback in _eventCallbacks)
+            {
+                if (callback == null) continue;
+
+                ((PlayerManagerCallbackBase)callback).OnPlayerRevived(revivedPlayer);
+            }
+        }
+
         #endregion
     }
 

@@ -71,7 +71,13 @@ namespace CenturionCC.System.Player.MassPlayer
             get => _syncedHasDied;
             protected set
             {
+                var lastDied = _syncedHasDied;
+
                 _syncedHasDied = value;
+
+                if (!_syncedHasDied && lastDied != _syncedHasDied)
+                    playerManager.Invoke_OnPlayerRevived(this);
+
                 UpdateView();
             }
         }
