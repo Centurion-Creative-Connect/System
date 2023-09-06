@@ -1037,8 +1037,6 @@ namespace CenturionCC.System.Player
                 return;
             }
 
-            hitPlayer.OnDeath();
-
             Logger.Log(
                 $"{Prefix}Invoke_OnKilled: {(firedPlayer != null ? NewbieUtils.GetPlayerName(firedPlayer.VrcPlayer) : "null")}, {(hitPlayer != null ? NewbieUtils.GetPlayerName(hitPlayer.VrcPlayer) : "null")}");
 

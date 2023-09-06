@@ -42,28 +42,28 @@ namespace CenturionCC.System.Tests
             var now = new DateTime(2022, 3, 25, 1, 0, 0);
             var outOfDuration = now.AddSeconds(-50D);
 
-            void Check(DateTime origin, DateTime hit, DateTime atkDied, DateTime vicDied, HitResult expected)
+            void Check(DateTime origin, DateTime hit, DateTime atkDied, DateTime vicDied, bool expected)
             {
                 var result = _instance.ComputeHitResultFromDateTime(origin, hit, atkDied, vicDied);
                 Assert.That(result == expected, "Expected: {0}\nBut was: {1}", expected, result);
             }
 
-            Check(now.AddSeconds(10D), now.AddSeconds(10D), now, outOfDuration, HitResult.Hit);
-            Check(now.AddSeconds(10D), now.AddSeconds(11D), now, outOfDuration, HitResult.Hit);
+            Check(now.AddSeconds(10D), now.AddSeconds(10D), now, outOfDuration, true);
+            Check(now.AddSeconds(10D), now.AddSeconds(11D), now, outOfDuration, true);
 
-            Check(now.AddSeconds(10D), now.AddSeconds(10D), outOfDuration, now, HitResult.Hit);
-            Check(now.AddSeconds(10D), now.AddSeconds(11D), outOfDuration, now, HitResult.Hit);
+            Check(now.AddSeconds(10D), now.AddSeconds(10D), outOfDuration, now, true);
+            Check(now.AddSeconds(10D), now.AddSeconds(11D), outOfDuration, now, true);
 
-            Check(now.AddSeconds(1D), now, now, now, HitResult.Fail);
-            Check(now.AddSeconds(11D), now.AddSeconds(10D), now, outOfDuration, HitResult.Fail);
-            Check(now.AddSeconds(11D), now.AddSeconds(10D), outOfDuration, now, HitResult.Fail);
+            Check(now.AddSeconds(1D), now, now, now, false);
+            Check(now.AddSeconds(11D), now.AddSeconds(10D), now, outOfDuration, false);
+            Check(now.AddSeconds(11D), now.AddSeconds(10D), outOfDuration, now, false);
 
-            Check(now, now, now, now, HitResult.FailByAttackerDead);
-            Check(now.AddSeconds(1D), now.AddSeconds(2D), now, outOfDuration, HitResult.FailByAttackerDead);
-            Check(now.AddSeconds(9D), now.AddSeconds(10D), now, outOfDuration, HitResult.FailByAttackerDead);
+            Check(now, now, now, now, false);
+            Check(now.AddSeconds(1D), now.AddSeconds(2D), now, outOfDuration, false);
+            Check(now.AddSeconds(9D), now.AddSeconds(10D), now, outOfDuration, false);
 
-            Check(now, now.AddSeconds(1D), outOfDuration, now, HitResult.FailByVictimDead);
-            Check(now, now.AddSeconds(9D), outOfDuration, now, HitResult.FailByVictimDead);
+            Check(now, now.AddSeconds(1D), outOfDuration, now, false);
+            Check(now, now.AddSeconds(9D), outOfDuration, now, false);
         }
     }
 }

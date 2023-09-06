@@ -1631,6 +1631,7 @@ GameObject:
   - component: {fileID: 1688446764428739932}
   - component: {fileID: -1911997249601102991}
   - component: {fileID: 1195375987281151924}
+  - component: {fileID: -5728551032463609039}
   m_Layer: 29
   m_Name: Player
   m_TagString: Untagged
@@ -1677,6 +1678,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1195375987281151924}
+  lastHitData: {fileID: -5728551032463609039}
   playerManager: {fileID: 0}
   playerTag: {fileID: 7287343238306855561}
   playerHumanoidCollider: {fileID: 6419621913699827687}
@@ -1723,6 +1725,29 @@ MonoBehaviour:
   - {fileID: 8309468432131039693}
   - {fileID: 3039998669233893481}
   publicVariablesSerializationDataFormat: 0
+--- !u!114 &-5728551032463609039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6010116994822508052}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bad62061629e21b4aa4d69f0c0a11acc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  _udonSharpBackingUdonBehaviour: {fileID: 0}
+  player: {fileID: -1911997249601102991}
 --- !u!1 &6222720769796004384
 GameObject:
   m_ObjectHideFlags: 0

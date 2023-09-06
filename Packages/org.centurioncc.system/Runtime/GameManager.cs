@@ -34,6 +34,8 @@ namespace CenturionCC.System
         public NotificationProvider notification;
         [NewbieInject]
         public DamageDataResolver resolver;
+        [NewbieInject]
+        public DamageDataSyncerManager syncer;
 
         public bool logHitLocation = true;
         public bool logShotLocation = true;
@@ -73,27 +75,6 @@ namespace CenturionCC.System
             return null;
         }
 
-        [Obsolete("Use PlayerBase.OnDeath() directly.")]
-        public void PlayHitLocal(PlayerBase player)
-        {
-            PlayOnDeath(player);
-        }
-
-        [Obsolete("Use PlayerBase.OnDeath() directly.")]
-        public void PlayHitRemote(PlayerBase player)
-        {
-            PlayOnDeath(player);
-        }
-
-        [Obsolete("Use PlayerBase.OnDeath() directly.")]
-        private void PlayOnDeath(PlayerBase player)
-        {
-            logger.LogVerbose(
-                $"{_prefix}PlayOnDeath: {(player != null ? NewbieUtils.GetPlayerName(player.VrcPlayer) : "Dummy (shooter player null)")}");
-            if (player != null)
-                player.OnDeath();
-        }
-
         public bool CanShoot()
         {
             if (!Networking.LocalPlayer.IsPlayerGrounded())
@@ -113,8 +94,8 @@ namespace CenturionCC.System
 
         public bool IsInAntiZombieTime()
         {
-            return resolver != null && resolver.IsInInvincibleDuration(Networking.GetNetworkDateTime(),
-                resolver.GetConfirmedDiedTime(Networking.LocalPlayer.playerId));
+            var localPlayer = players.GetLocalPlayer();
+            return localPlayer != null && localPlayer.HasDied;
         }
 
         [Obsolete("Use NewbieUtils.GetPlayerName() instead")]
@@ -162,6 +143,10 @@ namespace CenturionCC.System
 
         public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
+            if (!hitPlayer.IsLocal)
+                return;
+
+            hitPlayer.SendCustomEventDelayedSeconds(nameof(hitPlayer.Revive), 5F);
         }
 
         public void OnTeamChanged(PlayerBase player, int oldTeam)
