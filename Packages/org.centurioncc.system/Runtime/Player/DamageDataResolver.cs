@@ -105,17 +105,7 @@ namespace CenturionCC.System.Player
 
         #region DiedTimeGetterSetter
 
-        private readonly DataDictionary _confirmedDiedTimeDict = new DataDictionary();
         private readonly DataDictionary _assumedDiedTimeDict = new DataDictionary();
-
-        [PublicAPI]
-        public DateTime GetConfirmedDiedTime(int playerId)
-        {
-            return _confirmedDiedTimeDict.TryGetValue(new DataToken(playerId), TokenType.Long,
-                out var timeToken)
-                ? new DateTime(timeToken.Long)
-                : DateTime.MinValue;
-        }
 
         [PublicAPI]
         public DateTime GetAssumedDiedTime(int playerId)
@@ -126,24 +116,9 @@ namespace CenturionCC.System.Player
                 : DateTime.MinValue;
         }
 
-        private void SetConfirmedDiedTime(PlayerBase player, DateTime time)
-        {
-            var playerIdToken = new DataToken(player.PlayerId);
-            var timeToken = new DataToken(time.Ticks);
-
-            _confirmedDiedTimeDict.SetValue(playerIdToken, timeToken);
-            _assumedDiedTimeDict.SetValue(playerIdToken, timeToken);
-            // player.PreviousDiedTime = time;
-        }
-
         private void SetAssumedDiedTime(int playerId, DateTime time)
         {
             _assumedDiedTimeDict.SetValue(playerId, time.Ticks);
-        }
-
-        private void RevertAssumedDiedTime(int playerId)
-        {
-            _assumedDiedTimeDict.SetValue(playerId, GetConfirmedDiedTime(playerId).Ticks);
         }
 
         #endregion

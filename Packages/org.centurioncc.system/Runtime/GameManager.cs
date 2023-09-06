@@ -94,8 +94,11 @@ namespace CenturionCC.System
 
         public bool IsInAntiZombieTime()
         {
-            return resolver != null && resolver.IsInInvincibleDuration(Networking.GetNetworkDateTime(),
-                resolver.GetConfirmedDiedTime(Networking.LocalPlayer.playerId));
+            var localPlayer = players.GetLocalPlayer();
+            if (localPlayer == null)
+                return false;
+            return resolver != null &&
+                   resolver.IsInInvincibleDuration(Networking.GetNetworkDateTime(), localPlayer.LastHitData.HitTime);
         }
 
         [Obsolete("Use NewbieUtils.GetPlayerName() instead")]
