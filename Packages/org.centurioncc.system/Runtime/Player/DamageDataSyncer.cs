@@ -251,7 +251,7 @@ namespace CenturionCC.System.Player
             if (!_hasSent)
             {
                 Debug.LogError(
-                    $"[ResolverDataSyncer-{name}] Failed to send data@PostSerialization, Requesting sync again!");
+                    $"[DamageDataSyncer-{name}] Failed to send data@PostSerialization, Requesting sync again!");
                 RequestSync();
                 return;
             }
