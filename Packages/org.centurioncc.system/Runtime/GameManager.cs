@@ -95,10 +95,7 @@ namespace CenturionCC.System
         public bool IsInAntiZombieTime()
         {
             var localPlayer = players.GetLocalPlayer();
-            if (localPlayer == null)
-                return false;
-            return resolver != null &&
-                   resolver.IsInInvincibleDuration(Networking.GetNetworkDateTime(), localPlayer.LastHitData.HitTime);
+            return localPlayer != null && localPlayer.HasDied;
         }
 
         [Obsolete("Use NewbieUtils.GetPlayerName() instead")]
@@ -146,6 +143,10 @@ namespace CenturionCC.System
 
         public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
+            if (!hitPlayer.IsLocal)
+                return;
+
+            hitPlayer.SendCustomEventDelayedSeconds(nameof(hitPlayer.Revive), 5F);
         }
 
         public void OnTeamChanged(PlayerBase player, int oldTeam)
