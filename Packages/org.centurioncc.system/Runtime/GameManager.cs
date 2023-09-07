@@ -47,8 +47,6 @@ namespace CenturionCC.System
             logger.Println(GetLicense());
             logger.Println($"Centurion System - v{GetVersion()}");
             logger.LogVerbose($"{_prefix}Subscribing event");
-            if (players)
-                players.SubscribeCallback(this);
             if (guns)
                 guns.SubscribeCallback(this);
 
@@ -95,7 +93,7 @@ namespace CenturionCC.System
         public bool IsInAntiZombieTime()
         {
             var localPlayer = players.GetLocalPlayer();
-            return localPlayer != null && localPlayer.HasDied;
+            return localPlayer != null && localPlayer.IsDead;
         }
 
         [Obsolete("Use NewbieUtils.GetPlayerName() instead")]
@@ -116,45 +114,6 @@ namespace CenturionCC.System
         {
             if (eventLogger && logShotLocation)
                 eventLogger.LogShot(instance, projectile);
-        }
-
-        #endregion
-
-        #region PlayerManagerCallbackBase
-
-        public void OnPlayerChanged(PlayerBase player, int oldId, int newId)
-        {
-        }
-
-        public void OnLocalPlayerChanged(PlayerBase playerNullable, int index)
-        {
-        }
-
-        public void OnFriendlyFire(PlayerBase firedPlayer, PlayerBase hitPlayer)
-        {
-        }
-
-        public void OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint,
-            bool isShooterDetection)
-        {
-            if (eventLogger && logHitLocation)
-                eventLogger.LogHitDetection(playerCollider, damageData, contactPoint, isShooterDetection);
-        }
-
-        public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
-        {
-            if (!hitPlayer.IsLocal)
-                return;
-
-            hitPlayer.SendCustomEventDelayedSeconds(nameof(hitPlayer.Revive), 5F);
-        }
-
-        public void OnTeamChanged(PlayerBase player, int oldTeam)
-        {
-        }
-
-        public void OnPlayerTagChanged(TagType type, bool isOn)
-        {
         }
 
         #endregion
