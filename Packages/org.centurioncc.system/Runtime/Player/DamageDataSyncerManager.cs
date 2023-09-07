@@ -103,9 +103,9 @@ namespace CenturionCC.System.Player
 
             var hitTime = Networking.GetNetworkDateTime();
             var victim = pCol.player;
-            if (hitTime.Subtract(victim.LastHitData.HitTime).TotalSeconds < 10D)
+            if (victim.IsDead)
             {
-                logger.LogError($"{Prefix}Will not send because attacker was recently hit");
+                logger.LogVerbose($"{Prefix}Will not send because attacker was already dead");
                 return;
             }
 
@@ -208,8 +208,6 @@ namespace CenturionCC.System.Player
                     ++duplicateCount;
 
                 key = new DataToken($"{syncer.EventId}-{duplicateCount}");
-                logger.LogError(
-                    $"{Prefix}Duplicated EventId found ({syncer.EventId}), Recording as {key.String}");
             }
 
             _resolvedEvents.SetValue(key, syncer.AsDataToken());

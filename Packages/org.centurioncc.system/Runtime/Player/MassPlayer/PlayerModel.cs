@@ -22,8 +22,8 @@ namespace CenturionCC.System.Player.MassPlayer
         private RoleData _cachedRoleData;
 
         private FootstepAudioStore _footstepAudio;
-        [UdonSynced] [FieldChangeCallback(nameof(SyncedHasDied))]
-        private bool _syncedHasDied;
+        [UdonSynced] [FieldChangeCallback(nameof(SyncedIsDead))]
+        private bool _syncedIsDead;
         [UdonSynced] [FieldChangeCallback(nameof(SyncedPlayerId))]
         private int _syncedPlayerId = -1;
         [UdonSynced] [FieldChangeCallback(nameof(SyncedTeamId))]
@@ -66,16 +66,16 @@ namespace CenturionCC.System.Player.MassPlayer
                 UpdateView();
             }
         }
-        public bool SyncedHasDied
+        public bool SyncedIsDead
         {
-            get => _syncedHasDied;
+            get => _syncedIsDead;
             protected set
             {
-                var lastDied = _syncedHasDied;
+                var lastDied = _syncedIsDead;
 
-                _syncedHasDied = value;
+                _syncedIsDead = value;
 
-                if (!_syncedHasDied && lastDied != _syncedHasDied)
+                if (!_syncedIsDead && lastDied != _syncedIsDead)
                     playerManager.Invoke_OnPlayerRevived(this);
 
                 UpdateView();
@@ -84,7 +84,7 @@ namespace CenturionCC.System.Player.MassPlayer
 
         public override int PlayerId => SyncedPlayerId;
         public override int TeamId => SyncedTeamId;
-        public override bool HasDied => SyncedHasDied;
+        public override bool IsDead => SyncedIsDead;
 
         public override bool IsAssigned => VrcPlayer != null && VrcPlayer.IsValid();
         public override VRCPlayerApi VrcPlayer => cachedVrcPlayerApi;
@@ -143,6 +143,7 @@ namespace CenturionCC.System.Player.MassPlayer
 
         public override void ResetStats()
         {
+            SyncedIsDead = false;
             Deaths = 0;
             Kills = 0;
 
@@ -156,14 +157,14 @@ namespace CenturionCC.System.Player.MassPlayer
 
         public override void Kill()
         {
-            SyncedHasDied = true;
+            SyncedIsDead = true;
             if (IsLocal)
                 Sync();
         }
 
         public override void Revive()
         {
-            SyncedHasDied = false;
+            SyncedIsDead = false;
             if (IsLocal)
                 Sync();
         }

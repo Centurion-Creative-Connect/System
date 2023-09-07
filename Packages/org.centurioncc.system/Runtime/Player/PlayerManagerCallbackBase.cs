@@ -117,9 +117,9 @@ namespace CenturionCC.System.Player
         }
 
         /// <summary>
-        /// Called when <see cref="PlayerBase.HasDied"/> was set to false.
+        /// Called when <see cref="PlayerBase.IsDead"/> was set to false.
         /// </summary>
-        /// <param name="player">a player which changed <see cref="PlayerBase.HasDied"/></param>
+        /// <param name="player">a player which changed <see cref="PlayerBase.IsDead"/></param>
         public virtual void OnPlayerRevived(PlayerBase player)
         {
         }
