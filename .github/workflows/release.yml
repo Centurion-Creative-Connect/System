@@ -3,12 +3,8 @@ name: Build Release
 on:
   workflow_dispatch:
   push:
-    branches:
-      - master
-    # basically matches semver
     tags:
-      - '\d+.\d+.\d+'
-      - '\d+.\d+.\d+-beta-\d+'
+      - '\d+.\d+.\d+(-[a-zA-Z]+(.\d+)?)?'
 
 env:
   packageName: "org.centurioncc.system"
