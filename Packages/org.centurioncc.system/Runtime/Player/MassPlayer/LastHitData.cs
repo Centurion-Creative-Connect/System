@@ -11,6 +11,9 @@ namespace CenturionCC.System.Player.MassPlayer
         [SerializeField]
         private PlayerBase player;
 
+        private bool _hasInit;
+        private int _lastEventId;
+
         public PlayerBase Player => player;
 
         [field: UdonSynced]
@@ -38,6 +41,12 @@ namespace CenturionCC.System.Player.MassPlayer
         [field: UdonSynced]
         public KillType Type { get; private set; } = KillType.Default;
 
+        private void Start()
+        {
+            if (Networking.IsMaster)
+                _hasInit = true;
+        }
+
         public void SetData(DamageDataSyncer syncer)
         {
             EventId = syncer.EventId;
@@ -55,11 +64,26 @@ namespace CenturionCC.System.Player.MassPlayer
             if (!Networking.IsOwner(gameObject))
                 Networking.SetOwner(Networking.LocalPlayer, gameObject);
             RequestSerialization();
+
+            if (EventId == _lastEventId)
+                return;
+
+            _lastEventId = EventId;
             player.OnHitDataUpdated();
         }
 
         public override void OnDeserialization()
         {
+            if (!_hasInit)
+            {
+                _hasInit = true;
+                return;
+            }
+
+            if (EventId == _lastEventId)
+                return;
+
+            _lastEventId = EventId;
             player.OnHitDataUpdated();
         }
     }

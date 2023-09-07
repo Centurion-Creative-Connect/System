@@ -50,12 +50,13 @@ namespace CenturionCC.System.Player.External.PlayerTag
                 return;
             }
 
-            var trackingData = cachedLocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
-            var forwardVec = (trackingData.rotation * Vector3.forward) * .1F;
-            cachedTransform.position =
-                followingPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position + NameTagOffset +
-                forwardVec;
-            cachedTransform.LookAt(trackingData.position);
+            var localHead = cachedLocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+            var remoteHeadPos = followingPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
+            if (followingPlayer.isLocal)
+                remoteHeadPos += localHead.rotation * Vector3.forward * .5F;
+            var forwardVec = (localHead.position - remoteHeadPos).normalized * .1F;
+            cachedTransform.position = remoteHeadPos + NameTagOffset + forwardVec;
+            cachedTransform.LookAt(localHead.position);
         }
 
         public virtual void Setup(ExternalPlayerTagManager manager, VRCPlayerApi api)
@@ -75,6 +76,6 @@ namespace CenturionCC.System.Player.External.PlayerTag
 
         public abstract void SetTagOn(TagType type, bool isOn);
 
-        public abstract void SetTeamTag(int teamId, Color teamColor);
+        public abstract void SetTeamTag(int teamId, Color teamColor, bool isStaff);
     }
 }

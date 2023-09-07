@@ -39,7 +39,7 @@ namespace CenturionCC.System.Player
         public virtual bool IsLocal => PlayerId == Networking.LocalPlayer.playerId;
 
         [PublicAPI]
-        public abstract bool HasDied { get; }
+        public abstract bool IsDead { get; }
 
         [PublicAPI] [CanBeNull]
         public abstract VRCPlayerApi VrcPlayer { get; }

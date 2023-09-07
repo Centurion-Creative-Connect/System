@@ -72,7 +72,7 @@ namespace CenturionCC.System.Player.External.PlayerTag
             gameObject.SetActive(IsVisible());
         }
 
-        public override void SetTeamTag(int teamId, Color teamColor)
+        public override void SetTeamTag(int teamId, Color teamColor, bool isStaff)
         {
             var spriteIndex = teamId;
             if (teamId < 0 || teamId >= teamSprites.Length)

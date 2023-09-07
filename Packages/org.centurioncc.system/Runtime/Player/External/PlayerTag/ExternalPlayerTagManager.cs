@@ -58,7 +58,8 @@ namespace CenturionCC.System.Player.External.PlayerTag
                 return;
 
             var playerTag = GetOrCreatePlayerTag(player.VrcPlayer);
-            playerTag.SetTeamTag(player.TeamId, playerManager.GetTeamColor(player.TeamId));
+            var team = player.TeamId;
+            playerTag.SetTeamTag(team, playerManager.GetTeamColor(player.TeamId), playerManager.IsStaffTeamId(team));
 
             if (player.IsLocal)
             {
@@ -129,15 +130,18 @@ namespace CenturionCC.System.Player.External.PlayerTag
             var taggedPlayerRole = roleManager.GetPlayerRole(taggedPlayerApi);
             var taggedPlayerTeamId = taggedPlayer != null ? taggedPlayer.TeamId : 0;
             var inSameTeam = localPlayerTeamId == taggedPlayerTeamId;
-            var isDead = taggedPlayer != null && taggedPlayer.HasDied;
+            var isDead = taggedPlayer != null && taggedPlayer.IsDead;
             var showAlways = localPlayerInSpecialTeam || playerManager.IsSpecialTeamId(taggedPlayerTeamId);
-            var showTeam = playerManager.ShowTeamTag && (showOtherTeamsTag || showAlways || inSameTeam || isDead);
-            var teamTagColor = !isDead ? Color.black : playerManager.GetTeamColor(taggedPlayerTeamId);
+            var showTeam = playerManager.ShowTeamTag && (showOtherTeamsTag || showAlways || inSameTeam);
+            var teamTagColor = playerManager.GetTeamColor(taggedPlayerTeamId);
+            var isStaffTeam = playerManager.IsStaffTeamId(taggedPlayerTeamId);
             var showStaff = playerManager.ShowStaffTag && (showStaffTagWhileInTeam || showAlways);
             var showCreator = playerManager.ShowCreatorTag && (showStaffTagWhileInTeam || showAlways);
 
+            playerTag.SetTagOn(TagType.Hit, isDead);
+
             playerTag.SetTagOn(TagType.Team, showTeam);
-            playerTag.SetTeamTag(taggedPlayerTeamId, teamTagColor);
+            playerTag.SetTeamTag(taggedPlayerTeamId, teamTagColor, isStaffTeam);
 
             playerTag.SetTagOn(GetStaffTagType(taggedPlayerRole), showStaff && taggedPlayerRole.IsGameStaff());
             playerTag.SetTagOn(TagType.Master, showStaff && taggedPlayerApi.isMaster);

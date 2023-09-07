@@ -23,6 +23,12 @@ namespace CenturionCC.System.Player.External.PlayerTag
         private Image creatorTag;
         [SerializeField]
         private Image masterTag;
+        [SerializeField]
+        private Image hitTag;
+        [SerializeField]
+        private Sprite teamTagSprite;
+        [SerializeField]
+        private Sprite staffTeamTagSprite;
 
         protected override void Start()
         {
@@ -74,6 +80,9 @@ namespace CenturionCC.System.Player.External.PlayerTag
                 case TagType.Owner:
                     ownerTag.gameObject.SetActive(isOn);
                     break;
+                case TagType.Hit:
+                    hitTag.gameObject.SetActive(isOn);
+                    break;
             }
 
             if (gameObject.activeSelf == IsVisible())
@@ -82,16 +91,20 @@ namespace CenturionCC.System.Player.External.PlayerTag
             gameObject.SetActive(IsVisible());
         }
 
-        public override void SetTeamTag(int teamId, Color teamColor)
+        public override void SetTeamTag(int teamId, Color teamColor, bool isStaff)
         {
             teamTag.color = teamColor;
+            hitTag.color = teamColor;
+
+            teamTag.sprite = isStaff ? staffTeamTagSprite : teamTagSprite;
         }
 
         private bool IsVisible()
         {
             return teamTag.gameObject.activeSelf || masterTag.gameObject.activeSelf ||
                    creatorTag.gameObject.activeSelf || staffTag.gameObject.activeSelf ||
-                   devTag.gameObject.activeSelf || ownerTag.gameObject.activeSelf;
+                   devTag.gameObject.activeSelf || ownerTag.gameObject.activeSelf ||
+                   hitTag.gameObject.activeSelf;
         }
     }
 }

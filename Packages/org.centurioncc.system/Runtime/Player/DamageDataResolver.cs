@@ -86,8 +86,8 @@ namespace CenturionCC.System.Player
                 return;
 
             var victim = playerManager.GetPlayerById(syncer.VictimId);
-            // if (victim.HasDied)
-            //     return;
+            if (victim.IsDead)
+                return;
 
             var result = ComputeHitResultFromDateTime(
                 syncer.ActivatedTime, syncer.HitTime,
