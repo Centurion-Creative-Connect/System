@@ -125,6 +125,7 @@ namespace CenturionCC.System.Player
         Staff,
         Dev,
         Owner,
-        Creator
+        Creator,
+        Hit
     }
 }
