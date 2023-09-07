@@ -146,6 +146,7 @@ namespace CenturionCC.System.Player.MassPlayer
             SyncedIsDead = false;
             Deaths = 0;
             Kills = 0;
+            LastHitData.ResetData();
 
             playerManager.Invoke_OnResetPlayerStats(this);
         }
