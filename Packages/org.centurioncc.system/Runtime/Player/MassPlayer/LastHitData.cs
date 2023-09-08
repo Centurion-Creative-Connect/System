@@ -59,13 +59,25 @@ namespace CenturionCC.System.Player.MassPlayer
             Type = syncer.Type;
         }
 
+        public void ResetData()
+        {
+            EventId = default;
+            AttackerId = default;
+            ActivatedPosition = default;
+            ActivatedTimeTicks = default;
+            HitPosition = default;
+            HitTimeTicks = default;
+            WeaponType = default;
+            Type = default;
+        }
+
         public void SyncData()
         {
             if (!Networking.IsOwner(gameObject))
                 Networking.SetOwner(Networking.LocalPlayer, gameObject);
             RequestSerialization();
 
-            if (EventId == _lastEventId)
+            if (EventId == _lastEventId || EventId == default)
                 return;
 
             _lastEventId = EventId;
@@ -80,7 +92,7 @@ namespace CenturionCC.System.Player.MassPlayer
                 return;
             }
 
-            if (EventId == _lastEventId)
+            if (EventId == _lastEventId || EventId == default)
                 return;
 
             _lastEventId = EventId;
