@@ -89,6 +89,7 @@ namespace CenturionCC.System.Player.MassPlayer
             if (!_hasInit)
             {
                 _hasInit = true;
+                _lastEventId = EventId;
                 return;
             }
 
