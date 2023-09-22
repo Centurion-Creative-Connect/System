@@ -3,6 +3,7 @@ using CenturionCC.System.Utils;
 using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
 using DerpyNewbie.Common.Role;
+using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
@@ -172,8 +173,19 @@ namespace CenturionCC.System.Player.MassPlayer
 
         public override void OnHitDataUpdated()
         {
+            var attacker = playerManager.GetPlayerById(LastHitData.AttackerId);
+            if (attacker == null)
+            {
+                playerManager.Logger.LogError($"[PlayerModel] Could not find attacker {LastHitData.AttackerId}");
+                return;
+            }
+
             Kill();
-            playerManager.Invoke_OnKilled(playerManager.GetPlayerById(LastHitData.AttackerId), this, LastHitData.Type);
+
+            ++Deaths;
+            ++attacker.Kills;
+
+            playerManager.Invoke_OnKilled(attacker, this, LastHitData.Type);
         }
 
         #region PlayFootstepMethods
