@@ -53,7 +53,11 @@ namespace CenturionCC.System.Player.External.PlayerTag
             var localHead = cachedLocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
             var remoteHeadPos = followingPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
             if (followingPlayer.isLocal)
-                remoteHeadPos += localHead.rotation * Vector3.forward * .5F;
+            {
+                var additionalForward = localHead.rotation * Vector3.forward * .25F;
+                remoteHeadPos += new Vector3(additionalForward.x, 0, additionalForward.z);
+            }
+
             var forwardVec = (localHead.position - remoteHeadPos).normalized * .1F;
             cachedTransform.position = remoteHeadPos + NameTagOffset + forwardVec;
             cachedTransform.LookAt(localHead.position);
