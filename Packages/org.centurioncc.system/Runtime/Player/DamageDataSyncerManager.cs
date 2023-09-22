@@ -19,6 +19,8 @@ namespace CenturionCC.System.Player
         private PrintableBase logger;
         [NewbieInject] [HideInInspector] [SerializeField]
         private PlayerManager playerManager;
+        [NewbieInject] [HideInInspector] [SerializeField]
+        private DamageDataResolver resolver;
         [SerializeField]
         private DamageDataSyncer[] syncers;
 
@@ -138,7 +140,8 @@ namespace CenturionCC.System.Player
                 damageData.DamageOriginTime,
                 hitTime,
                 damageData.DamageType,
-                SyncResult.Sending,
+                SyncState.Sending,
+                SyncResult.Unassigned,
                 killType
             );
 
@@ -156,11 +159,9 @@ namespace CenturionCC.System.Player
 
             logger.LogVerbose($"{Prefix}Received {requester.GetGlobalInfo()}");
 
-            var result = requester.Result;
-
-            if (result == SyncResult.Sending && requester.VictimId == _local.playerId)
+            if (requester.State == SyncState.Sending && requester.VictimId == _local.playerId)
             {
-                requester.UpdateResult(SyncResult.Received);
+                requester.UpdateResult(resolver.Resolve(requester));
             }
 
             AddResolvedEventId(requester);

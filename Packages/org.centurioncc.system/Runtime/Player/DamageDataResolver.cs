@@ -11,7 +11,7 @@ using VRC.SDKBase;
 namespace CenturionCC.System.Player
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class DamageDataResolver : DamageDataSyncerManagerCallback
+    public class DamageDataResolver : PlayerManagerCallbackBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
@@ -27,7 +27,30 @@ namespace CenturionCC.System.Player
         {
             _local = Networking.LocalPlayer;
             playerManager.SubscribeCallback(this);
-            damageDataSyncerManager.SubscribeCallback(this);
+        }
+
+        public SyncResult Resolve(DamageDataSyncer syncer)
+        {
+            if (syncer.VictimId != _local.playerId)
+                return SyncResult.Unassigned;
+
+            var victim = playerManager.GetPlayerById(syncer.VictimId);
+            if (victim.IsDead)
+                return SyncResult.Cancelled;
+
+            var result = ComputeHitResultFromDateTime(
+                syncer.ActivatedTime,
+                syncer.HitTime,
+                GetAssumedDiedTime(syncer.AttackerId),
+                victim.LastHitData.HitTime
+            );
+
+            if (!result)
+                return SyncResult.Cancelled;
+
+            victim.LastHitData.SetData(syncer);
+            victim.LastHitData.SyncData();
+            return SyncResult.Hit;
         }
 
         [PublicAPI]
@@ -80,27 +103,6 @@ namespace CenturionCC.System.Player
             SetAssumedDiedTime(victimId, Networking.GetNetworkDateTime());
         }
 
-        public override void OnSyncerReceived(DamageDataSyncer syncer)
-        {
-            if (syncer.VictimId != _local.playerId)
-                return;
-
-            var victim = playerManager.GetPlayerById(syncer.VictimId);
-            if (victim.IsDead)
-                return;
-
-            var result = ComputeHitResultFromDateTime(
-                syncer.ActivatedTime, syncer.HitTime,
-                GetAssumedDiedTime(syncer.AttackerId), victim.LastHitData.HitTime
-            );
-
-            if (!result)
-                return;
-
-            victim.LastHitData.SetData(syncer);
-            victim.LastHitData.SyncData();
-        }
-
         #endregion
 
         #region DiedTimeGetterSetter
@@ -118,6 +120,10 @@ namespace CenturionCC.System.Player
 
         private void SetAssumedDiedTime(int playerId, DateTime time)
         {
+            var lastAssumedTime = GetAssumedDiedTime(playerId);
+            if (Math.Abs(time.Subtract(lastAssumedTime).TotalSeconds) < InvincibleDuration)
+                return;
+
             _assumedDiedTimeDict.SetValue(playerId, time.Ticks);
         }
 
