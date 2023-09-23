@@ -9920,6 +9920,12 @@ PrefabInstance:
       propertyPath: NetworkIDs.Array.data[526].gameObject
       value: 
       objectReference: {fileID: 820951727}
+    - target: {fileID: 8464459589408506562, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: serializedProgramAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 85e261dcca831944eb6199daccca8313,
+        type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8894fa7e4588a5c4fab98453e558847d, type: 3}
 --- !u!1 &820951727 stripped
@@ -10276,18 +10282,22 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 905604436}
   updateManager: {fileID: 1172751848}
+  hitEffect: {fileID: 0}
   players: {fileID: 392230535}
   guns: {fileID: 2428846941591081302}
+  wall: {fileID: 0}
   audioManager: {fileID: 769008500}
+  roleProvider: {fileID: 0}
   movement: {fileID: 0}
   logger: {fileID: 21636226}
   eventLogger: {fileID: 0}
+  footstep: {fileID: 0}
   moderatorTool: {fileID: 0}
   notification: {fileID: 0}
+  logHitLocation: 1
+  logShotLocation: 1
+  localPlayerHitDuration: 1
   antiZombieTime: 5
-  gameRules: []
-  respawnOnHit: 0
-  hasDied: 0
 --- !u!114 &905604436
 MonoBehaviour:
   m_ObjectHideFlags: 2
