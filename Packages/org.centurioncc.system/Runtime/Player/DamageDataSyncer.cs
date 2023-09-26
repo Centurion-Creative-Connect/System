@@ -18,7 +18,7 @@ namespace CenturionCC.System.Player
 
         private bool _hasSent = true;
 
-        public bool IsAvailable => _hasSent && Result != SyncResult.Sending;
+        public bool IsAvailable => _hasSent && State != SyncState.Sending;
         public int ResendCount { get; private set; }
         public float LastUsedTime { get; private set; }
 
@@ -37,7 +37,7 @@ namespace CenturionCC.System.Player
             _localActivatedTime = other._localActivatedTime;
             _localHitTime = other._localHitTime;
             _localWeaponType = other._localWeaponType;
-            _localResult = other._localResult;
+            _localState = other._localState;
             _localType = other._localType;
 
             ResendCount = ++other.ResendCount;
@@ -52,6 +52,7 @@ namespace CenturionCC.System.Player
             LastUsedTime = Time.realtimeSinceStartup;
 
             _localResult = result;
+            _localState = SyncState.Received;
 
             RequestSync();
         }
@@ -65,6 +66,7 @@ namespace CenturionCC.System.Player
             DateTime activatedTime,
             DateTime hitTime,
             string weaponType,
+            SyncState state,
             SyncResult result,
             KillType type
         )
@@ -83,6 +85,7 @@ namespace CenturionCC.System.Player
             _localHitTime = hitTime;
             _localWeaponType = weaponType;
 
+            _localState = state;
             _localResult = result;
             _localType = type;
 
@@ -103,6 +106,7 @@ namespace CenturionCC.System.Player
             HitTimeTicks = _localHitTime.Ticks;
             WeaponType = _localWeaponType;
 
+            State = _localState;
             Result = _localResult;
             Type = _localType;
         }
@@ -119,6 +123,7 @@ namespace CenturionCC.System.Player
             _localHitTime = HitTime;
             _localWeaponType = WeaponType;
 
+            _localState = State;
             _localResult = Result;
             _localType = Type;
         }
@@ -127,7 +132,7 @@ namespace CenturionCC.System.Player
         {
             _hasSent = true;
             _hasProcessed = false;
-            Result = SyncResult.Unassigned;
+            State = SyncState.Unassigned;
         }
 
         public string GetShortEventId()
@@ -149,6 +154,7 @@ namespace CenturionCC.System.Player
                    $"{VictimId}@" +
                    $"{ActivatedTime:s}/" +
                    $"{HitTime:s}:" +
+                   $"{GetStateName(State)}:" +
                    $"{GetResultName(Result)}:" +
                    $"{GetKillTypeName(Type)}|" +
                    $"{ResendCount}";
@@ -163,6 +169,7 @@ namespace CenturionCC.System.Player
                    $"{_localVictimId}@" +
                    $"{_localActivatedTime:s}/" +
                    $"{_localHitTime:s}:" +
+                   $"{GetStateName(_localState)}:" +
                    $"{GetResultName(_localResult)}:" +
                    $"{GetKillTypeName(_localType)}|" +
                    $"{ResendCount}";
@@ -195,6 +202,7 @@ namespace CenturionCC.System.Player
         private DateTime _localActivatedTime;
         private DateTime _localHitTime;
 
+        private SyncState _localState;
         private SyncResult _localResult;
         private KillType _localType;
         private int _localVictimId;
@@ -230,6 +238,8 @@ namespace CenturionCC.System.Player
                 : DateTime.MinValue;
         [field: UdonSynced]
         public string WeaponType { get; private set; }
+        [field: UdonSynced]
+        public SyncState State { get; private set; } = SyncState.Unassigned;
         [field: UdonSynced]
         public SyncResult Result { get; private set; } = SyncResult.Unassigned;
         [field: UdonSynced]
@@ -270,8 +280,8 @@ namespace CenturionCC.System.Player
             LastUsedTime = Time.realtimeSinceStartup;
 
             // TODO: test resending
-            var mayHaveOverwritten = _localResult == SyncResult.Sending ||
-                                     (previousTime + 1F > LastUsedTime && _localResult == SyncResult.Received);
+            var mayHaveOverwritten = _localState == SyncState.Sending ||
+                                     (previousTime + 1F > LastUsedTime && _localState == SyncState.Received);
             if (!_hasSent &&
                 _localSenderId == Networking.LocalPlayer.playerId &&
                 SenderId != _localSenderId &&
@@ -296,10 +306,25 @@ namespace CenturionCC.System.Player
             {
                 case SyncResult.Unassigned:
                     return "Unassigned";
-                case SyncResult.Sending:
-                    return "Waiting";
-                case SyncResult.Received:
-                    return "Processed";
+                case SyncResult.Hit:
+                    return "Hit";
+                case SyncResult.Cancelled:
+                    return "Cancelled";
+                default:
+                    return "Unknown";
+            }
+        }
+
+        public static string GetStateName(SyncState r)
+        {
+            switch (r)
+            {
+                case SyncState.Unassigned:
+                    return "Unassigned";
+                case SyncState.Sending:
+                    return "Sending";
+                case SyncState.Received:
+                    return "Received";
                 default:
                     return "Unknown";
             }
@@ -328,8 +353,8 @@ namespace CenturionCC.System.Player
             // U# does not support list collection initializer yet
             // ReSharper disable once UseObjectOrCollectionInitializer
             var damageData = new DataDictionary();
-            damageData.Add("activatedTime", syncer.ActivatedTime.ToString("s"));
-            damageData.Add("hitTime", syncer.HitTime.ToString("s"));
+            damageData.Add("activatedTime", syncer.ActivatedTime.ToString("O"));
+            damageData.Add("hitTime", syncer.HitTime.ToString("O"));
             damageData.Add("activatedPosition", AsDataToken(syncer.ActivatedPosition));
             damageData.Add("hitPosition", AsDataToken(syncer.HitPosition));
             damageData.Add("weaponName", syncer.WeaponType);
@@ -339,8 +364,9 @@ namespace CenturionCC.System.Player
             syncerData.Add("senderId", syncer.SenderId);
             syncerData.Add("attackerId", syncer.AttackerId);
             syncerData.Add("victimId", syncer.VictimId);
-            syncerData.Add("result", new DataToken(syncer.Result));
-            syncerData.Add("type", new DataToken(syncer.Type));
+            syncerData.Add("state", new DataToken(DamageDataSyncer.GetStateName(syncer.State)));
+            syncerData.Add("result", new DataToken(DamageDataSyncer.GetResultName(syncer.Result)));
+            syncerData.Add("type", new DataToken(DamageDataSyncer.GetKillTypeName(syncer.Type)));
             syncerData.Add("damageData", damageData);
 
             return new DataToken(syncerData);
@@ -357,7 +383,7 @@ namespace CenturionCC.System.Player
         }
     }
 
-    public enum SyncResult
+    public enum SyncState
     {
         /// <summary>
         /// Initial state before syncer is receiving or sending data
@@ -371,5 +397,12 @@ namespace CenturionCC.System.Player
         /// Waiting for next data
         /// </summary>
         Received = 0,
+    }
+
+    public enum SyncResult
+    {
+        Unassigned = -1,
+        Hit = 0,
+        Cancelled = 1
     }
 }
