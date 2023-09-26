@@ -3,6 +3,9 @@ name: Build Release
 on:
   workflow_dispatch:
   push:
+    branches:
+      - 'master'
+      - '\d+.\d+.\d+(-[a-zA-Z]+(.\d+)?)?'
     tags:
       - '\d+.\d+.\d+(-[a-zA-Z]+(.\d+)?)?'
 
