@@ -28,9 +28,9 @@ namespace CenturionCC.System.Audio
         }
 
         [PublicAPI]
-        public void PlayAudioAtTransform([CanBeNull] AudioClip clip, [CanBeNull] Transform t, float volume,
-            float pitch = 1F, float dopplerLevel = 1F, float spread = 0F, float minDistance = 0.5F,
-            float maxDistance = 25F)
+        public void PlayAudioAtTransform([CanBeNull] AudioClip clip, [CanBeNull] Transform t, Vector3 offset,
+            float volume, float pitch = 1F, float dopplerLevel = 1F, float spread = 0F,
+            float minDistance = 0.5F, float maxDistance = 25F)
         {
             if (clip == null || t == null)
             {
@@ -51,9 +51,17 @@ namespace CenturionCC.System.Audio
             var sourceTransform = source.transform;
 
             sourceTransform.SetParent(t);
-            sourceTransform.localPosition = Vector3.zero;
+            sourceTransform.localPosition = offset;
 
             AudioHelper.PlayAudioSource(source, clip, volume, pitch, dopplerLevel, spread, minDistance, maxDistance);
+        }
+
+        [PublicAPI]
+        public void PlayAudioAtTransform([CanBeNull] AudioClip clip, [CanBeNull] Transform t,
+            float volume, float pitch = 1F, float dopplerLevel = 1F, float spread = 0F,
+            float minDistance = 0.5F, float maxDistance = 25F)
+        {
+            PlayAudioAtTransform(clip, t, Vector3.zero, volume, pitch, dopplerLevel, spread, minDistance, maxDistance);
         }
 
         [PublicAPI]
@@ -91,6 +99,19 @@ namespace CenturionCC.System.Audio
             }
 
             PlayAudioAtTransform(dataStore.Clip, t, dataStore.Volume, dataStore.Pitch,
+                dataStore.DopplerLevel, dataStore.Spread, dataStore.MinDistance, dataStore.MaxDistance);
+        }
+
+        [PublicAPI]
+        public void PlayAudioAtTransform([CanBeNull] AudioDataStore dataStore, [CanBeNull] Transform t, Vector3 offset)
+        {
+            if (dataStore == null)
+            {
+                Debug.LogError(AudioDataStoreNullError);
+                return;
+            }
+
+            PlayAudioAtTransform(dataStore.Clip, t, offset, dataStore.Volume, dataStore.Pitch,
                 dataStore.DopplerLevel, dataStore.Spread, dataStore.MinDistance, dataStore.MaxDistance);
         }
 
