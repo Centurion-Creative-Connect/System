@@ -851,7 +851,7 @@ namespace CenturionCC.System.Gun
             if (TargetAnimator != null)
                 TargetAnimator.SetTrigger(GunUtility.IsShootingParameter());
             if (AudioData != null)
-                Internal_PlayAudio(AudioData.Shooting);
+                Internal_PlayAudio(AudioData.Shooting, AudioData.ShootingOffset);
             if (IsLocal && HapticData != null && HapticData.Shooting)
                 HapticData.Shooting.PlayBothHand();
 
@@ -866,12 +866,12 @@ namespace CenturionCC.System.Gun
         {
             OnEmptyShoot();
             if (AudioData != null)
-                Internal_PlayAudio(AudioData.EmptyShooting);
+                Internal_PlayAudio(AudioData.EmptyShooting, AudioData.EmptyShootingOffset);
         }
 
-        protected virtual void Internal_PlayAudio(AudioDataStore audioStore)
+        protected virtual void Internal_PlayAudio(AudioDataStore audioStore, Vector3 offset)
         {
-            AudioManager.PlayAudioAtTransform(audioStore, Target);
+            AudioManager.PlayAudioAtTransform(audioStore, Target, offset);
         }
 
         protected void Internal_CheckForHandleDistance()
@@ -1268,14 +1268,14 @@ namespace CenturionCC.System.Gun
 
             if (nextState == GunState.InCockingTwisting && previousState != GunState.InCockingTwisting)
             {
-                if (AudioData != null) Internal_PlayAudio(AudioData.CockingTwist);
+                if (AudioData != null) Internal_PlayAudio(AudioData.CockingTwist, AudioData.CockingTwistOffset);
 
                 if (TargetAnimator != null && !IsLocal)
                     TargetAnimator.SetFloat(GunUtility.CockingTwistParameter(), 1);
             }
             else if (nextState == GunState.InCockingPush && previousState == GunState.InCockingPull)
             {
-                if (AudioData != null) Internal_PlayAudio(AudioData.CockingPull);
+                if (AudioData != null) Internal_PlayAudio(AudioData.CockingPull, AudioData.CockingPullOffset);
 
                 if (TargetAnimator != null && !IsLocal)
                 {
@@ -1285,7 +1285,7 @@ namespace CenturionCC.System.Gun
             }
             else if (nextState == GunState.Idle && previousState != GunState.Idle)
             {
-                if (AudioData != null) Internal_PlayAudio(AudioData.CockingRelease);
+                if (AudioData != null) Internal_PlayAudio(AudioData.CockingRelease, AudioData.CockingReleaseOffset);
 
                 if (TargetAnimator != null && !IsLocal)
                 {
@@ -1307,7 +1307,7 @@ namespace CenturionCC.System.Gun
             if (objMarker == null || objMarker.Tags.ContainsString("NoCollisionAudio"))
                 return;
 
-            Internal_PlayAudio(AudioData.Collision.Get(objMarker.ObjectType));
+            Internal_PlayAudio(AudioData.Collision.Get(objMarker.ObjectType), other.ClosestPoint(transform.position));
         }
 
         #endregion

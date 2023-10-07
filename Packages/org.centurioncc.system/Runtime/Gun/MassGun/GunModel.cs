@@ -62,9 +62,9 @@ namespace CenturionCC.System.Gun.MassGun
             }
         }
 
-        protected override void Internal_PlayAudio(AudioDataStore audioStore)
+        protected override void Internal_PlayAudio(AudioDataStore audioStore, Vector3 offset)
         {
-            AudioManager.PlayAudioAtTransform(audioStore, MainHandle.transform);
+            AudioManager.PlayAudioAtTransform(audioStore, MainHandle.transform, offset);
         }
     }
 }
