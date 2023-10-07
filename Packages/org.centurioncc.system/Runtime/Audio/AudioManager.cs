@@ -84,8 +84,11 @@ namespace CenturionCC.System.Audio
             }
 
             var source = GetAudioSource();
+            var sourceTransform = source.transform;
 
-            source.transform.position = position;
+            sourceTransform.SetParent(transform);
+            sourceTransform.position = position;
+
             AudioHelper.PlayAudioSource(source, clip, volume, pitch, dopplerLevel, spread, minDistance, maxDistance);
         }
 
