@@ -1,12 +1,27 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace CenturionCC.System.Editor.Utils
 {
     internal static class GUIUtil
     {
+        public enum Alignment
+        {
+            None,
+            Left,
+            Right
+        }
+
+        private static Dictionary<string, bool> _expandMap = new Dictionary<string, bool>();
+        public static Color SurfaceIndentColor = Color.black;
+        public static Color DeepIndentColor = Color.red;
+
+        public static float HelpBoxWidth = 400;
+        public static float HelpBoxHeight = 40;
+        public static float HelpBoxButtonWidth = 100;
+
         public static string NotAssignedStringFormat =>
             Application.systemLanguage == SystemLanguage.Japanese
                 ? "{0} が指定されていません"
@@ -40,12 +55,6 @@ namespace CenturionCC.System.Editor.Utils
         public static string BoldStringFormat => "<b>{0}</b>";
 
         public static string ColoredStringFormat => "<color=#{0}>{1}</color>";
-        public static Color SurfaceIndentColor = Color.black;
-        public static Color DeepIndentColor = Color.red;
-
-        public static float HelpBoxWidth = 400;
-        public static float HelpBoxHeight = 40;
-        public static float HelpBoxButtonWidth = 100;
 
         public static Color DepthColor() =>
             Color.Lerp(SurfaceIndentColor, DeepIndentColor, EditorGUI.indentLevel / 5.0F);
@@ -55,6 +64,46 @@ namespace CenturionCC.System.Editor.Utils
 
         public static string ToBold(string text) =>
             string.Format(BoldStringFormat, text);
+
+        public static void DrawOrLabel(bool drawn) => DrawOrLabel(drawn, NothingHereString);
+
+        public static void DrawOrLabel(bool drawn, string label)
+        {
+            if (!drawn)
+                HelpBox(label, MessageType.Info);
+        }
+
+        public static void HelpBox(string text, MessageType msgType)
+        {
+            Rect rect = EditorGUILayout.GetControlRect(GUILayout.Width(HelpBoxWidth),
+                GUILayout.Height(HelpBoxHeight));
+            EditorGUI.HelpBox(rect, text, msgType);
+        }
+
+        public static GUIStyle GetButtonStyleWithAnchor(TextAnchor anchor)
+        {
+            GUIStyle style = new GUIStyle(GUI.skin.button) { alignment = anchor };
+            return style;
+        }
+
+        public readonly struct IconType
+        {
+            public static readonly IconType Info = new IconType("console.infoicon");
+            public static readonly IconType Warn = new IconType("console.warnicon");
+            public static readonly IconType Error = new IconType("console.erroricon");
+
+            public readonly string Name;
+
+            private IconType(string name)
+            {
+                this.Name = name;
+            }
+        }
+
+        public struct StyleSet
+        {
+            public static readonly GUIStyle ButtonStyle = GetButtonStyleWithAnchor(TextAnchor.MiddleLeft);
+        }
 
         #region Labels
 
@@ -107,7 +156,7 @@ namespace CenturionCC.System.Editor.Utils
 
         public static bool HelpBoxWithButton<T>(string text, MessageType msgType, ref T result,
             string buttonLabel = "Auto Fix")
-            where T : Object
+            where T : UnityEngine.Object
         {
             bool buttonResult;
 
@@ -119,7 +168,7 @@ namespace CenturionCC.System.Editor.Utils
                 using (new EditorGUILayout.VerticalScope())
                 {
                     buttonResult = SmallButton(buttonLabel);
-                    result = (T) EditorGUILayout.ObjectField(result, typeof(T), true,
+                    result = (T)EditorGUILayout.ObjectField(result, typeof(T), true,
                         GUILayout.Width(HelpBoxButtonWidth));
                 }
             }
@@ -133,13 +182,13 @@ namespace CenturionCC.System.Editor.Utils
 
         public static void ObjectField<T>(string label, ref T value, bool allowSceneObjects = true,
             bool labelDepthColor = false, Alignment alignment = Alignment.None, float labelWidth = 30F)
-            where T : Object
+            where T : UnityEngine.Object
         {
             T FieldFunc(T v)
             {
                 EditorGUIUtility.labelWidth = labelWidth;
                 Label(label, labelDepthColor);
-                return (T) EditorGUILayout.ObjectField(v, typeof(T), allowSceneObjects,
+                return (T)EditorGUILayout.ObjectField(v, typeof(T), allowSceneObjects,
                     GUILayout.Width(HelpBoxButtonWidth));
             }
 
@@ -180,10 +229,56 @@ namespace CenturionCC.System.Editor.Utils
             {
                 EditorGUIUtility.labelWidth = labelWidth;
                 Label(label, labelDepthColor);
-                return (T) EditorGUILayout.EnumPopup(v);
+                return (T)EditorGUILayout.EnumPopup(v);
             }
 
             FieldBase(FieldFunc, ref value, alignment);
+        }
+
+        public static bool FoldoutPropertyField(SerializedProperty property, int depth = 1)
+        {
+            var key = property.propertyPath;
+            _expandMap.TryGetValue(key, out var isExpanded);
+            return _expandMap[key] = FoldoutPropertyField(property, isExpanded, depth);
+        }
+
+        public static bool FoldoutPropertyField(SerializedProperty property, bool foldedOut, int depth = 1)
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.Space(5, false);
+                EditorGUILayout.PropertyField(property, true);
+                if (property.propertyType == SerializedPropertyType.ObjectReference && depth != 0)
+                {
+                    var lastRect = GUILayoutUtility.GetLastRect();
+                    // I have no idea why this weird offsets work, but it works so...
+                    var rect = new Rect(lastRect.x - 5, lastRect.y + lastRect.height - 15, 10, 10);
+                    foldedOut = EditorGUI.Foldout(rect, foldedOut, "");
+                }
+            }
+
+            EditorGUILayout.Space(3);
+
+            if (property.propertyType == SerializedPropertyType.ObjectReference && foldedOut && depth != 0 &&
+                property.objectReferenceValue != null)
+            {
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    var so = new SerializedObject(property.objectReferenceValue);
+                    var soProperty = so.GetIterator();
+                    soProperty.NextVisible(true);
+                    while (soProperty.NextVisible(false))
+                    {
+                        var key = soProperty.propertyPath;
+                        _expandMap.TryGetValue(key, out var isExpanded);
+                        _expandMap[key] = FoldoutPropertyField(soProperty, isExpanded, depth - 1);
+                    }
+
+                    so.ApplyModifiedProperties();
+                }
+            }
+
+            return foldedOut;
         }
 
         private static void FieldBase<T>(Func<T, T> func, ref T obj, Alignment alignment)
@@ -212,27 +307,6 @@ namespace CenturionCC.System.Editor.Utils
 
         #endregion
 
-        public static void DrawOrLabel(bool drawn) => DrawOrLabel(drawn, NothingHereString);
-
-        public static void DrawOrLabel(bool drawn, string label)
-        {
-            if (!drawn)
-                HelpBox(label, MessageType.Info);
-        }
-
-        public static void HelpBox(string text, MessageType msgType)
-        {
-            Rect rect = EditorGUILayout.GetControlRect(GUILayout.Width(HelpBoxWidth),
-                GUILayout.Height(HelpBoxHeight));
-            EditorGUI.HelpBox(rect, text, msgType);
-        }
-
-        public static GUIStyle GetButtonStyleWithAnchor(TextAnchor anchor)
-        {
-            GUIStyle style = new GUIStyle(GUI.skin.button) {alignment = anchor};
-            return style;
-        }
-
         #region Impls
 
         private static GUIContent Impl_IconContent(string name, string text, string tooltip)
@@ -251,42 +325,16 @@ namespace CenturionCC.System.Editor.Utils
         private static bool Impl_Foldout(string text, ref bool result)
         {
             return result = EditorGUILayout.Foldout(result, ToDepthColor(text), true,
-                new GUIStyle("foldout") {richText = true});
+                new GUIStyle("foldout") { richText = true });
         }
 
         private static void Impl_Label(string text, bool depthColor = true)
         {
             EditorGUILayout.LabelField(
                 depthColor ? ToDepthColor(text) : text,
-                new GUIStyle("label") {richText = true});
+                new GUIStyle("label") { richText = true });
         }
 
         #endregion
-
-        public readonly struct IconType
-        {
-            public static readonly IconType Info = new IconType("console.infoicon");
-            public static readonly IconType Warn = new IconType("console.warnicon");
-            public static readonly IconType Error = new IconType("console.erroricon");
-
-            public readonly string Name;
-
-            private IconType(string name)
-            {
-                this.Name = name;
-            }
-        }
-
-        public struct StyleSet
-        {
-            public static readonly GUIStyle ButtonStyle = GetButtonStyleWithAnchor(TextAnchor.MiddleLeft);
-        }
-
-        public enum Alignment
-        {
-            None,
-            Left,
-            Right
-        }
     }
 }
