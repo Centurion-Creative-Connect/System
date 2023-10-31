@@ -22,7 +22,6 @@ namespace CenturionCC.System.Gun
         private const float FreeHandPickupProximity = .1F;
         private const float SwapHandDisallowPickupProximity = 0.15F;
         private const float DisallowPickupFromBelowRange = -0.1F;
-        private const int MaxQueuedShot = 10;
 
         [UdonSynced] [FieldChangeCallback(nameof(RawState))]
         private byte _currentState;
@@ -171,36 +170,6 @@ namespace CenturionCC.System.Gun
                 CollisionCount = 0;
         }
 
-        public override void OnPreSerialization()
-        {
-            // We're not syncing to shooting a bullet 
-            if (QueuedShotCount <= 0)
-                return;
-
-            if (CanShoot() == ShotResult.Cancelled)
-            {
-                QueuedShotCount = 0;
-                return;
-            }
-
-            _shotPosition = ShooterPosition;
-            _shotRotation = ShooterRotation;
-            _shotTime = Networking.GetNetworkDateTime().Ticks;
-            ++ShotCount;
-            --QueuedShotCount;
-        }
-
-        public override void OnPostSerialization(SerializationResult result)
-        {
-            if (!result.success)
-                return;
-
-            ProcessShotCountData();
-
-            if (QueuedShotCount > 0)
-                RequestSerialization();
-        }
-
         public override void OnDeserialization()
         {
             ProcessShotCountData();
@@ -318,15 +287,14 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public override void Shoot()
         {
-            ++QueuedShotCount;
+            _shotPosition = ShooterPosition;
+            _shotRotation = ShooterRotation;
+            _shotTime = Networking.GetNetworkDateTime().Ticks;
+            ++ShotCount;
+
             Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
             RequestSerialization();
-
-#if UNITY_EDITOR
-            // ClientSim does not invoke serialization events, so just invoke it directly
-            OnPreSerialization();
-            OnDeserialization();
-#endif
+            ProcessShotCountData();
         }
 
         [PublicAPI]
@@ -712,25 +680,6 @@ namespace CenturionCC.System.Gun
         {
             get => shotCount;
             protected set => shotCount = value;
-        }
-        [PublicAPI]
-        public virtual int QueuedShotCount
-        {
-            get => _queuedShotCount;
-            protected set
-            {
-                _queuedShotCount = value;
-                if (_queuedShotCount >= MaxQueuedShot)
-                {
-                    Logger.LogWarn($"{Prefix}Queued shots overflow!: {_queuedShotCount}");
-                    _queuedShotCount = MaxQueuedShot;
-                }
-                else if (_queuedShotCount < 0)
-                {
-                    Logger.LogWarn($"{Prefix}Queued shots underflow!: {_queuedShotCount}");
-                    _queuedShotCount = 0;
-                }
-            }
         }
         [PublicAPI] [CanBeNull]
         public virtual GunHolster TargetHolster { get; protected set; }
