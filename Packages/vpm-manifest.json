@@ -1,43 +1,28 @@
 {
   "dependencies": {
-    "com.vrchat.udonsharp": {
-      "version": "1.1.1"
-    },
-    "com.vrchat.clientsim": {
-      "version": "1.2.2"
-    },
     "com.vrchat.core.vpm-resolver": {
       "version": "0.1.13"
     },
     "dev.derpynewbie.logger": {
       "version": "0.1.8"
+    },
+    "com.anatawa12.udon-sharp-migration-fix": {
+      "version": "0.1.1"
     }
   },
   "locked": {
-    "com.vrchat.udonsharp": {
-      "version": "1.1.9",
-      "dependencies": {
-        "com.vrchat.worlds": "^3.1.x"
-      }
-    },
     "com.vrchat.worlds": {
-      "version": "3.3.0",
+      "version": "3.4.1",
       "dependencies": {
-        "com.vrchat.base": "3.3.0"
+        "com.vrchat.base": "3.4.1"
       }
     },
     "com.vrchat.base": {
-      "version": "3.3.0",
+      "version": "3.4.1",
       "dependencies": {}
     },
-    "com.vrchat.clientsim": {
-      "version": "1.2.7",
-      "dependencies": {
-        "com.vrchat.worlds": "^3.2.2"
-      }
-    },
     "com.vrchat.core.vpm-resolver": {
-      "version": "0.1.23",
+      "version": "0.1.26",
       "dependencies": {}
     },
     "dev.derpynewbie.logger": {
@@ -53,6 +38,13 @@
       "dependencies": {
         "com.vrchat.worlds": ">=3.2.0 <=3.3.x",
         "com.vrchat.udonsharp": "~1.1.0"
+      }
+    },
+    "com.anatawa12.udon-sharp-migration-fix": {
+      "version": "0.1.1",
+      "dependencies": {
+        "com.vrchat.udonsharp": "^1.1.8",
+        "com.vrchat.worlds": "^3.1.x"
       }
     }
   }
