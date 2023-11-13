@@ -8,6 +8,7 @@ namespace CenturionCC.System.Player
     public class PlayerCollider : UdonSharpBehaviour
     {
         public PlayerBase player;
+        public BodyParts parts = BodyParts.Body;
         private MeshRenderer _meshRenderer;
 
         public bool IsVisible

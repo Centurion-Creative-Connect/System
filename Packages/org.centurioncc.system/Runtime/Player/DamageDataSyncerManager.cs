@@ -142,7 +142,8 @@ namespace CenturionCC.System.Player
                 damageData.DamageType,
                 SyncState.Sending,
                 SyncResult.Unassigned,
-                killType
+                killType,
+                pCol.parts
             );
 
             logger.LogVerbose($"{Prefix}Sending request {syncer.GetLocalInfo()}");

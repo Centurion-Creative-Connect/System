@@ -5,4 +5,14 @@
         Default,
         FriendlyFire
     }
+
+    public enum BodyParts
+    {
+        Body,
+        Head,
+        LeftArm,
+        RightArm,
+        LeftLeg,
+        RightLeg
+    }
 }
