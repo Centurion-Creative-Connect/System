@@ -843,6 +843,13 @@ namespace CenturionCC.System.Player
                 $"<color=#{GetTeamColorString(player.TeamId)}>{NewbieUtils.GetPlayerName(player.VrcPlayer)}</color>";
         }
 
+        [PublicAPI]
+        public string GetHumanFriendlyColoredName(PlayerBase player, string fallbackName = "???")
+        {
+            if (player == null || player.VrcPlayer == null || !player.VrcPlayer.IsValid()) return fallbackName;
+            return $"<color=#{GetTeamColorString(player.TeamId)}>{player.VrcPlayer.displayName}</color>";
+        }
+
         // From UnityEngine.ColorUtility
         // ReSharper disable once InconsistentNaming
         private static string ToHtmlStringRGBA(Color color)
@@ -1081,11 +1088,5 @@ namespace CenturionCC.System.Player
         }
 
         #endregion
-    }
-
-    public enum KillType
-    {
-        Default,
-        FriendlyFire
     }
 }
