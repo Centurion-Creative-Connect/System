@@ -101,6 +101,29 @@ namespace CenturionCC.System.Player
             SetAssumedRevivedTime(player.PlayerId, Networking.GetNetworkDateTime());
         }
 
+        public override void OnResetPlayerStats(PlayerBase player)
+        {
+            if (player == null) return;
+
+            _assumedDiedTimeDict.Remove(player.PlayerId);
+            _assumedRevivedTimeDict.Remove(player.PlayerId);
+        }
+
+        public override void OnResetAllPlayerStats()
+        {
+            _assumedDiedTimeDict.Clear();
+            _assumedRevivedTimeDict.Clear();
+        }
+
+        public override void OnPlayerChanged(PlayerBase player, int oldId, int newId)
+        {
+            _assumedDiedTimeDict.Remove(oldId);
+            _assumedDiedTimeDict.Remove(newId);
+
+            _assumedRevivedTimeDict.Remove(oldId);
+            _assumedRevivedTimeDict.Remove(newId);
+        }
+
         #endregion
 
         #region DiedTimeGetterSetter
