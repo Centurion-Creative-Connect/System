@@ -21,5 +21,25 @@ namespace CenturionCC.System.Gun
             Vector3 velocity, Vector3 torque, float drag,
             string damageType, DateTime originTime, int playerId,
             float trailTime, Gradient trailGradient);
+
+        public void SetDamageSetting(
+            DetectionType type,
+            bool respectFriendlyFireSetting = true,
+            bool canDamageSelf = false,
+            bool canDamageFriendly = true,
+            bool canDamageEnemy = true
+        )
+        {
+            DetectionType = type;
+            RespectFriendlyFireSetting = respectFriendlyFireSetting;
+            CanDamageSelf = canDamageSelf;
+            CanDamageFriendly = canDamageFriendly;
+            CanDamageEnemy = canDamageEnemy;
+        }
+
+        public void ResetDamageSetting()
+        {
+            SetDamageSetting(DetectionType.All);
+        }
     }
 }

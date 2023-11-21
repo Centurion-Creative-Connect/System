@@ -68,7 +68,8 @@ namespace CenturionCC.System.Player
             string weaponType,
             SyncState state,
             SyncResult result,
-            KillType type
+            KillType type,
+            BodyParts parts
         )
         {
             _hasProcessed = false;
@@ -88,6 +89,7 @@ namespace CenturionCC.System.Player
             _localState = state;
             _localResult = result;
             _localType = type;
+            _localParts = parts;
 
             ResendCount = 0;
 
@@ -97,22 +99,42 @@ namespace CenturionCC.System.Player
         public void ApplyLocal()
         {
             EventId = _localEventId;
-            SenderId = _localSenderId;
-            VictimId = _localVictimId;
-            AttackerId = _localAttackerId;
             ActivatedPosition = _localActivatedPos;
             HitPosition = _localHitPos;
             ActivatedTimeTicks = _localActivatedTime.Ticks;
             HitTimeTicks = _localHitTime.Ticks;
             WeaponType = _localWeaponType;
 
+            EncodedData = EncodeData(
+                _localSenderId, _localVictimId, _localAttackerId,
+                (int)_localState, (int)_localResult, (int)_localType, (int)_localParts
+            );
+
+            SenderId = _localSenderId;
+            VictimId = _localVictimId;
+            AttackerId = _localAttackerId;
             State = _localState;
             Result = _localResult;
             Type = _localType;
+            Parts = _localParts;
         }
 
         public void ApplyGlobal()
         {
+            DecodeData(
+                EncodedData,
+                out var sender, out var victim, out var attacker,
+                out var syncState, out var syncResult, out var killType, out var parts
+            );
+
+            SenderId = sender;
+            VictimId = victim;
+            AttackerId = attacker;
+            State = syncState;
+            Result = syncResult;
+            Type = killType;
+            Parts = parts;
+
             _localEventId = EventId;
             _localSenderId = SenderId;
             _localVictimId = VictimId;
@@ -126,6 +148,7 @@ namespace CenturionCC.System.Player
             _localState = State;
             _localResult = Result;
             _localType = Type;
+            _localParts = Parts;
         }
 
         public void MakeAvailable()
@@ -156,7 +179,8 @@ namespace CenturionCC.System.Player
                    $"{HitTime:s}:" +
                    $"{GetStateName(State)}:" +
                    $"{GetResultName(Result)}:" +
-                   $"{GetKillTypeName(Type)}|" +
+                   $"{GetKillTypeName(Type)}:" +
+                   $"{GetBodyPartsName(Parts)}|" +
                    $"{ResendCount}";
         }
 
@@ -171,7 +195,8 @@ namespace CenturionCC.System.Player
                    $"{_localHitTime:s}:" +
                    $"{GetStateName(_localState)}:" +
                    $"{GetResultName(_localResult)}:" +
-                   $"{GetKillTypeName(_localType)}|" +
+                   $"{GetKillTypeName(_localType)}:" +
+                   $"{GetBodyPartsName(_localParts)}|" +
                    $"{ResendCount}";
         }
 
@@ -181,6 +206,33 @@ namespace CenturionCC.System.Player
                 Networking.SetOwner(Networking.LocalPlayer, gameObject);
             _hasSent = false;
             RequestSerialization();
+        }
+
+        public static long EncodeData(int sender, int victim, int attacker, int state, int result, int type, int parts)
+        {
+            // NOTE: This converts VRCPlayerApi.playerId(int) to byte. Which might cause issues in public instances. 
+
+            long encoded = (byte)sender;
+            encoded += (long)((byte)victim) << 8;
+            encoded += (long)((byte)attacker) << 16;
+            encoded += (long)((byte)state) << 24;
+            encoded += (long)((byte)result) << 32;
+            encoded += (long)((byte)type) << 40;
+            encoded += (long)((byte)parts) << 48;
+            return encoded;
+        }
+
+        public static void DecodeData(long data,
+            out int sender, out int victim, out int attacker,
+            out SyncState state, out SyncResult result, out KillType type, out BodyParts parts)
+        {
+            sender = (byte)(data & 0xFF);
+            victim = (byte)((data >> 8) & 0xFF);
+            attacker = (byte)((data >> 16) & 0xFF);
+            state = (SyncState)(byte)((data >> 24) & 0xFF);
+            result = (SyncResult)(byte)((data >> 32) & 0xFF);
+            type = (KillType)(byte)((data >> 40) & 0xFF);
+            parts = (BodyParts)(byte)((data >> 48) & 0xFF);
         }
 
         #region WatchdogProc
@@ -205,6 +257,7 @@ namespace CenturionCC.System.Player
         private SyncState _localState;
         private SyncResult _localResult;
         private KillType _localType;
+        private BodyParts _localParts;
         private int _localVictimId;
         private string _localWeaponType;
 
@@ -214,11 +267,8 @@ namespace CenturionCC.System.Player
 
         [field: UdonSynced]
         public int EventId { get; private set; }
-        [field: UdonSynced]
         public int SenderId { get; private set; }
-        [field: UdonSynced]
         public int VictimId { get; private set; }
-        [field: UdonSynced]
         public int AttackerId { get; private set; }
         [field: UdonSynced]
         public Vector3 ActivatedPosition { get; private set; }
@@ -238,12 +288,12 @@ namespace CenturionCC.System.Player
                 : DateTime.MinValue;
         [field: UdonSynced]
         public string WeaponType { get; private set; }
-        [field: UdonSynced]
         public SyncState State { get; private set; } = SyncState.Unassigned;
-        [field: UdonSynced]
         public SyncResult Result { get; private set; } = SyncResult.Unassigned;
-        [field: UdonSynced]
         public KillType Type { get; private set; } = KillType.Default;
+        public BodyParts Parts { get; private set; } = BodyParts.Body;
+        [field: UdonSynced]
+        public long EncodedData { get; private set; }
 
         #endregion
 
@@ -279,6 +329,19 @@ namespace CenturionCC.System.Player
             var previousTime = LastUsedTime;
             LastUsedTime = Time.realtimeSinceStartup;
 
+            DecodeData(EncodedData,
+                out var sender, out var victim, out var attacker,
+                out var syncState, out var syncResult, out var killType, out var parts
+            );
+
+            SenderId = sender;
+            VictimId = victim;
+            AttackerId = attacker;
+            State = syncState;
+            Result = syncResult;
+            Type = killType;
+            Parts = parts;
+
             // TODO: test resending
             var mayHaveOverwritten = _localState == SyncState.Sending ||
                                      (previousTime + 1F > LastUsedTime && _localState == SyncState.Received);
@@ -304,14 +367,10 @@ namespace CenturionCC.System.Player
         {
             switch (r)
             {
-                case SyncResult.Unassigned:
-                    return "Unassigned";
-                case SyncResult.Hit:
-                    return "Hit";
-                case SyncResult.Cancelled:
-                    return "Cancelled";
-                default:
-                    return "Unknown";
+                case SyncResult.Unassigned: return "Unassigned";
+                case SyncResult.Hit: return "Hit";
+                case SyncResult.Cancelled: return "Cancelled";
+                default: return "Unknown";
             }
         }
 
@@ -319,14 +378,10 @@ namespace CenturionCC.System.Player
         {
             switch (r)
             {
-                case SyncState.Unassigned:
-                    return "Unassigned";
-                case SyncState.Sending:
-                    return "Sending";
-                case SyncState.Received:
-                    return "Received";
-                default:
-                    return "Unknown";
+                case SyncState.Unassigned: return "Unassigned";
+                case SyncState.Sending: return "Sending";
+                case SyncState.Received: return "Received";
+                default: return "Unknown";
             }
         }
 
@@ -334,12 +389,23 @@ namespace CenturionCC.System.Player
         {
             switch (r)
             {
-                case KillType.Default:
-                    return "Default";
-                case KillType.FriendlyFire:
-                    return "FriendlyFire";
-                default:
-                    return "Unknown";
+                case KillType.Default: return "Default";
+                case KillType.FriendlyFire: return "FriendlyFire";
+                default: return "Unknown";
+            }
+        }
+
+        public static string GetBodyPartsName(BodyParts r)
+        {
+            switch (r)
+            {
+                case BodyParts.Body: return "Body";
+                case BodyParts.Head: return "Head";
+                case BodyParts.LeftArm: return "LeftArm";
+                case BodyParts.LeftLeg: return "LeftLeg";
+                case BodyParts.RightArm: return "RightArm";
+                case BodyParts.RightLeg: return "RightLeg";
+                default: return "Unknown";
             }
         }
 
@@ -367,6 +433,7 @@ namespace CenturionCC.System.Player
             syncerData.Add("state", new DataToken(DamageDataSyncer.GetStateName(syncer.State)));
             syncerData.Add("result", new DataToken(DamageDataSyncer.GetResultName(syncer.Result)));
             syncerData.Add("type", new DataToken(DamageDataSyncer.GetKillTypeName(syncer.Type)));
+            syncerData.Add("parts", new DataToken(DamageDataSyncer.GetBodyPartsName(syncer.Parts)));
             syncerData.Add("damageData", damageData);
 
             return new DataToken(syncerData);
@@ -388,7 +455,7 @@ namespace CenturionCC.System.Player
         /// <summary>
         /// Initial state before syncer is receiving or sending data
         /// </summary>
-        Unassigned = -2,
+        Unassigned = 0,
         /// <summary>
         /// Waiting for data to be received
         /// </summary>
@@ -396,13 +463,13 @@ namespace CenturionCC.System.Player
         /// <summary>
         /// Waiting for next data
         /// </summary>
-        Received = 0,
+        Received = 2,
     }
 
     public enum SyncResult
     {
-        Unassigned = -1,
-        Hit = 0,
-        Cancelled = 1
+        Unassigned = 0,
+        Hit = 1,
+        Cancelled = 2
     }
 }

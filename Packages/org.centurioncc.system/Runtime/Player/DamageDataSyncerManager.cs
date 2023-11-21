@@ -84,9 +84,21 @@ namespace CenturionCC.System.Player
             var victimId = pCol.player.PlayerId;
             var attackerId = damageData.DamagerPlayerId;
 
-            if (victimId == attackerId)
+            if (victimId == attackerId && !damageData.CanDamageSelf)
             {
                 logger.LogVerbose($"{Prefix}Will not send because because self shooting");
+                return;
+            }
+
+            if (damageData.DetectionType == DetectionType.AttackerSide && _local.playerId != attackerId)
+            {
+                logger.LogVerbose($"{Prefix}Will not send because local is not attacker");
+                return;
+            }
+
+            if (damageData.DetectionType == DetectionType.VictimSide && _local.playerId != victimId)
+            {
+                logger.LogVerbose($"{Prefix}Will not set because local is not victim");
                 return;
             }
 
@@ -122,9 +134,23 @@ namespace CenturionCC.System.Player
                     return;
                 }
 
-                if (!playerManager.AllowFriendlyFire)
+                if (!damageData.CanDamageFriendly)
+                {
+                    logger.LogVerbose($"{Prefix}Will not resolve because damaging friendly is disabled");
+                    return;
+                }
+
+                if (damageData.RespectFriendlyFireSetting && !playerManager.AllowFriendlyFire)
                 {
                     logger.LogVerbose($"{Prefix}Will not resolve because friendly fire");
+                    return;
+                }
+            }
+            else
+            {
+                if (!damageData.CanDamageEnemy)
+                {
+                    logger.LogVerbose($"{Prefix}Will not resolve because damaging enemy is disabled");
                     return;
                 }
             }
@@ -142,7 +168,8 @@ namespace CenturionCC.System.Player
                 damageData.DamageType,
                 SyncState.Sending,
                 SyncResult.Unassigned,
-                killType
+                killType,
+                pCol.parts
             );
 
             logger.LogVerbose($"{Prefix}Sending request {syncer.GetLocalInfo()}");

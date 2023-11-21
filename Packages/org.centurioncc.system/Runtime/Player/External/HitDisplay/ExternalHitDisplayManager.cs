@@ -1,7 +1,7 @@
 ﻿using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
-using VRC.SDKBase;
+using UnityEngine.Serialization;
 
 namespace CenturionCC.System.Player.External.HitDisplay
 {
@@ -10,15 +10,16 @@ namespace CenturionCC.System.Player.External.HitDisplay
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
+        [FormerlySerializedAs("sourceRemoteHitDisplay")]
         [SerializeField]
-        private GameObject sourceRemoteHitDisplay;
+        private GameObject sourceExternalHitDisplay;
         [SerializeField]
         private Transform parent;
 
         private void Start()
         {
             playerManager.SubscribeCallback(this);
-            sourceRemoteHitDisplay.SetActive(false);
+            sourceExternalHitDisplay.SetActive(false);
             if (parent == null)
                 parent = transform;
         }
@@ -28,20 +29,20 @@ namespace CenturionCC.System.Player.External.HitDisplay
             if (hitPlayer.IsLocal)
                 return;
 
-            PlayAt(hitPlayer.VrcPlayer);
+            Play(hitPlayer);
         }
 
-        public void PlayAt(VRCPlayerApi api)
+        public void Play(PlayerBase player)
         {
-            if (api == null || !Utilities.IsValid(api))
+            if (player == null)
             {
-                Debug.LogError("[RemoteHitDisplayManager] VRCPlayerApi is null or invalid.");
+                Debug.LogError("[ExternalHitDisplayManager] Provided player is null");
                 return;
             }
 
-            var obj = Instantiate(sourceRemoteHitDisplay, parent);
-            var hitDisplay = obj.GetComponent<ExternalHitDisplay>();
-            hitDisplay.Play(api);
+            var obj = Instantiate(sourceExternalHitDisplay, parent);
+            var hitDisplay = obj.GetComponent<ExternalHitDisplayBase>();
+            hitDisplay.Play(player);
         }
 
         public void Clear()
@@ -49,7 +50,7 @@ namespace CenturionCC.System.Player.External.HitDisplay
             for (var i = 0; i < parent.childCount; i++)
             {
                 var obj = parent.GetChild(i);
-                if (obj == null || obj.gameObject == sourceRemoteHitDisplay)
+                if (obj == null || obj.gameObject == sourceExternalHitDisplay)
                     continue;
                 Destroy(obj.gameObject);
             }

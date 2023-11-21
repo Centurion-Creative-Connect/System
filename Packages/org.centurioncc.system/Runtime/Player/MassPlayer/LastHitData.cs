@@ -14,16 +14,25 @@ namespace CenturionCC.System.Player.MassPlayer
         private bool _hasInit;
         private int _lastEventId;
 
+
         public PlayerBase Player => player;
+
+
+        public int AttackerId { get; private set; }
+        public KillType Type { get; private set; } = KillType.Default;
+        public BodyParts Parts { get; private set; } = BodyParts.Body;
+
 
         [field: UdonSynced]
         public int EventId { get; private set; }
-        [field: UdonSynced]
-        public int AttackerId { get; private set; }
+
+
         [field: UdonSynced]
         public Vector3 ActivatedPosition { get; private set; }
         [field: UdonSynced]
         public Vector3 HitPosition { get; private set; }
+
+
         [field: UdonSynced]
         public long ActivatedTimeTicks { get; private set; }
         public DateTime ActivatedTime =>
@@ -36,10 +45,19 @@ namespace CenturionCC.System.Player.MassPlayer
             DateTime.MinValue.Ticks < HitTimeTicks && DateTime.MaxValue.Ticks > HitTimeTicks
                 ? new DateTime(HitTimeTicks)
                 : DateTime.MinValue;
+
+
         [field: UdonSynced]
         public string WeaponType { get; private set; }
+
+        /// <summary>
+        /// 3 bytes encoded in int.
+        /// (byte)AttackerId &lt;&lt; 0;
+        /// (byte)Type &lt;&lt; 8;
+        /// (byte)Parts &lt;&lt; 16;
+        /// </summary>
         [field: UdonSynced]
-        public KillType Type { get; private set; } = KillType.Default;
+        public int EncodedData { get; private set; }
 
         private void Start()
         {
@@ -57,6 +75,9 @@ namespace CenturionCC.System.Player.MassPlayer
             HitTimeTicks = syncer.HitTimeTicks;
             WeaponType = syncer.WeaponType;
             Type = syncer.Type;
+            Parts = syncer.Parts;
+
+            EncodedData = EncodeData(AttackerId, (int)Type, (int)Parts);
         }
 
         public void ResetData()
@@ -69,6 +90,8 @@ namespace CenturionCC.System.Player.MassPlayer
             HitTimeTicks = default;
             WeaponType = default;
             Type = default;
+
+            EncodedData = EncodeData(default, default, default);
         }
 
         public void SyncData()
@@ -97,7 +120,31 @@ namespace CenturionCC.System.Player.MassPlayer
                 return;
 
             _lastEventId = EventId;
+
+            DecodeData(EncodedData, out var attacker, out var type, out var parts);
+
+            AttackerId = attacker;
+            Type = type;
+            Parts = parts;
+
             player.OnHitDataUpdated();
+        }
+
+        public static int EncodeData(int attacker, int type, int parts)
+        {
+            int encoded = (byte)attacker;
+            encoded += (int)((byte)type) << 8;
+            encoded += (int)((byte)parts) << 16;
+
+            return encoded;
+        }
+
+        public static void DecodeData(int data, out int attacker, out KillType type, out BodyParts parts)
+        {
+            // NOTE: This converts VRCPlayerApi.playerId(int) to byte. Which might cause issues in public instances. 
+            attacker = (byte)(data & 0xFF);
+            type = (KillType)(byte)((data >> 8) & 0xFF);
+            parts = (BodyParts)(byte)((data >> 16) & 0xFF);
         }
     }
 }

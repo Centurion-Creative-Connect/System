@@ -99,6 +99,7 @@ namespace CenturionCC.System.Gun
             if (projectile == null)
                 return null;
 
+            projectile.ResetDamageSetting();
             projectile.Shoot(pos, rot, velocity, torque, drag, damageType, time, playerId, trailTime, trailGradient);
             return projectile;
         }

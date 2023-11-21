@@ -138,16 +138,18 @@ namespace CenturionCC.System.Player.MassPlayer
 
             SyncedPlayerId = -1;
             SyncedTeamId = 0;
+            SyncedIsDead = false;
 
             Sync();
         }
 
         public override void ResetStats()
         {
-            SyncedIsDead = false;
             Deaths = 0;
             Kills = 0;
             LastHitData.ResetData();
+            // Making sure
+            SyncedIsDead = false;
 
             playerManager.Invoke_OnResetPlayerStats(this);
         }

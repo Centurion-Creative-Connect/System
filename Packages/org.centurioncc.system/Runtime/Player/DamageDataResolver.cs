@@ -15,13 +15,8 @@ namespace CenturionCC.System.Player
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
-        [SerializeField] [HideInInspector] [NewbieInject]
-        private DamageDataSyncerManager damageDataSyncerManager;
 
         private VRCPlayerApi _local;
-
-        [PublicAPI]
-        public double InvincibleDuration { get; set; } = 10D;
 
         private void Start()
         {
@@ -35,14 +30,14 @@ namespace CenturionCC.System.Player
                 return SyncResult.Unassigned;
 
             var victim = playerManager.GetPlayerById(syncer.VictimId);
-            if (victim.IsDead)
+            var attacker = playerManager.GetPlayerById(syncer.AttackerId);
+            if (victim == null || attacker == null || victim.IsDead)
                 return SyncResult.Cancelled;
 
             var result = ComputeHitResultFromDateTime(
                 syncer.ActivatedTime,
-                syncer.HitTime,
                 GetAssumedDiedTime(syncer.AttackerId),
-                victim.LastHitData.HitTime
+                GetAssumedRevivedTime(syncer.AttackerId)
             );
 
             if (!result)
@@ -54,23 +49,18 @@ namespace CenturionCC.System.Player
         }
 
         [PublicAPI]
-        public bool ComputeHitResultFromDateTime(
+        public static bool ComputeHitResultFromDateTime(
             DateTime damageOriginatedTime,
-            DateTime hitTime,
             DateTime attackerDiedTime,
-            DateTime victimDiedTime
-        )
+            DateTime attackerRevivedTime)
         {
-            return damageOriginatedTime <= hitTime &&
-                   (!IsInInvincibleDuration(damageOriginatedTime, attackerDiedTime) &&
-                    !IsInInvincibleDuration(hitTime, victimDiedTime));
-        }
+            // Handle edge case where player was instantly revived 
+            if (attackerRevivedTime == attackerDiedTime) return true;
 
-        [PublicAPI]
-        public bool IsInInvincibleDuration(DateTime now, DateTime diedTime)
-        {
-            var diff = now.Subtract(diedTime).TotalSeconds;
-            return diff < InvincibleDuration && diff >= 0;
+            if (attackerDiedTime < attackerRevivedTime)
+                return damageOriginatedTime <= attackerDiedTime || damageOriginatedTime >= attackerRevivedTime;
+
+            return damageOriginatedTime <= attackerDiedTime && damageOriginatedTime >= attackerRevivedTime;
         }
 
         #region Callbacks
@@ -80,7 +70,6 @@ namespace CenturionCC.System.Player
             if (playerCollider == null || damageData == null)
                 return;
 
-            var now = Networking.GetNetworkDateTime();
             var victim = playerCollider.player;
             var victimId = victim.PlayerId;
             var attackerId = damageData.DamagerPlayerId;
@@ -90,11 +79,13 @@ namespace CenturionCC.System.Player
             if (victimId != _local.playerId && attackerId != _local.playerId)
                 return;
 
+            if (victim.IsDead)
+                return;
+
             var hitResult = ComputeHitResultFromDateTime(
                 damageData.DamageOriginTime,
-                now,
                 attacker.LastHitData.HitTime,
-                victim.LastHitData.HitTime
+                GetAssumedRevivedTime(attackerId)
             );
 
             if (!hitResult)
@@ -103,28 +94,67 @@ namespace CenturionCC.System.Player
             SetAssumedDiedTime(victimId, Networking.GetNetworkDateTime());
         }
 
+        public override void OnPlayerRevived(PlayerBase player)
+        {
+            if (player == null) return;
+
+            SetAssumedRevivedTime(player.PlayerId, Networking.GetNetworkDateTime());
+        }
+
+        public override void OnResetPlayerStats(PlayerBase player)
+        {
+            if (player == null) return;
+
+            _assumedDiedTimeDict.Remove(player.PlayerId);
+            _assumedRevivedTimeDict.Remove(player.PlayerId);
+        }
+
+        public override void OnResetAllPlayerStats()
+        {
+            _assumedDiedTimeDict.Clear();
+            _assumedRevivedTimeDict.Clear();
+        }
+
+        public override void OnPlayerChanged(PlayerBase player, int oldId, int newId)
+        {
+            _assumedDiedTimeDict.Remove(oldId);
+            _assumedDiedTimeDict.Remove(newId);
+
+            _assumedRevivedTimeDict.Remove(oldId);
+            _assumedRevivedTimeDict.Remove(newId);
+        }
+
         #endregion
 
         #region DiedTimeGetterSetter
 
         private readonly DataDictionary _assumedDiedTimeDict = new DataDictionary();
+        private readonly DataDictionary _assumedRevivedTimeDict = new DataDictionary();
 
         [PublicAPI]
         public DateTime GetAssumedDiedTime(int playerId)
         {
-            return _assumedDiedTimeDict.TryGetValue(new DataToken(playerId), TokenType.Long,
-                out var timeToken)
+            return _assumedDiedTimeDict.TryGetValue(new DataToken(playerId), TokenType.Long, out var timeToken)
                 ? new DateTime(timeToken.Long)
                 : DateTime.MinValue;
         }
 
         private void SetAssumedDiedTime(int playerId, DateTime time)
         {
-            var lastAssumedTime = GetAssumedDiedTime(playerId);
-            if (Math.Abs(time.Subtract(lastAssumedTime).TotalSeconds) < InvincibleDuration)
-                return;
-
             _assumedDiedTimeDict.SetValue(playerId, time.Ticks);
+        }
+
+        [PublicAPI]
+        public DateTime GetAssumedRevivedTime(int playerId)
+        {
+            return _assumedRevivedTimeDict.TryGetValue(new DataToken(playerId), TokenType.Long, out var timeToken)
+                ? new DateTime(timeToken.Long)
+                : DateTime.MinValue;
+        }
+
+        private void SetAssumedRevivedTime(int playerId, DateTime time)
+        {
+            _assumedRevivedTimeDict.SetValue(playerId, time.Ticks);
         }
 
         #endregion

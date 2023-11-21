@@ -65,7 +65,7 @@ namespace CenturionCC.System.Player
         [SerializeField]
         private bool useLightweightCollider = true;
         [SerializeField]
-        private bool alwaysUseLightweightCollider = false;
+        private bool alwaysUseLightweightCollider;
 
         private WatchdogChildCallbackBase[] _callbacks;
         private int _eventCallbackCount;
@@ -426,7 +426,7 @@ namespace CenturionCC.System.Player
             for (var i = 0; i < GetPlayers().Length; i++)
             {
                 var player = GetPlayer(i);
-                if (player && player.PlayerId != -1) continue;
+                if (player != null && player.PlayerId != -1) continue;
                 MasterOnly_SetPlayer(i, playerId);
                 result = i;
                 return result;
@@ -448,7 +448,7 @@ namespace CenturionCC.System.Player
             for (var i = 0; i < GetPlayers().Length; i++)
             {
                 var player = GetPlayer(i);
-                if (player && player.PlayerId != playerId) continue;
+                if (player != null && player.PlayerId != playerId) continue;
                 MasterOnly_SetPlayer(i, -1);
                 result = true;
                 break;
@@ -809,7 +809,7 @@ namespace CenturionCC.System.Player
         public PlayerBase GetPlayerById(int playerId)
         {
             foreach (var player in GetPlayers())
-                if (player != null && player.PlayerId == playerId)
+                if (player != null && player.IsAssigned && player.PlayerId == playerId)
                     return player;
 
             return null;
@@ -841,6 +841,14 @@ namespace CenturionCC.System.Player
             if (player == null) return "Invalid Player (null)";
             return
                 $"<color=#{GetTeamColorString(player.TeamId)}>{NewbieUtils.GetPlayerName(player.VrcPlayer)}</color>";
+        }
+
+        [PublicAPI]
+        public string GetHumanFriendlyColoredName(PlayerBase player, string fallbackName = "???")
+        {
+            if (player == null) return fallbackName;
+            return
+                $"<color=#{GetTeamColorString(player.TeamId)}>{player.VrcPlayer.SafeGetDisplayName(fallbackName)}</color>";
         }
 
         // From UnityEngine.ColorUtility
@@ -1038,7 +1046,7 @@ namespace CenturionCC.System.Player
             }
 
             Logger.Log(
-                $"{Prefix}Invoke_OnKilled: {(firedPlayer != null ? NewbieUtils.GetPlayerName(firedPlayer.VrcPlayer) : "null")}, {(hitPlayer != null ? NewbieUtils.GetPlayerName(hitPlayer.VrcPlayer) : "null")}");
+                $"{Prefix}Invoke_OnKilled: {NewbieUtils.GetPlayerName(firedPlayer.VrcPlayer)}, {NewbieUtils.GetPlayerName(hitPlayer.VrcPlayer)}");
 
             foreach (var callback in _eventCallbacks)
             {
@@ -1081,11 +1089,5 @@ namespace CenturionCC.System.Player
         }
 
         #endregion
-    }
-
-    public enum KillType
-    {
-        Default,
-        FriendlyFire
     }
 }

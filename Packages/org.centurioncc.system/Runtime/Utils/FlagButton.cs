@@ -1,12 +1,11 @@
-﻿using System;
-using CenturionCC.System.Player;
+﻿using CenturionCC.System.Player;
+using CenturionCC.System.UI;
 using DerpyNewbie.Common;
 using DerpyNewbie.Common.Invoker;
 using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
-using VRC.SDKBase;
 
 namespace CenturionCC.System.Utils
 {
@@ -17,12 +16,13 @@ namespace CenturionCC.System.Utils
         [SerializeField] [HideInInspector] [NewbieInject]
         private PrintableBase logger;
         [SerializeField] [HideInInspector] [NewbieInject]
-        private DamageDataResolver resolver;
+        private NotificationProvider notification;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PlayerManager playerManager;
         [SerializeField]
         private float resolverWaitDuration = 0.1F;
         public float delay = 2F;
         private AudioSource _audioSource;
-        private DateTime _lastInteractTime;
         private float _lastPlayedTime;
         private SendVariableSyncEvent _variableEvent;
 
@@ -45,24 +45,43 @@ namespace CenturionCC.System.Utils
 
         private void _DelayedExecute()
         {
-            _lastInteractTime = Networking.GetNetworkDateTime();
+            if (_CheckCooldown()) return;
+
             SendCustomEventDelayedSeconds(nameof(_TryPlayFlagAudio), resolverWaitDuration);
+        }
+
+        private bool _CheckCooldown()
+        {
+            if (_lastPlayedTime + delay > Time.timeSinceLevelLoad)
+            {
+                logger.LogWarn($"[Flag] flag button was pressed at {transform.parent.name} but i'm in delay time!");
+                notification.ShowInfo($"フラッグのクールダウン中: 残り{delay - (Time.timeSinceLevelLoad - _lastPlayedTime):F1}秒",
+                    id: 1058150);
+                return true;
+            }
+
+            return false;
         }
 
         [PublicAPI]
         public void _TryPlayFlagAudio()
         {
-            var diedTime = resolver.GetAssumedDiedTime(Networking.LocalPlayer.playerId);
-            if (resolver.IsInInvincibleDuration(_lastInteractTime, diedTime))
+            var localPlayer = playerManager.GetLocalPlayer();
+            if (localPlayer == null)
             {
-                logger.LogWarn(
-                    $"[Flag] flag button was pressed at {transform.parent.name} but i'm in invincible duration!");
+                notification.ShowWarn("ゲームに入っていない状態でフラッグを鳴らすことはできません");
                 return;
             }
 
-            if (_lastPlayedTime + delay > Time.timeSinceLevelLoad)
+            if (localPlayer.IsDead)
             {
-                logger.LogWarn($"[Flag] flag button was pressed at {transform.parent.name} but i'm in delay time!");
+                // TODO: make it translatable message
+                notification.ShowWarn("ヒット中にフラッグを鳴らすことはできません");
+                return;
+            }
+
+            if (_CheckCooldown())
+            {
                 return;
             }
 

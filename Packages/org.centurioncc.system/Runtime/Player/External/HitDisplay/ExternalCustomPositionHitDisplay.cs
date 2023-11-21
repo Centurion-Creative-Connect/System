@@ -5,20 +5,21 @@ using VRC.SDKBase;
 namespace CenturionCC.System.Player.External.HitDisplay
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class ExternalHitDisplay : ExternalHitDisplayBase
+    public class ExternalCustomPositionHitDisplay : ExternalHitDisplayBase
     {
         [SerializeField]
-        private float stoppingHeight = 0.7F;
+        private float duration = 0.5F;
+        [Header("Position Settings")]
         [SerializeField]
-        private AnimationCurve curve = AnimationCurve.EaseInOut(0, 0, 0.5F, 1F);
+        private HumanBodyBones referenceBone = HumanBodyBones.Chest;
         [SerializeField]
-        private float duration = 5F;
+        private Vector3 offsetForReference = Vector3.up * 0.05F;
+        [SerializeField]
+        private Vector3 offsetForView = Vector3.forward * .4F;
         private VRCPlayerApi _followingPlayer;
         private VRCPlayerApi _localPlayer;
-        private Vector3 _posOffset;
 
-        private float _time;
-
+        private Vector3 _offset;
         private Transform _transform;
 
         private void Start()
@@ -26,21 +27,22 @@ namespace CenturionCC.System.Player.External.HitDisplay
             _transform = transform;
             _localPlayer = Networking.LocalPlayer;
             if (_followingPlayer == null)
-                _followingPlayer = Networking.LocalPlayer;
+                _followingPlayer = _localPlayer;
         }
 
         private void Update()
         {
             if (!Utilities.IsValid(_followingPlayer) || !Utilities.IsValid(_localPlayer))
             {
-                DestroyThis();
+                Destroy(gameObject);
                 return;
             }
 
-            _time += Time.deltaTime;
-            _transform.position = _followingPlayer.GetPosition() + _posOffset +
-                                  new Vector3(0, stoppingHeight * curve.Evaluate(_time), 0);
-            _transform.LookAt(_localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position);
+            var localHead = _localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+            var followingPos = _followingPlayer.GetPosition();
+            var destPos = followingPos + _offset;
+            _transform.position = destPos + Quaternion.LookRotation(localHead.position - destPos) * offsetForView;
+            _transform.LookAt(localHead.position);
         }
 
         public override void Play(PlayerBase player)
@@ -53,10 +55,15 @@ namespace CenturionCC.System.Player.External.HitDisplay
             }
 
             _followingPlayer = followingPlayer;
-            var headPos = followingPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
+
             var playerPos = followingPlayer.GetPosition();
-            _posOffset = headPos - playerPos;
-            _time = 0;
+            var bonePos = followingPlayer.GetBonePosition(referenceBone) + offsetForReference;
+            if (bonePos == Vector3.zero)
+                bonePos = playerPos + Vector3.up * 1.7F;
+            _offset = bonePos - playerPos;
+
+            Start();
+            Update();
             gameObject.SetActive(true);
 
             SendCustomEventDelayedSeconds(nameof(DestroyThis), duration);
