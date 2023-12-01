@@ -12,15 +12,19 @@ Airsoft game system made for Centurion VR Survival Game Field.
 ## How to Import
 
 ### Import using VCC
-1. Open this [link](https://centurion-creative-connect.github.io/vpm-repos/) and add repository to your VCC.
-2. Add Centurion System package from Centurion Creative Connect repos
+1. Open [this link](https://centurion-creative-connect.github.io/vpm-repos/) and [this link](https://derpynewbie.github.io/vpm-repos/), add both repositories to your VCC.
+2. Add `Centurion System` and `Centurion System Commands` package from Centurion Creative Connect repos.
+    - At this point, VCC should automatically add `Newbie Commons` and `Newbie Logger` package as dependency.
 3. Done!
 
 ### Import using unitypackage
-1. Open [latest releases](https://github.com/Centurion-Creative-Connect/System/releases/latest).
-2. Download unitypackage in assets.
-3. Import downloaded unitypackage.
-4. Done!
+1. Download and Import all dependencies.
+    - [Newbie Commons](https://github.com/DerpyNewbie/NewbieCommons/releases)
+    - [Newbie Logger](https://github.com/DerpyNewbie/NewbieLogger/releases)
+2. Open [latest releases](https://github.com/Centurion-Creative-Connect/System/releases/latest).
+3. Download unitypackage in assets.
+4. Import downloaded unitypackage.
+5. Done!
 
 ## FAQ
 
