@@ -238,7 +238,7 @@ namespace CenturionCC.System.Player
                 key = new DataToken($"{syncer.EventId}-{duplicateCount}");
             }
 
-            _resolvedEvents.SetValue(key, syncer.AsDataToken());
+            _resolvedEvents.SetValue(key, syncer.ToDictionary());
         }
 
         private int GetValidEventId()
