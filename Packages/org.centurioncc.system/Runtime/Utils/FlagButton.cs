@@ -55,8 +55,8 @@ namespace CenturionCC.System.Utils
             if (_lastPlayedTime + delay > Time.timeSinceLevelLoad)
             {
                 logger.LogWarn($"[Flag] flag button was pressed at {transform.parent.name} but i'm in delay time!");
-                notification.ShowInfo($"フラッグのクールダウン中: 残り{delay - (Time.timeSinceLevelLoad - _lastPlayedTime):F1}秒",
-                    id: 1058150);
+                notification.ShowInfo($"フラッグのクールダウン中: 残り{delay - (Time.timeSinceLevelLoad - _lastPlayedTime):F1}秒", 5F,
+                    1058150);
                 return true;
             }
 
