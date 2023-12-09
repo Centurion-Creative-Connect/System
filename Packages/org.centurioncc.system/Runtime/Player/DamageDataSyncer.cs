@@ -3,7 +3,6 @@ using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
-using VRC.SDK3.Data;
 using VRC.SDKBase;
 using VRC.Udon.Common;
 
@@ -410,44 +409,6 @@ namespace CenturionCC.System.Player
         }
 
         #endregion
-    }
-
-    public static class ResolverDataSyncerExtensions
-    {
-        public static DataToken AsDataToken(this DamageDataSyncer syncer)
-        {
-            // U# does not support list collection initializer yet
-            // ReSharper disable once UseObjectOrCollectionInitializer
-            var damageData = new DataDictionary();
-            damageData.Add("activatedTime", syncer.ActivatedTime.ToString("O"));
-            damageData.Add("hitTime", syncer.HitTime.ToString("O"));
-            damageData.Add("activatedPosition", AsDataToken(syncer.ActivatedPosition));
-            damageData.Add("hitPosition", AsDataToken(syncer.HitPosition));
-            damageData.Add("weaponName", syncer.WeaponType);
-
-            // ReSharper disable once UseObjectOrCollectionInitializer
-            var syncerData = new DataDictionary();
-            syncerData.Add("senderId", syncer.SenderId);
-            syncerData.Add("attackerId", syncer.AttackerId);
-            syncerData.Add("victimId", syncer.VictimId);
-            syncerData.Add("state", new DataToken(DamageDataSyncer.GetStateName(syncer.State)));
-            syncerData.Add("result", new DataToken(DamageDataSyncer.GetResultName(syncer.Result)));
-            syncerData.Add("type", new DataToken(DamageDataSyncer.GetKillTypeName(syncer.Type)));
-            syncerData.Add("parts", new DataToken(DamageDataSyncer.GetBodyPartsName(syncer.Parts)));
-            syncerData.Add("damageData", damageData);
-
-            return new DataToken(syncerData);
-        }
-
-        private static DataToken AsDataToken(Vector3 value)
-        {
-            // ReSharper disable once UseObjectOrCollectionInitializer
-            var reference = new DataDictionary();
-            reference.Add("x", value.x);
-            reference.Add("y", value.y);
-            reference.Add("z", value.z);
-            return new DataToken(reference);
-        }
     }
 
     public enum SyncState
