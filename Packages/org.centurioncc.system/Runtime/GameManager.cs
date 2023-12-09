@@ -60,7 +60,7 @@ namespace CenturionCC.System
 
         public static string GetVersion()
         {
-            return "0.6.0-prealpha+centurion.1";
+            return "0.6.0-prealpha+centurion.3";
         }
 
         public int KeepAlive(WatchdogProc wd, int nonce)
