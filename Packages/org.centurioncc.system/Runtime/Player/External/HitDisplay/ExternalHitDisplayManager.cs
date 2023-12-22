@@ -24,12 +24,12 @@ namespace CenturionCC.System.Player.External.HitDisplay
                 parent = transform;
         }
 
-        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
+        public override void OnKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
-            if (hitPlayer.IsLocal)
+            if (victim.IsLocal)
                 return;
 
-            Play(hitPlayer);
+            Play(victim);
         }
 
         public void Play(PlayerBase player)
@@ -55,5 +55,12 @@ namespace CenturionCC.System.Player.External.HitDisplay
                 Destroy(obj.gameObject);
             }
         }
+    }
+
+    public enum HitDisplaySetting
+    {
+        Always,
+        LocalOnly,
+        RemoteOnly
     }
 }
