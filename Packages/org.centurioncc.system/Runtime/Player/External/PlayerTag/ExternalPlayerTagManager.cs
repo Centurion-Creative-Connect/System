@@ -2,7 +2,7 @@
 using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using DerpyNewbie.Common.Role;
-using DerpyNewbie.Logger;
+using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -16,18 +16,16 @@ namespace CenturionCC.System.Player.External.PlayerTag
         private PlayerManager playerManager;
         [SerializeField] [HideInInspector] [NewbieInject]
         private RoleManager roleManager;
-        [SerializeField] [HideInInspector] [NewbieInject]
-        private NewbieLogger logger;
         [SerializeField]
         private GameObject sourceRemotePlayerTag;
 
         [Header("Settings")]
         [SerializeField]
         [Tooltip("Shows team tag even if local player is not in same team as remote")]
-        private bool showOtherTeamsTag = false;
+        private bool showOtherTeamsTag;
         [SerializeField]
         [Tooltip("Shows staff tag even if staff player is not in special team")]
-        private bool showStaffTagWhileInTeam = false;
+        private bool showStaffTagWhileInTeam;
 
         private ExternalPlayerTagBase[] _remotePlayerTags = new ExternalPlayerTagBase[0];
 
@@ -42,8 +40,6 @@ namespace CenturionCC.System.Player.External.PlayerTag
             if (newId == -1)
             {
                 var oldPlayerApi = VRCPlayerApi.GetPlayerById(oldId);
-                if (!Utilities.IsValid(oldPlayerApi))
-                    return;
                 DestroyPlayerTag(GetOrCreatePlayerTag(oldPlayerApi));
                 return;
             }
@@ -54,11 +50,13 @@ namespace CenturionCC.System.Player.External.PlayerTag
 
         public override void OnTeamChanged(PlayerBase player, int oldTeam)
         {
-            if (!Utilities.IsValid(player.VrcPlayer))
-                return;
+            if (!Utilities.IsValid(player.VrcPlayer)) return;
 
             var playerTag = GetOrCreatePlayerTag(player.VrcPlayer);
-            playerTag.SetTeamTag(player.TeamId, playerManager.GetTeamColor(player.TeamId));
+            if (playerTag == null) return;
+
+            var team = player.TeamId;
+            playerTag.SetTeamTag(team, playerManager.GetTeamColor(player.TeamId), playerManager.IsStaffTeamId(team));
 
             if (player.IsLocal)
             {
@@ -93,8 +91,24 @@ namespace CenturionCC.System.Player.External.PlayerTag
             }
         }
 
-        private void SetupTag(VRCPlayerApi taggedPlayerApi)
+        public override void OnKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
+            if (!Utilities.IsValid(victim.VrcPlayer)) return;
+
+            SetupTag(victim.VrcPlayer);
+        }
+
+        public override void OnPlayerRevived(PlayerBase player)
+        {
+            if (!Utilities.IsValid(player.VrcPlayer)) return;
+
+            SetupTag(player.VrcPlayer);
+        }
+
+        private void SetupTag([CanBeNull] VRCPlayerApi taggedPlayerApi)
+        {
+            if (!Utilities.IsValid(taggedPlayerApi)) return;
+
             var playerTag = GetOrCreatePlayerTag(taggedPlayerApi);
             var localPlayer = playerManager.GetLocalPlayer();
             var localPlayerTeamId = localPlayer != null ? localPlayer.TeamId : 0;
@@ -103,23 +117,30 @@ namespace CenturionCC.System.Player.External.PlayerTag
             UpdateTag(playerTag, localPlayerTeamId, localPlayerInSpecialTeam);
         }
 
-        private void UpdateTag(ExternalPlayerTagBase playerTag, int localPlayerTeamId, bool localPlayerInSpecialTeam)
+        private void UpdateTag([CanBeNull] ExternalPlayerTagBase playerTag,
+            int localPlayerTeamId, bool localPlayerInSpecialTeam)
         {
+            if (playerTag == null) return;
+
             var taggedPlayerApi = playerTag.followingPlayer;
-            if (!Utilities.IsValid(taggedPlayerApi))
-                return;
+            if (!Utilities.IsValid(taggedPlayerApi)) return;
 
             var taggedPlayer = playerManager.GetPlayerById(taggedPlayerApi.playerId);
             var taggedPlayerRole = roleManager.GetPlayerRole(taggedPlayerApi);
             var taggedPlayerTeamId = taggedPlayer != null ? taggedPlayer.TeamId : 0;
             var inSameTeam = localPlayerTeamId == taggedPlayerTeamId;
+            var isDead = taggedPlayer != null && taggedPlayer.IsDead;
             var showAlways = localPlayerInSpecialTeam || playerManager.IsSpecialTeamId(taggedPlayerTeamId);
             var showTeam = playerManager.ShowTeamTag && (showOtherTeamsTag || showAlways || inSameTeam);
+            var teamTagColor = playerManager.GetTeamColor(taggedPlayerTeamId);
+            var isStaffTeam = playerManager.IsStaffTeamId(taggedPlayerTeamId);
             var showStaff = playerManager.ShowStaffTag && (showStaffTagWhileInTeam || showAlways);
             var showCreator = playerManager.ShowCreatorTag && (showStaffTagWhileInTeam || showAlways);
 
+            playerTag.SetTagOn(TagType.Hit, isDead);
+
             playerTag.SetTagOn(TagType.Team, showTeam);
-            playerTag.SetTeamTag(taggedPlayerTeamId, playerManager.GetTeamColor(taggedPlayerTeamId));
+            playerTag.SetTeamTag(taggedPlayerTeamId, teamTagColor, isStaffTeam);
 
             playerTag.SetTagOn(GetStaffTagType(taggedPlayerRole), showStaff && taggedPlayerRole.IsGameStaff());
             playerTag.SetTagOn(TagType.Master, showStaff && taggedPlayerApi.isMaster);
@@ -127,8 +148,10 @@ namespace CenturionCC.System.Player.External.PlayerTag
             playerTag.SetTagOn(TagType.Creator, showCreator && taggedPlayerRole.IsGameCreator());
         }
 
-        private TagType GetStaffTagType(RoleData role)
+        private static TagType GetStaffTagType([CanBeNull] RoleData role)
         {
+            if (role == null) return TagType.Staff;
+
             switch (role.RoleName)
             {
                 case "Owner":
@@ -140,6 +163,7 @@ namespace CenturionCC.System.Player.External.PlayerTag
             }
         }
 
+        [CanBeNull]
         private ExternalPlayerTagBase GetOrCreatePlayerTag(VRCPlayerApi api)
         {
             foreach (var playerTag in _remotePlayerTags)
@@ -149,8 +173,11 @@ namespace CenturionCC.System.Player.External.PlayerTag
             return CreatePlayerTag(api);
         }
 
-        private ExternalPlayerTagBase CreatePlayerTag(VRCPlayerApi api)
+        [CanBeNull]
+        private ExternalPlayerTagBase CreatePlayerTag([CanBeNull] VRCPlayerApi api)
         {
+            if (api == null || !Utilities.IsValid(api)) return null;
+
             Debug.Log($"[ExternalPlayerTagManager] Create player tag for '{api.playerId}'");
             var obj = Instantiate(sourceRemotePlayerTag, transform);
             obj.name = $"ExternalPlayerTag_{api.playerId}";

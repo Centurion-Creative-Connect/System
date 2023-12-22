@@ -1,4 +1,5 @@
-﻿using CenturionCC.System.Audio;
+﻿using System;
+using CenturionCC.System.Audio;
 using CenturionCC.System.Utils;
 using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
@@ -64,7 +65,7 @@ namespace CenturionCC.System.Player
         [SerializeField]
         private bool useLightweightCollider = true;
         [SerializeField]
-        private bool alwaysUseLightweightCollider = false;
+        private bool alwaysUseLightweightCollider;
 
         private WatchdogChildCallbackBase[] _callbacks;
         private int _eventCallbackCount;
@@ -425,7 +426,7 @@ namespace CenturionCC.System.Player
             for (var i = 0; i < GetPlayers().Length; i++)
             {
                 var player = GetPlayer(i);
-                if (player && player.PlayerId != -1) continue;
+                if (player != null && player.PlayerId != -1) continue;
                 MasterOnly_SetPlayer(i, playerId);
                 result = i;
                 return result;
@@ -447,7 +448,7 @@ namespace CenturionCC.System.Player
             for (var i = 0; i < GetPlayers().Length; i++)
             {
                 var player = GetPlayer(i);
-                if (player && player.PlayerId != playerId) continue;
+                if (player != null && player.PlayerId != playerId) continue;
                 MasterOnly_SetPlayer(i, -1);
                 result = true;
                 break;
@@ -842,6 +843,14 @@ namespace CenturionCC.System.Player
                 $"<color=#{GetTeamColorString(player.TeamId)}>{NewbieUtils.GetPlayerName(player.VrcPlayer)}</color>";
         }
 
+        [PublicAPI]
+        public string GetHumanFriendlyColoredName(PlayerBase player, string fallbackName = "???")
+        {
+            if (player == null) return fallbackName;
+            return
+                $"<color=#{GetTeamColorString(player.TeamId)}>{player.VrcPlayer.SafeGetDisplayName(fallbackName)}</color>";
+        }
+
         // From UnityEngine.ColorUtility
         // ReSharper disable once InconsistentNaming
         private static string ToHtmlStringRGBA(Color color)
@@ -1005,19 +1014,11 @@ namespace CenturionCC.System.Player
             }
         }
 
-        public void Invoke_OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint,
-            bool isShooterDetection)
+        public void Invoke_OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint)
         {
-            if (playerCollider == null || damageData == null)
-            {
-                Logger.LogWarn($"{Prefix}Invoke_OnHitDetection called without actual data.");
-                return;
-            }
-
             Logger.Log($"{Prefix}Invoke_OnHitDetection: " +
                        $"{(playerCollider != null ? playerCollider.name : "null")}, " +
-                       $"{(damageData != null ? damageData.DamageType : "null")} , " +
-                       $"{isShooterDetection}");
+                       $"{(damageData != null ? damageData.DamageType : "null")}");
 
             foreach (var callback in _eventCallbacks)
             {
@@ -1025,12 +1026,18 @@ namespace CenturionCC.System.Player
                 ((PlayerManagerCallbackBase)callback).OnHitDetection(
                     playerCollider,
                     damageData,
-                    contactPoint,
-                    isShooterDetection);
+                    contactPoint
+                );
             }
         }
 
+        [Obsolete]
         public void Invoke_OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
+        {
+            Invoke_OnKilled(firedPlayer, hitPlayer, KillType.Default);
+        }
+
+        public void Invoke_OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
         {
             if (firedPlayer == null || hitPlayer == null)
             {
@@ -1038,15 +1045,14 @@ namespace CenturionCC.System.Player
                 return;
             }
 
-            hitPlayer.OnDeath();
-
             Logger.Log(
-                $"{Prefix}Invoke_OnKilled: {(firedPlayer != null ? NewbieUtils.GetPlayerName(firedPlayer.VrcPlayer) : "null")}, {(hitPlayer != null ? NewbieUtils.GetPlayerName(hitPlayer.VrcPlayer) : "null")}");
+                $"{Prefix}Invoke_OnKilled: {NewbieUtils.GetPlayerName(firedPlayer.VrcPlayer)}, {NewbieUtils.GetPlayerName(hitPlayer.VrcPlayer)}");
 
             foreach (var callback in _eventCallbacks)
             {
                 if (callback == null) continue;
-                ((PlayerManagerCallbackBase)callback).OnKilled(firedPlayer, hitPlayer);
+
+                ((PlayerManagerCallbackBase)callback).OnKilled(firedPlayer, hitPlayer, type);
             }
         }
 
@@ -1061,6 +1067,24 @@ namespace CenturionCC.System.Player
             {
                 if (callback == null) continue;
                 ((PlayerManagerCallbackBase)callback).OnPlayerTagChanged(type, isOn);
+            }
+        }
+
+        public void Invoke_OnPlayerRevived(PlayerBase revivedPlayer)
+        {
+            if (revivedPlayer == null)
+            {
+                Logger.LogWarn($"{Prefix}Invoke_OnPlayerRevived called without actual player.");
+                return;
+            }
+
+            Logger.Log($"{Prefix}Invoke_OnPlayerRevived: {NewbieUtils.GetPlayerName(revivedPlayer.VrcPlayer)}");
+
+            foreach (var callback in _eventCallbacks)
+            {
+                if (callback == null) continue;
+
+                ((PlayerManagerCallbackBase)callback).OnPlayerRevived(revivedPlayer);
             }
         }
 

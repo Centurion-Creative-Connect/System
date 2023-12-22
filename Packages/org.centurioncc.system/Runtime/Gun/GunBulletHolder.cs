@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using UdonSharp;
 using UnityEngine;
 
@@ -91,14 +92,15 @@ namespace CenturionCC.System.Gun
         }
 
         public override ProjectileBase Shoot(Vector3 pos, Quaternion rot, Vector3 velocity, Vector3 torque, float drag,
-            string damageType,
+            string damageType, DateTime time,
             int playerId, float trailTime, Gradient trailGradient)
         {
             var projectile = GetProjectile();
             if (projectile == null)
                 return null;
 
-            projectile.Shoot(pos, rot, velocity, torque, drag, damageType, playerId, trailTime, trailGradient);
+            projectile.ResetDamageSetting();
+            projectile.Shoot(pos, rot, velocity, torque, drag, damageType, time, playerId, trailTime, trailGradient);
             return projectile;
         }
     }

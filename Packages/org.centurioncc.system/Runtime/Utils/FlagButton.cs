@@ -1,4 +1,6 @@
-﻿using DerpyNewbie.Common;
+﻿using CenturionCC.System.Player;
+using CenturionCC.System.UI;
+using DerpyNewbie.Common;
 using DerpyNewbie.Common.Invoker;
 using DerpyNewbie.Logger;
 using JetBrains.Annotations;
@@ -12,7 +14,13 @@ namespace CenturionCC.System.Utils
     public class FlagButton : PickupEventSenderCallback
     {
         [SerializeField] [HideInInspector] [NewbieInject]
-        private GameManager gameManager;
+        private PrintableBase logger;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private NotificationProvider notification;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private PlayerManager playerManager;
+        [SerializeField]
+        private float resolverWaitDuration = 0.1F;
         public float delay = 2F;
         private AudioSource _audioSource;
         private float _lastPlayedTime;
@@ -27,28 +35,53 @@ namespace CenturionCC.System.Utils
 
         public override void Interact()
         {
-            _TryPlayFlagAudio();
+            _DelayedExecute();
         }
 
         public override void OnPickupUseDownRelayed()
         {
-            _TryPlayFlagAudio();
+            _DelayedExecute();
+        }
+
+        private void _DelayedExecute()
+        {
+            if (_CheckCooldown()) return;
+
+            SendCustomEventDelayedSeconds(nameof(_TryPlayFlagAudio), resolverWaitDuration);
+        }
+
+        private bool _CheckCooldown()
+        {
+            if (_lastPlayedTime + delay > Time.timeSinceLevelLoad)
+            {
+                logger.LogWarn($"[Flag] flag button was pressed at {transform.parent.name} but i'm in delay time!");
+                notification.ShowInfo($"フラッグのクールダウン中: 残り{delay - (Time.timeSinceLevelLoad - _lastPlayedTime):F1}秒", 5F,
+                    1058150);
+                return true;
+            }
+
+            return false;
         }
 
         [PublicAPI]
         public void _TryPlayFlagAudio()
         {
-            if (gameManager.IsInAntiZombieTime())
+            var localPlayer = playerManager.GetLocalPlayer();
+            if (localPlayer == null)
             {
-                gameManager.logger.LogWarn(
-                    $"[Flag] flag button was pressed at {transform.parent.name} but i'm in anti-zombie time!");
+                notification.ShowWarn("ゲームに入っていない状態でフラッグを鳴らすことはできません");
                 return;
             }
 
-            if (_lastPlayedTime + delay > Time.timeSinceLevelLoad)
+            if (localPlayer.IsDead)
             {
-                gameManager.logger.LogWarn(
-                    $"[Flag] flag button was pressed at {transform.parent.name} but i'm in delay time!");
+                // TODO: make it translatable message
+                notification.ShowWarn("ヒット中にフラッグを鳴らすことはできません");
+                return;
+            }
+
+            if (_CheckCooldown())
+            {
                 return;
             }
 
@@ -57,12 +90,7 @@ namespace CenturionCC.System.Utils
 
         public void PlayFlagAudio()
         {
-            Internal_PlayFlagAudio();
-        }
-
-        private void Internal_PlayFlagAudio()
-        {
-            gameManager.logger.Log($"[Flag] flag at {transform.parent.name} is now playing!");
+            logger.Log($"[Flag] flag at {transform.parent.name} is now playing!");
             _audioSource.Play();
             _lastPlayedTime = Time.timeSinceLevelLoad;
         }

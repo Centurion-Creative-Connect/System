@@ -16,14 +16,18 @@ namespace CenturionCC.System.UI.HeadUI
         [SerializeField]
         public bool useHaptic;
         [SerializeField]
-        public float localPlayerHitDuration = 1F;
-        [SerializeField]
         private RectTransform rectTransform;
 
         [SerializeField]
         private AudioSource hitSound;
         [SerializeField]
         private AudioClip hapticSource;
+        [SerializeField]
+        private Text descriptionText;
+        [SerializeField]
+        private string descriptionFormat = "Hit by %attacker% in the %bodyParts% using %weapon%";
+        [SerializeField]
+        private Image descriptionBackground;
         [SerializeField]
         private Image hitSprite;
         [SerializeField]
@@ -115,7 +119,7 @@ namespace CenturionCC.System.UI.HeadUI
 
             SetAlpha(_alpha = Mathf.SmoothDamp(_alpha, _alphaTarget, ref _alphaVelocity, _alphaSmoothTime));
 
-            PlaySoundHaptic();
+            if (useHaptic) PlaySoundHaptic();
 
             _currentTime += Time.deltaTime;
         }
@@ -158,12 +162,17 @@ namespace CenturionCC.System.UI.HeadUI
             Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Right, HapticDuration, f, f);
         }
 
-        private void SetAlpha(float alpha)
+        private void SetAlpha(float a)
         {
-            var hc = hitSprite.color;
-            hitSprite.color = new Color(hc.r, hc.g, hc.b, alpha);
-            var lc = labelSprite.color;
-            labelSprite.color = new Color(lc.r, lc.g, lc.b, alpha);
+            hitSprite.color = WithAlpha(hitSprite.color, a);
+            labelSprite.color = WithAlpha(labelSprite.color, a);
+            if (descriptionText != null) descriptionText.color = WithAlpha(descriptionText.color, a);
+            if (descriptionBackground != null) descriptionBackground.color = WithAlpha(descriptionBackground.color, a);
+        }
+
+        private static Color WithAlpha(Color c, float a)
+        {
+            return new Color(c.r, c.g, c.b, a);
         }
 
         private int RandomNoDouble()
@@ -195,12 +204,41 @@ namespace CenturionCC.System.UI.HeadUI
             _alphaSmoothTime = outTime;
         }
 
+        private static string GetHumanFriendlyBodyPartsName(BodyParts parts)
+        {
+            switch (parts)
+            {
+                case BodyParts.Body: return "Body";
+                case BodyParts.Head: return "<color=maroon>Head</color>";
+                case BodyParts.LeftArm: return "Left Arm";
+                case BodyParts.LeftLeg: return "Left Leg";
+                case BodyParts.RightArm: return "Right Arm";
+                case BodyParts.RightLeg: return "Right Leg";
+                default: return "???";
+            }
+        }
+
+        private string FormatDescription(string format, PlayerBase attacker, PlayerBase victim)
+        {
+            var weaponName = victim.LastHitData.WeaponType.Replace("BBBullet: ", "");
+            var attackerName = playerManager.GetHumanFriendlyColoredName(attacker);
+            var victimName = playerManager.GetHumanFriendlyColoredName(victim);
+            var bodyParts = GetHumanFriendlyBodyPartsName(victim.LastHitData.Parts);
+
+            return format
+                .Replace("%weapon%", weaponName)
+                .Replace("%attacker%", attackerName)
+                .Replace("%victim%", victimName)
+                .Replace("%bodyParts%", bodyParts);
+        }
+
         #region PlayerManagerCallback
 
-        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
+        public override void OnKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
-            if (!hitPlayer.IsLocal)
-                return;
+            if (!victim.IsLocal) return;
+
+            if (descriptionText != null) descriptionText.text = FormatDescription(descriptionFormat, attacker, victim);
 
             Play();
         }

@@ -1,4 +1,5 @@
-﻿using DerpyNewbie.Common;
+﻿using System;
+using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
 
@@ -25,6 +26,7 @@ namespace CenturionCC.System.Gun
 
         private Vector3 _damageOriginPos;
         private Quaternion _damageOriginRot;
+        private DateTime _damageOriginTime;
 
         private int _damagerPlayerId;
         private string _damageType;
@@ -44,6 +46,7 @@ namespace CenturionCC.System.Gun
         public override int DamagerPlayerId => _damagerPlayerId;
         public override Vector3 DamageOriginPosition => _damageOriginPos;
         public override Quaternion DamageOriginRotation => _damageOriginRot;
+        public override DateTime DamageOriginTime => _damageOriginTime;
         public override string DamageType => _damageType;
 
         public void Start()
@@ -62,13 +65,14 @@ namespace CenturionCC.System.Gun
         }
 
         public override void Shoot(Vector3 pos, Quaternion rot, Vector3 velocity, Vector3 torque, float drag,
-            string damageType, int playerId,
+            string damageType, DateTime time, int playerId,
             float trailTime,
             Gradient trailGradient)
         {
             // Damage data
             _damageOriginPos = pos;
             _damageOriginRot = rot;
+            _damageOriginTime = time;
             _damageType = $"BBBullet: {damageType}";
             _damagerPlayerId = playerId;
 

@@ -1,4 +1,5 @@
-﻿using CenturionCC.System.Utils;
+﻿using System;
+using CenturionCC.System.Utils;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
@@ -52,25 +53,34 @@ namespace CenturionCC.System.Player
         }
 
         /// <summary>
-        /// Called when <see cref="VRC.SDKBase.Networking.LocalPlayer" /> has damaged <see cref="PlayerCollider" />
+        /// Called when <see cref="VRC.SDKBase.Networking.LocalPlayer"/> has hit <see cref="PlayerCollider"/>
         /// </summary>
-        /// <param name="playerCollider">which collider got hit by <see cref="DamageData" /></param>
-        /// <param name="damageData">which damager was applied for <see cref="PlayerCollider" /></param>
+        /// <param name="playerCollider">which collider got hit by <see cref="DamageData"/></param>
+        /// <param name="damageData">which damager was applied for <see cref="PlayerCollider"/></param>
         /// <param name="contactPoint">contact point of collision</param>
-        /// <param name="isShooterDetection">if collision was detected by damager holder. should always be true</param>
-        public virtual void OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint,
-            bool isShooterDetection)
+        public virtual void OnHitDetection(
+            [CanBeNull] PlayerCollider playerCollider,
+            [CanBeNull] DamageData damageData,
+            Vector3 contactPoint)
         {
         }
 
-
-        /// <summary>
-        /// Called when <see cref="PlayerBase"/>'s <see cref="PlayerBase.Kills"/> and <see cref="PlayerBase.Deaths"/> were changed.
-        /// </summary>
-        /// <param name="firedPlayer">Player who updated <see cref="PlayerBase.Kills"/></param>
-        /// <param name="hitPlayer">Player who updated <see cref="PlayerBase.Deaths"/></param>
+        [Obsolete("Use OnKilled(PlayerBase, PlayerBase, KillType) callback instead.")]
         public virtual void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
         {
+        }
+
+        /// <summary>
+        /// Called when <paramref name="hitPlayer"/> has been killed by <paramref name="firedPlayer"/>
+        /// </summary>
+        /// <param name="firedPlayer">player who has attacked <paramref name="hitPlayer"/></param>
+        /// <param name="hitPlayer">player who has been attacked by <paramref name="firedPlayer"/></param>
+        /// <param name="type">kill type of this event</param>
+        public virtual void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
+        {
+#pragma warning disable CS0618
+            OnKilled(firedPlayer, hitPlayer);
+#pragma warning restore CS0618
         }
 
         /// <summary>
@@ -103,6 +113,14 @@ namespace CenturionCC.System.Player
         /// </summary>
         /// <param name="player">a player which called <see cref="PlayerBase.ResetStats"/></param>
         public virtual void OnResetPlayerStats(PlayerBase player)
+        {
+        }
+
+        /// <summary>
+        /// Called when <see cref="PlayerBase.IsDead"/> was set to false.
+        /// </summary>
+        /// <param name="player">a player which changed <see cref="PlayerBase.IsDead"/></param>
+        public virtual void OnPlayerRevived(PlayerBase player)
         {
         }
     }

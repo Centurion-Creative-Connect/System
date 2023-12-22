@@ -32,24 +32,21 @@ namespace CenturionCC.System
         public FootstepGenerator footstep;
         public ModeratorTool moderatorTool;
         public NotificationProvider notification;
+        [NewbieInject]
+        public DamageDataResolver resolver;
+        [NewbieInject]
+        public DamageDataSyncerManager syncer;
 
         public bool logHitLocation = true;
         public bool logShotLocation = true;
 
-        public float localPlayerHitDuration = 1F;
-        public float antiZombieTime = 5F;
-
         private readonly string _prefix = "<color=yellow>GameManager</color>::";
-
-        private DateTime _lastLocalPlayerHitTime;
 
         private void Start()
         {
             logger.Println(GetLicense());
             logger.Println($"Centurion System - v{GetVersion()}");
             logger.LogVerbose($"{_prefix}Subscribing event");
-            if (players)
-                players.SubscribeCallback(this);
             if (guns)
                 guns.SubscribeCallback(this);
 
@@ -76,27 +73,6 @@ namespace CenturionCC.System
             return null;
         }
 
-        [Obsolete("Use PlayerBase.OnDeath() directly.")]
-        public void PlayHitLocal(PlayerBase player)
-        {
-            PlayOnDeath(player);
-        }
-
-        [Obsolete("Use PlayerBase.OnDeath() directly.")]
-        public void PlayHitRemote(PlayerBase player)
-        {
-            PlayOnDeath(player);
-        }
-
-        [Obsolete("Use PlayerBase.OnDeath() directly.")]
-        private void PlayOnDeath(PlayerBase player)
-        {
-            logger.LogVerbose(
-                $"{_prefix}PlayOnDeath: {(player != null ? NewbieUtils.GetPlayerName(player.VrcPlayer) : "Dummy (shooter player null)")}");
-            if (player != null)
-                player.OnDeath();
-        }
-
         public bool CanShoot()
         {
             if (!Networking.LocalPlayer.IsPlayerGrounded())
@@ -116,7 +92,8 @@ namespace CenturionCC.System
 
         public bool IsInAntiZombieTime()
         {
-            return DateTime.Now.Subtract(_lastLocalPlayerHitTime).TotalSeconds < antiZombieTime;
+            var localPlayer = players.GetLocalPlayer();
+            return localPlayer != null && localPlayer.IsDead;
         }
 
         [Obsolete("Use NewbieUtils.GetPlayerName() instead")]
@@ -137,43 +114,6 @@ namespace CenturionCC.System
         {
             if (eventLogger && logShotLocation)
                 eventLogger.LogShot(instance, projectile);
-        }
-
-        #endregion
-
-        #region PlayerManagerCallbackBase
-
-        public void OnPlayerChanged(PlayerBase player, int oldId, int newId)
-        {
-        }
-
-        public void OnLocalPlayerChanged(PlayerBase playerNullable, int index)
-        {
-        }
-
-        public void OnFriendlyFire(PlayerBase firedPlayer, PlayerBase hitPlayer)
-        {
-        }
-
-        public void OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint,
-            bool isShooterDetection)
-        {
-            if (eventLogger && logHitLocation)
-                eventLogger.LogHitDetection(playerCollider, damageData, contactPoint, isShooterDetection);
-        }
-
-        public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
-        {
-            if (hitPlayer.IsLocal)
-                _lastLocalPlayerHitTime = DateTime.Now;
-        }
-
-        public void OnTeamChanged(PlayerBase player, int oldTeam)
-        {
-        }
-
-        public void OnPlayerTagChanged(TagType type, bool isOn)
-        {
         }
 
         #endregion

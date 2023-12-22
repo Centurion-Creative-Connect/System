@@ -1,4 +1,4 @@
-﻿using System;
+﻿using CenturionCC.System.Player.MassPlayer;
 using CenturionCC.System.Utils;
 using DerpyNewbie.Common.Role;
 using JetBrains.Annotations;
@@ -8,9 +8,12 @@ using VRC.SDKBase;
 
 namespace CenturionCC.System.Player
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)] [RequireComponent(typeof(LastHitData))]
     public abstract class PlayerBase : UdonSharpBehaviour
     {
+        [SerializeField]
+        private LastHitData lastHitData;
+
         [PublicAPI]
         public abstract int PlayerId { get; }
 
@@ -27,19 +30,16 @@ namespace CenturionCC.System.Player
         public virtual int Deaths { get; set; }
 
         [PublicAPI]
-        public virtual long LastDiedTimeTicks { get; }
-
-        [PublicAPI]
-        public virtual DateTime LastDiedDateTime =>
-            DateTime.MinValue.Ticks < LastDiedTimeTicks && DateTime.MaxValue.Ticks > LastDiedTimeTicks
-                ? new DateTime(LastDiedTimeTicks)
-                : DateTime.MinValue;
+        public virtual LastHitData LastHitData => lastHitData;
 
         [PublicAPI]
         public virtual bool IsAssigned => PlayerId != -1;
 
         [PublicAPI]
         public virtual bool IsLocal => PlayerId == Networking.LocalPlayer.playerId;
+
+        [PublicAPI]
+        public abstract bool IsDead { get; }
 
         [PublicAPI] [CanBeNull]
         public abstract VRCPlayerApi VrcPlayer { get; }
@@ -78,6 +78,13 @@ namespace CenturionCC.System.Player
         public abstract void OnDamage(PlayerCollider playerCollider, DamageData data, Vector3 contactPoint);
 
         [PublicAPI]
-        public abstract void OnDeath();
+        public abstract void Kill();
+
+        [PublicAPI]
+        public abstract void Revive();
+
+        public virtual void OnHitDataUpdated()
+        {
+        }
     }
 }
