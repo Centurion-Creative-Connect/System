@@ -38,7 +38,6 @@ namespace CenturionCC.System.Gun
         private float _nextMainHandlePickupableTime;
         private float _nextSubHandlePickupableTime;
 
-        private int _queuedShotCount;
         [UdonSynced]
         private Vector3 _shotPosition;
         [UdonSynced]
