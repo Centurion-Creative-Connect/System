@@ -1,4 +1,5 @@
-﻿using UdonSharp;
+﻿using CenturionCC.System.Audio;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 
@@ -59,6 +60,11 @@ namespace CenturionCC.System.Gun.MassGun
                 Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .2F, .02F, .1F);
                 Networking.LocalPlayer.PlayHapticEventInHand(SubHandle.CurrentHand, .2F, .02F, .1F);
             }
+        }
+
+        protected override void Internal_PlayAudio(AudioDataStore audioStore, Vector3 offset)
+        {
+            AudioManager.PlayAudioAtTransform(audioStore, MainHandle.transform, offset);
         }
     }
 }

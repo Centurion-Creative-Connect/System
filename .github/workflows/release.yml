@@ -4,11 +4,10 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - master
-    # basically matches semver
+      - 'master'
+      - '\d+.\d+.\d+(-[a-zA-Z]+(.\d+)?)?'
     tags:
-      - '\d+.\d+.\d+'
-      - '\d+.\d+.\d+-beta-\d+'
+      - '\d+.\d+.\d+(-[a-zA-Z]+(.\d+)?)?'
 
 env:
   packageName: "org.centurioncc.system"

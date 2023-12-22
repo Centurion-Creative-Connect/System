@@ -22,7 +22,6 @@ namespace CenturionCC.System.Gun
         private const float FreeHandPickupProximity = .1F;
         private const float SwapHandDisallowPickupProximity = 0.15F;
         private const float DisallowPickupFromBelowRange = -0.1F;
-        private const int MaxQueuedShot = 10;
 
         [UdonSynced] [FieldChangeCallback(nameof(RawState))]
         private byte _currentState;
@@ -113,7 +112,10 @@ namespace CenturionCC.System.Gun
         protected virtual void OnTriggerEnter(Collider other)
         {
             var otherName = other.name.ToLower();
+
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             Logger.LogVerbose($"{Prefix}OnTriggerEnter: {otherName}");
+#endif
 
             if (otherName.StartsWith("safezone"))
             {
@@ -168,30 +170,6 @@ namespace CenturionCC.System.Gun
                 CollisionCount = 0;
         }
 
-        public override void OnPreSerialization()
-        {
-            // We're not syncing to shooting a bullet 
-            if (QueuedShotCount <= 0)
-                return;
-
-            _shotPosition = ShooterPosition;
-            _shotRotation = ShooterRotation;
-            _shotTime = Networking.GetNetworkDateTime().Ticks;
-            ++ShotCount;
-            --QueuedShotCount;
-        }
-
-        public override void OnPostSerialization(SerializationResult result)
-        {
-            if (!result.success)
-                return;
-
-            ProcessShotCountData();
-
-            if (QueuedShotCount > 0)
-                RequestSerialization();
-        }
-
         public override void OnDeserialization()
         {
             ProcessShotCountData();
@@ -202,8 +180,10 @@ namespace CenturionCC.System.Gun
             if (ShotCount == _lastShotCount)
                 return;
 
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             Logger.LogVerbose(
                 $"{Prefix}Received new shot: {ShotCount}:{QueuedShotCount}, {_shotPosition.ToString("2F")}, {_shotRotation.eulerAngles.ToString("2F")}");
+#endif
 
             if (ShotCount <= 0 || _lastShotCount == -1)
             {
@@ -307,15 +287,14 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public override void Shoot()
         {
-            ++QueuedShotCount;
+            _shotPosition = ShooterPosition;
+            _shotRotation = ShooterRotation;
+            _shotTime = Networking.GetNetworkDateTime().Ticks;
+            ++ShotCount;
+
             Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
             RequestSerialization();
-
-#if UNITY_EDITOR
-            // ClientSim does not invoke serialization events, so just invoke it directly
-            OnPreSerialization();
-            OnDeserialization();
-#endif
+            ProcessShotCountData();
         }
 
         [PublicAPI]
@@ -702,25 +681,6 @@ namespace CenturionCC.System.Gun
             get => shotCount;
             protected set => shotCount = value;
         }
-        [PublicAPI]
-        public virtual int QueuedShotCount
-        {
-            get => _queuedShotCount;
-            protected set
-            {
-                _queuedShotCount = value;
-                if (_queuedShotCount >= MaxQueuedShot)
-                {
-                    Logger.LogWarn($"{Prefix}Queued shots overflow!: {_queuedShotCount}");
-                    _queuedShotCount = MaxQueuedShot;
-                }
-                else if (_queuedShotCount < 0)
-                {
-                    Logger.LogWarn($"{Prefix}Queued shots underflow!: {_queuedShotCount}");
-                    _queuedShotCount = 0;
-                }
-            }
-        }
         [PublicAPI] [CanBeNull]
         public virtual GunHolster TargetHolster { get; protected set; }
         [PublicAPI] [field: UdonSynced]
@@ -840,7 +800,7 @@ namespace CenturionCC.System.Gun
             if (TargetAnimator != null)
                 TargetAnimator.SetTrigger(GunUtility.IsShootingParameter());
             if (AudioData != null)
-                Internal_PlayAudio(AudioData.Shooting);
+                Internal_PlayAudio(AudioData.Shooting, AudioData.ShootingOffset);
             if (IsLocal && HapticData != null && HapticData.Shooting)
                 HapticData.Shooting.PlayBothHand();
 
@@ -854,12 +814,12 @@ namespace CenturionCC.System.Gun
         {
             OnEmptyShoot();
             if (AudioData != null)
-                Internal_PlayAudio(AudioData.EmptyShooting);
+                Internal_PlayAudio(AudioData.EmptyShooting, AudioData.EmptyShootingOffset);
         }
 
-        protected void Internal_PlayAudio(AudioDataStore audioStore)
+        protected virtual void Internal_PlayAudio(AudioDataStore audioStore, Vector3 offset)
         {
-            AudioManager.PlayAudioAtTransform(audioStore, Target);
+            AudioManager.PlayAudioAtTransform(audioStore, Target, offset);
         }
 
         protected void Internal_CheckForHandleDistance()
@@ -1163,6 +1123,14 @@ namespace CenturionCC.System.Gun
                 TargetAnimator.SetInteger(GunUtility.SelectorTypeParameter(), (int)fireMode);
         }
 
+        protected bool Internal_IsHeldBy(VRCPlayerApi api)
+        {
+            var playerId = api.SafeGetPlayerId();
+            return MainHandle != null && MainHandle.CurrentPlayer.SafeGetPlayerId() == playerId ||
+                   SubHandle != null && SubHandle.CurrentPlayer.SafeGetPlayerId() == playerId ||
+                   CustomHandle != null && CustomHandle.CurrentPlayer.SafeGetPlayerId() == playerId;
+        }
+
         #endregion
 
         #region CustomizableMethods
@@ -1248,14 +1216,14 @@ namespace CenturionCC.System.Gun
 
             if (nextState == GunState.InCockingTwisting && previousState != GunState.InCockingTwisting)
             {
-                if (AudioData != null) Internal_PlayAudio(AudioData.CockingTwist);
+                if (AudioData != null) Internal_PlayAudio(AudioData.CockingTwist, AudioData.CockingTwistOffset);
 
                 if (TargetAnimator != null && !IsLocal)
                     TargetAnimator.SetFloat(GunUtility.CockingTwistParameter(), 1);
             }
             else if (nextState == GunState.InCockingPush && previousState == GunState.InCockingPull)
             {
-                if (AudioData != null) Internal_PlayAudio(AudioData.CockingPull);
+                if (AudioData != null) Internal_PlayAudio(AudioData.CockingPull, AudioData.CockingPullOffset);
 
                 if (TargetAnimator != null && !IsLocal)
                 {
@@ -1265,7 +1233,7 @@ namespace CenturionCC.System.Gun
             }
             else if (nextState == GunState.Idle && previousState != GunState.Idle)
             {
-                if (AudioData != null) Internal_PlayAudio(AudioData.CockingRelease);
+                if (AudioData != null) Internal_PlayAudio(AudioData.CockingRelease, AudioData.CockingReleaseOffset);
 
                 if (TargetAnimator != null && !IsLocal)
                 {
@@ -1287,7 +1255,7 @@ namespace CenturionCC.System.Gun
             if (objMarker == null || objMarker.Tags.ContainsString("NoCollisionAudio"))
                 return;
 
-            Internal_PlayAudio(AudioData.Collision.Get(objMarker.ObjectType));
+            Internal_PlayAudio(AudioData.Collision.Get(objMarker.ObjectType), other.ClosestPoint(transform.position));
         }
 
         #endregion
@@ -1334,18 +1302,28 @@ namespace CenturionCC.System.Gun
                 return;
             }
 
-            if (MainHandle.IsPickedUp ^
+            // OnHandlePickup is only called locally, thus setting isLocal here is appropriate
+            _isLocal = true;
+            if (PlayerController != null)
+            {
+                PlayerController.AddHoldingObject(this);
+            }
+
+            if (TargetAnimator != null)
+            {
+                TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), true);
+                TargetAnimator.SetFloat(GunUtility.TriggerProgressParameter(), 0F);
+            }
+
+            // When only one handle is picked up at this time
+            if ((MainHandle != null && MainHandle.IsPickedUp) ^
                 (SubHandle != null && SubHandle.IsPickedUp) ^
                 (CustomHandle != null && CustomHandle.IsPickedUp))
             {
-                _isLocal = true;
                 Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
-                if (TargetAnimator != null)
-                    TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), true);
+
                 OnGunPickup();
                 b.OnGunPickup(this);
-                if (PlayerController != null)
-                    PlayerController.AddHoldingObject(this);
             }
 
             OnGunHandlePickup(instance);
@@ -1416,7 +1394,6 @@ namespace CenturionCC.System.Gun
             OnGunHandleDrop(instance);
             b.OnHandleDrop(this, instance);
 
-
             switch (handleType)
             {
                 case HandleType.MainHandle:
@@ -1427,18 +1404,29 @@ namespace CenturionCC.System.Gun
                     break;
             }
 
-            // When dropped entirely
-            if (!(MainHandle.IsPickedUp ||
-                  (SubHandle != null && SubHandle.IsPickedUp) ||
-                  (CustomHandle != null && CustomHandle.IsPickedUp)))
+            if (!Internal_IsHeldBy(Networking.LocalPlayer))
             {
-                OnGunDrop();
-                b.OnGunDrop(this);
+                _isLocal = false;
+
                 if (TargetAnimator != null)
                 {
                     TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), false);
                     TargetAnimator.SetFloat(GunUtility.TriggerProgressParameter(), 0F);
                 }
+
+                if (PlayerController != null)
+                {
+                    PlayerController.RemoveHoldingObject(this);
+                }
+            }
+
+            // When dropped entirely
+            if (!((MainHandle != null && MainHandle.IsPickedUp) ||
+                  (SubHandle != null && SubHandle.IsPickedUp) ||
+                  (CustomHandle != null && CustomHandle.IsPickedUp)))
+            {
+                OnGunDrop();
+                b.OnGunDrop(this);
 
                 if (TargetHolster != null)
                 {
@@ -1448,11 +1436,6 @@ namespace CenturionCC.System.Gun
                     Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
                     RequestSerialization();
                 }
-
-                if (PlayerController != null)
-                    PlayerController.RemoveHoldingObject(this);
-
-                _isLocal = false;
             }
 
             Internal_UpdateIsPickedUpState();
