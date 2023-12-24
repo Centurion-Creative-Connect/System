@@ -42,6 +42,12 @@ namespace CenturionCC.System.Player
 
             if (!result) return SyncResult.Cancelled;
 
+            if (syncer.Type == KillType.FriendlyFire && playerManager.FriendlyFireMode == FriendlyFireMode.Both)
+            {
+                attacker.LastHitData.SetData(syncer);
+                attacker.LastHitData.SyncData();
+            }
+
             var lastHitData = syncer.Type == KillType.ReverseFriendlyFire ? attacker.LastHitData : victim.LastHitData;
             lastHitData.SetData(syncer);
             lastHitData.SyncData();

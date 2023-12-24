@@ -19,6 +19,7 @@ namespace CenturionCC.System.Player.MassPlayer
 
 
         public int AttackerId { get; private set; }
+        public int VictimId { get; private set; }
         public KillType Type { get; private set; } = KillType.Default;
         public BodyParts Parts { get; private set; } = BodyParts.Body;
 
@@ -69,6 +70,7 @@ namespace CenturionCC.System.Player.MassPlayer
         {
             EventId = syncer.EventId;
             AttackerId = syncer.AttackerId;
+            VictimId = syncer.VictimId;
             ActivatedPosition = syncer.ActivatedPosition;
             ActivatedTimeTicks = syncer.ActivatedTimeTicks;
             HitPosition = syncer.HitPosition;
@@ -77,13 +79,14 @@ namespace CenturionCC.System.Player.MassPlayer
             Type = syncer.Type;
             Parts = syncer.Parts;
 
-            EncodedData = EncodeData(AttackerId, (int)Type, (int)Parts);
+            EncodedData = EncodeData(AttackerId, VictimId, (int)Type, (int)Parts);
         }
 
         public void ResetData()
         {
             EventId = default;
             AttackerId = default;
+            VictimId = default;
             ActivatedPosition = default;
             ActivatedTimeTicks = default;
             HitPosition = default;
@@ -91,7 +94,7 @@ namespace CenturionCC.System.Player.MassPlayer
             WeaponType = default;
             Type = default;
 
-            EncodedData = EncodeData(default, default, default);
+            EncodedData = EncodeData(default, default, default, default);
         }
 
         public void SyncData()
@@ -121,30 +124,34 @@ namespace CenturionCC.System.Player.MassPlayer
 
             _lastEventId = EventId;
 
-            DecodeData(EncodedData, out var attacker, out var type, out var parts);
+            DecodeData(EncodedData, out var attacker, out var victim, out var type, out var parts);
 
             AttackerId = attacker;
+            VictimId = victim;
             Type = type;
             Parts = parts;
 
             player.OnHitDataUpdated();
         }
 
-        public static int EncodeData(int attacker, int type, int parts)
+        public static int EncodeData(int attacker, int victim, int type, int parts)
         {
             int encoded = (byte)attacker;
-            encoded += (int)((byte)type) << 8;
-            encoded += (int)((byte)parts) << 16;
+            encoded += (int)((byte)victim) << 8;
+            encoded += (int)((byte)type) << 16;
+            encoded += (int)((byte)parts) << 24;
 
             return encoded;
         }
 
-        public static void DecodeData(int data, out int attacker, out KillType type, out BodyParts parts)
+        public static void DecodeData(int data, out int attacker, out int victim, out KillType type,
+            out BodyParts parts)
         {
             // NOTE: This converts VRCPlayerApi.playerId(int) to byte. Which might cause issues in public instances. 
             attacker = (byte)(data & 0xFF);
-            type = (KillType)(byte)((data >> 8) & 0xFF);
-            parts = (BodyParts)(byte)((data >> 16) & 0xFF);
+            victim = (byte)((data >> 8) & 0xFF);
+            type = (KillType)(byte)((data >> 16) & 0xFF);
+            parts = (BodyParts)(byte)((data >> 24) & 0xFF);
         }
     }
 }
