@@ -40,11 +40,17 @@ namespace CenturionCC.System.Player
                 GetAssumedRevivedTime(syncer.AttackerId)
             );
 
-            if (!result)
-                return SyncResult.Cancelled;
+            if (!result) return SyncResult.Cancelled;
 
-            victim.LastHitData.SetData(syncer);
-            victim.LastHitData.SyncData();
+            if (syncer.Type == KillType.FriendlyFire && playerManager.FriendlyFireMode == FriendlyFireMode.Both)
+            {
+                attacker.LastHitData.SetData(syncer);
+                attacker.LastHitData.SyncData();
+            }
+
+            var lastHitData = syncer.Type == KillType.ReverseFriendlyFire ? attacker.LastHitData : victim.LastHitData;
+            lastHitData.SetData(syncer);
+            lastHitData.SyncData();
             return SyncResult.Hit;
         }
 

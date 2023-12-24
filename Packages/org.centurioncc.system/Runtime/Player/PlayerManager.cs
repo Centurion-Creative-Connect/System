@@ -39,6 +39,8 @@ namespace CenturionCC.System.Player
 
         [Header("Team Settings")]
         [SerializeField]
+        private FriendlyFireMode friendlyFireMode = FriendlyFireMode.Never;
+        [SerializeField]
         private Color[] teamColors;
         [SerializeField]
         private int staffTeamId = 255;
@@ -70,6 +72,8 @@ namespace CenturionCC.System.Player
         private WatchdogChildCallbackBase[] _callbacks;
         private int _eventCallbackCount;
         private UdonSharpBehaviour[] _eventCallbacks = new UdonSharpBehaviour[5];
+        [UdonSynced] [FieldChangeCallback(nameof(FriendlyFireModeSynced))]
+        private int _friendlyFireModeSynced; // Synced value is used thru FieldChangeCallback
 
         private bool _isTeamPlayerCountsDirty;
         private int _localPlayerIndex = -1;
@@ -84,8 +88,28 @@ namespace CenturionCC.System.Player
 
         public FootstepAudioStore FootstepAudio => footstepAudio;
 
-        [field: UdonSynced] [field: FieldChangeCallback(nameof(AllowFriendlyFire))]
-        public bool AllowFriendlyFire { get; private set; }
+        [Obsolete("Use FriendlyFireMode instead.")]
+        public bool AllowFriendlyFire
+        {
+            get => FriendlyFireMode == FriendlyFireMode.Always || FriendlyFireMode == FriendlyFireMode.Both;
+            private set => FriendlyFireMode = value ? FriendlyFireMode.Always : FriendlyFireMode.Never;
+        }
+
+        public FriendlyFireMode FriendlyFireMode
+        {
+            get => (FriendlyFireMode)FriendlyFireModeSynced;
+            private set => FriendlyFireModeSynced = (int)value;
+        }
+
+        private int FriendlyFireModeSynced
+        {
+            get => _friendlyFireModeSynced;
+            set
+            {
+                friendlyFireMode = (FriendlyFireMode)value;
+                _friendlyFireModeSynced = value;
+            }
+        }
 
         public bool UseBaseCollider
         {
@@ -175,6 +199,11 @@ namespace CenturionCC.System.Player
 
         private void Start()
         {
+            if (Networking.IsMaster)
+            {
+                FriendlyFireMode = friendlyFireMode;
+            }
+
             if (playerInstancePool == null || playerInstancePool.Length <= 0)
             {
                 Logger.Log($"{Prefix}Getting ShooterPlayer instances");
@@ -611,6 +640,7 @@ namespace CenturionCC.System.Player
             RequestSerialization();
         }
 
+        [Obsolete("Use MasterOnly_SetFriendlyFireMode(FriendlyFireMode) instead")]
         public void MasterOnly_SetFriendlyFire(bool isOn)
         {
             if (!Networking.IsMaster)
@@ -620,6 +650,18 @@ namespace CenturionCC.System.Player
             }
 
             AllowFriendlyFire = isOn;
+            RequestSerialization();
+        }
+
+        public void MasterOnly_SetFriendlyFireMode(FriendlyFireMode ffMode)
+        {
+            if (!Networking.IsMaster)
+            {
+                Logger.LogError(string.Format(MustBeMasterError, nameof(MasterOnly_SetFriendlyFireMode)));
+                return;
+            }
+
+            FriendlyFireMode = ffMode;
             RequestSerialization();
         }
 
@@ -1011,6 +1053,18 @@ namespace CenturionCC.System.Player
             {
                 if (callback == null) continue;
                 ((PlayerManagerCallbackBase)callback).OnFriendlyFire(firedPlayer, hitPlayer);
+            }
+        }
+
+        public void Invoke_OnFriendlyFireWarning(PlayerBase victim, DamageData damageData, Vector3 contactPoint)
+        {
+            Logger.Log(
+                $"{Prefix}Invoke_OnFriendlyFireWarning: {NewbieUtils.GetPlayerName(victim.PlayerId)}, {contactPoint.ToString("F2")}");
+
+            foreach (var callback in _eventCallbacks)
+            {
+                if (callback == null) continue;
+                ((PlayerManagerCallbackBase)callback).OnFriendlyFireWarning(victim, damageData, contactPoint);
             }
         }
 

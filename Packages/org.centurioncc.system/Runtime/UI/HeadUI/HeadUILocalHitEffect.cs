@@ -25,7 +25,16 @@ namespace CenturionCC.System.UI.HeadUI
         [SerializeField]
         private Text descriptionText;
         [SerializeField]
-        private string descriptionFormat = "Hit by %attacker% in the %bodyParts% using %weapon%";
+        private string normalDescriptionFormat = "Hit by %attacker% in the %bodyParts% using %weapon%";
+        [SerializeField]
+        private string friendlyFireDescriptionFormat =
+            "Hit by %attacker%(<color=maroon>FriendlyFire</color>) in the %bodyParts% using %weapon%";
+        [SerializeField]
+        private string reverseFriendlyFireDescriptionFormat =
+            "Hit by <color=maroon>ReverseFriendlyFire</color> for %victim% in the %bodyParts%";
+        [SerializeField]
+        private string bothFriendlyFireDescriptionFormat =
+            "Hit by <color=maroon>ReverseFriendlyFire</color> for %victim% in the %bodyParts%";
         [SerializeField]
         private Image descriptionBackground;
         [SerializeField]
@@ -238,7 +247,29 @@ namespace CenturionCC.System.UI.HeadUI
         {
             if (!victim.IsLocal) return;
 
-            if (descriptionText != null) descriptionText.text = FormatDescription(descriptionFormat, attacker, victim);
+            if (descriptionText != null)
+            {
+                var actualVictim = playerManager.GetPlayerById(victim.LastHitData.VictimId);
+
+                switch (type)
+                {
+                    default:
+                    case KillType.Default:
+                        descriptionText.text = FormatDescription(normalDescriptionFormat, attacker, victim);
+                        break;
+                    case KillType.ReverseFriendlyFire:
+                        descriptionText.text =
+                            FormatDescription(reverseFriendlyFireDescriptionFormat, attacker, actualVictim);
+                        break;
+                    case KillType.FriendlyFire:
+                        descriptionText.text =
+                            FormatDescription(
+                                actualVictim != victim
+                                    ? bothFriendlyFireDescriptionFormat
+                                    : friendlyFireDescriptionFormat, attacker, actualVictim);
+                        break;
+                }
+            }
 
             Play();
         }

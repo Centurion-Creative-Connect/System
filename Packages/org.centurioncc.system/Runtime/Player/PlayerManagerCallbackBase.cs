@@ -53,6 +53,16 @@ namespace CenturionCC.System.Player
         }
 
         /// <summary>
+        /// Called when local player should be warned by friendly fire
+        /// </summary>
+        /// <param name="victim">victim of friendly fire</param>
+        /// <param name="damageData">cause of the friendly fire</param>
+        /// <param name="contactPoint">contact point of <paramref name="damageData"/></param>
+        public virtual void OnFriendlyFireWarning(PlayerBase victim, DamageData damageData, Vector3 contactPoint)
+        {
+        }
+
+        /// <summary>
         /// Called when <see cref="VRC.SDKBase.Networking.LocalPlayer"/> has hit <see cref="PlayerCollider"/>
         /// </summary>
         /// <param name="playerCollider">which collider got hit by <see cref="DamageData"/></param>
