@@ -4,6 +4,7 @@ using DerpyNewbie.Common;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Data;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
 
@@ -26,11 +27,11 @@ namespace CenturionCC.System.Utils
         private GunManager gunManager;
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
+        private readonly DataList _activeTags = new DataList();
+
+        private readonly DataList _heldObjects = new DataList();
 
         private bool _canRun = true;
-
-        private ObjectMarkerBase[] _currentPickupObjects = new ObjectMarkerBase[0];
-        private ObjectMarkerBase _currentSurfaceObject;
 
         private Vector3 _footstepLastCheckedPosition;
         private float _footstepLastInvokedTime;
@@ -92,18 +93,34 @@ namespace CenturionCC.System.Utils
                 return;
 
             var objMarker = _hit.transform.GetComponent<ObjectMarkerBase>();
-            var hasChanged = objMarker != _currentSurfaceObject;
-            if (hasChanged)
-                Debug.Log(
-                    $"[PlayerController] ObjMarker changed: {(_currentSurfaceObject != null ? _currentSurfaceObject.name : null)} to {(objMarker != null ? objMarker.name : null)}");
+            var hasChanged = objMarker != CurrentSurface;
+            if (!hasChanged) return;
+            Debug.Log(
+                $"[PlayerController] ObjMarker changed: {(CurrentSurface != null ? CurrentSurface.name : null)} to {(objMarker != null ? objMarker.name : null)}");
 
-            _currentSurfaceObject = objMarker;
+            if (CurrentSurface != null)
+                foreach (var surfTag in CurrentSurface.Tags)
+                    _activeTags.Remove(surfTag);
 
-            if (hasChanged && _currentSurfaceObject != null)
+            var lastSurf = CurrentSurface;
+            CurrentSurface = objMarker;
+
+            if (CurrentSurface != null)
             {
-                EnvironmentEffectMultiplier = _currentSurfaceObject.WalkingSpeedMultiplier;
-                _lastSurfaceNoFootstep = _currentSurfaceObject.Tags.ContainsString("NoFootstep");
+                foreach (var surfTag in CurrentSurface.Tags)
+                    _activeTags.Add(surfTag);
+
+                EnvironmentEffectMultiplier = CurrentSurface.WalkingSpeedMultiplier;
+                _lastSurfaceNoFootstep = CurrentSurface.Tags.ContainsString("NoFootstep");
             }
+            else
+            {
+                EnvironmentEffectMultiplier = 1;
+                _lastSurfaceNoFootstep = true;
+            }
+
+            Invoke_OnActiveTagsUpdated();
+            Invoke_OnSurfaceUpdated(lastSurf, CurrentSurface);
         }
 
         private void UpdateCanRunState()
@@ -147,14 +164,14 @@ namespace CenturionCC.System.Utils
             _footstepLastCheckedPosition = localPlayerPos;
 
             // Did player traveled fast enough to play footstep?
-            if (footstepTime < timeDiff || _currentSurfaceObject == null) return;
+            if (footstepTime < timeDiff || CurrentSurface == null) return;
 
             var playerBase = playerManager.GetLocalPlayer();
             if (playerBase == null || playerManager.IsStaffTeamId(playerBase.TeamId))
                 return;
 
             var isSlow = footstepSlowThresholdTime < timeDiff;
-            var methodName = GetFootstepMethodName(_currentSurfaceObject.ObjectType, isSlow);
+            var methodName = GetFootstepMethodName(CurrentSurface.ObjectType, isSlow);
             playerBase.SendCustomNetworkEvent(NetworkEventTarget.All, methodName);
         }
 
@@ -272,11 +289,15 @@ namespace CenturionCC.System.Utils
             //           $"JumpImpulse: {ActualJumpImpulse}\n" +
             //           $"GravityStrength: {ActualGravityStrength}");
 
+            Invoke_OnPreApplyMovementProperties();
+
             _localPlayer.SetWalkSpeed(ActualWalkSpeed);
             _localPlayer.SetRunSpeed(ActualRunSpeed);
             _localPlayer.SetStrafeSpeed(ActualStrafeSpeed);
             _localPlayer.SetJumpImpulse(ActualJumpImpulse);
             _localPlayer.SetGravityStrength(ActualGravityStrength);
+
+            Invoke_OnPostApplyMovementProperties();
         }
 
         /// <summary>
@@ -285,8 +306,11 @@ namespace CenturionCC.System.Utils
         /// <param name="anObject">an object which begin holding.</param>
         public void AddHoldingObject(ObjectMarkerBase anObject)
         {
-            _currentPickupObjects = _currentPickupObjects.AddAsSet(anObject);
+            _heldObjects.Add(anObject);
+            foreach (var objectTag in anObject.Tags) _activeTags.Add(objectTag);
             UpdateHoldingObjects();
+            Invoke_OnActiveTagsUpdated();
+            Invoke_OnHeldObjectsUpdated();
         }
 
         /// <summary>
@@ -295,8 +319,11 @@ namespace CenturionCC.System.Utils
         /// <param name="anObject">an object which stopped holding.</param>
         public void RemoveHoldingObject(ObjectMarkerBase anObject)
         {
-            _currentPickupObjects = _currentPickupObjects.RemoveItem(anObject);
+            _heldObjects.Remove(anObject);
+            foreach (var objectTag in anObject.Tags) _activeTags.Remove(objectTag);
             UpdateHoldingObjects();
+            Invoke_OnActiveTagsUpdated();
+            Invoke_OnHeldObjectsUpdated();
         }
 
         /// <summary>
@@ -309,9 +336,10 @@ namespace CenturionCC.System.Utils
         public void UpdateHoldingObjects()
         {
             var totalWeight = 0F;
-            foreach (var o in _currentPickupObjects)
-                if (o != null)
-                    totalWeight += o.ObjectWeight;
+            var arr = _heldObjects.ToArray();
+            foreach (var o in arr)
+                if (((ObjectMarkerBase)o.Reference) != null)
+                    totalWeight += ((ObjectMarkerBase)o.Reference).ObjectWeight;
             PlayerWeight = totalWeight;
         }
 
@@ -323,8 +351,15 @@ namespace CenturionCC.System.Utils
         /// </remarks>
         public void RemoveAllHoldingObject()
         {
-            _currentPickupObjects = new ObjectMarkerBase[0];
+            _heldObjects.Clear();
+            _activeTags.Clear();
             UpdateHoldingObjects();
+
+            if (CurrentSurface == null) return;
+
+            foreach (var surfTags in CurrentSurface.Tags) _activeTags.Add(surfTags);
+            Invoke_OnActiveTagsUpdated();
+            Invoke_OnHeldObjectsUpdated();
         }
 
         #region Base
@@ -335,6 +370,38 @@ namespace CenturionCC.System.Utils
         [Tooltip("Layers to check objects with ObjectMarker attached.")]
         [SerializeField]
         private LayerMask surfaceCheckingLayer = 1 << 11;
+
+        #endregion
+
+        #region PublicAPIProperties
+
+        /// <summary>
+        /// Current surface <see cref="ObjectMarkerBase"/> used to determine footsteps and environment multipliers
+        /// </summary>
+        [PublicAPI]
+        public ObjectMarkerBase CurrentSurface { get; private set; }
+
+        /// <summary>
+        /// Current held objects list of <see cref="ObjectMarkerBase"/>s
+        /// </summary>
+        /// <remarks>
+        /// To use contents, get <see cref="DataToken.Reference"/> and cast it to <see cref="ObjectMarkerBase"/>.
+        /// </remarks>
+        /// <example>
+        /// <code>((ObjectMarkerBase)HeldObjects[0].Reference).ObjectType</code>
+        /// </example>
+        [PublicAPI]
+        public DataList HeldObjects => _heldObjects.DeepClone();
+
+        /// <summary>
+        /// Current effective <see cref="string"/> tags
+        /// </summary>
+        /// <example>
+        /// <code>ActiveTags[0].String</code>
+        /// </example>
+        /// <seealso cref="ObjectMarkerBase.Tags"/>
+        [PublicAPI]
+        public DataList ActiveTags => _activeTags.DeepClone();
 
         #endregion
 
@@ -503,5 +570,103 @@ namespace CenturionCC.System.Utils
         public float ActualGravityStrength => BaseGravityStrength * TotalMultiplier;
 
         #endregion
+
+        #region EventInvokers
+
+        private readonly DataList _eventCallbacks = new DataList();
+
+        [PublicAPI]
+        public void AddEventCallback(PlayerControllerCallback callback)
+        {
+            if (callback == null) return;
+            _eventCallbacks.Add(callback);
+        }
+
+        [PublicAPI]
+        public bool RemoveEventCallback(PlayerControllerCallback callback)
+        {
+            return _eventCallbacks.Remove(callback);
+        }
+
+        private void Invoke_OnSurfaceUpdated(ObjectMarkerBase previous, ObjectMarkerBase current)
+        {
+            var arr = _eventCallbacks.ToArray();
+            foreach (var token in arr) ((PlayerControllerCallback)token.Reference).OnSurfaceUpdated(previous, current);
+        }
+
+        private void Invoke_OnHeldObjectsUpdated()
+        {
+            var arr = _eventCallbacks.ToArray();
+            foreach (var token in arr) ((PlayerControllerCallback)token.Reference).OnHeldObjectsUpdated();
+        }
+
+        private void Invoke_OnActiveTagsUpdated()
+        {
+            var arr = _eventCallbacks.ToArray();
+            foreach (var token in arr) ((PlayerControllerCallback)token.Reference).OnActiveTagsUpdated();
+        }
+
+        private void Invoke_OnPreApplyMovementProperties()
+        {
+            var arr = _eventCallbacks.ToArray();
+            foreach (var token in arr) ((PlayerControllerCallback)token.Reference).OnPreApplyMovementProperties();
+        }
+
+        private void Invoke_OnPostApplyMovementProperties()
+        {
+            var arr = _eventCallbacks.ToArray();
+            foreach (var token in arr) ((PlayerControllerCallback)token.Reference).OnPostApplyMovementProperties();
+        }
+
+        #endregion
+    }
+
+    public abstract class PlayerControllerCallback : UdonSharpBehaviour
+    {
+        /// <summary>
+        /// Called when <see cref="PlayerController.CurrentSurface"/> has been changed.
+        /// </summary>
+        /// <param name="previous">previous <see cref="PlayerController.CurrentSurface"/></param>
+        /// <param name="current">current <see cref="PlayerController.CurrentSurface"/></param>
+        public virtual void OnSurfaceUpdated(ObjectMarkerBase previous, ObjectMarkerBase current)
+        {
+        }
+
+        /// <summary>
+        /// Called when <see cref="ObjectMarkerBase"/> objects were picked up or dropped.
+        /// </summary>
+        /// <seealso cref="PlayerController.HeldObjects"/>
+        public virtual void OnHeldObjectsUpdated()
+        {
+        }
+
+        /// <summary>
+        /// Called when affected held or surface <see cref="ObjectMarkerBase"/> tags were updated.
+        /// </summary>
+        /// <remarks>
+        /// Does not check equality of previous and updated list. unchanged calls are possible.
+        /// This event is called before <see cref="OnSurfaceUpdated"/> and <see cref="OnHeldObjectsUpdated"/>
+        /// </remarks>
+        /// <seealso cref="PlayerController.ActiveTags"/>
+        public virtual void OnActiveTagsUpdated()
+        {
+        }
+
+        /// <summary>
+        /// Called when <see cref="PlayerController.UpdateLocalVrcPlayer"/> was called. before applying properties.
+        /// </summary>
+        /// <remarks>
+        /// Updating player mods such as <see cref="VRCPlayerApi.SetWalkSpeed"/> will have no effect since it'll be overwritten.
+        /// </remarks>
+        public virtual void OnPreApplyMovementProperties()
+        {
+        }
+
+        /// <summary>
+        /// Called when <see cref="PlayerController.UpdateLocalVrcPlayer"/> was called. after applied properties.
+        /// </summary>
+        public virtual void OnPostApplyMovementProperties()
+        {
+        }
     }
 }
