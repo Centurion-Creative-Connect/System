@@ -28,13 +28,13 @@ namespace CenturionCC.System.UI.HeadUI
         private string normalDescriptionFormat = "Hit by %attacker% in the %bodyParts% using %weapon%";
         [SerializeField]
         private string friendlyFireDescriptionFormat =
-            "Hit by %attacker%(<color=yellow>FriendlyFire</color>) in the %bodyParts% using %weapon%";
+            "Hit by %attacker%(<color=maroon>FriendlyFire</color>) in the %bodyParts% using %weapon%";
         [SerializeField]
         private string reverseFriendlyFireDescriptionFormat =
-            "Hit by <color=yellow>Reverse Friendly Fire</color> for %victim% in the %bodyParts%";
+            "Hit by <color=maroon>ReverseFriendlyFire</color> for %victim% in the %bodyParts%";
         [SerializeField]
         private string bothFriendlyFireDescriptionFormat =
-            "Hit by <color=yellow>Friendly Fire</color> for %victim% in the %bodyParts%";
+            "Hit by <color=maroon>ReverseFriendlyFire</color> for %victim% in the %bodyParts%";
         [SerializeField]
         private Image descriptionBackground;
         [SerializeField]
