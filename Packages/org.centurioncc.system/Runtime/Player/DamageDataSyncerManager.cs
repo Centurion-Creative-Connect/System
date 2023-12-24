@@ -140,10 +140,33 @@ namespace CenturionCC.System.Player
                     return;
                 }
 
-                if (damageData.RespectFriendlyFireSetting && !playerManager.AllowFriendlyFire)
+                if (damageData.RespectFriendlyFireSetting)
                 {
-                    logger.LogVerbose($"{Prefix}Will not resolve because friendly fire");
-                    return;
+                    switch (playerManager.FriendlyFireMode)
+                    {
+                        default:
+                        case FriendlyFireMode.Never:
+                        {
+                            logger.LogVerbose($"{Prefix}Will not resolve because friendly fire");
+                            playerManager.Invoke_OnFriendlyFire(attacker, victim);
+                            return;
+                        }
+                        case FriendlyFireMode.Warning:
+                        {
+                            playerManager.Invoke_OnFriendlyFireWarning(victim, damageData, contactPoint);
+                            return;
+                        }
+                        case FriendlyFireMode.Reverse:
+                        {
+                            killType = KillType.ReverseFriendlyFire;
+                            break;
+                        }
+                        case FriendlyFireMode.Both:
+                        case FriendlyFireMode.Always:
+                        {
+                            break;
+                        }
+                    }
                 }
             }
             else
