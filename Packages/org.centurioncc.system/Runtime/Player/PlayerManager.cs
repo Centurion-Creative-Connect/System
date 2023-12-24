@@ -73,7 +73,6 @@ namespace CenturionCC.System.Player
         private int _eventCallbackCount;
         private UdonSharpBehaviour[] _eventCallbacks = new UdonSharpBehaviour[5];
         [UdonSynced] [FieldChangeCallback(nameof(FriendlyFireModeSynced))]
-        // ReSharper disable once NotAccessedField.Local
         private int _friendlyFireModeSynced; // Synced value is used thru FieldChangeCallback
 
         private bool _isTeamPlayerCountsDirty;
@@ -98,13 +97,13 @@ namespace CenturionCC.System.Player
 
         public FriendlyFireMode FriendlyFireMode
         {
-            get => friendlyFireMode;
+            get => (FriendlyFireMode)FriendlyFireModeSynced;
             private set => FriendlyFireModeSynced = (int)value;
         }
 
         private int FriendlyFireModeSynced
         {
-            get => (int)FriendlyFireMode;
+            get => _friendlyFireModeSynced;
             set
             {
                 friendlyFireMode = (FriendlyFireMode)value;
