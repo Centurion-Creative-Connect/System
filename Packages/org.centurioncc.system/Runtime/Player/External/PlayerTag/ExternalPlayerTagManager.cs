@@ -29,6 +29,28 @@ namespace CenturionCC.System.Player.External.PlayerTag
 
         private ExternalPlayerTagBase[] _remotePlayerTags = new ExternalPlayerTagBase[0];
 
+        [PublicAPI]
+        public bool ShowOtherTeamsTag
+        {
+            get => showOtherTeamsTag;
+            set
+            {
+                showOtherTeamsTag = value;
+                ReconstructTag();
+            }
+        }
+
+        [PublicAPI]
+        public bool ShowStaffTagWhileInTeam
+        {
+            get => showStaffTagWhileInTeam;
+            set
+            {
+                showStaffTagWhileInTeam = value;
+                ReconstructTag();
+            }
+        }
+
         private void Start()
         {
             sourceRemotePlayerTag.SetActive(false);

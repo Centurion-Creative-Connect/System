@@ -25,6 +25,8 @@ namespace CenturionCC.System.Player
         private TranslatableMessage onTeamTagEnabledMessage;
         [SerializeField]
         private TranslatableMessage onTeamTagDisabledMessage;
+        [SerializeField]
+        private TranslatableMessage onFriendlyFireWarningMessage;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private NotificationProvider notification;
@@ -81,6 +83,15 @@ namespace CenturionCC.System.Player
                     break;
                 }
             }
+        }
+
+        public override void OnFriendlyFireWarning(PlayerBase victim, DamageData damageData, Vector3 contactPoint)
+        {
+            notification.ShowWarn(
+                string.Format(onFriendlyFireWarningMessage.Message, playerManager.GetHumanFriendlyColoredName(victim)),
+                5F,
+                1325453321 + victim.PlayerId // string.GetHashCode() of "FRIENDLY_FIRE_WARNING" plus victim player id
+            );
         }
     }
 }
