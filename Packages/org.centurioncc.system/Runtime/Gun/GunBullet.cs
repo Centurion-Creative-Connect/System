@@ -1,4 +1,5 @@
 ﻿using System;
+using CenturionCC.System.Gun.DataStore;
 using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
@@ -173,6 +174,58 @@ namespace CenturionCC.System.Gun
                 debugTrailRenderer.Clear();
                 debugTrailRenderer.emitting = emit && UseDebugTrail;
             }
+        }
+
+        /// <summary>
+        /// This is very inaccurate approximation, do not expect accuracy!
+        /// </summary>
+        /// <param name="startingPos">Shooting position</param>
+        /// <param name="startingRot">Shooting rotation</param>
+        /// <param name="provider">Data provider</param>
+        /// <param name="offset">Data offset</param>
+        /// <param name="pointsOfLine">Max points of line</param>
+        /// <param name="deltaTimeBetweenPoints">Time steps between points</param>
+        /// <returns>Pretty inaccurate approximation</returns>
+        public static Vector3[] PredictTrajectory(Vector3 startingPos, Quaternion startingRot,
+            ProjectileDataProvider provider, int offset, int pointsOfLine, float deltaTimeBetweenPoints)
+        {
+            provider.Get(
+                offset,
+                out var positionOffset,
+                out var velocity,
+                out var rotationOffset,
+                out var torque,
+                out var drag,
+                out var trailDuration,
+                out var trailColor
+            );
+
+            Vector3 position = positionOffset + startingPos;
+            velocity = startingRot * velocity;
+
+            var hopUpStr = torque.x * 0.02F;
+            var initRotUp = startingRot * rotationOffset * Vector3.up;
+            var result = new Vector3[pointsOfLine];
+            result[0] = position;
+            for (var i = 1; i < pointsOfLine; i++)
+            {
+                // Apply Gravity
+                velocity += Physics.gravity * deltaTimeBetweenPoints;
+
+                // Apply Drag
+                velocity *= Mathf.Clamp01(1F - drag * deltaTimeBetweenPoints);
+
+                // Apply Hop Up
+                velocity += initRotUp * (new Vector3(velocity.x, 0, velocity.z).magnitude * hopUpStr *
+                                         deltaTimeBetweenPoints);
+
+                var nextPosition = position + velocity * deltaTimeBetweenPoints;
+
+                result[i] = nextPosition;
+                position = nextPosition;
+            }
+
+            return result;
         }
     }
 }
