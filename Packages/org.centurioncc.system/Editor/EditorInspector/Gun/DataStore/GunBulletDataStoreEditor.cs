@@ -1,5 +1,4 @@
 ﻿using CenturionCC.System.Editor.Utils;
-using CenturionCC.System.Gun;
 using CenturionCC.System.Gun.DataStore;
 using UdonSharpEditor;
 using UnityEditor;
@@ -66,8 +65,9 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
             var rot = offsetRot * l2w.rotation;
 
             Handles.color = Color.red;
-            var line = GunBullet.PredictTrajectory(pos, rot, data, offset, 100, 0.02F);
-            Handles.DrawPolyLine(line);
+            Handles.DrawDottedLine(pos, pos + (rot * Vector3.forward * 2), 10);
+            // var line = GunBullet.PredictTrajectory(pos, rot, data, offset, 100, 0.02F);
+            // Handles.DrawPolyLine(line);
         }
     }
 }
