@@ -28,7 +28,6 @@ namespace CenturionCC.System.Utils
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
         private readonly DataList _activeTags = new DataList();
-
         private readonly DataList _heldObjects = new DataList();
 
         private bool _canRun = true;
@@ -39,7 +38,6 @@ namespace CenturionCC.System.Utils
         private bool _isApplyingGroundSnap;
         private float _lastGroundSnapUpdatedTime;
         private bool _lastSurfaceNoFootstep;
-
         private float _lastSurfaceUpdatedTime;
 
         private VRCPlayerApi _localPlayer;
@@ -89,8 +87,7 @@ namespace CenturionCC.System.Utils
         private void UpdateCurrentSurface()
         {
             _ray = new Ray(_localPlayer.GetPosition() + new Vector3(0f, .1F, 0F), Vector3.down);
-            if (!Physics.Raycast(_ray, out _hit, 3, surfaceCheckingLayer))
-                return;
+            if (!Physics.Raycast(_ray, out _hit, 3, surfaceCheckingLayer)) return;
 
             var objMarker = _hit.transform.GetComponent<ObjectMarkerBase>();
             var hasChanged = objMarker != CurrentSurface;
@@ -148,16 +145,14 @@ namespace CenturionCC.System.Utils
             var localPlayerPos = _localPlayer.GetPosition();
 
             // Is total multiplier not zero?
-            if (TotalMultiplier == 0)
-                return;
+            if (TotalMultiplier == 0) return;
 
             // Did player traveled one step distance?
             if (Vector3.Distance(_footstepLastCheckedPosition, localPlayerPos) <
                 footstepDistance * TotalMultiplier) return;
 
             // Is player airborne?
-            if (!_localPlayer.IsPlayerGrounded())
-                return;
+            if (!_localPlayer.IsPlayerGrounded()) return;
 
             var timeDiff = (Time.time - _footstepLastInvokedTime) * TotalMultiplier;
             _footstepLastInvokedTime = Time.time;
@@ -167,8 +162,7 @@ namespace CenturionCC.System.Utils
             if (footstepTime < timeDiff || CurrentSurface == null) return;
 
             var playerBase = playerManager.GetLocalPlayer();
-            if (playerBase == null || playerManager.IsStaffTeamId(playerBase.TeamId))
-                return;
+            if (playerBase == null || playerManager.IsStaffTeamId(playerBase.TeamId)) return;
 
             var isSlow = footstepSlowThresholdTime < timeDiff;
             var methodName = GetFootstepMethodName(CurrentSurface.ObjectType, isSlow);
@@ -188,18 +182,10 @@ namespace CenturionCC.System.Utils
             _vel = _localPlayer.GetVelocity();
 
             // We're going upwards, don't check ground.
-            if (0.01F < _vel.y)
-            {
-                // Debug.Log($"[PlayerController] GroundSnap: {_isApplyingGroundSnap} Going Upwards");
-                return;
-            }
+            if (0.01F < _vel.y) return;
 
             // Player is already airborne, don't check ground.
-            if (!_localPlayer.IsPlayerGrounded() && !_isApplyingGroundSnap)
-            {
-                // Debug.Log("[PlayerController] GroundSnap: Not Grounded");
-                return;
-            }
+            if (!_localPlayer.IsPlayerGrounded() && !_isApplyingGroundSnap) return;
 
             // Make it 2D normalized vector to easier use
             _vel = (new Vector3(_vel.x, 0F, _vel.z).normalized) * groundSnapForwardDistance;
@@ -207,12 +193,8 @@ namespace CenturionCC.System.Utils
             _ray = new Ray(_localPlayer.GetPosition() + Vector3.up + _vel, Vector3.down);
             if (!Physics.Raycast(_ray, out _hit, groundSnapMaxDistance + 1, playerGroundLayer))
             {
-                // Debug.DrawRay(_ray.origin, _ray.direction * (groundSnapMaxDistance + 1), Color.red, 5F);
-                // Debug.Log(
-                //     $"[PlayerController] GroundSnap: {_isApplyingGroundSnap} Ray Not Hit: {_vel.ToString("F2")}");
                 if (_isApplyingGroundSnap)
                 {
-                    // Debug.Log("[PlayerController] GroundSnap: Abort");
                     UpdateLocalVrcPlayer();
                     _isApplyingGroundSnap = false;
                 }
@@ -220,20 +202,12 @@ namespace CenturionCC.System.Utils
                 return;
             }
 
-
             // If hit was occuring at roughly same place, don't begin snapping.
-            if (_hit.distance <= 1.0075F)
-            {
-                // Debug.DrawRay(_ray.origin, _ray.direction * _hit.distance, Color.cyan, 5F);
-                return;
-            }
-
-            // Debug.DrawRay(_ray.origin, _ray.direction * _hit.distance, Color.green, 5F);
+            if (_hit.distance <= 1.0075F) return;
 
             _localPlayer.SetGravityStrength(100F);
             _lastGroundSnapUpdatedTime = Time.timeSinceLevelLoad + .5F;
             _isApplyingGroundSnap = true;
-            // Debug.Log($"[PlayerController] GroundSnap: Begin: {_hit.distance}");
         }
 
         private static string GetFootstepMethodName(ObjectType type, bool isSlow)
@@ -279,15 +253,7 @@ namespace CenturionCC.System.Utils
         [PublicAPI]
         public void UpdateLocalVrcPlayer()
         {
-            if (_localPlayer == null || !_localPlayer.IsValid())
-                return;
-
-            // Debug.Log($"[PlayerController] Applying actual properties: \n" +
-            //           $"WalkSpeed  : {ActualWalkSpeed}\n" +
-            //           $"RunSpeed   : {ActualRunSpeed}\n" +
-            //           $"StrafeSpeed: {ActualStrafeSpeed}\n" +
-            //           $"JumpImpulse: {ActualJumpImpulse}\n" +
-            //           $"GravityStrength: {ActualGravityStrength}");
+            if (_localPlayer == null || !_localPlayer.IsValid()) return;
 
             Invoke_OnPreApplyMovementProperties();
 
