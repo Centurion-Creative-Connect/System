@@ -10,14 +10,17 @@ using VRC.SDKBase;
 
 namespace CenturionCC.System.Utils
 {
+    [Obsolete("This class's log syncing is unreliable. Use `HitLogger` or `MatchLogger` instead.")]
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-    public class EventLogger : UdonSharpBehaviour
+    public class EventLogger : GunManagerCallbackBase
     {
         private const int TupleValueLength = 5;
 
         [SerializeField]
         private GameObject visualizeObject;
 
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private GunManager gunManager;
         [SerializeField] [HideInInspector] [NewbieInject]
         private PrintableBase logger;
 
@@ -40,6 +43,16 @@ namespace CenturionCC.System.Utils
         public string PersistentHitLogData { get; private set; } = "";
         public string TempHitLogData { get; private set; } = "";
         public string ShotLogData { get; private set; } = "";
+
+        private void Start()
+        {
+            gunManager.SubscribeCallback(this);
+        }
+
+        public override void OnShoot(ManagedGun instance, ProjectileBase projectile)
+        {
+            LogShot(instance, projectile);
+        }
 
         public void LogHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint,
             bool isShooterDetection)
