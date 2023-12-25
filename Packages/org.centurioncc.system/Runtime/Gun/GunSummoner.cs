@@ -1,5 +1,7 @@
 ﻿using System;
+using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
+using DerpyNewbie.Common.Role;
 using DerpyNewbie.Common.UI;
 using DerpyNewbie.Logger;
 using UdonSharp;
@@ -20,9 +22,13 @@ namespace CenturionCC.System.Gun
         private Transform summonPosition;
         [SerializeField]
         private float summonTime = 5F;
+        [SerializeField]
+        private bool staffOnly;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private GunManager gunManager;
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private RoleProvider roleProvider;
 
         private DateTime _lastSummonedTime;
         private PopUpImage _summoningPopUp;
@@ -71,6 +77,12 @@ namespace CenturionCC.System.Gun
 
         public override void Interact()
         {
+            if (staffOnly && !roleProvider.GetPlayerRole().IsGameStaff())
+            {
+                gunManager.Logger.LogWarn($"[GunSummoner-{gunVariationId}] This summoner is staff-only!");
+                return;
+            }
+
             if (DateTime.Now.Subtract(_lastSummonedTime).TotalSeconds < summonTime)
             {
                 gunManager.Logger.LogWarn($"[GunSummoner-{gunVariationId}] You're trying to spawn a gun too fast!");
