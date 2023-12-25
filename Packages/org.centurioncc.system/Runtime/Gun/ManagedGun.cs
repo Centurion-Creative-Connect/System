@@ -343,6 +343,12 @@ namespace CenturionCC.System.Gun
                 result = ShotResult.Cancelled;
             }
 
+            if (ParentManager.CheckCanLocalShoot(this, out var ruleId) == false)
+            {
+                ParentManager.Invoke_OnShootCancelled(this, ruleId);
+                result = ShotResult.Cancelled;
+            }
+
             return result;
         }
 
