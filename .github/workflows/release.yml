@@ -5,9 +5,11 @@ on:
   push:
     branches:
       - 'master'
-      - '\d+.\d+.\d+(-[a-zA-Z]+(.\d+)?)?'
+      - '\d+.\d+.\d'
     tags:
-      - '\d+.\d+.\d+(-[a-zA-Z]+(.\d+)?)?'
+      - '\d+.\d+.\d+'
+      - '\d+.\d+.\d+-beta.\d+'
+      - '\d+.\d+.\d+-rc.\d+'
 
 env:
   packageName: "org.centurioncc.system"
