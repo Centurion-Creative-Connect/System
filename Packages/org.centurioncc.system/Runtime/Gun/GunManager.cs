@@ -317,7 +317,7 @@ namespace CenturionCC.System.Gun
         #region ShootingRule
 
         private readonly DataDictionary _shootingRuleDict = new DataDictionary();
-        private ShootingRule[] _shootingRules;
+        private ShootingRule[] _shootingRules = new ShootingRule[0];
 
         [PublicAPI]
         public void AddShootingRule(ShootingRule rule)
