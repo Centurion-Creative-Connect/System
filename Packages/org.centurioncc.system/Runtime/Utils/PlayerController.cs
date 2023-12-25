@@ -540,6 +540,7 @@ namespace CenturionCC.System.Utils
         #region EventInvokers
 
         private readonly DataList _eventCallbacks = new DataList();
+        private bool _isInvokingEvents;
 
         [PublicAPI]
         public void SubscribeCallback(PlayerControllerCallback callback)
@@ -556,32 +557,52 @@ namespace CenturionCC.System.Utils
 
         private void Invoke_OnSurfaceUpdated(ObjectMarkerBase previous, ObjectMarkerBase current)
         {
+            if (_isInvokingEvents) return;
+
+            _isInvokingEvents = true;
             var arr = _eventCallbacks.ToArray();
             foreach (var token in arr) ((PlayerControllerCallback)token.Reference).OnSurfaceUpdated(previous, current);
+            _isInvokingEvents = false;
         }
 
         private void Invoke_OnHeldObjectsUpdated()
         {
+            if (_isInvokingEvents) return;
+
+            _isInvokingEvents = true;
             var arr = _eventCallbacks.ToArray();
             foreach (var token in arr) ((PlayerControllerCallback)token.Reference).OnHeldObjectsUpdated();
+            _isInvokingEvents = false;
         }
 
         private void Invoke_OnActiveTagsUpdated()
         {
+            if (_isInvokingEvents) return;
+
+            _isInvokingEvents = true;
             var arr = _eventCallbacks.ToArray();
             foreach (var token in arr) ((PlayerControllerCallback)token.Reference).OnActiveTagsUpdated();
+            _isInvokingEvents = false;
         }
 
         private void Invoke_OnPreApplyMovementProperties()
         {
+            if (_isInvokingEvents) return;
+
+            _isInvokingEvents = true;
             var arr = _eventCallbacks.ToArray();
             foreach (var token in arr) ((PlayerControllerCallback)token.Reference).OnPreApplyMovementProperties();
+            _isInvokingEvents = false;
         }
 
         private void Invoke_OnPostApplyMovementProperties()
         {
+            if (_isInvokingEvents) return;
+
+            _isInvokingEvents = true;
             var arr = _eventCallbacks.ToArray();
             foreach (var token in arr) ((PlayerControllerCallback)token.Reference).OnPostApplyMovementProperties();
+            _isInvokingEvents = false;
         }
 
         #endregion
