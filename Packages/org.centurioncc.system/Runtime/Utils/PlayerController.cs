@@ -542,14 +542,14 @@ namespace CenturionCC.System.Utils
         private readonly DataList _eventCallbacks = new DataList();
 
         [PublicAPI]
-        public void AddEventCallback(PlayerControllerCallback callback)
+        public void SubscribeCallback(PlayerControllerCallback callback)
         {
             if (callback == null) return;
             _eventCallbacks.Add(callback);
         }
 
         [PublicAPI]
-        public bool RemoveEventCallback(PlayerControllerCallback callback)
+        public bool UnsubscribeCallback(PlayerControllerCallback callback)
         {
             return _eventCallbacks.Remove(callback);
         }
