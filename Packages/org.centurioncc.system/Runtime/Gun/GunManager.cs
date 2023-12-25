@@ -336,9 +336,9 @@ namespace CenturionCC.System.Gun
         [PublicAPI] [CanBeNull]
         public TranslatableMessage GetCancelledMessageOf(int ruleId)
         {
-            return !_shootingRuleDict.TryGetValue(ruleId, TokenType.Reference, out var rule)
-                ? null
-                : ((ShootingRule)rule.Reference).CancelledMessage;
+            return _shootingRuleDict.TryGetValue(ruleId, TokenType.Reference, out var rule)
+                ? ((ShootingRule)rule.Reference).CancelledMessage
+                : null;
         }
 
         [PublicAPI]
