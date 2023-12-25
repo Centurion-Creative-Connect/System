@@ -37,19 +37,12 @@ namespace CenturionCC.System
         [NewbieInject]
         public DamageDataSyncerManager syncer;
 
-        public bool logHitLocation = true;
-        public bool logShotLocation = true;
-
         private readonly string _prefix = "<color=yellow>GameManager</color>::";
 
         private void Start()
         {
             logger.Println(GetLicense());
             logger.Println($"Centurion System - v{GetVersion()}");
-            logger.LogVerbose($"{_prefix}Subscribing event");
-            if (guns)
-                guns.SubscribeCallback(this);
-
             logger.LogVerbose($"{_prefix}Start complete");
         }
 
@@ -73,23 +66,7 @@ namespace CenturionCC.System
             return null;
         }
 
-        public bool CanShoot()
-        {
-            if (!Networking.LocalPlayer.IsPlayerGrounded())
-            {
-                logger.LogVerbose($"{_prefix}CanShoot: cannot shoot because player is not grounded");
-                return false;
-            }
-
-            if (IsInAntiZombieTime())
-            {
-                logger.LogVerbose($"{_prefix}CanShoot: cannot shoot because player has been hit");
-                return false;
-            }
-
-            return true;
-        }
-
+        [Obsolete("Use PlayerBase.IsDead instead")]
         public bool IsInAntiZombieTime()
         {
             var localPlayer = players.GetLocalPlayer();
@@ -107,16 +84,6 @@ namespace CenturionCC.System
         {
             return NewbieUtils.GetPlayerName(playerId);
         }
-
-        #region GunManagerCallbackBase
-
-        public void OnShoot(ManagedGun instance, ProjectileBase projectile)
-        {
-            if (eventLogger && logShotLocation)
-                eventLogger.LogShot(instance, projectile);
-        }
-
-        #endregion
     }
 
     // Obsolete from v0.2

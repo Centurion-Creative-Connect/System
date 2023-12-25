@@ -2,8 +2,6 @@
 using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
-using UnityEngine.Serialization;
-using VRC.SDKBase;
 
 namespace CenturionCC.System.Gun
 {
@@ -12,8 +10,6 @@ namespace CenturionCC.System.Gun
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private GunManager gunManager;
-        [SerializeField] [HideInInspector] [NewbieInject]
-        private GameManager gameManager;
         [SerializeField] [HideInInspector] [NewbieInject]
         private NotificationProvider notification;
         [Header("Messages")]
@@ -25,11 +21,8 @@ namespace CenturionCC.System.Gun
         private TranslatableMessage onCantShootInWall;
         [SerializeField]
         private TranslatableMessage onCantShootWhenSelectorSafety;
-        [FormerlySerializedAs("onCantShootAfterHitOrNotGrounded")]
         [SerializeField]
-        private TranslatableMessage onCantShootAfterHit;
-        [SerializeField]
-        private TranslatableMessage onCantShootOnAir;
+        private TranslatableMessage onCantShootBecauseCallback;
         [SerializeField]
         private TranslatableMessage onCantShootUnknown;
         [SerializeField]
@@ -101,15 +94,12 @@ namespace CenturionCC.System.Gun
                     SendNotification(onCantShootInSafeZone, true);
                     break;
                 case 200:
-                    if (!Networking.LocalPlayer.IsPlayerGrounded())
-                        SendNotification(onCantShootOnAir, true);
-                    else if (gameManager.IsInAntiZombieTime())
-                        SendNotification(onCantShootAfterHit, true);
-                    else
-                        SendErrNotification(onCantShootUnknown, $"{reasonId}");
+                    SendNotification(onCantShootBecauseCallback, false);
                     break;
                 default:
-                    SendErrNotification(onCantShootUnknown, $"{reasonId}");
+                    var cancelledMessage = gunManager.GetCancelledMessageOf(reasonId);
+                    if (cancelledMessage != null) SendNotification(cancelledMessage, true);
+                    else SendErrNotification(onCantShootUnknown, $"{reasonId}");
                     break;
             }
         }
