@@ -44,17 +44,17 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
 
             so.ApplyModifiedProperties();
 
-            GUILayout.Label("Preview", EditorStyles.boldLabel);
-
-            using (new EditorGUI.IndentLevelScope())
-            {
-                _usePreview = EditorGUILayout.Toggle("Use Preview", _usePreview);
-                _shootingRef =
-                    (Transform)EditorGUILayout.ObjectField("Shooting Ref", _shootingRef, typeof(Transform), true);
-                EditorGUILayout.MinMaxSlider("Bullet Count", ref _offsetMin, ref _offsetMax, 1F, 10F);
-                if (_usePreview && _shootingRef != null)
-                    GUILayout.Label($"Previewing pattern {(int)_offsetMin} to {(int)_offsetMax}");
-            }
+            // GUILayout.Label("Preview", EditorStyles.boldLabel);
+            //
+            // using (new EditorGUI.IndentLevelScope())
+            // {
+            //     _usePreview = EditorGUILayout.Toggle("Use Preview", _usePreview);
+            //     _shootingRef =
+            //         (Transform)EditorGUILayout.ObjectField("Shooting Ref", _shootingRef, typeof(Transform), true);
+            //     EditorGUILayout.MinMaxSlider("Bullet Count", ref _offsetMin, ref _offsetMax, 1F, 10F);
+            //     if (_usePreview && _shootingRef != null)
+            //         GUILayout.Label($"Previewing pattern {(int)_offsetMin} to {(int)_offsetMax}");
+            // }
         }
 
         public static void DrawHandles(Transform parent, Vector3 offsetPos, Quaternion offsetRot,
