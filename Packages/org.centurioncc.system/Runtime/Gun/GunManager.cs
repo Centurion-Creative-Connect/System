@@ -1,5 +1,6 @@
 ﻿using CenturionCC.System.Gun.Behaviour;
 using CenturionCC.System.Gun.DataStore;
+using CenturionCC.System.Gun.Rule;
 using CenturionCC.System.Utils;
 using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
@@ -7,6 +8,7 @@ using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Data;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
 
@@ -308,6 +310,49 @@ namespace CenturionCC.System.Gun
         public void UnsubscribeCallback(UdonSharpBehaviour behaviour)
         {
             CallbackUtil.RemoveBehaviour(behaviour, ref _eventCallbackCount, ref _eventCallbacks);
+        }
+
+        #endregion
+
+        #region ShootingRule
+
+        private readonly DataDictionary _shootingRuleDict = new DataDictionary();
+        private ShootingRule[] _shootingRules;
+
+        [PublicAPI]
+        public void AddShootingRule(ShootingRule rule)
+        {
+            _shootingRuleDict.Add(rule.RuleId, rule);
+            _shootingRules = _shootingRules.AddAsList(rule);
+        }
+
+        [PublicAPI]
+        public void RemoveShootingRule(ShootingRule rule)
+        {
+            _shootingRuleDict.Remove(rule.RuleId);
+            _shootingRules = _shootingRules.RemoveItem(rule);
+        }
+
+        [PublicAPI] [CanBeNull]
+        public TranslatableMessage GetCancelledMessageOf(int ruleId)
+        {
+            return !_shootingRuleDict.TryGetValue(ruleId, TokenType.Reference, out var rule)
+                ? null
+                : ((ShootingRule)rule.Reference).CancelledMessage;
+        }
+
+        [PublicAPI]
+        public bool CheckCanLocalShoot(GunBase instance, out int ruleId)
+        {
+            foreach (var rule in _shootingRules)
+                if (rule != null && !rule.CanLocalShoot(instance))
+                {
+                    ruleId = rule.RuleId;
+                    return false;
+                }
+
+            ruleId = 0;
+            return true;
         }
 
         #endregion
