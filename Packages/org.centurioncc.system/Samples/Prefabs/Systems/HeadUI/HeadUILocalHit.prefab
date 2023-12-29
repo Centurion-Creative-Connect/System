@@ -390,11 +390,12 @@ MonoBehaviour:
   hapticSource: {fileID: 8300000, guid: 58212c46dfdbde4419144d1037c7fb56, type: 3}
   descriptionText: {fileID: 6722103226381266449}
   normalDescriptionFormat: Hit by %attacker% in the %bodyParts% using %weapon%
-  friendlyFireDescriptionFormat: Hit by %attacker%(FriendlyFire) in the %bodyParts%
-    using %weapon%
-  reverseFriendlyFireDescriptionFormat: Hit by Reverse Friendly Fire for %victim%
-    in the %bodyParts%
-  bothFriendlyFireDescriptionFormat: Hit by friendly fire for %victim% in the %bodyParts%
+  friendlyFireDescriptionFormat: Hit by %attacker%(<color=maroon>FriendlyFire</color>)
+    in the %bodyParts% using %weapon%
+  reverseFriendlyFireDescriptionFormat: Hit by <color=maroon>ReverseFriendlyFire</color>
+    for %victim% in the %bodyParts%
+  bothFriendlyFireDescriptionFormat: Hit by <color=maroon>ReverseFriendlyFire</color>
+    for %victim% in the %bodyParts%
   descriptionBackground: {fileID: 6317194179815401517}
   hitSprite: {fileID: 5912293117508487270}
   labelSprite: {fileID: 5912293118676595670}
