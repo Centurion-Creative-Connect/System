@@ -45,7 +45,7 @@ namespace CenturionCC.System.UI.HeadUI
         private Sprite[] availableSprites;
 
         [SerializeField]
-        private float inTime = 0.1F;
+        private float inTime = 0.05F;
         [SerializeField]
         private Vector2 inPosition = new Vector2(0, -500);
         [SerializeField]
