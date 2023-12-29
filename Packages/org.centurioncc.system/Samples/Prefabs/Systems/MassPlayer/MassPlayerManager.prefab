@@ -95,6 +95,7 @@ MonoBehaviour:
   autoAddPlayerAtJoin: 1
   playerInstancePool: []
   footstepAudio: {fileID: 0}
+  friendlyFireMode: 4
   teamColors:
   - {r: 0.509434, g: 0.509434, b: 0.509434, a: 1}
   - {r: 0.8117647, g: 0.17254902, b: 0.19607843, a: 1}
@@ -278,6 +279,7 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 8685854237540915792}
   logger: {fileID: 0}
   playerManager: {fileID: 0}
+  resolver: {fileID: 0}
   syncers: []
 --- !u!114 &8685854237540915792
 MonoBehaviour:
@@ -360,7 +362,6 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 914347972046800843}
   playerManager: {fileID: 0}
-  damageDataSyncerManager: {fileID: 0}
 --- !u!114 &914347972046800843
 MonoBehaviour:
   m_ObjectHideFlags: 0
