@@ -20,7 +20,7 @@ namespace CenturionCC.System.UI
         [SerializeField]
         private Toggle staffTagToggle;
         [SerializeField]
-        private Toggle friendlyFireToggle;
+        private Dropdown friendlyFireDropdown;
         [SerializeField]
         private Toggle debugToggle;
 
@@ -49,7 +49,7 @@ namespace CenturionCC.System.UI
             // TODO: dont reference PlayerManager directly, get from console command instead.
             teamTagToggle.isOn = playerManager.ShowTeamTag;
             staffTagToggle.isOn = playerManager.ShowStaffTag;
-            friendlyFireToggle.isOn = playerManager.AllowFriendlyFire;
+            friendlyFireDropdown.value = (int)playerManager.FriendlyFireMode;
             debugToggle.isOn = playerManager.IsDebug;
         }
 
@@ -71,7 +71,8 @@ namespace CenturionCC.System.UI
                     console.Evaluate($"PlayerManager showStaffTag {staffTagToggle.isOn}");
                     break;
                 case 2:
-                    console.Evaluate($"PlayerManager allowFriendlyFire {friendlyFireToggle.isOn}");
+                    console.Evaluate(
+                        $"PlayerManager friendlyFireMode {((FriendlyFireMode)friendlyFireDropdown.value).ToEnumName()}");
                     break;
                 case 3:
                     console.Evaluate($"PlayerManager debug {debugToggle.isOn}");
