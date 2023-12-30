@@ -21,6 +21,8 @@ namespace CenturionCC.System.Player.External.HitDisplay
                                   "Remote will play when local player was not an attacker.")]
         private HitDisplaySetting playHitDisplay = HitDisplaySetting.Always;
         [SerializeField]
+        private bool ignoreForLocalHit = true;
+        [SerializeField]
         private bool playWhenLocalIsNotInGame = true;
         [SerializeField] [Tooltip("Bypasses Play Hit Display setting and plays any hits when you're in staff team")]
         private bool bypassPlayHitDisplayWhenStaffTeam = true;
@@ -40,6 +42,13 @@ namespace CenturionCC.System.Player.External.HitDisplay
         {
             get => playHitDisplay;
             set => playHitDisplay = value;
+        }
+
+        [PublicAPI]
+        public bool IgnoreForLocalHit
+        {
+            get => ignoreForLocalHit;
+            set => ignoreForLocalHit = value;
         }
 
         [PublicAPI]
@@ -66,6 +75,11 @@ namespace CenturionCC.System.Player.External.HitDisplay
 
         public override void OnKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
+            if (victim.IsLocal && IgnoreForLocalHit)
+            {
+                return;
+            }
+
             var localPlayer = playerManager.GetLocalPlayer();
             if (localPlayer == null)
             {
