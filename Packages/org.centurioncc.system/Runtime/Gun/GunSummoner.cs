@@ -58,7 +58,7 @@ namespace CenturionCC.System.Gun
             {
                 var par = _summoningPopUp.transform.parent;
                 par.SetParent(popupPosition, false);
-                par.localPosition = new Vector3(0, -.2F, 0.3F);
+                par.localPosition = summonPosition == popupPosition ? new Vector3(0, -.2F, 0.3F) : Vector3.zero;
 
                 _summoningPopUp.ShowAndHideLater(summonTime);
             }
