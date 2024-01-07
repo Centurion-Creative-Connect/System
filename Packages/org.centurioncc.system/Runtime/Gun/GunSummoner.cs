@@ -21,6 +21,8 @@ namespace CenturionCC.System.Gun
         [SerializeField]
         private Transform summonPosition;
         [SerializeField]
+        private Transform popupPosition;
+        [SerializeField]
         private float summonTime = 5F;
         [SerializeField]
         private bool staffOnly;
@@ -37,6 +39,9 @@ namespace CenturionCC.System.Gun
         {
             if (summonPosition == null)
                 summonPosition = transform;
+            if (popupPosition == null)
+                popupPosition = summonPosition;
+
             if (_summoningPopUp == null)
             {
                 var go = GameObject.Find(SummoningPopUpHint);
@@ -52,8 +57,8 @@ namespace CenturionCC.System.Gun
             if (_summoningPopUp)
             {
                 var par = _summoningPopUp.transform.parent;
-                par.SetParent(summonPosition, false);
-                par.localPosition = new Vector3(0, -.2F, 0.3F);
+                par.SetParent(popupPosition, false);
+                par.localPosition = summonPosition == popupPosition ? new Vector3(0, -.2F, 0.3F) : Vector3.zero;
 
                 _summoningPopUp.ShowAndHideLater(summonTime);
             }
