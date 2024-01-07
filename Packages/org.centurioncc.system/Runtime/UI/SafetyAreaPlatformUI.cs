@@ -163,7 +163,7 @@ namespace CenturionCC.System.UI
         public void UpdateToggleState()
         {
             showTeamTagToggle.SetIsOnWithoutNotify(playerManager.ShowTeamTag);
-            allowFriendlyFireToggle.SetIsOnWithoutNotify(playerManager.AllowFriendlyFire);
+            allowFriendlyFireToggle.SetIsOnWithoutNotify(playerManager.FriendlyFireMode == FriendlyFireMode.Always);
         }
 
         public void UpdatePlayerStatusText()
@@ -303,11 +303,6 @@ namespace CenturionCC.System.UI
             _updatePlayerStatusNextFrame = true;
         }
 
-        public void OnFriendlyFire(PlayerBase firedPlayer, PlayerBase hitPlayer)
-        {
-            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(IncrementFriendlyFireCounter));
-        }
-
         public void OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint,
             bool isShooterDetection)
         {
@@ -315,12 +310,15 @@ namespace CenturionCC.System.UI
             _updateStatisticsNextFrame = true;
         }
 
-        public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
+        public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
         {
             if (hitPlayer.IsLocal)
                 ++_localHitCount;
             else
                 ++_remoteHitCount;
+
+            if (type == KillType.FriendlyFire)
+                ++_ffCount;
 
             _updateStatisticsNextFrame = true;
         }
