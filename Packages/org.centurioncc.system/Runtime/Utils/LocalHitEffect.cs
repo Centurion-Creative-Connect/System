@@ -9,7 +9,7 @@ using VRC.SDKBase;
 
 namespace CenturionCC.System.Utils
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)] [Obsolete("Use HeadUILocalHitEffect instead.")]
     public class LocalHitEffect : PlayerManagerCallbackBase
     {
         private const float HapticDuration = 0.02F;
@@ -62,7 +62,7 @@ namespace CenturionCC.System.Utils
             playerManager.SubscribeCallback(this);
         }
 
-        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
+        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
         {
             if (!hitPlayer.IsLocal)
                 return;

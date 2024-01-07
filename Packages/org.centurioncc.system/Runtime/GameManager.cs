@@ -20,6 +20,7 @@ namespace CenturionCC.System
     public class GameManager : UdonSharpBehaviour
     {
         public UpdateManager updateManager;
+        [Obsolete]
         public LocalHitEffect hitEffect;
         public PlayerManager players;
         public GunManager guns;
@@ -28,7 +29,9 @@ namespace CenturionCC.System
         public RoleProvider roleProvider;
         public PlayerMovement movement;
         public PrintableBase logger;
+        [Obsolete]
         public EventLogger eventLogger;
+        [Obsolete]
         public FootstepGenerator footstep;
         public ModeratorTool moderatorTool;
         public NotificationProvider notification;

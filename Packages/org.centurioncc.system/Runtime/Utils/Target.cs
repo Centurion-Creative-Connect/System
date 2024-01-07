@@ -1,4 +1,5 @@
-﻿using CenturionCC.System.Audio;
+﻿using System;
+using CenturionCC.System.Audio;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -11,6 +12,7 @@ namespace CenturionCC.System.Utils
     {
         public Material hitMaterial;
         public float seconds = 3;
+        [Obsolete]
         public AudioMarker marker;
         private Material _defaultMaterial;
 
@@ -36,8 +38,10 @@ namespace CenturionCC.System.Utils
         {
             _ChangeMat(hitMaterial);
             SendCustomEventDelayedSeconds(nameof(ResetMaterial), seconds);
+#pragma warning disable CS0612 // Type or member is obsolete
             if (marker)
                 marker.PlayAt(transform.position, 10);
+#pragma warning restore CS0612 // Type or member is obsolete
         }
 
         public void ResetMaterial()
