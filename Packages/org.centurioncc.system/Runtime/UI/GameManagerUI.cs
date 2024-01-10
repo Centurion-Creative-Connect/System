@@ -1,11 +1,13 @@
-﻿using DerpyNewbie.Logger;
+﻿using System;
+using DerpyNewbie.Logger;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace CenturionCC.System.UI
 {
-    [DefaultExecutionOrder(100000)] [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    [DefaultExecutionOrder(100000)] [UdonBehaviourSyncMode(BehaviourSyncMode.None)] [Obsolete(
+        "No longer maintained. See SafetyAreaPlatformUI component or System.Commands package instead.")]
     public class GameManagerUI : UdonSharpBehaviour
     {
         private const string Prefix = "<color=orange>GameManagerUI</color>::";

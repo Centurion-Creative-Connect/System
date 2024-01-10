@@ -26,7 +26,7 @@ namespace CenturionCC.System.Utils
             playerManager.SubscribeCallback(this);
         }
 
-        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
+        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
         {
             if (!hitPlayer.IsLocal)
                 return;

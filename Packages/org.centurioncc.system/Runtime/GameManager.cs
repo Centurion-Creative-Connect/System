@@ -20,6 +20,7 @@ namespace CenturionCC.System
     public class GameManager : UdonSharpBehaviour
     {
         public UpdateManager updateManager;
+        [Obsolete]
         public LocalHitEffect hitEffect;
         public PlayerManager players;
         public GunManager guns;
@@ -28,7 +29,9 @@ namespace CenturionCC.System
         public RoleProvider roleProvider;
         public PlayerMovement movement;
         public PrintableBase logger;
+        [Obsolete]
         public EventLogger eventLogger;
+        [Obsolete]
         public FootstepGenerator footstep;
         public ModeratorTool moderatorTool;
         public NotificationProvider notification;
@@ -53,7 +56,7 @@ namespace CenturionCC.System
 
         public static string GetVersion()
         {
-            return "0.6.0-beta.2";
+            return "0.6.0-rc.2";
         }
 
         public int KeepAlive(WatchdogProc wd, int nonce)

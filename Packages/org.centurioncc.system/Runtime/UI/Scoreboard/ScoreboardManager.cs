@@ -65,7 +65,7 @@ namespace CenturionCC.System.UI.Scoreboard
             SortScoreboard();
         }
 
-        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
+        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
         {
             SortScoreboard();
         }
