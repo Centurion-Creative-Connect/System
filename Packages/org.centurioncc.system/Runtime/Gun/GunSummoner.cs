@@ -14,8 +14,6 @@ namespace CenturionCC.System.Gun
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class GunSummoner : UdonSharpBehaviour
     {
-        [NonSerialized]
-        private const string SummoningPopUpHint = "Logics/System/UI/SummonerUI/SummoningImage";
         [SerializeField]
         private byte gunVariationId;
         [SerializeField]
@@ -37,6 +35,11 @@ namespace CenturionCC.System.Gun
         private RoleProvider roleProvider;
         [SerializeField] [HideInInspector] [NewbieInject]
         private NewbieLogger logger;
+        private readonly string[] _summoningPopupHints =
+        {
+            "Logics/System/UI/SummonerUI/SummoningImage",
+            "Logics/UI/SummonerUI/SummoningImage"
+        };
 
         private DateTime _lastSummonedTime;
         private PopUpImage _summoningPopUp;
@@ -50,9 +53,13 @@ namespace CenturionCC.System.Gun
 
             if (_summoningPopUp == null)
             {
-                var go = GameObject.Find(SummoningPopUpHint);
-                if (go != null)
+                foreach (var hint in _summoningPopupHints)
+                {
+                    var go = GameObject.Find(hint);
+                    if (go == null) continue;
                     _summoningPopUp = go.GetComponent<PopUpImage>();
+                    break;
+                }
             }
         }
 
