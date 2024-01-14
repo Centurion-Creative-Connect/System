@@ -1,6 +1,7 @@
 ﻿using CenturionCC.System.Player;
 using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
+using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 
@@ -13,23 +14,39 @@ namespace CenturionCC.System.UI
         private PlayerManager playerManager;
         [SerializeField] [HideInInspector] [NewbieInject]
         private NewbieConsole console;
+        [SerializeField]
+        private int customTeamId;
 
+        [PublicAPI]
         public void OnRedTeamButtonPressed()
         {
-            var localPlayer = playerManager.GetLocalPlayer();
-            if (localPlayer == null)
-                return;
-
-            SetTeam(localPlayer.TeamId != 1 ? 1 : 0);
+            ButtonPress(1);
         }
 
+        [PublicAPI]
         public void OnYellowTeamButtonPressed()
         {
-            var localPlayer = playerManager.GetLocalPlayer();
-            if (localPlayer == null)
-                return;
+            ButtonPress(2);
+        }
 
-            SetTeam(localPlayer.TeamId != 2 ? 2 : 0);
+        [PublicAPI]
+        public void OnStaffTeamButtonPressed()
+        {
+            ButtonPress(255);
+        }
+
+        [PublicAPI]
+        public void OnCustomTeamButtonPressed()
+        {
+            ButtonPress(customTeamId);
+        }
+
+        private void ButtonPress(int destTeamId)
+        {
+            var localPlayer = playerManager.GetLocalPlayer();
+            if (localPlayer == null) return;
+
+            SetTeam(localPlayer.TeamId != destTeamId ? destTeamId : 0);
         }
 
         private void SetTeam(int teamId)
