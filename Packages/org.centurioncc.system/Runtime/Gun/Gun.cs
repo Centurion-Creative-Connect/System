@@ -832,9 +832,9 @@ namespace CenturionCC.System.Gun
             if (SubHandle == null || !SubHandle.IsPickedUp) return;
 
             var localSubHandlePos = Target.worldToLocalMatrix.MultiplyPoint3x4(SubHandle.transform.position);
-            //
-            // if (localSubHandlePos.z > SubHandlePositionOffset.z + MaxHoldDistance)
-            //     SubHandle.ForceDrop();
+
+            if (localSubHandlePos.z > SubHandlePositionOffset.z + MaxHoldDistance)
+                SubHandle.ForceDrop();
         }
 
         protected void Internal_UpdateIsPickedUpState()
