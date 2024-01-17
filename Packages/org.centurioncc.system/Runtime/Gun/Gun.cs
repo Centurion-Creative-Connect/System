@@ -564,9 +564,15 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual float SubHandleRePickupDelay => subHandleRePickupDelay;
         [PublicAPI]
-        public virtual Vector3 LookAtTargetOffset =>
-            new Vector3(0, MainHandlePositionOffset.y - SubHandlePositionOffset.y, 0);
-
+        public virtual Vector3 LookAtTargetOffset
+        {
+            get
+            {
+                var offset = MainHandlePositionOffset - SubHandlePositionOffset;
+                // I have no idea why multiplying z by -2 fixes x/z offset issue. but it fixes the problem, so who cares!
+                return new Vector3(offset.x, offset.y, offset.z * -2);
+            }
+        }
 
         /// <summary>
         /// Local position of where bullets shooting out from.
@@ -826,9 +832,9 @@ namespace CenturionCC.System.Gun
             if (SubHandle == null || !SubHandle.IsPickedUp) return;
 
             var localSubHandlePos = Target.worldToLocalMatrix.MultiplyPoint3x4(SubHandle.transform.position);
-
-            if (localSubHandlePos.z > SubHandlePositionOffset.z + MaxHoldDistance)
-                SubHandle.ForceDrop();
+            //
+            // if (localSubHandlePos.z > SubHandlePositionOffset.z + MaxHoldDistance)
+            //     SubHandle.ForceDrop();
         }
 
         protected void Internal_UpdateIsPickedUpState()
