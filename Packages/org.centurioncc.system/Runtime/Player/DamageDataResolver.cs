@@ -54,6 +54,31 @@ namespace CenturionCC.System.Player
             return SyncResult.Hit;
         }
 
+        public void OnFinishing(DamageDataSyncer syncer)
+        {
+            switch (syncer.Result)
+            {
+                case SyncResult.Unassigned:
+                default:
+                {
+                    // No finishing up needed for in-progress syncer
+                    return;
+                }
+                case SyncResult.Hit:
+                {
+                    // Update confirmed died time
+                    UpdateConfirmedDiedTime(syncer.VictimId);
+                    return;
+                }
+                case SyncResult.Cancelled:
+                {
+                    // Revert assumed to confirmed died time
+                    RevertAssumedDiedTime(syncer.VictimId);
+                    return;
+                }
+            }
+        }
+
         [PublicAPI]
         public static bool ComputeHitResultFromDateTime(
             DateTime damageOriginatedTime,
@@ -111,18 +136,23 @@ namespace CenturionCC.System.Player
         {
             if (player == null) return;
 
+            _confirmedDiedTimeDict.Remove(player.PlayerId);
             _assumedDiedTimeDict.Remove(player.PlayerId);
             _assumedRevivedTimeDict.Remove(player.PlayerId);
         }
 
         public override void OnResetAllPlayerStats()
         {
+            _confirmedDiedTimeDict.Clear();
             _assumedDiedTimeDict.Clear();
             _assumedRevivedTimeDict.Clear();
         }
 
         public override void OnPlayerChanged(PlayerBase player, int oldId, int newId)
         {
+            _confirmedDiedTimeDict.Remove(oldId);
+            _confirmedDiedTimeDict.Remove(newId);
+
             _assumedDiedTimeDict.Remove(oldId);
             _assumedDiedTimeDict.Remove(newId);
 
@@ -134,8 +164,27 @@ namespace CenturionCC.System.Player
 
         #region DiedTimeGetterSetter
 
+        private readonly DataDictionary _confirmedDiedTimeDict = new DataDictionary();
         private readonly DataDictionary _assumedDiedTimeDict = new DataDictionary();
         private readonly DataDictionary _assumedRevivedTimeDict = new DataDictionary();
+
+        [PublicAPI]
+        public DateTime GetConfirmedDiedTime(int playerId)
+        {
+            return _confirmedDiedTimeDict.TryGetValue(new DataToken(playerId), TokenType.Long, out var timeToken)
+                ? new DateTime(timeToken.Long)
+                : DateTime.MinValue;
+        }
+
+        private void SetConfirmedDiedTime(int playerId, DateTime time)
+        {
+            _confirmedDiedTimeDict.SetValue(playerId, time.Ticks);
+        }
+
+        private void UpdateConfirmedDiedTime(int playerId)
+        {
+            SetConfirmedDiedTime(playerId, GetAssumedDiedTime(playerId));
+        }
 
         [PublicAPI]
         public DateTime GetAssumedDiedTime(int playerId)
@@ -148,6 +197,11 @@ namespace CenturionCC.System.Player
         private void SetAssumedDiedTime(int playerId, DateTime time)
         {
             _assumedDiedTimeDict.SetValue(playerId, time.Ticks);
+        }
+
+        private void RevertAssumedDiedTime(int playerId)
+        {
+            SetAssumedDiedTime(playerId, GetConfirmedDiedTime(playerId));
         }
 
         [PublicAPI]
