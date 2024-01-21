@@ -186,6 +186,7 @@ namespace CenturionCC.System
             var key = playerBase.VrcPlayer.SafeGetDisplayName();
             var playerTable = statsDict[key].DataDictionary;
 
+            playerTable["team"] = playerBase.TeamId;
             playerTable["death"] = playerTable["death"].Int + 1;
             if (playerTable["killStreak"].Int > playerTable["highestKillStreak"].Int)
                 playerTable["highestKillStreak"] = playerTable["killStreak"];
@@ -200,6 +201,7 @@ namespace CenturionCC.System
             var key = playerBase.VrcPlayer.SafeGetDisplayName();
             var playerTable = statsDict[key].DataDictionary;
 
+            playerTable["team"] = playerBase.TeamId;
             playerTable["kill"] = playerTable["kill"].Int + 1;
             playerTable["killStreak"] = playerTable["killStreak"].Int + 1;
             if (playerTable["killStreak"].Int >= playerTable["highestKillStreak"].Int)
@@ -221,6 +223,7 @@ namespace CenturionCC.System
             d.Add("killStreak", 0);
             d.Add("highestKillStreak", 0);
             d.Add("score", 0);
+            d.Add("team", 0);
 
             statsDict.Add(key, d);
             return false;
