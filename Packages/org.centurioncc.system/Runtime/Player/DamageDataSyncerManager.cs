@@ -210,12 +210,12 @@ namespace CenturionCC.System.Player
             logger.LogVerbose($"{Prefix}Received {requester.GetGlobalInfo()}");
 
             if (requester.State == SyncState.Sending && requester.VictimId == _local.playerId)
-            {
                 requester.UpdateResult(resolver.Resolve(requester));
-            }
 
             AddResolvedEventId(requester);
             Invoke_OnReceiveCallback(requester);
+
+            resolver.OnFinishing(requester);
         }
 
         public void RequestResend(DamageDataSyncer requester)
