@@ -112,6 +112,14 @@ namespace CenturionCC.System.Player
         }
 
         /// <summary>
+        /// Called when <see cref="PlayerManager.FriendlyFireMode"/> was changed.
+        /// </summary>
+        /// <param name="previousMode">Previously active <see cref="FriendlyFireMode"/></param>
+        public virtual void OnFriendlyFireModeChanged(FriendlyFireMode previousMode)
+        {
+        }
+
+        /// <summary>
         /// Called when <see cref="PlayerManager.MasterOnly_ResetAllPlayerStats"/> was called (Global)
         /// </summary>
         public virtual void OnResetAllPlayerStats()
