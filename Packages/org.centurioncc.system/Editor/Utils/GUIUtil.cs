@@ -18,7 +18,7 @@ namespace CenturionCC.System.Editor.Utils
         public static Color SurfaceIndentColor = Color.black;
         public static Color DeepIndentColor = Color.red;
 
-        public static float HelpBoxWidth = 400;
+        public static float HelpBoxWidth = 200;
         public static float HelpBoxHeight = 40;
         public static float HelpBoxButtonWidth = 100;
 
@@ -75,8 +75,8 @@ namespace CenturionCC.System.Editor.Utils
 
         public static void HelpBox(string text, MessageType msgType)
         {
-            Rect rect = EditorGUILayout.GetControlRect(GUILayout.Width(HelpBoxWidth),
-                GUILayout.Height(HelpBoxHeight));
+            Rect rect = EditorGUILayout.GetControlRect(GUILayout.MinWidth(HelpBoxWidth), GUILayout.MaxWidth(1000),
+                GUILayout.Height(HelpBoxHeight), GUILayout.ExpandWidth(true));
             EditorGUI.HelpBox(rect, text, msgType);
         }
 
@@ -125,7 +125,9 @@ namespace CenturionCC.System.Editor.Utils
 
         #region Buttons
 
-        public static bool SmallButton(string label) => GUILayout.Button(label, GUILayout.Width(HelpBoxButtonWidth));
+        public static bool SmallButton(string label) =>
+            GUILayout.Button(label, GUILayout.Width(HelpBoxButtonWidth), GUILayout.ExpandHeight(true));
+
         public static bool SmallButton(string label, out bool result) => result = SmallButton(label);
         public static void Button(string label, out bool result) => Impl_Button(label, out result, IconType.Info);
 
@@ -142,13 +144,14 @@ namespace CenturionCC.System.Editor.Utils
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                HelpBox(text, msgType);
                 GUILayout.FlexibleSpace();
-
+                HelpBox(text, msgType);
                 using (new EditorGUILayout.VerticalScope())
                 {
                     buttonResult = SmallButton(buttonLabel);
                 }
+
+                GUILayout.FlexibleSpace();
             }
 
             return buttonResult;
@@ -163,8 +166,6 @@ namespace CenturionCC.System.Editor.Utils
             using (new EditorGUILayout.HorizontalScope())
             {
                 HelpBox(text, msgType);
-                GUILayout.FlexibleSpace();
-
                 using (new EditorGUILayout.VerticalScope())
                 {
                     buttonResult = SmallButton(buttonLabel);

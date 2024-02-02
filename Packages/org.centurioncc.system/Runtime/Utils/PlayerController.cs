@@ -89,13 +89,17 @@ namespace CenturionCC.System.Utils
             _ray = new Ray(_localPlayer.GetPosition() + new Vector3(0f, .1F, 0F), Vector3.down);
             if (!Physics.Raycast(_ray, out _hit, 3, surfaceCheckingLayer)) return;
 
-            var objMarker = _hit.transform.GetComponent<ObjectMarkerBase>();
-            var hasChanged = objMarker != CurrentSurface;
+            // Check existing terrain
+            var objMarker = TryGetObjectMarker(_hit.transform, out var hasMarkerDataUpdate);
+            var hasChanged = objMarker != CurrentSurface || hasMarkerDataUpdate;
             if (!hasChanged) return;
             Debug.Log(
                 $"[PlayerController] ObjMarker changed: {(CurrentSurface != null ? CurrentSurface.name : null)} to {(objMarker != null ? objMarker.name : null)}");
+            if (hasMarkerDataUpdate)
+                Debug.Log($"[PlayerController] ObjMarkerData was updated: {objMarker.ObjectType}");
 
-            if (CurrentSurface != null)
+            // If marker data was updated, its tags are already removed at TryGetObjectMarker
+            if (CurrentSurface != null && !hasMarkerDataUpdate)
                 foreach (var surfTag in CurrentSurface.Tags)
                     _activeTags.Remove(surfTag);
 
@@ -118,6 +122,25 @@ namespace CenturionCC.System.Utils
 
             Invoke_OnActiveTagsUpdated();
             Invoke_OnSurfaceUpdated(lastSurf, CurrentSurface);
+        }
+
+        private ObjectMarkerBase TryGetObjectMarker(Component o, out bool hasMarkerDataUpdate)
+        {
+            var terrainMarker = o.GetComponent<TerrainMarker>();
+            if (terrainMarker != null)
+            {
+                hasMarkerDataUpdate = terrainMarker.UpdateObjectMarkerInfo(_hit.point);
+                if (CurrentSurface == terrainMarker && hasMarkerDataUpdate)
+                {
+                    foreach (var prevTag in terrainMarker.PreviousTags)
+                        ActiveTags.Remove(prevTag);
+                }
+
+                return terrainMarker;
+            }
+
+            hasMarkerDataUpdate = false;
+            return o.GetComponent<ObjectMarkerBase>();
         }
 
         private void UpdateCanRunState()
