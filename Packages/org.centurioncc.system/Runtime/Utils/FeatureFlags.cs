@@ -13,7 +13,9 @@ namespace CenturionCC.System.Utils
         [NonSerialized]
         public bool useConditionalResultCheck = false;
         [NonSerialized]
-        public bool doNotifyIfHitFailed = true;
+        public bool doNotifyIfLocalHitCancelled = false;
+        [NonSerialized]
+        public bool doNotifyIfRemoteHitCancelled = false;
         [NonSerialized]
         public bool makeSyncerPlayerIdDependent = true;
         // ReSharper restore FieldCanBeMadeReadOnly.Global ConvertToConstant.Global
