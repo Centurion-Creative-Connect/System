@@ -1309,10 +1309,6 @@ namespace CenturionCC.System.Gun
 
             // OnHandlePickup is only called locally, thus setting isLocal here is appropriate
             _isLocal = true;
-            if (PlayerController != null)
-            {
-                PlayerController.AddHoldingObject(this);
-            }
 
             if (TargetAnimator != null)
             {
@@ -1325,6 +1321,11 @@ namespace CenturionCC.System.Gun
                 (SubHandle != null && SubHandle.IsPickedUp) ^
                 (CustomHandle != null && CustomHandle.IsPickedUp))
             {
+                if (PlayerController != null)
+                {
+                    PlayerController.AddHoldingObject(this);
+                }
+
                 Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
 
                 OnGunPickup();
