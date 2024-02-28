@@ -88,10 +88,11 @@ namespace CenturionCC.System.Player
             // Handle edge case where player was instantly revived 
             if (attackerRevivedTime == attackerDiedTime) return true;
 
-            if (attackerDiedTime < attackerRevivedTime)
-                return damageOriginatedTime <= attackerDiedTime || damageOriginatedTime >= attackerRevivedTime;
+            // When attacker is alive
+            if (attackerDiedTime < attackerRevivedTime) return attackerRevivedTime <= damageOriginatedTime;
 
-            return damageOriginatedTime <= attackerDiedTime && damageOriginatedTime >= attackerRevivedTime;
+            // When attacker is dead
+            return damageOriginatedTime <= attackerDiedTime;
         }
 
         #region Callbacks

@@ -73,10 +73,9 @@ namespace CenturionCC.System.Player.MassPlayer
             protected set
             {
                 var lastDied = _syncedIsDead;
-
                 _syncedIsDead = value;
 
-                if (!_syncedIsDead && lastDied != _syncedIsDead)
+                if (!_syncedIsDead && (lastDied != _syncedIsDead))
                     playerManager.Invoke_OnPlayerRevived(this);
 
                 UpdateView();
