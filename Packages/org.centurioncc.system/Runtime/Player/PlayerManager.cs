@@ -106,8 +106,12 @@ namespace CenturionCC.System.Player
             get => _friendlyFireModeSynced;
             set
             {
+                var previousMode = friendlyFireMode;
+
                 friendlyFireMode = (FriendlyFireMode)value;
                 _friendlyFireModeSynced = value;
+
+                if (previousMode != friendlyFireMode) Invoke_OnFriendlyFireModeChanged(previousMode);
             }
         }
 
@@ -1121,6 +1125,17 @@ namespace CenturionCC.System.Player
             {
                 if (callback == null) continue;
                 ((PlayerManagerCallbackBase)callback).OnPlayerTagChanged(type, isOn);
+            }
+        }
+
+        public void Invoke_OnFriendlyFireModeChanged(FriendlyFireMode previousMode)
+        {
+            Logger.Log($"{Prefix}Invoke_OnFriendlyFireModeChanged: {previousMode}");
+
+            foreach (var callback in _eventCallbacks)
+            {
+                if (callback == null) continue;
+                ((PlayerManagerCallbackBase)callback).OnFriendlyFireModeChanged(previousMode);
             }
         }
 
