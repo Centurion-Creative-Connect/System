@@ -295,6 +295,19 @@ namespace CenturionCC.System.Utils
         /// <param name="anObject">an object which begin holding.</param>
         public void AddHoldingObject(ObjectMarkerBase anObject)
         {
+            if (anObject == null)
+            {
+                Debug.LogWarning("[PlayerController] Tried to add null to held object list!");
+                return;
+            }
+
+            if (_heldObjects.Contains(anObject) && !allowDuplicateHeldObjects)
+            {
+                Debug.LogWarning(
+                    $"[PlayerController] Tried to add {anObject.name}, but it already exists in held objects list!");
+                return;
+            }
+
             _heldObjects.Add(anObject);
             foreach (var objectTag in anObject.Tags) _activeTags.Add(objectTag);
             UpdateHoldingObjects();
@@ -308,6 +321,12 @@ namespace CenturionCC.System.Utils
         /// <param name="anObject">an object which stopped holding.</param>
         public void RemoveHoldingObject(ObjectMarkerBase anObject)
         {
+            if (anObject == null)
+            {
+                Debug.LogWarning("[PlayerController] Tried to remove null from held objects list!");
+                return;
+            }
+
             _heldObjects.Remove(anObject);
             foreach (var objectTag in anObject.Tags) _activeTags.Remove(objectTag);
             UpdateHoldingObjects();
@@ -424,6 +443,11 @@ namespace CenturionCC.System.Utils
         private float playerWeight;
         [SerializeField]
         public float maximumCarryingWeightInKilogram = 75F;
+        [SerializeField]
+        [Tooltip("Compatibility option.\n" +
+                 "Allows duplicate occuring for `PlayerController#AddHeldObject` method.\n" +
+                 "Leave it unchecked if you are not experiencing issues.")]
+        private bool allowDuplicateHeldObjects;
         [SerializeField]
         private float environmentEffectMultiplier = 1F;
         [SerializeField]
