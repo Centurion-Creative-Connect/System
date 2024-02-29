@@ -3,6 +3,7 @@ using DerpyNewbie.Common;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Data;
 using VRC.SDKBase;
 
 namespace CenturionCC.System.Utils
@@ -10,18 +11,20 @@ namespace CenturionCC.System.Utils
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class AreaPlayerCounter : PlayerManagerCallbackBase
     {
+        private const int MinTeamId = 0;
+        private const int MaxTeamId = short.MaxValue;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
         private int _eventCallbackCount;
 
         private UdonSharpBehaviour[] _eventCallbacks = new UdonSharpBehaviour[0];
-
-        private PlayerBase[] _playersInArea = new PlayerBase[0];
+        private DataDictionary _playersInAreaDict = new DataDictionary();
 
         [PublicAPI]
-        public int TotalPlayerCount => _playersInArea.Length;
+        public int TotalPlayerCount => _playersInAreaDict.Count;
         [PublicAPI]
-        public int[] TeamPlayerCount { get; private set; } = new int[short.MaxValue];
+        public int[] TeamPlayerCount { get; private set; } = new int[MaxTeamId];
 
         private void Start()
         {
@@ -45,21 +48,27 @@ namespace CenturionCC.System.Utils
         {
             TeamPlayerCount = new int[short.MaxValue];
 
-            foreach (var player in _playersInArea)
-                if (player != null)
-                    IncrementTeamCount(player.TeamId);
+            var playersInArea = _playersInAreaDict.GetKeys().ToArray();
+            foreach (var player in playersInArea)
+                IncrementTeamCount(((PlayerBase)player.Reference).TeamId);
         }
 
         [PublicAPI]
         public PlayerBase[] GetPlayersInArea()
         {
-            return _playersInArea;
+            // Reconstruct PlayerBase array based on DataDictionary keys because it's easier to use
+            var playersInAreaTokens = _playersInAreaDict.GetKeys().ToArray();
+            var playerBaseArr = new PlayerBase[playersInAreaTokens.Length];
+            for (var i = 0; i < playerBaseArr.Length; i++)
+                playerBaseArr[i] = (PlayerBase)playersInAreaTokens[i].Reference;
+
+            return playerBaseArr;
         }
 
         [PublicAPI]
         public void GetPlayerCount(out int allPlayersCount, out int redPlayerCount, out int yellowPlayerCount)
         {
-            allPlayersCount = _playersInArea.Length;
+            allPlayersCount = _playersInAreaDict.Count;
             redPlayerCount = TeamPlayerCount[1];
             yellowPlayerCount = TeamPlayerCount[2];
         }
@@ -71,8 +80,16 @@ namespace CenturionCC.System.Utils
             var playerBase = playerManager.GetPlayerById(player.playerId);
             if (playerBase == null) return;
 
-            _playersInArea = _playersInArea.AddAsSet(playerBase);
-            IncrementTeamCount(playerBase.TeamId);
+            var key = new DataToken(playerBase);
+            if (!_playersInAreaDict.ContainsKey(key))
+            {
+                // For the first time player enters collider
+                _playersInAreaDict.Add(key, 0);
+                IncrementTeamCount(playerBase.TeamId);
+            }
+
+            var triggerCount = _playersInAreaDict[key].Int + 1;
+            _playersInAreaDict[key] = triggerCount;
         }
 
         public override void OnPlayerTriggerExit(VRCPlayerApi player)
@@ -82,13 +99,25 @@ namespace CenturionCC.System.Utils
             var playerBase = playerManager.GetPlayerById(player.playerId);
             if (playerBase == null) return;
 
-            _playersInArea = _playersInArea.RemoveItem(playerBase);
-            DecrementTeamCount(playerBase.TeamId);
+            var key = new DataToken(playerBase);
+            if (!_playersInAreaDict.ContainsKey(key)) return;
+
+            var triggerCount = _playersInAreaDict[key].Int - 1;
+            if (triggerCount <= 0)
+            {
+                // For the last time player exits collider
+                _playersInAreaDict.Remove(key);
+                DecrementTeamCount(playerBase.TeamId);
+            }
+            else
+            {
+                _playersInAreaDict[key] = triggerCount;
+            }
         }
 
         public override void OnTeamChanged(PlayerBase player, int oldTeam)
         {
-            if (!_playersInArea.ContainsItem(player)) return;
+            if (!_playersInAreaDict.ContainsKey(player)) return;
 
             DecrementTeamCount(oldTeam);
             IncrementTeamCount(player.TeamId);
@@ -96,21 +125,21 @@ namespace CenturionCC.System.Utils
 
         public override void OnPlayerChanged(PlayerBase player, int oldId, int newId)
         {
-            if (!_playersInArea.ContainsItem(player)) return;
+            if (!_playersInAreaDict.ContainsKey(player)) return;
 
-            _playersInArea = _playersInArea.RemoveItem(player);
+            _playersInAreaDict.Remove(player);
             DecrementTeamCount(player.TeamId);
         }
 
         private void DecrementTeamCount(int id)
         {
-            if (id >= 0 && id <= 255) --TeamPlayerCount[id];
+            if (id >= MinTeamId && id <= MaxTeamId) --TeamPlayerCount[id];
             Invoke_CountChanged();
         }
 
         private void IncrementTeamCount(int id)
         {
-            if (id >= 0 && id <= 255) ++TeamPlayerCount[id];
+            if (id >= MinTeamId && id <= MaxTeamId) ++TeamPlayerCount[id];
             Invoke_CountChanged();
         }
 
