@@ -66,7 +66,7 @@ namespace CenturionCC.System.Gun.DataStore
 
         private int GetIndexFromCount(int count)
         {
-            return Mathf.RoundToInt(Mathf.Repeat(count, patternCount));
+            return count % patternCount;
         }
     }
 }
