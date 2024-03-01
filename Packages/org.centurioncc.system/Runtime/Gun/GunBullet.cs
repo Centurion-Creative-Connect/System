@@ -178,16 +178,21 @@ namespace CenturionCC.System.Gun
         /// <summary>
         /// This is very inaccurate approximation, do not expect accuracy!
         /// </summary>
+        /// <remarks>
+        /// Currently this method does not consider rotation-affected hop up.
+        /// Thus does not accurately approximate sample shotgun recoils.
+        /// </remarks>
         /// <param name="startingPos">Shooting position</param>
         /// <param name="startingRot">Shooting rotation</param>
         /// <param name="provider">Data provider</param>
         /// <param name="offset">Data offset</param>
         /// <param name="pointsOfLine">Max points of line</param>
-        /// <param name="deltaTimeBetweenPoints">Time steps between points</param>
         /// <returns>Pretty inaccurate approximation</returns>
         public static Vector3[] PredictTrajectory(Vector3 startingPos, Quaternion startingRot,
-            ProjectileDataProvider provider, int offset, int pointsOfLine, float deltaTimeBetweenPoints)
+            ProjectileDataProvider provider, int offset, int pointsOfLine)
         {
+            const float deltaTimeBetweenPoints = 0.02F;
+
             provider.Get(
                 offset,
                 out var positionOffset,
@@ -203,21 +208,21 @@ namespace CenturionCC.System.Gun
             Vector3 position = positionOffset + startingPos;
             velocity = startingRot * velocity;
 
-            var hopUpStr = torque.x * 0.02F;
-            var initRotUp = startingRot * rotationOffset * Vector3.up;
+            var hopUpStr = torque.x * deltaTimeBetweenPoints * 10F; // Super magic number. dunno why but it works so...
+            var initRotUp = (startingRot * rotationOffset) * Vector3.up;
             var result = new Vector3[pointsOfLine];
             result[0] = position;
             for (var i = 1; i < pointsOfLine; i++)
             {
+                // Apply Hop Up
+                velocity += initRotUp * (new Vector3(velocity.x, 0, velocity.z).magnitude * hopUpStr *
+                                         deltaTimeBetweenPoints);
+
                 // Apply Gravity
                 velocity += Physics.gravity * deltaTimeBetweenPoints;
 
                 // Apply Drag
                 velocity *= Mathf.Clamp01(1F - drag * deltaTimeBetweenPoints);
-
-                // Apply Hop Up
-                velocity += initRotUp * (new Vector3(velocity.x, 0, velocity.z).magnitude * hopUpStr *
-                                         deltaTimeBetweenPoints);
 
                 var nextPosition = position + velocity * deltaTimeBetweenPoints;
 
