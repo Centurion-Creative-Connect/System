@@ -1215,7 +1215,24 @@ namespace CenturionCC.System.Gun
 
             if (nextState == GunState.InCockingTwisting && previousState != GunState.InCockingTwisting)
             {
-                if (AudioData != null) Internal_PlayAudio(AudioData.CockingTwist, AudioData.CockingTwistOffset);
+                if (AudioData != null)
+                {
+                    if (!AudioData.UseSecondTwistAudio)
+                    {
+                        Internal_PlayAudio(AudioData.CockingTwist, AudioData.CockingTwistOffset);
+                    }
+                    else
+                    {
+                        if (previousState == GunState.InCockingPush || previousState == GunState.InCockingPull)
+                        {
+                            Internal_PlayAudio(AudioData.CockingSecondTwist, AudioData.CockingSecondTwistOffset);
+                        }
+                        else
+                        {
+                            Internal_PlayAudio(AudioData.CockingTwist, AudioData.CockingTwistOffset);
+                        }
+                    }
+                }
 
                 if (TargetAnimator != null && !IsLocal)
                     TargetAnimator.SetFloat(GunUtility.CockingTwistParameter(), 1);
