@@ -102,10 +102,9 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
         public static void DrawRange(Transform parent, Vector3 offsetPos, Quaternion offsetRot, int length = 75,
             int part = 5)
         {
-            var l2w = parent.localToWorldMatrix;
-            var pos = l2w.MultiplyPoint3x4(offsetPos);
-            var rot = Quaternion.AngleAxis(Quaternion.Angle(Quaternion.Euler(Vector3.up), offsetRot * l2w.rotation),
-                Vector3.up);
+            var parentRot = parent.rotation;
+            var rot = new Quaternion(0, parentRot.y, 0, parentRot.w).normalized * offsetRot;
+            var pos = parent.position + offsetRot * offsetPos;
             var forward = rot * Vector3.forward;
             var left = rot * Vector3.left;
 
