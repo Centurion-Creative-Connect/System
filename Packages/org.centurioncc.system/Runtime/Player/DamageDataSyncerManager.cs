@@ -192,7 +192,8 @@ namespace CenturionCC.System.Player
                 SyncState.Sending,
                 SyncResult.Unassigned,
                 killType,
-                pCol.parts
+                pCol.parts,
+                0x00
             );
 
             logger.LogVerbose($"{Prefix}Sending request {syncer.GetLocalInfo()}");
@@ -210,7 +211,16 @@ namespace CenturionCC.System.Player
             logger.LogVerbose($"{Prefix}Received {requester.GetGlobalInfo()}");
 
             if (requester.State == SyncState.Sending && requester.VictimId == _local.playerId)
-                requester.UpdateResult(resolver.Resolve(requester));
+            {
+                if (!resolver.Resolve(requester, out var result, out var context))
+                {
+                    Debug.LogError(
+                        $"{Prefix}{requester.GetGlobalInfo()} has requested resolve, but resolver rejected it");
+                    return;
+                }
+
+                requester.UpdateResult(result, context);
+            }
 
             AddResolvedEventId(requester);
             Invoke_OnReceiveCallback(requester);

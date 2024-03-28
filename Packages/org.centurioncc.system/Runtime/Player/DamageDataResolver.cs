@@ -24,23 +24,43 @@ namespace CenturionCC.System.Player
             playerManager.SubscribeCallback(this);
         }
 
-        public SyncResult Resolve(DamageDataSyncer syncer)
+        public bool Resolve(DamageDataSyncer syncer, out SyncResult result, out byte resultContext)
         {
             if (syncer.VictimId != _local.playerId)
-                return SyncResult.Unassigned;
+            {
+                result = SyncResult.Unassigned;
+                resultContext = default;
+                return false;
+            }
 
             var victim = playerManager.GetPlayerById(syncer.VictimId);
             var attacker = playerManager.GetPlayerById(syncer.AttackerId);
-            if (victim == null || attacker == null || victim.IsDead)
-                return SyncResult.Cancelled;
+            if (victim == null || attacker == null)
+            {
+                result = SyncResult.Cancelled;
+                resultContext = SyncResultContext.PlayerCouldNotBeFound;
+                return true;
+            }
 
-            var result = ComputeHitResultFromDateTime(
+            if (victim.IsDead)
+            {
+                result = SyncResult.Cancelled;
+                resultContext = SyncResultContext.VictimAlreadyDead;
+                return true;
+            }
+
+            var hitResult = ComputeHitResultFromDateTime(
                 syncer.ActivatedTime,
                 GetAssumedDiedTime(syncer.AttackerId),
                 GetAssumedRevivedTime(syncer.AttackerId)
             );
 
-            if (!result) return SyncResult.Cancelled;
+            if (!hitResult)
+            {
+                result = SyncResult.Cancelled;
+                resultContext = SyncResultContext.AttackerAlreadyDead;
+                return true;
+            }
 
             if (syncer.Type == KillType.FriendlyFire && playerManager.FriendlyFireMode == FriendlyFireMode.Both)
             {
@@ -51,7 +71,9 @@ namespace CenturionCC.System.Player
             var lastHitData = syncer.Type == KillType.ReverseFriendlyFire ? attacker.LastHitData : victim.LastHitData;
             lastHitData.SetData(syncer);
             lastHitData.SyncData();
-            return SyncResult.Hit;
+            result = SyncResult.Hit;
+            resultContext = SyncResultContext.None;
+            return true;
         }
 
         public void OnFinishing(DamageDataSyncer syncer)
@@ -190,7 +212,7 @@ namespace CenturionCC.System.Player
         [PublicAPI]
         public DateTime GetAssumedDiedTime(int playerId)
         {
-            return _assumedDiedTimeDict.TryGetValue(new DataToken(playerId), TokenType.Long, out var timeToken)
+            return _assumedDiedTimeDict.TryGetValue(playerId, TokenType.Long, out var timeToken)
                 ? new DateTime(timeToken.Long)
                 : DateTime.MinValue;
         }
@@ -208,7 +230,7 @@ namespace CenturionCC.System.Player
         [PublicAPI]
         public DateTime GetAssumedRevivedTime(int playerId)
         {
-            return _assumedRevivedTimeDict.TryGetValue(new DataToken(playerId), TokenType.Long, out var timeToken)
+            return _assumedRevivedTimeDict.TryGetValue(playerId, TokenType.Long, out var timeToken)
                 ? new DateTime(timeToken.Long)
                 : DateTime.MinValue;
         }
@@ -233,5 +255,29 @@ namespace CenturionCC.System.Player
         }
 
         #endregion
+    }
+
+    public static class SyncResultContext
+    {
+        public const byte None = 0x00;
+        public const byte GenericFail = 0x01;
+        public const byte AttackerAlreadyDead = 0x02;
+        public const byte VictimAlreadyDead = 0x03;
+        public const byte PlayerCouldNotBeFound = 0x04;
+
+        public static string GetContextMessage(byte context)
+        {
+            // NOTE: Switch Expression is not supported in UdonSharp yet
+            // ReSharper disable once ConvertSwitchStatementToSwitchExpression
+            switch (context)
+            {
+                default: return "UNDEFINED";
+                case 0x00: return "NONE";
+                case 0x01: return "FAIL";
+                case 0x02: return "ATTACKER_DEAD";
+                case 0x03: return "VICTIM_DEAD";
+                case 0x04: return "PLAYER_NOT_FOUND";
+            }
+        }
     }
 }
