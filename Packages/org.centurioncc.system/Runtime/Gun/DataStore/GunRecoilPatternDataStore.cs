@@ -1,5 +1,11 @@
-﻿using UdonSharp;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using UdonSharp;
 using UnityEngine;
+
+[assembly: InternalsVisibleTo("CenturionCC.System.Editor")]
 
 namespace CenturionCC.System.Gun.DataStore
 {
@@ -34,6 +40,10 @@ namespace CenturionCC.System.Gun.DataStore
             0.3F
         };
 
+        public Vector3[] RecoilOffsetPatterns => recoilOffsetPatterns;
+        public Vector3[] PositionOffsetPatterns => positionOffsetPatterns;
+        public float[] SpeedOffsetPatterns => speedOffsetPatterns;
+
         public virtual Vector3 GetRecoilOffset(int count)
         {
             return recoilOffsetPatterns[count % recoilOffsetPatterns.Length];
@@ -55,5 +65,39 @@ namespace CenturionCC.System.Gun.DataStore
             recoilOffset = recoilOffsetPatterns[count % recoilOffsetPatterns.Length];
             positionOffset = positionOffsetPatterns[count % positionOffsetPatterns.Length];
         }
+
+#if !COMPILER_UDONSHARP && UNITY_EDITOR
+
+        public int MaxPatterns => Lcm(new[]
+            { recoilOffsetPatterns.Length, positionOffsetPatterns.Length, speedOffsetPatterns.Length });
+
+        private static int Lcm(int[] vs)
+        {
+            vs = vs.Where(x => x > 1).ToArray();
+            if (vs.Length < 2)
+                return vs.Length == 1 ? vs[0] : 1;
+
+            var div = 2;
+            var divs = new List<int>();
+
+            while (true)
+            {
+                if (vs.Count(x => x % div == 0) == vs.Length)
+                {
+                    vs = vs.Select(x => x / div).ToArray();
+                    divs.Add(div);
+                }
+                else
+                {
+                    div++;
+                }
+
+                Array.Sort(vs);
+                if (vs[vs.Length - 2] < div) break;
+            }
+
+            return divs.Aggregate(1, (current, i) => current * i);
+        }
+#endif
     }
 }
