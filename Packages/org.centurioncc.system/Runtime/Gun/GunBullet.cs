@@ -10,7 +10,6 @@ namespace CenturionCC.System.Gun
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class GunBullet : ProjectileBase
     {
-        private const float LifeTime = 5F;
         private const float HopUpCoefficient = .005F;
         private const float DampingCoefficient = 2.5F;
 
@@ -67,8 +66,8 @@ namespace CenturionCC.System.Gun
 
         public override void Shoot(Vector3 pos, Quaternion rot, Vector3 velocity, Vector3 torque, float drag,
             string damageType, DateTime time, int playerId,
-            float trailTime,
-            Gradient trailGradient)
+            float trailTime, Gradient trailGradient,
+            float lifeTimeInSeconds)
         {
             // Damage data
             _damageOriginPos = pos;
@@ -105,7 +104,7 @@ namespace CenturionCC.System.Gun
             _ricochetCount = 0;
 
             Activate();
-            SendCustomEventDelayedSeconds(nameof(Deactivate), LifeTime);
+            SendCustomEventDelayedSeconds(nameof(Deactivate), lifeTimeInSeconds);
         }
 
         // _FixedUpdate will only be subscribed when it's in their lifetime.
@@ -197,7 +196,8 @@ namespace CenturionCC.System.Gun
                 out var torque,
                 out var drag,
                 out var trailDuration,
-                out var trailColor
+                out var trailColor,
+                out var lifeTimeInSeconds
             );
 
             Vector3 position = positionOffset + startingPos;

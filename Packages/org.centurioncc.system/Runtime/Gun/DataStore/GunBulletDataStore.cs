@@ -22,6 +22,8 @@ namespace CenturionCC.System.Gun.DataStore
         [FormerlySerializedAs("bulletTrailGradient")]
         [SerializeField]
         private Gradient trailGradient = new Gradient();
+        [SerializeField] [Tooltip("In seconds, defaults to 5s")]
+        private float lifeTime = 5F;
         [SerializeField]
         private int projectileCount = 1;
         [SerializeField]
@@ -33,7 +35,7 @@ namespace CenturionCC.System.Gun.DataStore
             out Vector3 positionOffset, out Vector3 velocity,
             out Quaternion rotationOffset, out Vector3 torque,
             out float drag,
-            out float trailDuration, out Gradient trailColor)
+            out float trailDuration, out Gradient trailColor, out float lifeTimeInSeconds)
         {
             recoilPattern.Get(i, out var speedOffset, out var recoilOffset, out positionOffset);
             drag = baseDrag;
@@ -42,6 +44,7 @@ namespace CenturionCC.System.Gun.DataStore
             torque = new Vector3(baseHopUpStrength, 0, 0) + recoilOffset;
             trailDuration = trailTime;
             trailColor = trailGradient;
+            lifeTimeInSeconds = lifeTime;
         }
     }
 }
