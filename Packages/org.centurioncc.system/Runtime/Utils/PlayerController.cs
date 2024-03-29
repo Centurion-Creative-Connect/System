@@ -38,7 +38,6 @@ namespace CenturionCC.System.Utils
         private float _footstepLastInvokedTime;
         private RaycastHit _hit;
         private bool _isApplyingGroundSnap;
-        private float _lastCombatTagTime;
         private float _lastGroundSnapUpdatedTime;
         private bool _lastSurfaceNoFootstep;
         private float _lastSurfaceUpdatedTime;
