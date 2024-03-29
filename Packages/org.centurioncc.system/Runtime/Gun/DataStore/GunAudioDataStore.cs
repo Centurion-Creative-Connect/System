@@ -26,6 +26,10 @@ namespace CenturionCC.System.Gun.DataStore
         [SerializeField]
         private Vector3 cockingTwistOffset;
         [SerializeField]
+        private AudioDataStore cockingSecondTwistAudio;
+        [SerializeField]
+        private Vector3 cockingSecondTwistOffset;
+        [SerializeField]
         private AudioDataStore cockingPullAudio;
         [SerializeField]
         private Vector3 cockingPullOffset;
@@ -34,6 +38,10 @@ namespace CenturionCC.System.Gun.DataStore
         [SerializeField]
         private Vector3 cockingReleaseOffset;
 
+        [Header("Options")]
+        [SerializeField]
+        private bool useSecondTwistAudio = false;
+
         public CollisionAudioStore Collision => collisionAudio;
         public AudioDataStore Shooting => shootingAudio;
         public Vector3 ShootingOffset => shootingOffset;
@@ -41,9 +49,14 @@ namespace CenturionCC.System.Gun.DataStore
         public Vector3 EmptyShootingOffset => emptyShootingOffset;
         public AudioDataStore CockingTwist => cockingTwistAudio;
         public Vector3 CockingTwistOffset => cockingTwistOffset;
+        public AudioDataStore CockingSecondTwist => cockingSecondTwistAudio;
+        public Vector3 CockingSecondTwistOffset => cockingSecondTwistOffset;
         public AudioDataStore CockingPull => cockingPullAudio;
         public Vector3 CockingPullOffset => cockingPullOffset;
         public AudioDataStore CockingRelease => cockingReleaseAudio;
         public Vector3 CockingReleaseOffset => cockingReleaseOffset;
+
+        // NOTE: for compatibility
+        public bool UseSecondTwistAudio => useSecondTwistAudio;
     }
 }

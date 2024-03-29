@@ -564,15 +564,9 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual float SubHandleRePickupDelay => subHandleRePickupDelay;
         [PublicAPI]
-        public virtual Vector3 LookAtTargetOffset
-        {
-            get
-            {
-                var offset = MainHandlePositionOffset - SubHandlePositionOffset;
-                // I have no idea why multiplying z by -2 fixes x/z offset issue. but it fixes the problem, so who cares!
-                return new Vector3(offset.x, offset.y, offset.z * -2);
-            }
-        }
+        public virtual Vector3 LookAtTargetOffset =>
+            new Vector3(0, MainHandlePositionOffset.y - SubHandlePositionOffset.y, 0);
+
 
         /// <summary>
         /// Local position of where bullets shooting out from.
@@ -776,7 +770,8 @@ namespace CenturionCC.System.Gun
                     out var posOffset, out var velocity,
                     out var rotOffset, out var torque,
                     out var drag,
-                    out var trailTime, out var trailGradient
+                    out var trailTime, out var trailGradient,
+                    out var lifeTimeInSeconds
                 );
 
                 var tempRot = rot * rotOffset;
@@ -790,7 +785,8 @@ namespace CenturionCC.System.Gun
                     torque,
                     drag,
                     WeaponName, LastShotTime, playerId,
-                    trailTime, trailGradient
+                    trailTime, trailGradient,
+                    lifeTimeInSeconds
                 );
 
                 if (projectile == null)
@@ -1221,7 +1217,24 @@ namespace CenturionCC.System.Gun
 
             if (nextState == GunState.InCockingTwisting && previousState != GunState.InCockingTwisting)
             {
-                if (AudioData != null) Internal_PlayAudio(AudioData.CockingTwist, AudioData.CockingTwistOffset);
+                if (AudioData != null)
+                {
+                    if (!AudioData.UseSecondTwistAudio)
+                    {
+                        Internal_PlayAudio(AudioData.CockingTwist, AudioData.CockingTwistOffset);
+                    }
+                    else
+                    {
+                        if (previousState == GunState.InCockingPush || previousState == GunState.InCockingPull)
+                        {
+                            Internal_PlayAudio(AudioData.CockingSecondTwist, AudioData.CockingSecondTwistOffset);
+                        }
+                        else
+                        {
+                            Internal_PlayAudio(AudioData.CockingTwist, AudioData.CockingTwistOffset);
+                        }
+                    }
+                }
 
                 if (TargetAnimator != null && !IsLocal)
                     TargetAnimator.SetFloat(GunUtility.CockingTwistParameter(), 1);

@@ -60,6 +60,8 @@ namespace CenturionCC.System.Player.MassPlayer
         [field: UdonSynced]
         public int EncodedData { get; private set; }
 
+        public float Distance { get; private set; }
+
         private void Start()
         {
             if (Networking.IsMaster)
@@ -78,6 +80,7 @@ namespace CenturionCC.System.Player.MassPlayer
             WeaponType = syncer.WeaponType;
             Type = syncer.Type;
             Parts = syncer.Parts;
+            Distance = Vector3.Distance(ActivatedPosition, HitPosition);
 
             EncodedData = EncodeData(AttackerId, VictimId, (int)Type, (int)Parts);
         }
@@ -93,6 +96,7 @@ namespace CenturionCC.System.Player.MassPlayer
             HitTimeTicks = default;
             WeaponType = default;
             Type = default;
+            Distance = default;
 
             EncodedData = EncodeData(default, default, default, default);
         }
@@ -130,6 +134,7 @@ namespace CenturionCC.System.Player.MassPlayer
             VictimId = victim;
             Type = type;
             Parts = parts;
+            Distance = Vector3.Distance(ActivatedPosition, HitPosition);
 
             player.OnHitDataUpdated();
         }

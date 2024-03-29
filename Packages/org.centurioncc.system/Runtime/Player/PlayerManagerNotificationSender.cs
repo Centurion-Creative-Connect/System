@@ -14,6 +14,8 @@ namespace CenturionCC.System.Player
         [SerializeField]
         private TranslatableMessage[] teamChangeNotificationMessages;
         [SerializeField]
+        private TranslatableMessage changeToStaffTeamMessage;
+        [SerializeField]
         private TranslatableMessage unknownTeamChangeNotificationMessage;
         [FormerlySerializedAs("onDisguiseEnabledMessage")]
         [SerializeField]
@@ -29,6 +31,8 @@ namespace CenturionCC.System.Player
         private TranslatableMessage onFriendlyFireWarningMessage;
         [SerializeField]
         private TranslatableMessage onFriendlyFireModeChangedMessage;
+        [SerializeField]
+        private TranslatableMessage[] friendlyFireModes;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private NotificationProvider notification;
@@ -47,9 +51,10 @@ namespace CenturionCC.System.Player
 
             if (player.TeamId >= 0 && player.TeamId < teamChangeNotificationMessages.Length)
                 notification.ShowInfo(teamChangeNotificationMessages[player.TeamId].Message);
+            else if (playerManager.IsStaffTeamId(player.TeamId))
+                notification.ShowInfo(changeToStaffTeamMessage.Message);
             else
-                notification.ShowInfo(string.Format(unknownTeamChangeNotificationMessage.Message,
-                    player.TeamId));
+                notification.ShowInfo(string.Format(unknownTeamChangeNotificationMessage.Message, player.TeamId));
         }
 
         public override void OnPlayerTagChanged(TagType type, bool isOn)
@@ -89,6 +94,19 @@ namespace CenturionCC.System.Player
 
         public override void OnFriendlyFireModeChanged(FriendlyFireMode previousMode)
         {
+            if ((int)playerManager.FriendlyFireMode >= 0 &&
+                (int)playerManager.FriendlyFireMode < friendlyFireModes.Length)
+            {
+                notification.ShowInfo(
+                    string.Format(onFriendlyFireModeChangedMessage.Message,
+                        friendlyFireModes[(int)playerManager.FriendlyFireMode].Message,
+                        5F,
+                        978490789
+                    )
+                );
+                return;
+            }
+
             notification.ShowInfo(
                 string.Format(onFriendlyFireModeChangedMessage.Message,
                     playerManager.FriendlyFireMode.ToEnumName()),

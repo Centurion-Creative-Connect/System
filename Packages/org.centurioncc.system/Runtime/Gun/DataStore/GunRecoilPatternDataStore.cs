@@ -1,13 +1,15 @@
-﻿using UdonSharp;
+﻿using System.Linq;
+using System.Runtime.CompilerServices;
+using UdonSharp;
 using UnityEngine;
+
+[assembly: InternalsVisibleTo("CenturionCC.System.Editor")]
 
 namespace CenturionCC.System.Gun.DataStore
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class GunRecoilPatternDataStore : UdonSharpBehaviour
     {
-        [SerializeField]
-        private int patternCount = 6;
         [SerializeField]
         private Vector3[] recoilOffsetPatterns =
         {
@@ -22,11 +24,6 @@ namespace CenturionCC.System.Gun.DataStore
         [SerializeField]
         private Vector3[] positionOffsetPatterns =
         {
-            Vector3.zero,
-            Vector3.zero,
-            Vector3.zero,
-            Vector3.zero,
-            Vector3.zero,
             Vector3.zero
         };
 
@@ -41,32 +38,44 @@ namespace CenturionCC.System.Gun.DataStore
             0.3F
         };
 
+        public Vector3[] RecoilOffsetPatterns => recoilOffsetPatterns;
+        public Vector3[] PositionOffsetPatterns => positionOffsetPatterns;
+        public float[] SpeedOffsetPatterns => speedOffsetPatterns;
+
+#if !COMPILER_UDONSHARP && UNITY_EDITOR
+
+        public int MaxPatterns
+        {
+            get
+            {
+                var nums = new[]
+                    { recoilOffsetPatterns.Length, positionOffsetPatterns.Length, speedOffsetPatterns.Length };
+                return nums.Distinct().Aggregate((a, b) => a * b);
+            }
+        }
+
+#endif
+
         public virtual Vector3 GetRecoilOffset(int count)
         {
-            return recoilOffsetPatterns[GetIndexFromCount(count)];
+            return recoilOffsetPatterns[count % recoilOffsetPatterns.Length];
         }
 
         public virtual Vector3 GetPositionOffset(int count)
         {
-            return positionOffsetPatterns[GetIndexFromCount(count)];
+            return positionOffsetPatterns[count % positionOffsetPatterns.Length];
         }
 
         public virtual float GetSpeedOffset(int count)
         {
-            return speedOffsetPatterns[GetIndexFromCount(count)];
+            return speedOffsetPatterns[count % speedOffsetPatterns.Length];
         }
 
         public virtual void Get(int count, out float speedOffset, out Vector3 recoilOffset, out Vector3 positionOffset)
         {
-            var i = GetIndexFromCount(count);
-            speedOffset = speedOffsetPatterns[i];
-            recoilOffset = recoilOffsetPatterns[i];
-            positionOffset = positionOffsetPatterns[i];
-        }
-
-        private int GetIndexFromCount(int count)
-        {
-            return count % patternCount;
+            speedOffset = speedOffsetPatterns[count % speedOffsetPatterns.Length];
+            recoilOffset = recoilOffsetPatterns[count % recoilOffsetPatterns.Length];
+            positionOffset = positionOffsetPatterns[count % positionOffsetPatterns.Length];
         }
     }
 }

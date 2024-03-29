@@ -38,19 +38,21 @@ namespace CenturionCC.System.Player
             _localWeaponType = other._localWeaponType;
             _localState = other._localState;
             _localType = other._localType;
+            _localResultContext = other._localResultContext;
 
             ResendCount = ++other.ResendCount;
 
             RequestSync();
         }
 
-        public void UpdateResult(SyncResult result)
+        public void UpdateResult(SyncResult result, byte resultContext)
         {
             _hasProcessed = false;
 
             LastUsedTime = Time.realtimeSinceStartup;
 
             _localResult = result;
+            _localResultContext = resultContext;
             _localState = SyncState.Received;
 
             RequestSync();
@@ -68,7 +70,8 @@ namespace CenturionCC.System.Player
             SyncState state,
             SyncResult result,
             KillType type,
-            BodyParts parts
+            BodyParts parts,
+            byte resultContext
         )
         {
             _hasProcessed = false;
@@ -89,6 +92,7 @@ namespace CenturionCC.System.Player
             _localResult = result;
             _localType = type;
             _localParts = parts;
+            _localResultContext = resultContext;
 
             ResendCount = 0;
 
@@ -116,6 +120,7 @@ namespace CenturionCC.System.Player
             Result = _localResult;
             Type = _localType;
             Parts = _localParts;
+            ResultContext = _localResultContext;
         }
 
         public void ApplyGlobal()
@@ -148,6 +153,7 @@ namespace CenturionCC.System.Player
             _localResult = Result;
             _localType = Type;
             _localParts = Parts;
+            _localResultContext = ResultContext;
         }
 
         public void MakeAvailable()
@@ -177,7 +183,7 @@ namespace CenturionCC.System.Player
                    $"{ActivatedTime:s}/" +
                    $"{HitTime:s}:" +
                    $"{GetStateName(State)}:" +
-                   $"{GetResultName(Result)}:" +
+                   $"{GetResultName(Result)}({ResultContext}):" +
                    $"{GetKillTypeName(Type)}:" +
                    $"{GetBodyPartsName(Parts)}|" +
                    $"{ResendCount}";
@@ -193,7 +199,7 @@ namespace CenturionCC.System.Player
                    $"{_localActivatedTime:s}/" +
                    $"{_localHitTime:s}:" +
                    $"{GetStateName(_localState)}:" +
-                   $"{GetResultName(_localResult)}:" +
+                   $"{GetResultName(_localResult)}({_localResultContext}):" +
                    $"{GetKillTypeName(_localType)}:" +
                    $"{GetBodyPartsName(_localParts)}|" +
                    $"{ResendCount}";
@@ -259,6 +265,7 @@ namespace CenturionCC.System.Player
         private BodyParts _localParts;
         private int _localVictimId;
         private string _localWeaponType;
+        private byte _localResultContext;
 
         #endregion
 
@@ -291,6 +298,8 @@ namespace CenturionCC.System.Player
         public SyncResult Result { get; private set; } = SyncResult.Unassigned;
         public KillType Type { get; private set; } = KillType.Default;
         public BodyParts Parts { get; private set; } = BodyParts.Body;
+        [field: UdonSynced]
+        public byte ResultContext { get; private set; }
         [field: UdonSynced]
         public long EncodedData { get; private set; }
 

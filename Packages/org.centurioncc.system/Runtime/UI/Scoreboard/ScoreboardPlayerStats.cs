@@ -1,5 +1,5 @@
 ﻿using CenturionCC.System.Player;
-using DerpyNewbie.Common;
+using CenturionCC.System.Utils;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
@@ -40,7 +40,7 @@ namespace CenturionCC.System.UI.Scoreboard
             if (Source == null)
             {
                 rankingText.text = "??";
-                displayNameText.text = "???";
+                displayNameText.text = "???(InvalidSource)";
                 killsText.text = "??";
                 deathsText.text = "??";
                 return;
@@ -48,7 +48,7 @@ namespace CenturionCC.System.UI.Scoreboard
 
             rankingText.text = $"{(transform.GetSiblingIndex() + 1)}";
 
-            displayNameText.text = NewbieUtils.GetPlayerName(Source.VrcPlayer);
+            displayNameText.text = Source.VrcPlayer.SafeGetDisplayName("???(InvalidVrcPlayer)");
             killsText.text = Source.Kills.ToString();
             deathsText.text = Source.Deaths.ToString();
         }

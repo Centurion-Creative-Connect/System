@@ -684,7 +684,7 @@ namespace CenturionCC.System.Player
         {
             if (!Networking.IsMaster)
             {
-                Logger.LogError(string.Format(MustBeMasterError, nameof(MasterOnly_ResetAllPlayerStats)));
+                Logger.LogError(string.Format(MustBeMasterError, nameof(MasterOnly_ResetPlayerStats)));
                 return;
             }
 
@@ -692,11 +692,11 @@ namespace CenturionCC.System.Player
 
             if (instance == null)
             {
-                Logger.LogError($"{Prefix}Could not reset stats: ShooterPlayer with such player id not found!");
+                Logger.LogError($"{Prefix}Could not reset stats: PlayerBase with such player id not found!");
                 return;
             }
 
-            instance.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(instance.ResetPlayer));
+            instance.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(instance.ResetStats));
         }
 
         public void UpdateLocalPlayer()

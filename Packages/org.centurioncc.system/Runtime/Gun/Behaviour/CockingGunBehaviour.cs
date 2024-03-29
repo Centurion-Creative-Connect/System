@@ -180,7 +180,7 @@ namespace CenturionCC.System.Gun.Behaviour
 
         private void DrawGizmos()
         {
-            // TODO: cocking pos may be null
+            // NOTE: cocking pos might be null
             var cockingPos = cockingPosition.position;
             GizmosUtil.SetColor(Color.cyan, 0.8F);
             GizmosUtil.DrawArrow(cockingPos, cockingPos + (cockingLength * transform.forward) * -1, 0.01F);
@@ -256,7 +256,6 @@ namespace CenturionCC.System.Gun.Behaviour
             // Calculate cocking/twist progress
             if (Networking.LocalPlayer.IsUserInVR())
             {
-                // if (useInteractionLimiter) CheckCustomHandleDistance(instance);
                 GetNormalizedProgressAndTwist(instance, out progressNormalized, out twistNormalized);
             }
             else

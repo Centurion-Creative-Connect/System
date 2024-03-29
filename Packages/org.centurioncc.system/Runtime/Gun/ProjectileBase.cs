@@ -14,13 +14,21 @@ namespace CenturionCC.System.Gun
         public virtual void Shoot(Vector3 pos, Quaternion rot,
             Vector3 velocity, Vector3 torque, float drag,
             string damageType, DateTime originTime, int playerId)
-            => Shoot(pos, rot, velocity, torque, drag, damageType, originTime, playerId, float.NaN, null);
+            => Shoot(pos, rot, velocity, torque, drag, damageType, originTime, playerId, float.NaN, null, 5F);
+
+        [PublicAPI]
+        public virtual void Shoot(Vector3 pos, Quaternion rot,
+            Vector3 velocity, Vector3 torque, float drag,
+            string damageType, DateTime originTime, int playerId,
+            float trailTime, Gradient trailGradient)
+            => Shoot(pos, rot, velocity, torque, drag, damageType, originTime, playerId, float.NaN, null, 5F);
 
         [PublicAPI]
         public abstract void Shoot(Vector3 pos, Quaternion rot,
             Vector3 velocity, Vector3 torque, float drag,
             string damageType, DateTime originTime, int playerId,
-            float trailTime, Gradient trailGradient);
+            float trailTime, Gradient trailGradient,
+            float lifeTimeInSeconds);
 
         public void SetDamageSetting(
             DetectionType type,

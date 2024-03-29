@@ -17,6 +17,8 @@ namespace CenturionCC.System.Gun.DataStore
         public float hopUpStrength;
         [UdonSynced]
         public float trailTime;
+        [UdonSynced]
+        public float lifeTimeInSeconds;
         public Gradient trailGradient;
         public GunRecoilPatternDataStore recoilPattern;
 
@@ -26,7 +28,8 @@ namespace CenturionCC.System.Gun.DataStore
             out Vector3 posOff, out Vector3 vel,
             out Quaternion rotOff, out Vector3 torque,
             out float d,
-            out float trailDur, out Gradient trailColor)
+            out float trailDur, out Gradient trailColor,
+            out float lifeTime)
         {
             recoilPattern.Get(i, out var spdOff, out var recOff, out posOff);
             d = drag;
@@ -35,6 +38,7 @@ namespace CenturionCC.System.Gun.DataStore
             torque = new Vector3(hopUpStrength, 0, 0) + recOff;
             trailDur = trailTime;
             trailColor = trailGradient;
+            lifeTime = lifeTimeInSeconds;
         }
 
         public void Sync()

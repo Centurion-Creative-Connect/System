@@ -68,19 +68,36 @@ namespace CenturionCC.System.Gun
             SendCustomEventDelayedFrames(nameof(GenerateSteps), 5);
         }
 
+        private ProjectileBase GetProjectile(int retryCount)
+        {
+            while (true)
+            {
+                if (!HasInitialized) return null;
+
+                if (retryCount < 0) return _bullets[_lastBulletIndex];
+
+                if (++_lastBulletIndex >= _bullets.Length) _lastBulletIndex = 0;
+                var bullet = _bullets[_lastBulletIndex];
+                if (bullet == null)
+                {
+                    UnityEngine.Debug.LogError($"[GunBulletHolder] bullet pool contains null at {_lastBulletIndex}");
+                    --retryCount;
+                    continue;
+                }
+
+                if (bullet.IsCurrentlyActive)
+                {
+                    --retryCount;
+                    continue;
+                }
+
+                return bullet;
+            }
+        }
+
         public override ProjectileBase GetProjectile()
         {
-            if (!HasInitialized)
-                return null;
-
-            if (++_lastBulletIndex >= _bullets.Length)
-                _lastBulletIndex = 0;
-            var bullet = _bullets[_lastBulletIndex];
-            if (bullet == null)
-            {
-                UnityEngine.Debug.LogError($"[GunBulletHolder] bullet pool contains null at {_lastBulletIndex}");
-                return null;
-            }
+            var bullet = GetProjectile(gunBulletMax);
 
             if (bullet.IsCurrentlyActive)
             {
@@ -93,14 +110,16 @@ namespace CenturionCC.System.Gun
 
         public override ProjectileBase Shoot(Vector3 pos, Quaternion rot, Vector3 velocity, Vector3 torque, float drag,
             string damageType, DateTime time,
-            int playerId, float trailTime, Gradient trailGradient)
+            int playerId, float trailTime, Gradient trailGradient,
+            float lifeTimeInSeconds)
         {
             var projectile = GetProjectile();
             if (projectile == null)
                 return null;
 
             projectile.ResetDamageSetting();
-            projectile.Shoot(pos, rot, velocity, torque, drag, damageType, time, playerId, trailTime, trailGradient);
+            projectile.Shoot(pos, rot, velocity, torque, drag, damageType, time, playerId, trailTime, trailGradient,
+                lifeTimeInSeconds);
             return projectile;
         }
     }

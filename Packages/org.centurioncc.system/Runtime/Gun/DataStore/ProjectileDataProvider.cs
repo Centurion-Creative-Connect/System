@@ -12,6 +12,7 @@ namespace CenturionCC.System.Gun.DataStore
             out Quaternion rotationOffset, out Vector3 torque,
             out float drag,
             out float trailDuration,
-            out Gradient trailColor);
+            out Gradient trailColor,
+            out float lifeTimeInSeconds);
     }
 }

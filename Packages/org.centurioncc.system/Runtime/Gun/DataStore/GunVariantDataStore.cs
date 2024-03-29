@@ -35,6 +35,10 @@ namespace CenturionCC.System.Gun.DataStore
         [SerializeField]
         private GunBehaviourBase behaviour;
         [SerializeField]
+        [Tooltip(
+            "Override default ProjectilePool for this variant. leave this empty to use GunManager's ProjectilePool")]
+        private ProjectilePool projectilePoolOverride;
+        [SerializeField]
         private bool isDoubleHanded;
         [SerializeField]
         private bool useRePickupDelayForMainHandle;
@@ -87,6 +91,8 @@ namespace CenturionCC.System.Gun.DataStore
         public GunHapticDataStore HapticData => hapticData;
         [CanBeNull]
         public GunBehaviourBase Behaviour => behaviour;
+        [CanBeNull]
+        public ProjectilePool ProjectilePoolOverride => projectilePoolOverride;
 
         public bool IsDoubleHanded => isDoubleHanded;
         public bool UseRePickupDelayForMainHandle => useRePickupDelayForMainHandle;
