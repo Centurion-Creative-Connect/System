@@ -3,6 +3,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Components;
 using VRC.SDKBase;
+using VRC.Udon.Common;
 
 namespace CenturionCC.System.Utils
 {
@@ -27,11 +28,14 @@ namespace CenturionCC.System.Utils
         private bool dropShieldOnHit;
 
         protected DropContext context;
+        protected HandType currentRef;
         protected bool isHeldLocally;
 
         public virtual bool CanShootWhileCarrying => canShootWhileCarrying;
 
         public virtual bool DropShieldOnHit => dropShieldOnHit;
+
+        public virtual VRCPickup VrcPickup => pickup;
 
         private void OnCollisionEnter(Collision collision)
         {
@@ -64,14 +68,20 @@ namespace CenturionCC.System.Utils
                 ? leftHandedReference
                 : rightHandedReference;
 
-            pickupReference.localPosition = refTransform.localPosition;
-            pickupReference.localRotation = refTransform.localRotation;
+            SetPickupRef(refTransform);
+            currentRef = pickup.currentHand == VRC_Pickup.PickupHand.Left ? HandType.LEFT : HandType.RIGHT;
 
             isHeldLocally = true;
             pickup.pickupable = false;
 
             if (!Networking.IsOwner(gameObject))
                 Networking.SetOwner(Networking.LocalPlayer, gameObject);
+        }
+
+        public override void OnPickupUseDown()
+        {
+            currentRef = currentRef == HandType.LEFT ? HandType.RIGHT : HandType.LEFT;
+            SetPickupRef(currentRef == HandType.LEFT ? leftHandedReference : rightHandedReference);
         }
 
         public override void OnDrop()
@@ -88,6 +98,12 @@ namespace CenturionCC.System.Utils
         {
             context = DropContext.Hit;
             pickup.Drop();
+        }
+
+        private void SetPickupRef(Transform t)
+        {
+            pickupReference.localPosition = t.localPosition;
+            pickupReference.localRotation = t.localRotation;
         }
 
         #region ObjectMarkerBase
