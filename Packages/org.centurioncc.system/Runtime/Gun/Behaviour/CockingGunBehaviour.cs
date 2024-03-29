@@ -31,6 +31,8 @@ namespace CenturionCC.System.Gun.Behaviour
         [SerializeField]
         private bool requireTwist;
         [SerializeField]
+        private bool useHandleRotation;
+        [SerializeField]
         private Transform idleTwistPosition;
         [SerializeField]
         private Transform activeTwistPosition;
@@ -74,6 +76,8 @@ namespace CenturionCC.System.Gun.Behaviour
         private void GetNormalizedProgressAndTwist(GunBase instance, out float progress, out float twist)
         {
             var refPos = instance.CustomHandle.transform.localPosition;
+            if (useHandleRotation) // Limit Z movement
+                refPos += (Vector3)(Vector2)(instance.CustomHandle.transform.localRotation * Vector3.up);
             var currentState = instance.State;
             progress = GetProgressNormalized(refPos);
             twist = GetTwistNormalized(refPos);
@@ -120,33 +124,38 @@ namespace CenturionCC.System.Gun.Behaviour
         private void UpdateCustomHandlePosition(GunBase instance)
         {
             Vector3 targetPos;
+            Quaternion targetRot;
             switch (instance.State)
             {
                 default:
                 case GunState.Idle:
                 case GunState.Unknown:
                 {
-                    targetPos = (requireTwist && idleTwistPosition != null
-                        ? idleTwistPosition.localPosition
-                        : cockingPosition.localPosition);
+                    var t = requireTwist && idleTwistPosition != null ? idleTwistPosition : cockingPosition;
+                    targetPos = t.localPosition;
+                    targetRot = t.localRotation;
                     break;
                 }
                 case GunState.InCockingTwisting:
                 {
-                    targetPos = (requireTwist && idleTwistPosition != null
-                        ? activeTwistPosition.localPosition
-                        : cockingPosition.localPosition);
+                    var t = requireTwist && activeTwistPosition != null ? activeTwistPosition : cockingPosition;
+                    targetPos = t.localPosition;
+                    targetRot = t.localRotation;
                     break;
                 }
                 case GunState.InCockingPull:
                 case GunState.InCockingPush:
                 {
+                    var t = requireTwist && activeTwistPosition != null ? activeTwistPosition : cockingPosition;
                     targetPos = cockingPosition.localPosition + new Vector3(0, 0, -cockingLength);
+                    targetRot = t.localRotation;
                     break;
                 }
             }
 
-            instance.CustomHandle.transform.localPosition = targetPos;
+            var handleTransform = instance.CustomHandle.transform;
+            handleTransform.localPosition = targetPos;
+            handleTransform.localRotation = targetRot;
         }
 
         #region StateCheckMethods
@@ -171,6 +180,7 @@ namespace CenturionCC.System.Gun.Behaviour
 
         private void DrawGizmos()
         {
+            // NOTE: cocking pos might be null
             var cockingPos = cockingPosition.position;
             GizmosUtil.SetColor(Color.cyan, 0.8F);
             GizmosUtil.DrawArrow(cockingPos, cockingPos + (cockingLength * transform.forward) * -1, 0.01F);
