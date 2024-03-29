@@ -802,8 +802,14 @@ namespace CenturionCC.System.Gun
                 TargetAnimator.SetTrigger(GunUtility.IsShootingParameter());
             if (AudioData != null)
                 Internal_PlayAudio(AudioData.Shooting, AudioData.ShootingOffset);
-            if (IsLocal && HapticData != null && HapticData.Shooting)
-                HapticData.Shooting.PlayBothHand();
+
+            if (IsLocal)
+            {
+                if (HapticData != null && HapticData.Shooting)
+                    HapticData.Shooting.PlayBothHand();
+                if (PlayerController != null)
+                    PlayerController.ApplyCombatTag();
+            }
 
             HasCocked = false;
         }
