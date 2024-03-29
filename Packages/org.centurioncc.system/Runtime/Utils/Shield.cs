@@ -1,8 +1,10 @@
-﻿using DerpyNewbie.Common;
+﻿using CenturionCC.System.Player;
+using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Components;
 using VRC.SDKBase;
+using VRC.Udon.Common.Interfaces;
 using VRC.Udon.Common;
 
 namespace CenturionCC.System.Utils
@@ -10,6 +12,8 @@ namespace CenturionCC.System.Utils
     [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
     public class Shield : ObjectMarkerBase
     {
+        [SerializeField] [HideInInspector] [NewbieInject]
+        protected PlayerManager playerManager;
         [SerializeField] [HideInInspector] [NewbieInject]
         protected ShieldManager shieldManager;
         [SerializeField] [HideInInspector] [NewbieInject]
@@ -30,12 +34,15 @@ namespace CenturionCC.System.Utils
         protected DropContext context;
         protected HandType currentRef;
         protected bool isHeldLocally;
+        protected int teamId;
 
         public virtual bool CanShootWhileCarrying => canShootWhileCarrying;
 
         public virtual bool DropShieldOnHit => dropShieldOnHit;
 
         public virtual VRCPickup VrcPickup => pickup;
+
+        public virtual int TeamId => teamId;
 
         private void OnCollisionEnter(Collision collision)
         {
@@ -76,6 +83,8 @@ namespace CenturionCC.System.Utils
 
             if (!Networking.IsOwner(gameObject))
                 Networking.SetOwner(Networking.LocalPlayer, gameObject);
+
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(UpdateTeamId));
         }
 
         public override void OnPickupUseDown()
@@ -91,6 +100,8 @@ namespace CenturionCC.System.Utils
             isHeldLocally = false;
             pickup.pickupable = true;
 
+            if (context == DropContext.UserInput) SendCustomNetworkEvent(NetworkEventTarget.All, nameof(UpdateTeamId));
+
             shieldManager.Invoke_OnShieldDrop(this, context);
         }
 
@@ -104,6 +115,37 @@ namespace CenturionCC.System.Utils
         {
             pickupReference.localPosition = t.localPosition;
             pickupReference.localRotation = t.localRotation;
+        }
+
+        public void UpdateTeamId()
+        {
+            PlayerBase playerBase = null;
+            // If pickup was held, get from current pickup player
+            if (pickup.IsHeld && Utilities.IsValid(pickup.currentPlayer))
+            {
+                playerBase = playerManager.GetPlayerById(pickup.currentPlayer.playerId);
+            }
+
+            // If pickup was not held, get from last owner
+            if (playerBase == null)
+            {
+                playerBase = playerManager.GetPlayerById(Networking.GetOwner(gameObject).playerId);
+            }
+
+            // If PlayerBase was not found for any cases, do not update team id
+            if (playerBase == null)
+            {
+                return;
+            }
+
+            // Staff should not be able to occupy a shield as a team
+            if (playerManager.IsStaffTeamId(playerBase.TeamId))
+            {
+                teamId = 0;
+                return;
+            }
+
+            teamId = playerBase.TeamId;
         }
 
         #region ObjectMarkerBase
