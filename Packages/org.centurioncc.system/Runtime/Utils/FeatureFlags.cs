@@ -13,7 +13,7 @@ namespace CenturionCC.System.Utils
         [NonSerialized]
         public bool useConditionalResultCheck = false;
         [NonSerialized]
-        public bool doNotifyIfLocalHitCancelled = false;
+        public bool doNotifyIfLocalHitCancelled = true;
         [NonSerialized]
         public bool doNotifyIfRemoteHitCancelled = false;
         [NonSerialized]
