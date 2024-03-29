@@ -48,7 +48,7 @@ namespace CenturionCC.System.UI
         [SerializeField]
         private Toggle showTeamTagToggle;
         [SerializeField]
-        private Toggle allowFriendlyFireToggle;
+        private Toggle showStaffTagToggle;
 
         [SerializeField] [TextArea]
         private string lastResetMessage = "{0}前にリセットしました!";
@@ -163,7 +163,7 @@ namespace CenturionCC.System.UI
         public void UpdateToggleState()
         {
             showTeamTagToggle.SetIsOnWithoutNotify(playerManager.ShowTeamTag);
-            allowFriendlyFireToggle.SetIsOnWithoutNotify(playerManager.FriendlyFireMode == FriendlyFireMode.Always);
+            showStaffTagToggle.SetIsOnWithoutNotify(playerManager.ShowStaffTag);
         }
 
         public void UpdatePlayerStatusText()
@@ -279,12 +279,6 @@ namespace CenturionCC.System.UI
             resetButton.interactable = true;
         }
 
-        public void IncrementFriendlyFireCounter()
-        {
-            ++_ffCount;
-            _updateStatisticsNextFrame = true;
-        }
-
         #region StatsCounter
 
         private int _ffCount;
@@ -327,6 +321,11 @@ namespace CenturionCC.System.UI
         {
             _updatePlayerStatusNextFrame = true;
             _updateActiveModeratorsNextFrame = true;
+        }
+
+        public void OnPlayerTagChanged(TagType type, bool isOn)
+        {
+            UpdateToggleState();
         }
 
         #endregion
