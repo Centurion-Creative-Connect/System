@@ -183,46 +183,63 @@ namespace CenturionCC.System.Gun
         /// <param name="provider">Data provider</param>
         /// <param name="offset">Data offset</param>
         /// <param name="pointsOfLine">Max points of line</param>
-        /// <param name="deltaTimeBetweenPoints">Time steps between points</param>
         /// <returns>Pretty inaccurate approximation</returns>
         public static Vector3[] PredictTrajectory(Vector3 startingPos, Quaternion startingRot,
-            ProjectileDataProvider provider, int offset, int pointsOfLine, float deltaTimeBetweenPoints)
+            ProjectileDataProvider provider, int offset, int pointsOfLine)
         {
-            provider.Get(
+            provider.Get
+            (
                 offset,
-                out var positionOffset,
-                out var velocity,
-                out var rotationOffset,
-                out var torque,
+                out var posOffset, out var velocity,
+                out var rotOffset, out var torque,
                 out var drag,
                 out var trailDuration,
                 out var trailColor,
                 out var lifeTimeInSeconds
             );
 
-            Vector3 position = positionOffset + startingPos;
-            velocity = startingRot * velocity;
+            var tempRot = startingRot * rotOffset;
+            var tempPos = startingPos + (tempRot * posOffset);
+            return PredictTrajectory(tempPos, tempRot, velocity, torque, drag, pointsOfLine);
+        }
 
-            var hopUpStr = torque.x * 0.02F;
-            var initRotUp = startingRot * rotationOffset * Vector3.up;
+        /// <summary>
+        /// This is very inaccurate approximation, do not expect accuracy!
+        /// </summary>
+        /// <param name="pos">Shooting position</param>
+        /// <param name="rot">Shooting rotation</param>
+        /// <param name="velocity">Starting velocity</param>
+        /// <param name="torque">Starting torque</param>
+        /// <param name="drag">Rigidbody drag</param>
+        /// <param name="pointsOfLine">Max points of line</param>
+        /// <returns>Pretty inaccurate approximation</returns>
+        public static Vector3[] PredictTrajectory(Vector3 pos, Quaternion rot, Vector3 velocity, Vector3 torque,
+            float drag, int pointsOfLine)
+        {
+            const float dt = 0.02F;
+            velocity = rot * velocity;
+
+            var hopUpStr = torque.x * dt * 9F; // Super magic number. dunno why but it works so...
+            var initRotUp = rot * Vector3.up;
             var result = new Vector3[pointsOfLine];
-            result[0] = position;
+
+            drag = Mathf.Clamp01(1F - (drag * dt));
+            result[0] = pos;
             for (var i = 1; i < pointsOfLine; i++)
             {
+                // Apply Hop Up
+                velocity += initRotUp * (new Vector3(velocity.x, 0, velocity.z).magnitude * hopUpStr * dt);
+
                 // Apply Gravity
-                velocity += Physics.gravity * deltaTimeBetweenPoints;
+                velocity += Physics.gravity * dt;
 
                 // Apply Drag
-                velocity *= Mathf.Clamp01(1F - drag * deltaTimeBetweenPoints);
+                velocity *= drag;
 
-                // Apply Hop Up
-                velocity += initRotUp * (new Vector3(velocity.x, 0, velocity.z).magnitude * hopUpStr *
-                                         deltaTimeBetweenPoints);
-
-                var nextPosition = position + velocity * deltaTimeBetweenPoints;
+                var nextPosition = pos + velocity * dt;
 
                 result[i] = nextPosition;
-                position = nextPosition;
+                pos = nextPosition;
             }
 
             return result;

@@ -29,6 +29,7 @@ namespace CenturionCC.System.Gun.DataStore
         [SerializeField]
         private GunRecoilPatternDataStore recoilPattern;
 
+        public GunRecoilPatternDataStore RecoilPattern => recoilPattern;
         public override int ProjectileCount => projectileCount;
 
         public override void Get(int i,

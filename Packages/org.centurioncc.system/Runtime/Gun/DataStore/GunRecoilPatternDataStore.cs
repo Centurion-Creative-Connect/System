@@ -1,5 +1,9 @@
-﻿using UdonSharp;
+﻿using System.Linq;
+using System.Runtime.CompilerServices;
+using UdonSharp;
 using UnityEngine;
+
+[assembly: InternalsVisibleTo("CenturionCC.System.Editor")]
 
 namespace CenturionCC.System.Gun.DataStore
 {
@@ -33,6 +37,24 @@ namespace CenturionCC.System.Gun.DataStore
             0.5F,
             0.3F
         };
+
+        public Vector3[] RecoilOffsetPatterns => recoilOffsetPatterns;
+        public Vector3[] PositionOffsetPatterns => positionOffsetPatterns;
+        public float[] SpeedOffsetPatterns => speedOffsetPatterns;
+
+#if !COMPILER_UDONSHARP && UNITY_EDITOR
+
+        public int MaxPatterns
+        {
+            get
+            {
+                var nums = new[]
+                    { recoilOffsetPatterns.Length, positionOffsetPatterns.Length, speedOffsetPatterns.Length };
+                return nums.Distinct().Aggregate((a, b) => a * b);
+            }
+        }
+
+#endif
 
         public virtual Vector3 GetRecoilOffset(int count)
         {
