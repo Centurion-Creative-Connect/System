@@ -12,29 +12,29 @@ using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.Gun
 {
-    [DefaultExecutionOrder(110)] [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+    [DefaultExecutionOrder(110)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class ManagedGun : Gun
     {
-        [PublicAPI] [CanBeNull]
-        public GameObject Model;
+        [PublicAPI] [CanBeNull] public GameObject Model;
+
         private Animator _animator;
         private bool _hasInit;
+
         [UdonSynced] [FieldChangeCallback(nameof(IsOccupied))]
         private bool _isOccupied;
 
         [UdonSynced] [FieldChangeCallback(nameof(VariantDataUniqueId))]
         private byte _variantDataUniqueId = 0xFF;
 
-        [PublicAPI]
-        public GunManager ParentManager { get; protected set; }
+        [PublicAPI] public GunManager ParentManager { get; protected set; }
+
+        [PublicAPI] public BoxCollider Collider { get; protected set; }
+
+        [PublicAPI] [CanBeNull] public GunVariantDataStore VariantData { get; protected set; }
 
         [PublicAPI]
-        public BoxCollider Collider { get; protected set; }
-
-        [PublicAPI] [CanBeNull]
-        public GunVariantDataStore VariantData { get; protected set; }
-
-        [PublicAPI] [CanBeNull]
+        [CanBeNull]
         public GunCameraDataStore CameraData => VariantData != null ? VariantData.CameraData : null;
 
         /// <summary>
@@ -297,7 +297,7 @@ namespace CenturionCC.System.Gun
 
         protected override void OnTriggerEnter(Collider other)
         {
-            if (other.name.ToLower().StartsWith("eraser"))
+            if (IsLocal && other.name.ToLower().StartsWith("eraser"))
             {
                 SendCustomNetworkEvent(NetworkEventTarget.All, nameof(RequestDisposeToMaster));
                 return;
@@ -390,17 +390,22 @@ namespace CenturionCC.System.Gun
 
         public override string WeaponName => VariantData != null ? VariantData.WeaponName : null;
         public override Animator TargetAnimator => _animator;
+
         public override ProjectilePool ProjectilePool =>
             VariantData != null && VariantData.ProjectilePoolOverride != null ? VariantData.ProjectilePoolOverride :
             ParentManager != null ? ParentManager.BulletHolder : null;
+
         public override GunBehaviourBase Behaviour =>
             VariantData != null ? VariantData.Behaviour : null;
+
         [PublicAPI]
         public override ProjectileDataProvider ProjectileData =>
             VariantData != null ? VariantData.ProjectileData : null;
+
         [PublicAPI]
         public override GunAudioDataStore AudioData =>
             VariantData != null ? VariantData.AudioData : null;
+
         [PublicAPI]
         public override GunHapticDataStore HapticData =>
             VariantData != null ? VariantData.HapticData : null;
@@ -409,6 +414,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public override Vector3 MainHandlePositionOffset =>
             VariantData != null ? VariantData.MainHandlePositionOffset : Vector3.zero;
+
         [PublicAPI]
         public override Quaternion MainHandleRotationOffset =>
             VariantData != null ? VariantData.MainHandleRotationOffset : Quaternion.identity;
@@ -417,6 +423,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public override Vector3 SubHandlePositionOffset =>
             VariantData != null ? VariantData.SubHandlePositionOffset : Vector3.forward;
+
         [PublicAPI]
         public override Quaternion SubHandleRotationOffset =>
             VariantData != null ? VariantData.SubHandleRotationOffset : Quaternion.identity;
@@ -428,19 +435,20 @@ namespace CenturionCC.System.Gun
 
         public override bool IsDoubleHandedGun => VariantData != null && VariantData.IsDoubleHanded;
 
-        [PublicAPI]
-        public override int RequiredHolsterSize => VariantData != null ? VariantData.HolsterSize : 0;
+        [PublicAPI] public override int RequiredHolsterSize => VariantData != null ? VariantData.HolsterSize : 0;
 
         [PublicAPI]
         public override float MainHandleRePickupDelay =>
             VariantData != null && ParentManager != null && VariantData.UseRePickupDelayForMainHandle
                 ? ParentManager.handleRePickupDelay
                 : 0F;
+
         [PublicAPI]
         public override float SubHandleRePickupDelay =>
             VariantData != null && ParentManager != null && VariantData.UseRePickupDelayForSubHandle
                 ? ParentManager.handleRePickupDelay
                 : 0F;
+
         [PublicAPI]
         public override float OptimizationRange => ParentManager != null ? ParentManager.optimizationRange : 0F;
 
