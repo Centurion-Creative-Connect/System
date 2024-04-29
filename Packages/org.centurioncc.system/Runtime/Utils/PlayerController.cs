@@ -48,6 +48,7 @@ namespace CenturionCC.System.Utils
 
         private float _playerWeight;
         private Ray _ray;
+        private bool _updatedSurfaceInFrame = false;
         private Vector3 _vel;
 
         private void Start()
@@ -57,13 +58,18 @@ namespace CenturionCC.System.Utils
 
         private void Update()
         {
+            _updatedSurfaceInFrame = false;
+
             if (snapPlayerToGroundOnSlopes)
                 UpdateGroundSnap();
 
             if (UpdateTimer())
             {
                 UpdateCurrentSurface();
+            }
 
+            // Run / Combat Tag logics
+            {
                 var lastCanRun = _canRun;
                 var lastCombatTagged = _combatTagged;
 
@@ -71,7 +77,9 @@ namespace CenturionCC.System.Utils
 
                 if (lastCanRun != _canRun || lastCombatTagged != _combatTagged)
                 {
+#if CENTURIONSYSTEM_VERBOSE_LOGGING
                     Debug.Log($"[PlayerController] CanRun or CombatTag was updated: {_canRun}, {_combatTagged}");
+#endif
                     UpdateLocalVrcPlayer();
                 }
             }
@@ -93,6 +101,7 @@ namespace CenturionCC.System.Utils
 
         private void UpdateCurrentSurface()
         {
+            _updatedSurfaceInFrame = true;
             _ray = new Ray(_localPlayer.GetPosition() + new Vector3(0f, .1F, 0F), Vector3.down);
             if (!Physics.Raycast(_ray, out _hit, 3, surfaceCheckingLayer)) return;
 
@@ -155,6 +164,7 @@ namespace CenturionCC.System.Utils
             if (!checkGunDirectionToAllowRunning || gunManager.LocalHeldGuns.Length == 0)
             {
                 _canRun = true;
+                _combatTagged = false;
                 return;
             }
 
@@ -205,7 +215,11 @@ namespace CenturionCC.System.Utils
             _footstepLastCheckedPosition = localPlayerPos;
 
             // Did player traveled fast enough to play footstep?
-            if (footstepTime < timeDiff || CurrentSurface == null) return;
+            if (footstepTime < timeDiff) return;
+
+            if (!_updatedSurfaceInFrame) UpdateCurrentSurface();
+
+            if (CurrentSurface == null) return;
 
             var playerBase = playerManager.GetLocalPlayer();
             if (playerBase == null || playerManager.IsStaffTeamId(playerBase.TeamId)) return;
