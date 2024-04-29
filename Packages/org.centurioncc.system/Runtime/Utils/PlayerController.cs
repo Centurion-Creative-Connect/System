@@ -1,4 +1,5 @@
-﻿using CenturionCC.System.Gun;
+﻿using System;
+using CenturionCC.System.Gun;
 using CenturionCC.System.Player;
 using DerpyNewbie.Common;
 using JetBrains.Annotations;
@@ -27,10 +28,13 @@ namespace CenturionCC.System.Utils
         private GunManager gunManager;
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
+
         private readonly DataList _activeTags = new DataList();
         private readonly DataList _heldObjects = new DataList();
 
         private bool _canRun = true;
+        private bool _combatTagged = false;
+        private float _environmentEffectMultiplier = 1F;
 
         private Vector3 _footstepLastCheckedPosition;
         private float _footstepLastInvokedTime;
@@ -41,6 +45,8 @@ namespace CenturionCC.System.Utils
         private float _lastSurfaceUpdatedTime;
 
         private VRCPlayerApi _localPlayer;
+
+        private float _playerWeight;
         private Ray _ray;
         private Vector3 _vel;
 
@@ -59,12 +65,13 @@ namespace CenturionCC.System.Utils
                 UpdateCurrentSurface();
 
                 var lastCanRun = _canRun;
+                var lastCombatTagged = _combatTagged;
 
                 UpdateCanRunState();
 
-                if (lastCanRun != _canRun)
+                if (lastCanRun != _canRun || lastCombatTagged != _combatTagged)
                 {
-                    Debug.Log($"[PlayerController] CanRun was updated: {_canRun}");
+                    Debug.Log($"[PlayerController] CanRun or CombatTag was updated: {_canRun}, {_combatTagged}");
                     UpdateLocalVrcPlayer();
                 }
             }
@@ -151,11 +158,27 @@ namespace CenturionCC.System.Utils
                 return;
             }
 
+            var head = _localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+            var headForward = head.rotation * Vector3.forward;
+            var utcNow = DateTime.UtcNow;
+
             _canRun = true;
+            _combatTagged = false;
             foreach (var gun in gunManager.LocalHeldGuns)
             {
-                var dot = Vector3.Dot(Vector3.up, gun.transform.forward);
-                if (dot < gunDirectionUpperBound && dot > gunDirectionLowerBound)
+                if (!gun.MainHandle.IsPickedUp)
+                    continue;
+
+                if (utcNow.Subtract(gun.LastShotTime).Seconds < combatTagTime)
+                {
+                    _combatTagged = true;
+                    break;
+                }
+
+                var gunForward = gun.ShooterRotation * Vector3.forward;
+                var dot = Vector3.Dot(headForward, gunForward);
+
+                if (dot > gunDirectionDotThreshold)
                 {
                     _canRun = false;
                     break;
@@ -374,7 +397,7 @@ namespace CenturionCC.System.Utils
 
         [Tooltip("Delay in seconds until try to update current surface object marker.")]
         [SerializeField]
-        private float surfaceUpdateFrequency = 0.5F;
+        private float surfaceUpdateFrequency = 0.25F;
         [Tooltip("Layers to check objects with ObjectMarker attached.")]
         [SerializeField]
         private LayerMask surfaceCheckingLayer = 1 << 11;
@@ -440,8 +463,6 @@ namespace CenturionCC.System.Utils
         private float baseGravityStrength = 1F;
 
         [SerializeField]
-        private float playerWeight;
-        [SerializeField]
         public float maximumCarryingWeightInKilogram = 75F;
         [SerializeField]
         [Tooltip("Compatibility option.\n" +
@@ -449,13 +470,13 @@ namespace CenturionCC.System.Utils
                  "Leave it unchecked if you are not experiencing issues.")]
         private bool allowDuplicateHeldObjects;
         [SerializeField]
-        private float environmentEffectMultiplier = 1F;
-        [SerializeField]
         public bool checkGunDirectionToAllowRunning = false;
         [SerializeField] [Range(0, 1F)]
-        public float gunDirectionUpperBound = 0.7F;
-        [SerializeField] [Range(-1F, 0)]
-        public float gunDirectionLowerBound = -0.7F;
+        public float gunDirectionDotThreshold = 0.88F;
+        [SerializeField]
+        public float combatTagTime = 0;
+        [SerializeField]
+        public float combatTagSpeedMultiplier = 0.5F;
 
         #endregion
 
@@ -538,10 +559,10 @@ namespace CenturionCC.System.Utils
         [PublicAPI]
         public float PlayerWeight
         {
-            get => playerWeight;
+            get => _playerWeight;
             protected set
             {
-                playerWeight = Mathf.Clamp(value, 0F, maximumCarryingWeightInKilogram);
+                _playerWeight = Mathf.Clamp(value, 0F, maximumCarryingWeightInKilogram);
                 UpdateLocalVrcPlayer();
             }
         }
@@ -549,10 +570,10 @@ namespace CenturionCC.System.Utils
         [PublicAPI]
         public float EnvironmentEffectMultiplier
         {
-            get => environmentEffectMultiplier;
+            get => _environmentEffectMultiplier;
             protected set
             {
-                environmentEffectMultiplier = value;
+                _environmentEffectMultiplier = value;
                 UpdateLocalVrcPlayer();
             }
         }
@@ -562,10 +583,13 @@ namespace CenturionCC.System.Utils
 
         [PublicAPI]
         public float TotalMultiplier => (1 - (PlayerWeight / maximumCarryingWeightInKilogram)) *
-                                        EnvironmentEffectMultiplier * CustomEffectMultiplier;
+                                        EnvironmentEffectMultiplier * CustomEffectMultiplier * CombatTagMultiplier;
 
         [PublicAPI]
-        public bool CanRun => _canRun;
+        public float CombatTagMultiplier => _combatTagged ? combatTagSpeedMultiplier : 1F;
+
+        [PublicAPI]
+        public bool CanRun => _canRun && !_combatTagged;
 
         [PublicAPI]
         public float ActualWalkSpeed => BaseWalkSpeed * TotalMultiplier;
