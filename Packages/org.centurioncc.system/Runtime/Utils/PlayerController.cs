@@ -31,13 +31,11 @@ namespace CenturionCC.System.Utils
         private readonly DataList _heldObjects = new DataList();
 
         private bool _canRun = true;
-        private bool _combatTagged = false;
 
         private Vector3 _footstepLastCheckedPosition;
         private float _footstepLastInvokedTime;
         private RaycastHit _hit;
         private bool _isApplyingGroundSnap;
-        private float _lastCombatTagTime;
         private float _lastGroundSnapUpdatedTime;
         private bool _lastSurfaceNoFootstep;
         private float _lastSurfaceUpdatedTime;
@@ -61,12 +59,10 @@ namespace CenturionCC.System.Utils
                 UpdateCurrentSurface();
 
                 var lastCanRun = _canRun;
-                var lastCombatTagged = _combatTagged;
 
                 UpdateCanRunState();
-                UpdateCombatTagState();
 
-                if (lastCanRun != _canRun || lastCombatTagged != _combatTagged)
+                if (lastCanRun != _canRun)
                 {
                     Debug.Log($"[PlayerController] CanRun was updated: {_canRun}");
                     UpdateLocalVrcPlayer();
@@ -165,11 +161,6 @@ namespace CenturionCC.System.Utils
                     break;
                 }
             }
-        }
-
-        private void UpdateCombatTagState()
-        {
-            _combatTagged = Time.timeSinceLevelLoad < _lastCombatTagTime + combatTagTime;
         }
 
         private void UpdateFootstep()
@@ -379,29 +370,11 @@ namespace CenturionCC.System.Utils
             Invoke_OnHeldObjectsUpdated();
         }
 
-        public void ApplyCombatTag()
-        {
-            Debug.Log("Applying combat tag");
-            _lastCombatTagTime = Time.timeSinceLevelLoad;
-            if (!_combatTagged)
-            {
-                UpdateCombatTagState();
-                UpdateLocalVrcPlayer();
-            }
-        }
-
-        public void ClearCombatTag()
-        {
-            _lastCombatTagTime = 0F;
-            _combatTagged = false;
-            UpdateLocalVrcPlayer();
-        }
-
         #region Base
 
         [Tooltip("Delay in seconds until try to update current surface object marker.")]
         [SerializeField]
-        private float surfaceUpdateFrequency = 0.25F;
+        private float surfaceUpdateFrequency = 0.5F;
         [Tooltip("Layers to check objects with ObjectMarker attached.")]
         [SerializeField]
         private LayerMask surfaceCheckingLayer = 1 << 11;
@@ -483,10 +456,6 @@ namespace CenturionCC.System.Utils
         public float gunDirectionUpperBound = 0.7F;
         [SerializeField] [Range(-1F, 0)]
         public float gunDirectionLowerBound = -0.7F;
-        [SerializeField]
-        public float combatTagTime;
-        [SerializeField]
-        public float combatTagSpeedMultiplier = 0.5F;
 
         #endregion
 
@@ -593,13 +562,10 @@ namespace CenturionCC.System.Utils
 
         [PublicAPI]
         public float TotalMultiplier => (1 - (PlayerWeight / maximumCarryingWeightInKilogram)) *
-                                        EnvironmentEffectMultiplier * CustomEffectMultiplier * CombatTagMultiplier;
+                                        EnvironmentEffectMultiplier * CustomEffectMultiplier;
 
         [PublicAPI]
-        public float CombatTagMultiplier => _combatTagged ? combatTagSpeedMultiplier : 1F;
-
-        [PublicAPI]
-        public bool CanRun => _canRun && !_combatTagged;
+        public bool CanRun => _canRun;
 
         [PublicAPI]
         public float ActualWalkSpeed => BaseWalkSpeed * TotalMultiplier;
