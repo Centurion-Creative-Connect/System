@@ -1273,7 +1273,7 @@ namespace CenturionCC.System.Gun
             if (objMarker == null || objMarker.Tags.ContainsString("NoCollisionAudio"))
                 return;
 
-            Internal_PlayAudio(AudioData.Collision.Get(objMarker.ObjectType), other.ClosestPoint(transform.position));
+            Internal_PlayAudio(AudioData.Collision.Get(objMarker.ObjectType), Vector3.zero);
         }
 
         #endregion
