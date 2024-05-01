@@ -1,4 +1,5 @@
-﻿using CenturionCC.System.Gun.Behaviour;
+﻿using System;
+using CenturionCC.System.Gun.Behaviour;
 using CenturionCC.System.Gun.DataStore;
 using CenturionCC.System.Gun.Rule;
 using CenturionCC.System.Utils;
@@ -11,37 +12,44 @@ using UnityEngine;
 using VRC.SDK3.Data;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
+using Random = UnityEngine.Random;
 
 namespace CenturionCC.System.Gun
 {
-    [DefaultExecutionOrder(100)] [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+    [DefaultExecutionOrder(100)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class GunManager : UdonSharpBehaviour
     {
         private const string Prefix = "[GunManager] ";
+
         private const string MustBeMasterError =
             Prefix + "<color=red>You must be an master to execute this method</color>: {0}";
 
-        [SerializeField]
-        private GameObject variantRoot;
-        [SerializeField]
-        private GameObject managedGunRoot;
-        [SerializeField]
-        private ProjectilePool bulletHolder;
-        [SerializeField]
-        private GunVariantDataStore fallbackVariantData;
-        [SerializeField]
-        private DefaultGunBehaviour fallbackBehaviour;
+        [SerializeField] private GameObject variantRoot;
+
+        [SerializeField] private GameObject managedGunRoot;
+
+        [SerializeField] private ProjectilePool bulletHolder;
+
+        [SerializeField] private GunVariantDataStore fallbackVariantData;
+
+        [SerializeField] private DefaultGunBehaviour fallbackBehaviour;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         // ReSharper disable once InconsistentNaming
         public PrintableBase Logger;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         // ReSharper disable once InconsistentNaming
         public RicochetHandler RicochetHandler;
 
         public int allowedRicochetCount = 0;
-        public int maxQueuedShotCount = 10;
+
+        [Obsolete("No longer used")] public int maxQueuedShotCount = 10;
+
+        [Obsolete("Use GunModel with GunUpdater instead")]
         public float optimizationRange = 30F;
+
         public float handleRePickupDelay = 0.5F;
         public float maxHoldDistance = 0.3F;
 
@@ -57,12 +65,14 @@ namespace CenturionCC.System.Gun
 
 
         private int _lastResetIndex = -1;
-        [ItemCanBeNull]
-        public ManagedGun[] ManagedGunInstances { get; private set; } = new ManagedGun[0];
-        [ItemNotNull]
-        public ManagedGun[] LocalHeldGuns { get; private set; } = new ManagedGun[0];
+
+        [ItemCanBeNull] public ManagedGun[] ManagedGunInstances { get; private set; } = new ManagedGun[0];
+
+        [ItemNotNull] public ManagedGun[] LocalHeldGuns { get; private set; } = new ManagedGun[0];
+
         [ItemCanBeNull]
         public GunVariantDataStore[] VariantDataInstances { get; private set; } = new GunVariantDataStore[0];
+
         public ProjectilePool BulletHolder => bulletHolder;
         public DefaultGunBehaviour FallbackBehaviour => fallbackBehaviour;
         public GunVariantDataStore FallbackVariantData => fallbackVariantData;
@@ -86,6 +96,7 @@ namespace CenturionCC.System.Gun
                 _isDebugGunHandleVisible = value;
             }
         }
+
         public bool CanLocalShoot
         {
             get
@@ -104,6 +115,7 @@ namespace CenturionCC.System.Gun
                 return true;
             }
         }
+
         public bool IsHoldingGun => LocalHeldGuns.Length != 0;
         public int OccupiedRemoteGunCount { get; private set; }
 
@@ -333,7 +345,8 @@ namespace CenturionCC.System.Gun
             _shootingRules = _shootingRules.RemoveItem(rule);
         }
 
-        [PublicAPI] [CanBeNull]
+        [PublicAPI]
+        [CanBeNull]
         public TranslatableMessage GetCancelledMessageOf(int ruleId)
         {
             return _shootingRuleDict.TryGetValue(ruleId, TokenType.Reference, out var rule)
