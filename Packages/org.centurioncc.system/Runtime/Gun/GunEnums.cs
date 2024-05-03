@@ -95,6 +95,22 @@ namespace CenturionCC.System.Gun
         Failed,
     }
 
+    public enum CanSprintOption
+    {
+        Inherit,
+        Direct,
+        Multiply,
+        Disable
+    }
+
+    public enum CombatTagOption
+    {
+        Inherit,
+        Direct,
+        Multiply,
+        Disable
+    }
+
     public static class GunStateHelper
     {
         public const byte MaxValue = (byte)GunState.InCockingTwisting;

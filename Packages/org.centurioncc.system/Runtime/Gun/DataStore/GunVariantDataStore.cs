@@ -5,6 +5,7 @@ using DerpyNewbie.Common;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
+using UnityEngine.Serialization;
 using VRC.SDKBase;
 
 namespace CenturionCC.System.Gun.DataStore
@@ -72,6 +73,19 @@ namespace CenturionCC.System.Gun.DataStore
         private float objectWeight = 0F;
         [SerializeField]
         private string[] tags = { "NoFootstep" };
+        [Header("Player Controller Properties")]
+        [SerializeField]
+        private CanSprintOption canSprint = CanSprintOption.Inherit;
+        [FormerlySerializedAs("sprintSpeedMultiplier")]
+        [SerializeField]
+        private float sprintSpeed = 1.5F;
+        [SerializeField]
+        private CombatTagOption combatTag = CombatTagOption.Inherit;
+        [FormerlySerializedAs("combatTagSpeed")]
+        [SerializeField]
+        private float combatTagSpeedMultiplier = 0.5F;
+        [SerializeField]
+        private float combatTagTime = 0.5F;
 
         public byte UniqueId => uniqueId;
         public string WeaponName => weaponName;
@@ -127,7 +141,13 @@ namespace CenturionCC.System.Gun.DataStore
         public float ObjectWeight => objectWeight;
         public string[] Tags => tags;
 
-        private string _MessageOrEmpty(TranslatableMessage message)
+        public CanSprintOption CanSprint => canSprint;
+        public float SprintSpeed => sprintSpeed;
+        public CombatTagOption CombatTag => combatTag;
+        public float CombatTagSpeedMultiplier => combatTagSpeedMultiplier;
+        public float CombatTagTime => combatTagTime;
+
+        private static string _MessageOrEmpty(TranslatableMessage message)
         {
             return message != null ? message.Message : "";
         }
