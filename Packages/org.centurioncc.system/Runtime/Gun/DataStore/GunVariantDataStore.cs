@@ -5,7 +5,6 @@ using DerpyNewbie.Common;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
-using UnityEngine.Serialization;
 using VRC.SDKBase;
 
 namespace CenturionCC.System.Gun.DataStore
@@ -76,16 +75,14 @@ namespace CenturionCC.System.Gun.DataStore
         [Header("Player Controller Properties")]
         [SerializeField]
         private CanSprintOption canSprint = CanSprintOption.Inherit;
-        [FormerlySerializedAs("sprintSpeedMultiplier")]
         [SerializeField]
-        private float sprintSpeed = 1.5F;
+        private float sprintSpeed = 1F;
         [SerializeField]
         private CombatTagOption combatTag = CombatTagOption.Inherit;
-        [FormerlySerializedAs("combatTagSpeed")]
         [SerializeField]
-        private float combatTagSpeedMultiplier = 0.5F;
+        private float combatTagSpeedMultiplier = 1F;
         [SerializeField]
-        private float combatTagTime = 0.5F;
+        private float combatTagTime = 1F;
 
         public byte UniqueId => uniqueId;
         public string WeaponName => weaponName;
