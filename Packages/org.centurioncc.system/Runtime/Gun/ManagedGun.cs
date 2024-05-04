@@ -1,4 +1,5 @@
-﻿using CenturionCC.System.Gun.Behaviour;
+﻿using System;
+using CenturionCC.System.Gun.Behaviour;
 using CenturionCC.System.Gun.DataStore;
 using CenturionCC.System.Gun.GunCamera;
 using CenturionCC.System.Utils;
@@ -214,6 +215,7 @@ namespace CenturionCC.System.Gun
             HasBulletInChamber = false;
             HasCocked = false;
             IsInSafeZone = false;
+
 
             Collider.enabled = false;
             Collider.center = Vector3.zero;
@@ -449,8 +451,9 @@ namespace CenturionCC.System.Gun
                 ? ParentManager.handleRePickupDelay
                 : 0F;
 
-        [PublicAPI]
-        public override float OptimizationRange => ParentManager != null ? ParentManager.optimizationRange : 0F;
+        [PublicAPI] [Obsolete]
+        public override float OptimizationRange =>
+            ParentManager != null ? ParentManager.optimizationRange : 0F;
 
         public override float MaxHoldDistance => ParentManager != null ? ParentManager.maxHoldDistance : 0F;
 
@@ -473,6 +476,21 @@ namespace CenturionCC.System.Gun
 
         public override string[] Tags =>
             VariantData != null ? VariantData.Tags : new string[0];
+
+        public override CanSprintOption CanSprint =>
+            VariantData != null ? VariantData.CanSprint : CanSprintOption.Inherit;
+
+        public override float SprintSpeed =>
+            VariantData != null ? VariantData.SprintSpeed : 1F;
+
+        public override CombatTagOption CombatTag =>
+            VariantData != null ? VariantData.CombatTag : CombatTagOption.Inherit;
+
+        public override float CombatTagSpeedMultiplier =>
+            VariantData != null ? VariantData.CombatTagSpeedMultiplier : 1F;
+
+        public override float CombatTagTime =>
+            VariantData != null ? VariantData.CombatTagTime : 1F;
 
         #endregion
     }

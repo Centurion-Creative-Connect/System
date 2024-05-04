@@ -70,6 +70,17 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public abstract Quaternion SubHandleRotationOffset { get; }
 
+        [PublicAPI]
+        public abstract CanSprintOption CanSprint { get; }
+        [PublicAPI]
+        public abstract float SprintSpeed { get; }
+
+        [PublicAPI]
+        public abstract CombatTagOption CombatTag { get; }
+        [PublicAPI]
+        public abstract float CombatTagSpeedMultiplier { get; }
+        [PublicAPI]
+        public abstract float CombatTagTime { get; }
 
         /// <summary>
         /// Shoots bullet without any checks.
