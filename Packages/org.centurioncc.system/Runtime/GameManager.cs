@@ -16,12 +16,14 @@ using VRC.SDKBase;
 
 namespace CenturionCC.System
 {
-    [DefaultExecutionOrder(-1000)] [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+    [DefaultExecutionOrder(-1000)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class GameManager : UdonSharpBehaviour
     {
         public UpdateManager updateManager;
-        [Obsolete]
-        public LocalHitEffect hitEffect;
+
+        [Obsolete] public LocalHitEffect hitEffect;
+
         public PlayerManager players;
         public GunManager guns;
         public WallManager wall;
@@ -29,16 +31,17 @@ namespace CenturionCC.System
         public RoleProvider roleProvider;
         public PlayerMovement movement;
         public PrintableBase logger;
-        [Obsolete]
-        public EventLogger eventLogger;
-        [Obsolete]
-        public FootstepGenerator footstep;
+
+        [Obsolete] public EventLogger eventLogger;
+
+        [Obsolete] public FootstepGenerator footstep;
+
         public ModeratorTool moderatorTool;
         public NotificationProvider notification;
-        [NewbieInject]
-        public DamageDataResolver resolver;
-        [NewbieInject]
-        public DamageDataSyncerManager syncer;
+
+        [NewbieInject] public DamageDataResolver resolver;
+
+        [NewbieInject] public DamageDataSyncerManager syncer;
 
         private readonly string _prefix = "<color=yellow>GameManager</color>::";
 
@@ -56,7 +59,7 @@ namespace CenturionCC.System
 
         public static string GetVersion()
         {
-            return "0.6.0-rc.6";
+            return "0.6.0-rc.7";
         }
 
         public int KeepAlive(WatchdogProc wd, int nonce)
@@ -93,11 +96,14 @@ namespace CenturionCC.System
     [Obsolete("Use CenturionSystemReference instead.")]
     public static class GameManagerHelper
     {
-        [PublicAPI] [Obsolete(
+        [PublicAPI]
+        [Obsolete(
             "Do not reference the direct path. Use CenturionSystemReference.GetGameManager() instead.")]
         public const string GameManagerPath = "Logics/System/GameManager";
+
         [PublicAPI] [Obsolete("Do not reference the direct path. Use CenturionSystemReference.GetConsole() instead.")]
         public const string ConsolePath = "Logics/System/LogTablet/NewbieConsole";
+
         [PublicAPI] [Obsolete("Do not reference the direct path. Use CenturionSystemReference.GetLogger() instead.")]
         public const string LoggerPath = "Logics/System/LogTablet/NewbieLogger";
 
