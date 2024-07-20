@@ -38,12 +38,9 @@ namespace CenturionCC.System.Gun
         private float _nextMainHandlePickupableTime;
         private float _nextSubHandlePickupableTime;
 
-        [UdonSynced]
-        private Vector3 _shotPosition;
-        [UdonSynced]
-        private Quaternion _shotRotation;
-        [UdonSynced]
-        private long _shotTime;
+        [UdonSynced] private Vector3 _shotPosition;
+        [UdonSynced] private Quaternion _shotRotation;
+        [UdonSynced] private long _shotTime;
 
         private bool _subHandleIsPickedUp;
 
@@ -53,10 +50,9 @@ namespace CenturionCC.System.Gun
 
         protected GunHandle pivotHandle;
 
-        [UdonSynced]
-        protected Vector3 pivotPosOffset = Vector3.zero;
-        [UdonSynced]
-        protected Quaternion pivotRotOffset = Quaternion.identity;
+        [UdonSynced] protected Vector3 pivotPosOffset = Vector3.zero;
+        [UdonSynced] protected Quaternion pivotRotOffset = Quaternion.identity;
+
         [UdonSynced] [FieldChangeCallback(nameof(ShotCount))]
         protected int shotCount = -1;
 
@@ -414,74 +410,52 @@ namespace CenturionCC.System.Gun
 
         #region SerializeFields
 
-        [SerializeField]
-        protected string weaponName;
+        [SerializeField] protected string weaponName;
 
-        [SerializeField]
-        protected Transform target;
-        [SerializeField]
-        protected Transform shooter;
-        [SerializeField]
-        protected GunHandle mainHandle;
-        [SerializeField]
-        protected GunHandle subHandle;
-        [SerializeField]
-        protected GunHandle customHandle;
-        [SerializeField]
-        protected GunBulletHolder bulletHolder;
-        [SerializeField]
-        protected Animator animator;
-        [SerializeField]
-        protected GunBehaviourBase behaviour;
-        [SerializeField]
-        protected FireMode[] availableFireModes = { FireMode.SemiAuto };
-        [SerializeField]
-        protected ProjectileDataProvider projectileData;
-        [SerializeField]
-        protected GunAudioDataStore audioData;
-        [SerializeField]
-        protected GunHapticDataStore hapticData;
-        [SerializeField]
-        protected bool isDoubleHanded = true;
-        [SerializeField]
-        protected float maxHoldDistance = 0.3F;
-        [SerializeField]
-        protected float roundsPerSecond = 4.5F;
-        [SerializeField]
-        protected int requiredHolsterSize = 100;
-        [SerializeField]
-        protected float mainHandlePitchOffset;
-        [SerializeField]
-        protected float mainHandleRePickupDelay;
-        [SerializeField]
-        protected float subHandleRePickupDelay;
+        [SerializeField] protected Transform target;
+        [SerializeField] protected Transform shooter;
+        [SerializeField] protected GunHandle mainHandle;
+        [SerializeField] protected GunHandle subHandle;
+        [SerializeField] protected GunHandle customHandle;
+        [SerializeField] protected GunBulletHolder bulletHolder;
+        [SerializeField] protected Animator animator;
+        [SerializeField] protected GunBehaviourBase behaviour;
+        [SerializeField] protected FireMode[] availableFireModes = { FireMode.SemiAuto };
+        [SerializeField] protected ProjectileDataProvider projectileData;
+        [SerializeField] protected GunAudioDataStore audioData;
+        [SerializeField] protected GunHapticDataStore hapticData;
+        [SerializeField] protected bool isDoubleHanded = true;
+        [SerializeField] protected float maxHoldDistance = 0.3F;
+        [SerializeField] protected float roundsPerSecond = 4.5F;
+        [SerializeField] protected int requiredHolsterSize = 100;
+        [SerializeField] protected float mainHandlePitchOffset;
+        [SerializeField] protected float mainHandleRePickupDelay;
+        [SerializeField] protected float subHandleRePickupDelay;
 
-        [Header("ObjectMarker Properties")]
-        [SerializeField]
+        [Header("ObjectMarker Properties")] [SerializeField]
         protected ObjectType objectType = ObjectType.Metallic;
-        [SerializeField]
-        protected float objectWeight = 0F;
-        [SerializeField]
-        protected string[] tags = { "NoFootstep" };
 
-        [Header("Player Controller Properties")]
-        [SerializeField]
+        [SerializeField] protected float objectWeight = 0F;
+        [SerializeField] protected string[] tags = { "NoFootstep" };
+
+        [Header("Player Controller Properties")] [SerializeField]
         protected CanSprintOption canSprint = CanSprintOption.Inherit;
-        [SerializeField]
-        protected float sprintSpeed = 1F;
-        [SerializeField]
-        protected CombatTagOption combatTag = CombatTagOption.Inherit;
-        [SerializeField]
-        protected float combatTagSpeedMultiplier = 1F;
-        [SerializeField]
-        protected float combatTagTime = 1F;
+
+        [SerializeField] protected float sprintSpeed = 1F;
+        [SerializeField] protected float sprintThresholdMultiplier = 1F;
+        [SerializeField] protected CombatTagOption combatTag = CombatTagOption.Inherit;
+        [SerializeField] protected float combatTagSpeedMultiplier = 1F;
+        [SerializeField] protected float combatTagTime = 1F;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private PrintableBase logger;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private UpdateManager updateManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private AudioManager audioManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerController playerController;
 
@@ -494,21 +468,18 @@ namespace CenturionCC.System.Gun
         public override float WalkingSpeedMultiplier => 1;
         public override string[] Tags => tags;
 
-        [PublicAPI]
-        public override string WeaponName => weaponName;
+        [PublicAPI] public override string WeaponName => weaponName;
+
+        [PublicAPI] public override GunHandle MainHandle => mainHandle;
+        [PublicAPI] public override GunHandle SubHandle => subHandle;
+        [PublicAPI] public override GunHandle CustomHandle => customHandle;
+        [PublicAPI] public override Transform Target => target ? target : transform;
+        [PublicAPI] [CanBeNull] public override Animator TargetAnimator => animator;
 
         [PublicAPI]
-        public override GunHandle MainHandle => mainHandle;
-        [PublicAPI]
-        public override GunHandle SubHandle => subHandle;
-        [PublicAPI]
-        public override GunHandle CustomHandle => customHandle;
-        [PublicAPI]
-        public override Transform Target => target ? target : transform;
-        [PublicAPI] [CanBeNull]
-        public override Animator TargetAnimator => animator;
-        [PublicAPI] [CanBeNull]
+        [CanBeNull]
         public override VRCPlayerApi CurrentHolder => MainHandle.CurrentPlayer ?? SubHandle.CurrentPlayer;
+
         [PublicAPI]
         public override GunState State
         {
@@ -520,6 +491,7 @@ namespace CenturionCC.System.Gun
             }
             set => SetState(value);
         }
+
         [PublicAPI]
         public override TriggerState Trigger
         {
@@ -532,61 +504,42 @@ namespace CenturionCC.System.Gun
             }
         }
 
-        [PublicAPI]
-        public override Vector3 MainHandlePositionOffset => _mainHandlePosOffset;
-        [PublicAPI]
-        public override Quaternion MainHandleRotationOffset => _mainHandleRotOffset;
+        [PublicAPI] public override Vector3 MainHandlePositionOffset => _mainHandlePosOffset;
+        [PublicAPI] public override Quaternion MainHandleRotationOffset => _mainHandleRotOffset;
 
-        [PublicAPI]
-        public override Vector3 SubHandlePositionOffset => _subHandlePosOffset;
-        [PublicAPI]
-        public override Quaternion SubHandleRotationOffset => _subHandleRotOffset;
+        [PublicAPI] public override Vector3 SubHandlePositionOffset => _subHandlePosOffset;
+        [PublicAPI] public override Quaternion SubHandleRotationOffset => _subHandleRotOffset;
 
-        [PublicAPI]
-        public override bool IsPickedUp => _isPickedUp;
-        [PublicAPI]
-        public override bool IsLocal => _isLocal;
+        [PublicAPI] public override bool IsPickedUp => _isPickedUp;
+        [PublicAPI] public override bool IsLocal => _isLocal;
 
-        [PublicAPI]
-        public override CanSprintOption CanSprint => canSprint;
-        [PublicAPI]
-        public override float SprintSpeed => sprintSpeed;
-
-        [PublicAPI]
-        public override CombatTagOption CombatTag => combatTag;
-        [PublicAPI]
-        public override float CombatTagSpeedMultiplier => combatTagSpeedMultiplier;
-        [PublicAPI]
-        public override float CombatTagTime => combatTagTime;
+        [PublicAPI] public override CanSprintOption CanSprint => canSprint;
+        [PublicAPI] public override float SprintSpeed => sprintSpeed;
+        [PublicAPI] public override float SprintThresholdMultiplier => sprintThresholdMultiplier;
+        [PublicAPI] public override CombatTagOption CombatTag => combatTag;
+        [PublicAPI] public override float CombatTagSpeedMultiplier => combatTagSpeedMultiplier;
+        [PublicAPI] public override float CombatTagTime => combatTagTime;
 
         #endregion
 
         #region SystemReferences
 
-        [PublicAPI]
-        public PrintableBase Logger => logger;
-        [PublicAPI]
-        public UpdateManager UpdateManager => updateManager;
-        [PublicAPI]
-        public AudioManager AudioManager => audioManager;
-        [PublicAPI]
-        public PlayerController PlayerController => playerController;
+        [PublicAPI] public PrintableBase Logger => logger;
+        [PublicAPI] public UpdateManager UpdateManager => updateManager;
+        [PublicAPI] public AudioManager AudioManager => audioManager;
+        [PublicAPI] public PlayerController PlayerController => playerController;
 
         #endregion
 
         #region GunProperties
 
-        [PublicAPI]
-        public virtual bool IsDoubleHandedGun => isDoubleHanded;
-        [PublicAPI]
-        public virtual float MainHandleRePickupDelay => mainHandleRePickupDelay;
-        [PublicAPI]
-        public virtual float MainHandlePitchOffset => mainHandlePitchOffset;
-        [PublicAPI]
-        public virtual float CurrentMainHandlePitchOffset { get; protected set; }
+        [PublicAPI] public virtual bool IsDoubleHandedGun => isDoubleHanded;
+        [PublicAPI] public virtual float MainHandleRePickupDelay => mainHandleRePickupDelay;
+        [PublicAPI] public virtual float MainHandlePitchOffset => mainHandlePitchOffset;
+        [PublicAPI] public virtual float CurrentMainHandlePitchOffset { get; protected set; }
 
-        [PublicAPI]
-        public virtual float SubHandleRePickupDelay => subHandleRePickupDelay;
+        [PublicAPI] public virtual float SubHandleRePickupDelay => subHandleRePickupDelay;
+
         [PublicAPI]
         public virtual Vector3 LookAtTargetOffset =>
             new Vector3(0, MainHandlePositionOffset.y - SubHandlePositionOffset.y, 0);
@@ -597,37 +550,34 @@ namespace CenturionCC.System.Gun
         /// </summary>
         [PublicAPI]
         public virtual Vector3 ShooterPositionOffset => shooter.localPosition;
-        [PublicAPI]
-        public virtual Quaternion ShooterRotationOffset => shooter.localRotation;
+
+        [PublicAPI] public virtual Quaternion ShooterRotationOffset => shooter.localRotation;
 
         /// <summary>
         /// World-based position of where bullets shooting out from.
         /// </summary>
         [PublicAPI]
         public virtual Vector3 ShooterPosition => shooter.position;
+
         /// <summary>
         /// World-based rotation of where bullets shooting out from.
         /// </summary>
         [PublicAPI]
         public virtual Quaternion ShooterRotation => shooter.rotation;
 
-        [Obsolete("Use ProjectilePool instead")] [CanBeNull]
+        [Obsolete("Use ProjectilePool instead")]
+        [CanBeNull]
         public virtual ProjectilePool BulletHolder => ProjectilePool;
-        [PublicAPI]
-        public virtual ProjectilePool ProjectilePool => bulletHolder;
-        [PublicAPI] [CanBeNull]
-        public virtual GunBehaviourBase Behaviour => behaviour;
-        [PublicAPI] [CanBeNull]
-        public virtual ProjectileDataProvider ProjectileData => projectileData;
-        [PublicAPI] [CanBeNull]
-        public virtual GunAudioDataStore AudioData => audioData;
-        [PublicAPI] [CanBeNull]
-        public virtual GunHapticDataStore HapticData => hapticData;
 
-        [PublicAPI]
-        public virtual int RequiredHolsterSize => requiredHolsterSize;
-        [PublicAPI]
-        public virtual float OptimizationRange => 45F;
+        [PublicAPI] public virtual ProjectilePool ProjectilePool => bulletHolder;
+        [PublicAPI] [CanBeNull] public virtual GunBehaviourBase Behaviour => behaviour;
+        [PublicAPI] [CanBeNull] public virtual ProjectileDataProvider ProjectileData => projectileData;
+        [PublicAPI] [CanBeNull] public virtual GunAudioDataStore AudioData => audioData;
+        [PublicAPI] [CanBeNull] public virtual GunHapticDataStore HapticData => hapticData;
+
+        [PublicAPI] public virtual int RequiredHolsterSize => requiredHolsterSize;
+        [PublicAPI] public virtual float OptimizationRange => 45F;
+
         /// <summary>
         /// Maximum holdable distance of <see cref="SubHandle"/>. exceeding this will cause SubHandle to drop.
         /// </summary>
@@ -645,6 +595,7 @@ namespace CenturionCC.System.Gun
         /// <seealso cref="SecondsPerRound" />
         [PublicAPI]
         public virtual float RoundsPerSecond => roundsPerSecond;
+
         /// <summary>
         /// Available <see cref="FireMode"/> set of this Gun.
         /// </summary>
@@ -670,6 +621,7 @@ namespace CenturionCC.System.Gun
             }
             protected set => _shotTime = value.Ticks;
         }
+
         /// <summary>
         /// Currently active <see cref="FireMode"/> of this Gun.
         /// </summary>
@@ -684,6 +636,7 @@ namespace CenturionCC.System.Gun
                 OnFireModeChanged(lastFireMode, value);
             }
         }
+
         [PublicAPI]
         public virtual byte RawState
         {
@@ -698,18 +651,17 @@ namespace CenturionCC.System.Gun
                     OnProcessStateChange(lastState, value);
             }
         }
+
         [PublicAPI]
         public virtual int ShotCount
         {
             get => shotCount;
             protected set => shotCount = value;
         }
-        [PublicAPI] [CanBeNull]
-        public virtual GunHolster TargetHolster { get; protected set; }
-        [PublicAPI] [field: UdonSynced]
-        public virtual bool IsHolstered { get; protected set; }
-        [PublicAPI]
-        public virtual bool IsOptimized { get; protected set; }
+
+        [PublicAPI] [CanBeNull] public virtual GunHolster TargetHolster { get; protected set; }
+        [PublicAPI] [field: UdonSynced] public virtual bool IsHolstered { get; protected set; }
+        [PublicAPI] public virtual bool IsOptimized { get; protected set; }
 
         /// <summary>
         /// Alias of 1 / <see cref="RoundsPerSecond" />.
