@@ -12,30 +12,33 @@ namespace CenturionCC.System.Player
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private DamageDataSyncerManager manager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private NotificationProvider notification;
 
-        [SerializeField]
-        private float notificationDuration = 5F;
+        [SerializeField] private float notificationDuration = 5F;
 
-        [SerializeField] [Tooltip("Do notify hit cancellation when attacker was local player?")]
+        [Header("Target")] [SerializeField] [Tooltip("Do notify hit cancellation when attacker was local player?")]
         public bool doNotifyLocalHitCancellation = true;
+
         [SerializeField] [Tooltip("Do notify hit cancellation when attacker was NOT local player?")]
         public bool doNotifyNonLocalHitCancellation = false;
 
-        [SerializeField] [Tooltip("Do notify hit cancellation when it was caused by attacker already dead?")]
+        [Header("Type")]
+        [SerializeField]
+        [Tooltip("Do notify hit cancellation when it was caused by attacker already dead?")]
         public bool doNotifyAttackerDeadCancellation = true;
+
         [SerializeField] [Tooltip("Do notify hit cancellation when it was caused by victim already dead?")]
         public bool doNotifyVictimDeadCancellation = false;
 
-        [SerializeField]
-        private TranslatableMessage onLocalHitCancelledAsAttackerDeadMessage;
-        [SerializeField]
-        private TranslatableMessage onLocalHitCancelledAsVictimDeadMessage;
-        [SerializeField]
-        private TranslatableMessage onNonLocalHitCancelledAsAttackerDeadMessage;
-        [SerializeField]
-        private TranslatableMessage onNonLocalHitCancelledAsVictimDeadMessage;
+        [Header("Messages")] [SerializeField] private TranslatableMessage onLocalHitCancelledAsAttackerDeadMessage;
+
+        [SerializeField] private TranslatableMessage onLocalHitCancelledAsVictimDeadMessage;
+
+        [SerializeField] private TranslatableMessage onNonLocalHitCancelledAsAttackerDeadMessage;
+
+        [SerializeField] private TranslatableMessage onNonLocalHitCancelledAsVictimDeadMessage;
 
         private void Start()
         {
