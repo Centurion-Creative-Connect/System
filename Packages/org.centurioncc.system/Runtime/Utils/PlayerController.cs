@@ -5,6 +5,7 @@ using DerpyNewbie.Common;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
+using UnityEngine.Serialization;
 using VRC.SDK3.Data;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
@@ -22,10 +23,11 @@ namespace CenturionCC.System.Utils
     /// </remarks>
     /// <seealso cref="ObjectMarker"/>
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-    public class PlayerController : UdonSharpBehaviour
+    public class PlayerController : GunManagerCallbackBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private GunManager gunManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
 
@@ -34,6 +36,7 @@ namespace CenturionCC.System.Utils
 
         private bool _canRun = true;
         private bool _combatTagged = false;
+
         private float _environmentEffectMultiplier = 1F;
 
         private Vector3 _footstepLastCheckedPosition;
@@ -54,6 +57,8 @@ namespace CenturionCC.System.Utils
         private void Start()
         {
             _localPlayer = Networking.LocalPlayer;
+
+            if (gunManager != null) gunManager.SubscribeCallback(this);
         }
 
         private void Update()
@@ -61,31 +66,16 @@ namespace CenturionCC.System.Utils
             _updatedSurfaceInFrame = false;
 
             if (snapPlayerToGroundOnSlopes)
-                UpdateGroundSnap();
+                GroundSnapUpdatePass();
 
             if (UpdateTimer())
-            {
-                UpdateCurrentSurface();
-            }
-
-            // Run / Combat Tag logics
-            {
-                var lastCanRun = _canRun;
-                var lastCombatTagged = _combatTagged;
-
-                UpdateCanRunState();
-
-                if (lastCanRun != _canRun || lastCombatTagged != _combatTagged)
-                {
-#if CENTURIONSYSTEM_VERBOSE_LOGGING
-                    Debug.Log($"[PlayerController] CanRun or CombatTag was updated: {_canRun}, {_combatTagged}");
-#endif
-                    UpdateLocalVrcPlayer();
-                }
-            }
+                CurrentSurfaceUpdatePass();
 
             if (playFootstepSound && !_lastSurfaceNoFootstep)
-                UpdateFootstep();
+                FootstepUpdatePass();
+
+            if (baseUseGunSprint)
+                GunIntegrationUpdatePass();
         }
 
         private bool UpdateTimer()
@@ -99,7 +89,7 @@ namespace CenturionCC.System.Utils
             return false;
         }
 
-        private void UpdateCurrentSurface()
+        private void CurrentSurfaceUpdatePass()
         {
             _updatedSurfaceInFrame = true;
             _ray = new Ray(_localPlayer.GetPosition() + new Vector3(0f, .1F, 0F), Vector3.down);
@@ -159,44 +149,7 @@ namespace CenturionCC.System.Utils
             return o.GetComponent<ObjectMarkerBase>();
         }
 
-        private void UpdateCanRunState()
-        {
-            if (!checkGunDirectionToAllowRunning || gunManager.LocalHeldGuns.Length == 0)
-            {
-                _canRun = true;
-                _combatTagged = false;
-                return;
-            }
-
-            var head = _localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
-            var headForward = head.rotation * Vector3.forward;
-            var utcNow = DateTime.UtcNow;
-
-            _canRun = true;
-            _combatTagged = false;
-            foreach (var gun in gunManager.LocalHeldGuns)
-            {
-                if (!gun.MainHandle.IsPickedUp)
-                    continue;
-
-                if (utcNow.Subtract(gun.LastShotTime).Seconds < combatTagTime)
-                {
-                    _combatTagged = true;
-                    break;
-                }
-
-                var gunForward = gun.ShooterRotation * Vector3.forward;
-                var dot = Vector3.Dot(headForward, gunForward);
-
-                if (dot > gunDirectionDotThreshold)
-                {
-                    _canRun = false;
-                    break;
-                }
-            }
-        }
-
-        private void UpdateFootstep()
+        private void FootstepUpdatePass()
         {
             var localPlayerPos = _localPlayer.GetPosition();
 
@@ -217,7 +170,7 @@ namespace CenturionCC.System.Utils
             // Did player traveled fast enough to play footstep?
             if (footstepTime < timeDiff) return;
 
-            if (!_updatedSurfaceInFrame) UpdateCurrentSurface();
+            if (!_updatedSurfaceInFrame) CurrentSurfaceUpdatePass();
 
             if (CurrentSurface == null) return;
 
@@ -229,7 +182,7 @@ namespace CenturionCC.System.Utils
             playerBase.SendCustomNetworkEvent(NetworkEventTarget.All, methodName);
         }
 
-        private void UpdateGroundSnap()
+        private void GroundSnapUpdatePass()
         {
             // If we've been applying ground snap for period of time, remove that effect by setting gravity to default.
             if (_isApplyingGroundSnap && _lastGroundSnapUpdatedTime < Time.timeSinceLevelLoad)
@@ -291,6 +244,8 @@ namespace CenturionCC.System.Utils
             }
         }
 
+        #region BasePublicAPIs
+
         /// <summary>
         /// Syncs and applies locals base properties globally. 
         /// </summary>
@@ -325,6 +280,10 @@ namespace CenturionCC.System.Utils
 
             Invoke_OnPostApplyMovementProperties();
         }
+
+        #endregion
+
+        #region ObjectBaseHandlingAPIs
 
         /// <summary>
         /// Adds object's weight to player's current weight.
@@ -407,13 +366,14 @@ namespace CenturionCC.System.Utils
             Invoke_OnHeldObjectsUpdated();
         }
 
-        #region Base
+        #endregion
 
-        [Tooltip("Delay in seconds until try to update current surface object marker.")]
-        [SerializeField]
+        #region BaseSerializedFields
+
+        [Tooltip("Delay in seconds until try to update current surface object marker.")] [SerializeField]
         private float surfaceUpdateFrequency = 0.25F;
-        [Tooltip("Layers to check objects with ObjectMarker attached.")]
-        [SerializeField]
+
+        [Tooltip("Layers to check objects with ObjectMarker attached.")] [SerializeField]
         private LayerMask surfaceCheckingLayer = 1 << 11;
 
         #endregion
@@ -452,61 +412,92 @@ namespace CenturionCC.System.Utils
 
         #region GroundSnapping
 
-        [SerializeField]
+        [Header("Ground Snapping")] [SerializeField]
         public bool snapPlayerToGroundOnSlopes = true;
-        [SerializeField]
-        private LayerMask playerGroundLayer = (1 | 1 << 9 | 1 << 11);
-        [SerializeField]
-        public float groundSnapMaxDistance = 0.4F;
-        [SerializeField]
-        public float groundSnapForwardDistance = 0.2F;
+
+        [SerializeField] private LayerMask playerGroundLayer = (1 | 1 << 9 | 1 << 11);
+        [SerializeField] public float groundSnapMaxDistance = 0.4F;
+        [SerializeField] public float groundSnapForwardDistance = 0.2F;
 
         #endregion
 
-        #region PlayerMovement
+        #region PlayerMovementSerializeFields
 
-        [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(BaseWalkSpeed))]
+        [Header("Base Player Movement")] [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(BaseWalkSpeed))]
         private float baseWalkSpeed = 2F;
+
         [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(BaseRunSpeed))]
         private float baseRunSpeed = 4F;
+
         [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(BaseStrafeSpeed))]
         private float baseStrafeSpeed = 2F;
+
         [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(BaseJumpImpulse))]
-        private float baseJumpImpulse = 0;
+        private float baseJumpImpulse;
+
         [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(BaseGravityStrength))]
         private float baseGravityStrength = 1F;
 
-        [SerializeField]
+        [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(CanRun))]
+        private bool baseCanRun = true;
+
+        [Header("ObjectMarker Pickups")] [SerializeField]
         public float maximumCarryingWeightInKilogram = 75F;
+
         [SerializeField]
         [Tooltip("Compatibility option.\n" +
                  "Allows duplicate occuring for `PlayerController#AddHeldObject` method.\n" +
                  "Leave it unchecked if you are not experiencing issues.")]
         private bool allowDuplicateHeldObjects;
-        [SerializeField]
-        public bool checkGunDirectionToAllowRunning = false;
-        [SerializeField] [Range(0, 1F)]
-        public float gunDirectionDotThreshold = 0.88F;
-        [SerializeField]
-        public float combatTagTime = 0;
-        [SerializeField]
-        public float combatTagSpeedMultiplier = 0.5F;
 
         #endregion
 
-        #region Footstep
+        #region FootstepSerializeFields
+
+        [Header("Footstep")] [SerializeField] [UdonSynced]
+        private bool playFootstepSound = true;
 
         [SerializeField]
-        private bool playFootstepSound = true;
-        [SerializeField] [Range(0, 2)] [UdonSynced]
+        [Range(0, 2)]
+        [UdonSynced]
         [Tooltip("Plays footstep sound if player went this amount of units away.")]
         public float footstepDistance = 1F;
-        [SerializeField] [Range(0, 2)] [UdonSynced]
+
+        [SerializeField]
+        [Range(0, 2)]
+        [UdonSynced]
         [Tooltip("Plays footstep sound if player went footstepDistance far for this time, in seconds.")]
         public float footstepTime = 0.9F;
-        [SerializeField] [Range(0, 2)] [UdonSynced]
+
+        [SerializeField]
+        [Range(0, 2)]
+        [UdonSynced]
         [Tooltip("Plays slow footstep sound if player invoked footstep sound after this time, in seconds.")]
         public float footstepSlowThresholdTime = 0.45F;
+
+        #endregion
+
+        #region GunIntegrationSerializeFields
+
+        [Header("Options")] [SerializeField] private bool baseApplyGunPropertyToPlayerController = true;
+
+        [Header("Gun Sprint")] [SerializeField] [UdonSynced] [FormerlySerializedAs("checkGunDirectionToAllowRunning")]
+        private bool baseUseGunSprint = true;
+
+        [SerializeField] [UdonSynced] private float baseGunWalkSpeed = 1F;
+        [SerializeField] [UdonSynced] private float baseGunSprintSpeed = 2F;
+
+        [SerializeField] [UdonSynced] [Range(0, 1F)] [FormerlySerializedAs("gunDirectionDotThreshold")]
+        private float baseGunDirectionThreshold = 0.88F;
+
+        [Header("Combat Tag")]
+        [SerializeField]
+        [UdonSynced]
+        [Tooltip("\"CombatTag\" refers to a slow down when player has started shooting")]
+        private bool baseUseCombatTag = true;
+
+        [SerializeField] [UdonSynced] private float baseCombatTagSpeedMultiplier = 0.5F;
+        [SerializeField] [UdonSynced] private float baseCombatTagTime = 0;
 
         #endregion
 
@@ -592,33 +583,31 @@ namespace CenturionCC.System.Utils
             }
         }
 
-        [PublicAPI]
-        public float CustomEffectMultiplier { get; set; } = 1F;
+        [PublicAPI] public float CustomEffectMultiplier { get; set; } = 1F;
 
         [PublicAPI]
         public float TotalMultiplier => (1 - (PlayerWeight / maximumCarryingWeightInKilogram)) *
                                         EnvironmentEffectMultiplier * CustomEffectMultiplier * CombatTagMultiplier;
 
-        [PublicAPI]
-        public float CombatTagMultiplier => _combatTagged ? combatTagSpeedMultiplier : 1F;
+        [PublicAPI] public float CombatTagMultiplier => _combatTagged ? _cachedCombatTagSpeedMultiplier : 1F;
+        [PublicAPI] public bool CanRun => _canRun && !_combatTagged;
 
         [PublicAPI]
-        public bool CanRun => _canRun && !_combatTagged;
+        public float ActualWalkSpeed =>
+            (_useGunSprint ? _cachedGunWalkSpeed : BaseWalkSpeed) * TotalMultiplier;
 
         [PublicAPI]
-        public float ActualWalkSpeed => BaseWalkSpeed * TotalMultiplier;
+        public float ActualRunSpeed => CanRun
+            ? (_useGunSprint ? _cachedGunSprintSpeed : BaseRunSpeed) * TotalMultiplier
+            : ActualWalkSpeed;
 
         [PublicAPI]
-        public float ActualRunSpeed => CanRun ? BaseRunSpeed * TotalMultiplier : ActualWalkSpeed;
+        public float ActualStrafeSpeed => CanRun
+            ? (_useGunSprint ? BaseWalkSpeed : BaseStrafeSpeed) * TotalMultiplier
+            : ActualWalkSpeed;
 
-        [PublicAPI]
-        public float ActualStrafeSpeed => CanRun ? BaseStrafeSpeed * TotalMultiplier : ActualWalkSpeed;
-
-        [PublicAPI]
-        public float ActualJumpImpulse => BaseJumpImpulse * TotalMultiplier;
-
-        [PublicAPI]
-        public float ActualGravityStrength => BaseGravityStrength * TotalMultiplier;
+        [PublicAPI] public float ActualJumpImpulse => BaseJumpImpulse * TotalMultiplier;
+        [PublicAPI] public float ActualGravityStrength => BaseGravityStrength * TotalMultiplier;
 
         #endregion
 
@@ -688,6 +677,214 @@ namespace CenturionCC.System.Utils
             var arr = _eventCallbacks.ToArray();
             foreach (var token in arr) ((PlayerControllerCallback)token.Reference).OnPostApplyMovementProperties();
             _isInvokingEvents = false;
+        }
+
+        #endregion
+
+        #region GunIntegration
+
+        private bool _useGunSprint = false;
+        private float _cachedGunWalkSpeed = float.NaN;
+        private float _cachedGunSprintSpeed = float.NaN;
+        private float _cachedGunSprintThresholdMultiplier = float.NaN;
+        private bool _useCombatTag = false;
+        private float _cachedCombatTagSpeedMultiplier = float.NaN;
+        private float _cachedCombatTagTime = float.NaN;
+
+        private void UpdateCombatTagAndCanRunState()
+        {
+            if (!baseUseGunSprint || gunManager.LocalHeldGuns.Length == 0 || !_useGunSprint)
+            {
+                _canRun = true;
+                _combatTagged = false;
+                return;
+            }
+
+            var head = _localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+            var headForward = head.rotation * Vector3.forward;
+            var utcNow = DateTime.UtcNow;
+
+            _canRun = true;
+            _combatTagged = false;
+            foreach (var gun in gunManager.LocalHeldGuns)
+            {
+                if (!gun.MainHandle.IsPickedUp) continue;
+
+                if (utcNow.Subtract(gun.LastShotTime).Seconds < _cachedCombatTagTime && _useCombatTag)
+                {
+                    _combatTagged = true;
+                    break;
+                }
+
+                var gunForward = gun.ShooterRotation * Vector3.forward;
+                var dot = Vector3.Dot(headForward, gunForward);
+
+                if (dot > baseGunDirectionThreshold * _cachedGunSprintThresholdMultiplier)
+                {
+                    _canRun = false;
+                    break;
+                }
+            }
+        }
+
+        private void UpdateLowestGunProperty()
+        {
+            _useGunSprint = false;
+            _cachedGunWalkSpeed = float.NaN;
+            _cachedGunSprintSpeed = float.NaN;
+            _cachedGunSprintThresholdMultiplier = float.NaN;
+            _useCombatTag = false;
+            _cachedCombatTagSpeedMultiplier = float.NaN;
+            _cachedCombatTagTime = float.NaN;
+
+            if (gunManager.LocalHeldGuns.Length == 0) return;
+
+            foreach (var gun in gunManager.LocalHeldGuns)
+            {
+                float estWalkSpeed, estSprintSpeed, estSprintThresholdMultiplier;
+                var movementOption = gun.MovementOption;
+                switch (movementOption)
+                {
+                    default:
+                    case MovementOption.Inherit:
+                    {
+                        estWalkSpeed = baseGunWalkSpeed;
+                        estSprintSpeed = baseGunSprintSpeed;
+                        estSprintThresholdMultiplier = 1F;
+                        break;
+                    }
+                    case MovementOption.Direct:
+                    {
+                        estWalkSpeed = gun.WalkSpeed;
+                        estSprintSpeed = gun.SprintSpeed;
+                        estSprintThresholdMultiplier = gun.SprintThresholdMultiplier;
+                        break;
+                    }
+                    case MovementOption.Multiply:
+                    {
+                        estWalkSpeed = BaseWalkSpeed * gun.WalkSpeed;
+                        estSprintSpeed = BaseRunSpeed * gun.SprintSpeed;
+                        estSprintThresholdMultiplier = gun.SprintThresholdMultiplier;
+                        break;
+                    }
+                    case MovementOption.Disable:
+                    {
+                        estWalkSpeed = BaseWalkSpeed;
+                        estSprintSpeed = BaseRunSpeed;
+                        estSprintThresholdMultiplier = 1F;
+                        break;
+                    }
+                }
+
+                if (movementOption != MovementOption.Disable)
+                {
+                    if (float.IsNaN(_cachedGunSprintSpeed) ||
+                        estSprintSpeed < _cachedGunSprintSpeed)
+                    {
+                        _cachedGunSprintSpeed = estSprintSpeed;
+                        _cachedGunSprintThresholdMultiplier = estSprintThresholdMultiplier;
+                    }
+
+                    if (float.IsNaN(_cachedGunWalkSpeed) ||
+                        estWalkSpeed < _cachedGunWalkSpeed)
+                    {
+                        _cachedGunWalkSpeed = estWalkSpeed;
+                    }
+
+                    _useGunSprint = true;
+                }
+
+                var combatTagOption = gun.CombatTagOption;
+                float estCombatTagSpeedMultiplier, estCombatTagTime;
+                switch (combatTagOption)
+                {
+                    default:
+                    case CombatTagOption.Inherit:
+                    {
+                        estCombatTagSpeedMultiplier = baseCombatTagSpeedMultiplier;
+                        estCombatTagTime = baseCombatTagTime;
+                        break;
+                    }
+                    case CombatTagOption.Direct:
+                    {
+                        estCombatTagSpeedMultiplier = gun.CombatTagSpeedMultiplier;
+                        estCombatTagTime = gun.CombatTagTime;
+                        break;
+                    }
+                    case CombatTagOption.Multiply:
+                    {
+                        estCombatTagSpeedMultiplier = baseCombatTagSpeedMultiplier * gun.CombatTagSpeedMultiplier;
+                        estCombatTagTime = baseCombatTagTime * gun.CombatTagTime;
+                        break;
+                    }
+                    case CombatTagOption.Disable:
+                    {
+                        estCombatTagSpeedMultiplier = 1;
+                        estCombatTagTime = 0;
+                        break;
+                    }
+                }
+
+                if (combatTagOption != CombatTagOption.Disable)
+                {
+                    if (float.IsNaN(_cachedCombatTagSpeedMultiplier) ||
+                        _cachedCombatTagSpeedMultiplier > estCombatTagSpeedMultiplier)
+                    {
+                        _cachedCombatTagSpeedMultiplier = estCombatTagSpeedMultiplier;
+                    }
+
+                    if (float.IsNaN(_cachedCombatTagTime) || _cachedCombatTagTime < estCombatTagTime)
+                    {
+                        _cachedCombatTagTime = estCombatTagTime;
+                    }
+
+                    _useCombatTag = true;
+                }
+            }
+        }
+
+        public override void OnPickedUpLocally(ManagedGun instance)
+        {
+            UpdateLowestGunProperty();
+        }
+
+        public override void OnDropLocally(ManagedGun instance)
+        {
+            UpdateLowestGunProperty();
+        }
+
+        private void GunIntegrationUpdatePass()
+        {
+            bool lastCanRun = _canRun, lastCombatTagged = _combatTagged;
+            UpdateCombatTagAndCanRunState();
+
+            if (lastCanRun != _canRun || lastCombatTagged != _combatTagged)
+                UpdateLocalVrcPlayer();
+        }
+
+        #endregion
+
+        #region Compatibility
+
+        [Obsolete]
+        public bool checkGunDirectionToAllowRunning
+        {
+            get => baseUseGunSprint;
+            set => baseUseGunSprint = value;
+        }
+
+        [Obsolete]
+        public float gunDirectionUpperBound
+        {
+            get => baseGunDirectionThreshold;
+            set => baseGunDirectionThreshold = value;
+        }
+
+        [Obsolete]
+        public float combatTagTime
+        {
+            get => baseCombatTagTime;
+            set => baseCombatTagTime = value;
         }
 
         #endregion
