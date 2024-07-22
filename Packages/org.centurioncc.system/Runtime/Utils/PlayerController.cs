@@ -484,8 +484,8 @@ namespace CenturionCC.System.Utils
         [Header("Gun Sprint")] [SerializeField] [UdonSynced] [FormerlySerializedAs("checkGunDirectionToAllowRunning")]
         private bool baseUseGunSprint = true;
 
-        [SerializeField] [UdonSynced] private float baseGunWalkSpeed = 1F;
-        [SerializeField] [UdonSynced] private float baseGunSprintSpeed = 2F;
+        [SerializeField] [UdonSynced] private float baseGunWalkSpeed = 2F;
+        [SerializeField] [UdonSynced] private float baseGunSprintSpeed = 4F;
 
         [SerializeField] [UdonSynced] [Range(0, 1F)] [FormerlySerializedAs("gunDirectionDotThreshold")]
         private float baseGunDirectionThreshold = 0.88F;
@@ -497,7 +497,7 @@ namespace CenturionCC.System.Utils
         private bool baseUseCombatTag = true;
 
         [SerializeField] [UdonSynced] private float baseCombatTagSpeedMultiplier = 0.5F;
-        [SerializeField] [UdonSynced] private float baseCombatTagTime = 0;
+        [SerializeField] [UdonSynced] private float baseCombatTagTime = 0.25F;
 
         #endregion
 
@@ -750,7 +750,7 @@ namespace CenturionCC.System.Utils
                     {
                         estWalkSpeed = baseGunWalkSpeed;
                         estSprintSpeed = baseGunSprintSpeed;
-                        estSprintThresholdMultiplier = 1F;
+                        estSprintThresholdMultiplier = 1;
                         break;
                     }
                     case MovementOption.Direct:
@@ -841,16 +841,21 @@ namespace CenturionCC.System.Utils
                     _useCombatTag = true;
                 }
             }
+
+            Debug.Log(
+                $"[PlayerController] l:{gunManager.LocalHeldGuns.Length}, gs:{_useGunSprint}, ct:{_useCombatTag}");
         }
 
         public override void OnPickedUpLocally(ManagedGun instance)
         {
             UpdateLowestGunProperty();
+            UpdateLocalVrcPlayer();
         }
 
         public override void OnDropLocally(ManagedGun instance)
         {
             UpdateLowestGunProperty();
+            UpdateLocalVrcPlayer();
         }
 
         private void GunIntegrationUpdatePass()
