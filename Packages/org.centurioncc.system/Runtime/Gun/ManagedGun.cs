@@ -451,7 +451,8 @@ namespace CenturionCC.System.Gun
                 ? ParentManager.handleRePickupDelay
                 : 0F;
 
-        [PublicAPI] [Obsolete]
+        [PublicAPI]
+        [Obsolete]
         public override float OptimizationRange =>
             ParentManager != null ? ParentManager.optimizationRange : 0F;
 
@@ -477,13 +478,16 @@ namespace CenturionCC.System.Gun
         public override string[] Tags =>
             VariantData != null ? VariantData.Tags : new string[0];
 
-        public override CanSprintOption CanSprint =>
-            VariantData != null ? VariantData.CanSprint : CanSprintOption.Inherit;
+        public override MovementOption MovementOption =>
+            VariantData != null ? VariantData.Movement : MovementOption.Inherit;
+
+        public override float WalkSpeed =>
+            VariantData != null ? VariantData.WalkSpeed : 1F;
 
         public override float SprintSpeed =>
             VariantData != null ? VariantData.SprintSpeed : 1F;
 
-        public override CombatTagOption CombatTag =>
+        public override CombatTagOption CombatTagOption =>
             VariantData != null ? VariantData.CombatTag : CombatTagOption.Inherit;
 
         public override float CombatTagSpeedMultiplier =>

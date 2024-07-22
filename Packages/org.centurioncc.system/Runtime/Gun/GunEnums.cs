@@ -30,18 +30,22 @@ namespace CenturionCC.System.Gun
         /// <seealso cref="Gun.State"/>
         /// <seealso cref="Gun.RawState"/>
         Unknown = 0xFF,
+
         /// <summary>
         /// When it's in idle state. With <see cref="Gun.HasBulletInChamber"/> and <see cref="Gun.HasCocked"/>, it should be able to shoot.
         /// </summary>
         Idle = 0,
+
         /// <summary>
         /// When it's pulling state. For most of guns in this state should not be able to shoot.
         /// </summary>
         InCockingPull = 1,
+
         /// <summary>
         /// When it's pushing state. For most of guns in this state should not be able to shoot.
         /// </summary>
         InCockingPush = 2,
+
         /// <summary>
         /// When it's twisting state. For most of guns in this state should not be able to shoot.
         /// </summary>
@@ -54,14 +58,17 @@ namespace CenturionCC.System.Gun
         /// Trigger when it's in safety.
         /// </summary>
         Idle = 0,
+
         /// <summary>
         /// Trigger when it's movable.
         /// </summary>
         Armed = 1,
+
         /// <summary>
         /// Trigger when it's pulled, and should be firing.
         /// </summary>
         Firing = 2,
+
         /// <summary>
         /// Trigger when it's pulled, and should not be firing until released again.
         /// </summary>
@@ -74,6 +81,7 @@ namespace CenturionCC.System.Gun
         /// When shot was succeeded.
         /// </summary>
         Succeeded,
+
         /// <summary>
         /// When shot was succeeded and should continue to shoot next possible frame.
         /// </summary>
@@ -81,21 +89,24 @@ namespace CenturionCC.System.Gun
         /// This will return in condition like first and second shot of <see cref="FireMode.ThreeRoundsBurst"/>. third shot will be <see cref="Succeeded"/>.
         /// </remarks>
         SucceededContinuously,
+
         /// <summary>
         /// When shot was paused until the Gun is able to shoot next possible frame.
         /// </summary>
         Paused,
+
         /// <summary>
         /// When shot was cancelled due to custom game rule such as no firing inside safezone. will make no sound at all.
         /// </summary>
         Cancelled,
+
         /// <summary>
         /// When shot was failed due to mechanical issue such as fire mode being in safety. will make a trigger sound.
         /// </summary>
         Failed,
     }
 
-    public enum CanSprintOption
+    public enum MovementOption
     {
         Inherit,
         Direct,

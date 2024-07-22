@@ -74,13 +74,15 @@ namespace CenturionCC.System.Gun.DataStore
         [SerializeField] private string[] tags = { "NoFootstep" };
 
         [Header("Player Controller Properties")] [SerializeField]
-        private CanSprintOption canSprint = CanSprintOption.Inherit;
+        private MovementOption movementOption = MovementOption.Inherit;
+
+        [SerializeField] private float walkSpeed = 1F;
 
         [SerializeField] private float sprintSpeed = 1F;
 
         [SerializeField] private float sprintThresholdMultiplier = 1F;
 
-        [SerializeField] private CombatTagOption combatTag = CombatTagOption.Inherit;
+        [SerializeField] private CombatTagOption combatTagOption = CombatTagOption.Inherit;
 
         [SerializeField] private float combatTagSpeedMultiplier = 1F;
 
@@ -148,9 +150,10 @@ namespace CenturionCC.System.Gun.DataStore
         public float ObjectWeight => objectWeight;
         public string[] Tags => tags;
 
-        public CanSprintOption CanSprint => canSprint;
+        public MovementOption Movement => movementOption;
+        public float WalkSpeed => walkSpeed;
         public float SprintSpeed => sprintSpeed;
-        public CombatTagOption CombatTag => combatTag;
+        public CombatTagOption CombatTag => combatTagOption;
         public float CombatTagSpeedMultiplier => combatTagSpeedMultiplier;
         public float CombatTagTime => combatTagTime;
 

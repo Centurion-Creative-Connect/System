@@ -58,10 +58,11 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public abstract Vector3 SubHandlePositionOffset { get; }
         [PublicAPI] public abstract Quaternion SubHandleRotationOffset { get; }
 
-        [PublicAPI] public abstract CanSprintOption CanSprint { get; }
+        [PublicAPI] public abstract MovementOption MovementOption { get; }
+        [PublicAPI] public abstract float WalkSpeed { get; }
         [PublicAPI] public abstract float SprintSpeed { get; }
         [PublicAPI] public abstract float SprintThresholdMultiplier { get; }
-        [PublicAPI] public abstract CombatTagOption CombatTag { get; }
+        [PublicAPI] public abstract CombatTagOption CombatTagOption { get; }
         [PublicAPI] public abstract float CombatTagSpeedMultiplier { get; }
         [PublicAPI] public abstract float CombatTagTime { get; }
 

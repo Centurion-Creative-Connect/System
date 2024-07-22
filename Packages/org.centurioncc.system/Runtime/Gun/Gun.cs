@@ -439,8 +439,9 @@ namespace CenturionCC.System.Gun
         [SerializeField] protected string[] tags = { "NoFootstep" };
 
         [Header("Player Controller Properties")] [SerializeField]
-        protected CanSprintOption canSprint = CanSprintOption.Inherit;
+        protected MovementOption movementOption = MovementOption.Inherit;
 
+        [SerializeField] protected float walkSpeed = 1F;
         [SerializeField] protected float sprintSpeed = 1F;
         [SerializeField] protected float sprintThresholdMultiplier = 1F;
         [SerializeField] protected CombatTagOption combatTag = CombatTagOption.Inherit;
@@ -513,10 +514,11 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public override bool IsPickedUp => _isPickedUp;
         [PublicAPI] public override bool IsLocal => _isLocal;
 
-        [PublicAPI] public override CanSprintOption CanSprint => canSprint;
+        [PublicAPI] public override MovementOption MovementOption => movementOption;
+        [PublicAPI] public override float WalkSpeed => walkSpeed;
         [PublicAPI] public override float SprintSpeed => sprintSpeed;
         [PublicAPI] public override float SprintThresholdMultiplier => sprintThresholdMultiplier;
-        [PublicAPI] public override CombatTagOption CombatTag => combatTag;
+        [PublicAPI] public override CombatTagOption CombatTagOption => combatTag;
         [PublicAPI] public override float CombatTagSpeedMultiplier => combatTagSpeedMultiplier;
         [PublicAPI] public override float CombatTagTime => combatTagTime;
 
