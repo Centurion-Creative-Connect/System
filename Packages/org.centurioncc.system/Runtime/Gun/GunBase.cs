@@ -6,22 +6,16 @@ namespace CenturionCC.System.Gun
 {
     public abstract class GunBase : GunHandleCallbackBase
     {
-        [PublicAPI]
-        public abstract string WeaponName { get; }
+        [PublicAPI] public abstract string WeaponName { get; }
 
-        [PublicAPI]
-        public abstract Transform Target { get; }
-        [PublicAPI]
-        public virtual Animator TargetAnimator { get; }
-        [PublicAPI]
-        public abstract GunHandle MainHandle { get; }
-        [PublicAPI]
-        public abstract GunHandle SubHandle { get; }
-        [PublicAPI]
-        public abstract GunHandle CustomHandle { get; }
+        [PublicAPI] public abstract Transform Target { get; }
+        [PublicAPI] public virtual Animator TargetAnimator { get; }
+        [PublicAPI] public abstract GunHandle MainHandle { get; }
+        [PublicAPI] public abstract GunHandle SubHandle { get; }
+        [PublicAPI] public abstract GunHandle CustomHandle { get; }
 
-        [PublicAPI]
-        public abstract bool IsPickedUp { get; }
+        [PublicAPI] public abstract bool IsPickedUp { get; }
+
         /// <summary>
         /// Current holder of this Gun.
         /// </summary>
@@ -34,10 +28,8 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public abstract bool IsLocal { get; }
 
-        [PublicAPI]
-        public virtual TriggerState Trigger { get; set; }
-        [PublicAPI]
-        public virtual GunState State { get; set; }
+        [PublicAPI] public virtual TriggerState Trigger { get; set; }
+        [PublicAPI] public virtual GunState State { get; set; }
 
         /// <summary>
         /// Has the gun bullet in chamber?
@@ -60,16 +52,19 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual bool HasCocked { get; set; }
 
-        [PublicAPI]
-        public abstract Vector3 MainHandlePositionOffset { get; }
-        [PublicAPI]
-        public abstract Quaternion MainHandleRotationOffset { get; }
+        [PublicAPI] public abstract Vector3 MainHandlePositionOffset { get; }
+        [PublicAPI] public abstract Quaternion MainHandleRotationOffset { get; }
 
-        [PublicAPI]
-        public abstract Vector3 SubHandlePositionOffset { get; }
-        [PublicAPI]
-        public abstract Quaternion SubHandleRotationOffset { get; }
+        [PublicAPI] public abstract Vector3 SubHandlePositionOffset { get; }
+        [PublicAPI] public abstract Quaternion SubHandleRotationOffset { get; }
 
+        [PublicAPI] public abstract MovementOption MovementOption { get; }
+        [PublicAPI] public abstract float WalkSpeed { get; }
+        [PublicAPI] public abstract float SprintSpeed { get; }
+        [PublicAPI] public abstract float SprintThresholdMultiplier { get; }
+        [PublicAPI] public abstract CombatTagOption CombatTagOption { get; }
+        [PublicAPI] public abstract float CombatTagSpeedMultiplier { get; }
+        [PublicAPI] public abstract float CombatTagTime { get; }
 
         /// <summary>
         /// Shoots bullet without any checks.
