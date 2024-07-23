@@ -129,6 +129,9 @@ namespace CenturionCC.System.Player
             var attackerId = damageData.DamagerPlayerId;
             var attacker = playerManager.GetPlayerById(attackerId);
 
+            if (attacker == null)
+                return;
+
             // Do not process if local was not associated with it
             if (victimId != _local.playerId && attackerId != _local.playerId)
                 return;

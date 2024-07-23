@@ -1,4 +1,5 @@
-﻿using CenturionCC.System.Editor.Utils;
+﻿using System;
+using CenturionCC.System.Editor.Utils;
 using CenturionCC.System.Gun.DataStore;
 using UdonSharpEditor;
 using UnityEditor;
@@ -10,6 +11,23 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
     [CustomEditor(typeof(GunVariantDataStore))]
     public class GunVariantDataStoreEditor : UnityEditor.Editor
     {
+        private static readonly string[] PlayerMovementMessages =
+        {
+            "Will be using default values specified in PlayerController",
+            "Values specified here will be directly applied.",
+            "Values specified here will be multiplied by PlayerController values.",
+            "Will not change movement behavior by gun's direction. Player will move freely unless they have other guns activating MovementOption."
+        };
+
+        private static readonly string[] CombatTagMessages =
+        {
+            "Will be using default values specified in PlayerController",
+            "Values specified here will be directly applied.",
+            "Values specified here will be multiplied by PlayerController values.",
+            "Will not slow down when shooting unless they have other guns activating CombatTag."
+        };
+
+
         public void OnSceneGUI()
         {
             DrawHandles((GunVariantDataStore)target);
@@ -23,11 +41,17 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
             var so = serializedObject;
             var property = so.GetIterator();
             property.NextVisible(true);
+            int count = 0;
             while (property.NextVisible(false))
             {
                 if (property.name == "m_Script") continue;
+                if (count > 27) break;
+
                 GUIUtil.FoldoutPropertyField(property, 3);
+                ++count;
             }
+
+            DrawPlayerControllerInspector(so);
 
             so.ApplyModifiedProperties();
         }
@@ -68,6 +92,50 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
 
             Handles.zTest = CompareFunction.Disabled;
             Handles.Label(pos + Vector3.up * 0.025F, text, style);
+        }
+
+        private static void DrawPlayerControllerInspector(SerializedObject so)
+        {
+            var movementOptionProperty = so.FindProperty("movementOption");
+            DrawEnumDisabledProperties(movementOptionProperty, 3, false, i => i == 0 || i == 3, i =>
+            {
+                EditorGUILayout.HelpBox(
+                    PlayerMovementMessages[i],
+                    MessageType.Info
+                );
+            });
+
+            var combatTagOptionProperty = so.FindProperty("combatTagOption");
+            DrawEnumDisabledProperties(combatTagOptionProperty, 2, false, i => i == 0 || i == 3, i =>
+            {
+                EditorGUILayout.HelpBox(
+                    CombatTagMessages[i],
+                    MessageType.Info
+                );
+            });
+        }
+
+        private static void DrawEnumDisabledProperties(SerializedProperty property, int count, bool drawDisabled,
+            Func<int, bool> disableFunc, Action<int> beforeDisabledGroup)
+        {
+            GUIUtil.FoldoutPropertyField(property);
+
+            var disabled = disableFunc.Invoke(property.enumValueIndex);
+            beforeDisabledGroup.Invoke(property.enumValueIndex);
+            if (!drawDisabled && disabled)
+            {
+                EditorGUILayout.HelpBox("Disabled properties are hidden.", MessageType.None);
+                return;
+            }
+
+            using (new EditorGUI.DisabledScope(disabled))
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    property.NextVisible(false);
+                    GUIUtil.FoldoutPropertyField(property);
+                }
+            }
         }
     }
 }
