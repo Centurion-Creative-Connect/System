@@ -214,7 +214,7 @@ namespace CenturionCC.System.Gun
             State = GunState.Idle;
             HasBulletInChamber = false;
             HasCocked = false;
-            IsInSafeZone = false;
+            safetyAreaCollisionCount = 0;
 
 
             Collider.enabled = false;
