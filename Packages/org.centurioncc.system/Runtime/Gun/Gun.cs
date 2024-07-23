@@ -53,6 +53,8 @@ namespace CenturionCC.System.Gun
         [UdonSynced] protected Vector3 pivotPosOffset = Vector3.zero;
         [UdonSynced] protected Quaternion pivotRotOffset = Quaternion.identity;
 
+        protected int safetyAreaCollisionCount;
+
         [UdonSynced] [FieldChangeCallback(nameof(ShotCount))]
         protected int shotCount = -1;
 
@@ -114,7 +116,7 @@ namespace CenturionCC.System.Gun
 
             if (otherName.StartsWith("safezone"))
             {
-                IsInSafeZone = true;
+                safetyAreaCollisionCount++;
                 return;
             }
 
@@ -143,7 +145,7 @@ namespace CenturionCC.System.Gun
 
             if (otherName.StartsWith("safezone"))
             {
-                IsInSafeZone = false;
+                safetyAreaCollisionCount--;
                 return;
             }
 
@@ -707,7 +709,7 @@ namespace CenturionCC.System.Gun
         /// Is this Gun inside of safezone?
         /// </summary>
         [PublicAPI]
-        public virtual bool IsInSafeZone { get; protected set; }
+        public virtual bool IsInSafeZone => safetyAreaCollisionCount > 0;
 
         #endregion
 
