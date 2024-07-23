@@ -602,9 +602,9 @@ namespace CenturionCC.System.Utils
             : ActualWalkSpeed;
 
         [PublicAPI]
-        public float ActualStrafeSpeed => CanRun
-            ? (_useGunSprint ? BaseWalkSpeed : BaseStrafeSpeed) * TotalMultiplier
-            : ActualWalkSpeed;
+        public float ActualStrafeSpeed => _useGunSprint
+            ? Mathf.Min(ActualWalkSpeed, BaseStrafeSpeed * TotalMultiplier)
+            : BaseStrafeSpeed * TotalMultiplier;
 
         [PublicAPI] public float ActualJumpImpulse => BaseJumpImpulse * TotalMultiplier;
         [PublicAPI] public float ActualGravityStrength => BaseGravityStrength * TotalMultiplier;
