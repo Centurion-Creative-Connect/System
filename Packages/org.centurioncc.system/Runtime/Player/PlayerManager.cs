@@ -13,65 +13,68 @@ using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.Player
 {
-    [DefaultExecutionOrder(20)] [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+    [DefaultExecutionOrder(20)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class PlayerManager : UdonSharpBehaviour
     {
         private const string Prefix = "[<color=orange>PlayerManager</color>] ";
+
         private const string MustBeMasterError =
             Prefix + "<color=red>You must be an master to execute this method</color>: {0}";
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private UpdateManager updateManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private PrintableBase logger;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private AudioManager audioManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private RoleProvider roleProvider;
 
-        [Header("Base Settings")]
-        [SerializeField]
+        [Header("Base Settings")] [SerializeField]
         private bool autoAddPlayerAtJoin = true;
-        [SerializeField]
-        private PlayerBase[] playerInstancePool;
-        [SerializeField]
-        private FootstepAudioStore footstepAudio;
 
-        [Header("Team Settings")]
-        [SerializeField]
+        [SerializeField] private PlayerBase[] playerInstancePool;
+
+        [SerializeField] private FootstepAudioStore footstepAudio;
+
+        [Header("Team Settings")] [SerializeField]
         private FriendlyFireMode friendlyFireMode = FriendlyFireMode.Never;
-        [SerializeField]
-        private Color[] teamColors;
-        [SerializeField]
-        private int staffTeamId = 255;
-        [SerializeField]
-        private Color staffTeamColor = new Color(0.172549F, 0.4733055F, 0.8117647F, 1F);
 
-        [Header("Tag Settings")]
-        [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowTeamTag))]
+        [SerializeField] private Color[] teamColors;
+
+        [SerializeField] private int staffTeamId = 255;
+
+        [SerializeField] private Color staffTeamColor = new Color(0.172549F, 0.4733055F, 0.8117647F, 1F);
+
+        [Header("Tag Settings")] [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowTeamTag))]
         private bool showTeamTag = true;
+
         [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowStaffTag))]
         private bool showStaffTag = true;
+
         [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowCreatorTag))]
         private bool showCreatorTag;
 
-        [Header("Debug Settings")]
-        [SerializeField]
+        [Header("Debug Settings")] [SerializeField]
         private bool isDebug;
 
-        [Header("Deprecated Settings")]
-        [SerializeField]
+        [Header("Deprecated Settings")] [SerializeField]
         private bool useBaseCollider = true;
-        [SerializeField]
-        private bool useAdditionalCollider = true;
-        [SerializeField]
-        private bool useLightweightCollider = true;
-        [SerializeField]
-        private bool alwaysUseLightweightCollider;
+
+        [SerializeField] private bool useAdditionalCollider = true;
+
+        [SerializeField] private bool useLightweightCollider = true;
+
+        [SerializeField] private bool alwaysUseLightweightCollider;
 
         private WatchdogChildCallbackBase[] _callbacks;
         private int _eventCallbackCount;
         private UdonSharpBehaviour[] _eventCallbacks = new UdonSharpBehaviour[5];
+
         [UdonSynced] [FieldChangeCallback(nameof(FriendlyFireModeSynced))]
         private int _friendlyFireModeSynced; // Synced value is used thru FieldChangeCallback
 
@@ -309,6 +312,7 @@ namespace CenturionCC.System.Player
             }
             private set => _noneTeamPlayerCount = value;
         }
+
         public int NoneTeamModeratorPlayerCount
         {
             get
@@ -319,6 +323,7 @@ namespace CenturionCC.System.Player
             }
             private set => _noneTeamModPlayerCount = value;
         }
+
         public int RedTeamPlayerCount
         {
             get
@@ -329,6 +334,7 @@ namespace CenturionCC.System.Player
             }
             private set => _redTeamPlayerCount = value;
         }
+
         public int RedTeamModeratorPlayerCount
         {
             get
@@ -339,6 +345,7 @@ namespace CenturionCC.System.Player
             }
             private set => _redTeamModPlayerCount = value;
         }
+
         public int YellowTeamPlayerCount
         {
             get
@@ -349,6 +356,7 @@ namespace CenturionCC.System.Player
             }
             private set => _yellowTeamPlayerCount = value;
         }
+
         public int YellowTeamModeratorPlayerCount
         {
             get
@@ -359,6 +367,7 @@ namespace CenturionCC.System.Player
             }
             private set => _yellowTeamModPlayerCount = value;
         }
+
         public int GreenTeamPlayerCount
         {
             get
@@ -369,6 +378,7 @@ namespace CenturionCC.System.Player
             }
             private set => _greenTeamPlayerCount = value;
         }
+
         public int GreenTeamModeratorPlayerCount
         {
             get
@@ -379,6 +389,7 @@ namespace CenturionCC.System.Player
             }
             private set => _greenTeamModPlayerCount = value;
         }
+
         public int BlueTeamPlayerCount
         {
             get
@@ -389,6 +400,7 @@ namespace CenturionCC.System.Player
             }
             private set => _blueTeamPlayerCount = value;
         }
+
         public int BlueTeamModeratorPlayerCount
         {
             get
@@ -399,6 +411,7 @@ namespace CenturionCC.System.Player
             }
             private set => _blueTeamModPlayerCount = value;
         }
+
         public int UndefinedTeamPlayerCount
         {
             get
@@ -409,6 +422,7 @@ namespace CenturionCC.System.Player
             }
             private set => _undefinedTeamPlayerCount = value;
         }
+
         public int UndefinedTeamModeratorPlayerCount
         {
             get
@@ -795,20 +809,23 @@ namespace CenturionCC.System.Player
 
         #region Getters
 
-        [PublicAPI] [ItemCanBeNull]
+        [PublicAPI]
+        [ItemCanBeNull]
         public PlayerBase[] GetPlayers()
         {
             return playerInstancePool;
         }
 
-        [PublicAPI] [CanBeNull]
+        [PublicAPI]
+        [CanBeNull]
         public PlayerBase GetPlayer(int index)
         {
             if (index > playerInstancePool.Length || index < 0) return null;
             return GetPlayers()[index];
         }
 
-        [PublicAPI] [CanBeNull]
+        [PublicAPI]
+        [CanBeNull]
         public PlayerBase GetLocalPlayer()
         {
             return GetPlayer(GetLocalPlayerIndex());
@@ -852,6 +869,7 @@ namespace CenturionCC.System.Player
         }
 
         [PublicAPI]
+        [CanBeNull]
         public PlayerBase GetPlayerById(int playerId)
         {
             foreach (var player in GetPlayers())
