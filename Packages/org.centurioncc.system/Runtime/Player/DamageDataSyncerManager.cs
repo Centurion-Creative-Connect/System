@@ -17,12 +17,14 @@ namespace CenturionCC.System.Player
 
         [NewbieInject] [HideInInspector] [SerializeField]
         private PrintableBase logger;
+
         [NewbieInject] [HideInInspector] [SerializeField]
         private PlayerManager playerManager;
+
         [NewbieInject] [HideInInspector] [SerializeField]
         private DamageDataResolver resolver;
-        [SerializeField]
-        private DamageDataSyncer[] syncers;
+
+        [SerializeField] private DamageDataSyncer[] syncers;
 
         private readonly DataDictionary _resolvedEvents = new DataDictionary();
 
@@ -34,10 +36,8 @@ namespace CenturionCC.System.Player
         private WatchdogChildCallbackBase[] _watchdogChild;
 
 
-        [PublicAPI]
-        public int MaxResendCount { get; set; } = 2;
-        [PublicAPI]
-        public bool ProcessingPaused { get; private set; }
+        [PublicAPI] public int MaxResendCount { get; set; } = 2;
+        [PublicAPI] public bool ProcessingPaused { get; private set; }
 
         private void Start()
         {
@@ -178,6 +178,13 @@ namespace CenturionCC.System.Player
                 }
             }
 
+            if (Invoke_OnHitSendCallback(damageData, attacker, victim))
+            {
+                logger.LogVerbose($"{Prefix}Callback has refused this hit.");
+                return;
+            }
+
+
             var syncer = GetPlayerDependentSyncer(victim);
 
             syncer.Send(
@@ -287,6 +294,15 @@ namespace CenturionCC.System.Player
             foreach (var callback in _callbacks)
                 if (callback != null)
                     ((DamageDataSyncerManagerCallback)callback).OnSyncerReceived(syncer);
+        }
+
+        private bool Invoke_OnHitSendCallback(DamageData damageData, PlayerBase attacker, PlayerBase victim)
+        {
+            foreach (var callback in _callbacks)
+                if (callback != null &&
+                    ((DamageDataSyncerManagerCallback)callback).OnPreHitSend(damageData, attacker, victim))
+                    return true;
+            return false;
         }
 
         [PublicAPI]
