@@ -10,32 +10,37 @@ namespace CenturionCC.System.Player
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PlayerManagerNotificationSender : PlayerManagerCallbackBase
     {
-        [Header("Notification Messages")]
-        [SerializeField]
+        [Header("Team Change Messages")] [SerializeField]
         private TranslatableMessage[] teamChangeNotificationMessages;
-        [SerializeField]
-        private TranslatableMessage changeToStaffTeamMessage;
-        [SerializeField]
-        private TranslatableMessage unknownTeamChangeNotificationMessage;
-        [FormerlySerializedAs("onDisguiseEnabledMessage")]
-        [SerializeField]
+
+        [SerializeField] private TranslatableMessage changeToStaffTeamMessage;
+        [SerializeField] private TranslatableMessage unknownTeamChangeNotificationMessage;
+
+        [Header("Staff Tag Messages")] [FormerlySerializedAs("onDisguiseEnabledMessage")] [SerializeField]
         private TranslatableMessage onStaffTagEnabledMessage;
-        [FormerlySerializedAs("onDisguiseDisabledMessage")]
-        [SerializeField]
+
+        [FormerlySerializedAs("onDisguiseDisabledMessage")] [SerializeField]
         private TranslatableMessage onStaffTagDisabledMessage;
-        [SerializeField]
+
+        [Header("Team Tag Messages")] [SerializeField]
         private TranslatableMessage onTeamTagEnabledMessage;
-        [SerializeField]
-        private TranslatableMessage onTeamTagDisabledMessage;
-        [SerializeField]
+
+        [SerializeField] private TranslatableMessage onTeamTagDisabledMessage;
+
+        [Header("Friendly Fire Messages")] [SerializeField]
         private TranslatableMessage onFriendlyFireWarningMessage;
-        [SerializeField]
+
+        [SerializeField] private TranslatableMessage onFriendlyFireOccurredMessage;
+        [SerializeField] private TranslatableMessage onReverseFriendlyFireOccurredMessage;
+
+        [Header("Friendly Fire Mode Changes Messages")] [SerializeField]
         private TranslatableMessage onFriendlyFireModeChangedMessage;
-        [SerializeField]
-        private TranslatableMessage[] friendlyFireModes;
+
+        [SerializeField] private TranslatableMessage[] friendlyFireModes;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private NotificationProvider notification;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
 
@@ -115,8 +120,45 @@ namespace CenturionCC.System.Player
             );
         }
 
+        public override void OnKilled(PlayerBase attacker, PlayerBase victim, KillType type)
+        {
+            string fmt;
+            PlayerBase target;
+            switch (type)
+            {
+                case KillType.Default:
+                default:
+                    return;
+                case KillType.FriendlyFire:
+                {
+                    if (!attacker.IsLocal || onFriendlyFireOccurredMessage == null ||
+                        playerManager.FriendlyFireMode == FriendlyFireMode.Both) return;
+
+                    fmt = onFriendlyFireOccurredMessage.Message;
+                    target = victim;
+                    break;
+                }
+                case KillType.ReverseFriendlyFire:
+                {
+                    if (!attacker.IsLocal || onReverseFriendlyFireOccurredMessage == null) return;
+
+                    fmt = onReverseFriendlyFireOccurredMessage.Message;
+                    target = victim;
+                    break;
+                }
+            }
+
+            notification.ShowError(
+                string.Format(fmt, playerManager.GetHumanFriendlyColoredName(target)),
+                5F,
+                1325453321 + victim.PlayerId // string.GetHashCode() of "FRIENDLY_FIRE_WARNING" plus victim player id
+            );
+        }
+
         public override void OnFriendlyFireWarning(PlayerBase victim, DamageData damageData, Vector3 contactPoint)
         {
+            if (onFriendlyFireWarningMessage == null) return;
+
             notification.ShowWarn(
                 string.Format(onFriendlyFireWarningMessage.Message, playerManager.GetHumanFriendlyColoredName(victim)),
                 5F,
