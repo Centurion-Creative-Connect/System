@@ -1,6 +1,7 @@
 ﻿using System;
 using CenturionCC.System.Player;
 using DerpyNewbie.Common;
+using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,52 +14,39 @@ namespace CenturionCC.System.UI.HeadUI
     {
         private const float HapticDuration = 0.02F;
 
-        [SerializeField]
-        public bool useHaptic;
-        [SerializeField]
-        private RectTransform rectTransform;
+        [SerializeField] public bool useHaptic;
+        [SerializeField] public bool showFriendlyFireAttackerName;
+        [SerializeField] private RectTransform rectTransform;
 
-        [SerializeField]
-        private AudioSource hitSound;
-        [SerializeField]
-        private AudioClip hapticSource;
-        [SerializeField]
-        private Text descriptionText;
-        [SerializeField]
-        private string normalDescriptionFormat = "Hit by %attacker% in the %bodyParts% using %weapon%";
-        [SerializeField]
-        private string friendlyFireDescriptionFormat =
+        [SerializeField] private AudioSource hitSound;
+        [SerializeField] private AudioClip hapticSource;
+        [SerializeField] private Text descriptionText;
+        [SerializeField] private string normalDescriptionFormat = "Hit by %attacker% in the %bodyParts% using %weapon%";
+
+        [SerializeField] private string friendlyFireDescriptionFormat =
             "Hit by %attacker%(<color=maroon>FriendlyFire</color>) in the %bodyParts% using %weapon%";
-        [SerializeField]
-        private string reverseFriendlyFireDescriptionFormat =
-            "Hit by <color=maroon>ReverseFriendlyFire</color> for %victim% in the %bodyParts%";
-        [SerializeField]
-        private string bothFriendlyFireDescriptionFormat =
-            "Hit by <color=maroon>ReverseFriendlyFire</color> for %victim% in the %bodyParts%";
-        [SerializeField]
-        private Image descriptionBackground;
-        [SerializeField]
-        private Image hitSprite;
-        [SerializeField]
-        private Image labelSprite;
-        [SerializeField]
-        private Sprite[] availableSprites;
 
-        [SerializeField]
-        private float inTime = 0.05F;
-        [SerializeField]
-        private Vector2 inPosition = new Vector2(0, -500);
-        [SerializeField]
-        private float stopTime = 5F;
-        [SerializeField]
-        private Vector2 stopPosition = Vector2.zero;
-        [SerializeField]
-        private float outTime = 0.1F;
-        [SerializeField]
-        private Vector2 outPosition = new Vector2(0, 500);
+        [SerializeField] private string reverseFriendlyFireDescriptionFormat =
+            "Hit by <color=maroon>ReverseFriendlyFire</color> for %victim% in the %bodyParts%";
+
+        [SerializeField] private string bothFriendlyFireDescriptionFormat =
+            "Hit by <color=maroon>ReverseFriendlyFire</color> for %victim% in the %bodyParts%";
+
+        [SerializeField] private Image descriptionBackground;
+        [SerializeField] private Image hitSprite;
+        [SerializeField] private Image labelSprite;
+        [SerializeField] private Sprite[] availableSprites;
+
+        [SerializeField] private float inTime = 0.05F;
+        [SerializeField] private Vector2 inPosition = new Vector2(0, -500);
+        [SerializeField] private float stopTime = 5F;
+        [SerializeField] private Vector2 stopPosition = Vector2.zero;
+        [SerializeField] private float outTime = 0.1F;
+        [SerializeField] private Vector2 outPosition = new Vector2(0, 500);
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private UpdateManager updateManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
 
@@ -67,27 +55,20 @@ namespace CenturionCC.System.UI.HeadUI
         private float _alphaTarget;
         private float _alphaVelocity;
 
-        [NonSerialized]
-        private float _currentTime;
-        [NonSerialized]
-        private int _hapticFrequency;
-        [NonSerialized]
-        private int _hapticPackSize;
-        [NonSerialized]
-        private float[] _hapticSamples;
+        [NonSerialized] private float _currentTime;
+        [NonSerialized] private int _hapticFrequency;
+        [NonSerialized] private int _hapticPackSize;
+        [NonSerialized] private float[] _hapticSamples;
 
         private bool _isPlaying;
-        [NonSerialized]
-        private int _lastSpriteIndex;
+        [NonSerialized] private int _lastSpriteIndex;
         private float _posSmoothTime;
 
         private Vector2 _posTarget;
         private Vector2 _posVelocity;
 
-        [NonSerialized]
-        public DateTime lastHitEffectPlayBeginTime;
-        [NonSerialized]
-        public DateTime lastHitEffectPlayEndTime;
+        [NonSerialized] public DateTime lastHitEffectPlayBeginTime;
+        [NonSerialized] public DateTime lastHitEffectPlayEndTime;
 
         private void Start()
         {
@@ -227,12 +208,21 @@ namespace CenturionCC.System.UI.HeadUI
             }
         }
 
-        private string FormatDescription(string format, PlayerBase attacker, PlayerBase victim)
+        private string FormatDescription(string format, [CanBeNull] PlayerBase attacker, [CanBeNull] PlayerBase victim)
         {
-            var weaponName = victim.LastHitData.WeaponType.Replace("BBBullet: ", "");
-            var attackerName = playerManager.GetHumanFriendlyColoredName(attacker);
-            var victimName = playerManager.GetHumanFriendlyColoredName(victim);
-            var bodyParts = GetHumanFriendlyBodyPartsName(victim.LastHitData.Parts);
+            string weaponName = "???", attackerName = "???", victimName = "???", bodyParts = "???";
+            if (victim != null)
+            {
+                weaponName = victim.LastHitData.WeaponType.Replace("BBBullet: ", "");
+                victimName = playerManager.GetHumanFriendlyColoredName(victim);
+                bodyParts = GetHumanFriendlyBodyPartsName(victim.LastHitData.Parts);
+            }
+
+            if (attacker != null && victim != null &&
+                (victim.TeamId == 0 || victim.TeamId != attacker.TeamId || showFriendlyFireAttackerName))
+            {
+                attackerName = playerManager.GetHumanFriendlyColoredName(attacker);
+            }
 
             return format
                 .Replace("%weapon%", weaponName)
