@@ -15,12 +15,12 @@ namespace CenturionCC.System.Player.MassPlayer
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
-        [SerializeField]
-        private PlayerModel[] models;
-        [SerializeField]
-        private PlayerViewBase[] views;
-        [SerializeField]
-        private int sortStep = 5;
+
+        [SerializeField] private PlayerModel[] models;
+
+        [SerializeField] private PlayerViewBase[] views;
+
+        [SerializeField] private int sortStep = 5;
 
         public int sortStepCount;
 
@@ -28,8 +28,7 @@ namespace CenturionCC.System.Player.MassPlayer
         private int _lastSortStepIndex;
         private VRCPlayerApi _localPlayer;
 
-        [PublicAPI]
-        public int ModelCount => models.Length;
+        [PublicAPI] public int ModelCount => models.Length;
 
         private void Start()
         {
@@ -51,6 +50,11 @@ namespace CenturionCC.System.Player.MassPlayer
         public override void OnPlayerChanged(PlayerBase player, int oldId, int newId)
         {
             PairViewAndModel();
+        }
+
+        public PlayerModel[] GetSortedPlayerModels()
+        {
+            return _distanceSortedModels;
         }
 
         public string GetOrder()
