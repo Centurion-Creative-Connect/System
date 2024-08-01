@@ -702,7 +702,7 @@ namespace CenturionCC.System.Utils
 
             var head = _localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
             var headForward = head.rotation * Vector3.forward;
-            var utcNow = DateTime.UtcNow;
+            var now = Networking.GetNetworkDateTime();
 
             _canRun = true;
             _combatTagged = false;
@@ -710,7 +710,7 @@ namespace CenturionCC.System.Utils
             {
                 if (!gun.MainHandle.IsPickedUp) continue;
 
-                if (utcNow.Subtract(gun.LastShotTime).Seconds < _cachedCombatTagTime && _useCombatTag)
+                if (now.Subtract(gun.LastShotTime).Seconds < _cachedCombatTagTime && _useCombatTag)
                 {
                     _combatTagged = true;
                     break;
