@@ -44,6 +44,7 @@ namespace CenturionCC.System.Utils
             syncerData.Add("victimId", syncer.VictimId);
             syncerData.Add("state", new DataToken(DamageDataSyncer.GetStateName(syncer.State)));
             syncerData.Add("result", new DataToken(DamageDataSyncer.GetResultName(syncer.Result)));
+            syncerData.Add("resultContext", syncer.ResultContext);
             syncerData.Add("type", new DataToken(DamageDataSyncer.GetKillTypeName(syncer.Type)));
             syncerData.Add("parts", new DataToken(DamageDataSyncer.GetBodyPartsName(syncer.Parts)));
             syncerData.Add("damageData", damageData);
