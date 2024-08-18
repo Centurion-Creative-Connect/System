@@ -19,7 +19,7 @@ const config = {
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'Centurion-Creative-Connect', // Usually your GitHub org/user name.
-  projectName: 'docs-system', // Usually your repo name.
+  projectName: 'System', // Usually your repo name.
 
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
@@ -40,7 +40,7 @@ const config = {
         docs: {
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
-          editUrl: 'https://github.com/Centurion-Creative-Connect/Docs-System/tree/main/',
+          editUrl: 'https://github.com/Centurion-Creative-Connect/System/tree/docs/',
         },
         blog: false,
         theme: {
