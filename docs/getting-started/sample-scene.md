@@ -21,6 +21,8 @@ Centurion System のシステムの根幹はヒエラルキー上の `Logics/Sys
 - モデレーター専用のコンソールコマンドを実行できる
 - スタッフタグを頭上に表示できる
 
+詳細は [スタッフメンバーを追加する](/docs/how-to/add-staff-member) を参照してください。
+
 ## 概要
 
 Centurion System は3つのモジュールに分けることができます:
