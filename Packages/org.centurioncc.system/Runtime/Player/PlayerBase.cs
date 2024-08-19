@@ -8,44 +8,70 @@ using VRC.SDKBase;
 
 namespace CenturionCC.System.Player
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)] [RequireComponent(typeof(LastHitData))]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+    [RequireComponent(typeof(LastHitData))]
     public abstract class PlayerBase : UdonSharpBehaviour
     {
-        [SerializeField]
-        private LastHitData lastHitData;
+        [SerializeField] private LastHitData lastHitData;
+        protected int _deaths = 0;
+
+        protected int _kills = 0;
+
+        [PublicAPI] public abstract int PlayerId { get; }
+
+        [PublicAPI] public virtual int Index { get; protected set; } = -1;
+
+        [PublicAPI] public abstract int TeamId { get; }
 
         [PublicAPI]
-        public abstract int PlayerId { get; }
+        public virtual int Kills
+        {
+            get => _kills;
+            set
+            {
+                var diff = value - _kills;
+                _kills = value;
+
+                KillStreak += diff;
+                if (KillStreak < 0)
+                    KillStreak = 0;
+                if (KillStreak > HighestKillStreak)
+                    HighestKillStreak = KillStreak;
+
+                Score += 100 * KillStreak;
+                if (LastHitData.Distance > 50)
+                    Score += (int)LastHitData.Distance * 2;
+            }
+        }
 
         [PublicAPI]
-        public virtual int Index { get; protected set; } = -1;
+        public virtual int Deaths
+        {
+            get => _deaths;
+            set
+            {
+                _deaths = value;
+                KillStreak = 0;
+            }
+        }
 
-        [PublicAPI]
-        public abstract int TeamId { get; }
+        [PublicAPI] public virtual int Score { get; set; }
 
-        [PublicAPI]
-        public virtual int Kills { get; set; }
+        [PublicAPI] public virtual int KillStreak { get; set; }
 
-        [PublicAPI]
-        public virtual int Deaths { get; set; }
+        [PublicAPI] public virtual int HighestKillStreak { get; set; }
 
-        [PublicAPI]
-        public virtual LastHitData LastHitData => lastHitData;
+        [PublicAPI] public virtual LastHitData LastHitData => lastHitData;
 
-        [PublicAPI]
-        public virtual bool IsAssigned => PlayerId != -1;
+        [PublicAPI] public virtual bool IsAssigned => PlayerId != -1;
 
-        [PublicAPI]
-        public virtual bool IsLocal => PlayerId == Networking.LocalPlayer.playerId;
+        [PublicAPI] public virtual bool IsLocal => PlayerId == Networking.LocalPlayer.playerId;
 
-        [PublicAPI]
-        public abstract bool IsDead { get; }
+        [PublicAPI] public abstract bool IsDead { get; }
 
-        [PublicAPI] [CanBeNull]
-        public abstract VRCPlayerApi VrcPlayer { get; }
+        [PublicAPI] [CanBeNull] public abstract VRCPlayerApi VrcPlayer { get; }
 
-        [PublicAPI] [CanBeNull]
-        public abstract RoleData Role { get; }
+        [PublicAPI] [CanBeNull] public abstract RoleData Role { get; }
 
         [PublicAPI]
         public virtual void SetId(int id)
