@@ -57,9 +57,9 @@ namespace CenturionCC.System.Gun
         public bool useBulletTrail = true;
         public bool useCollisionCheck = true;
         private WatchdogChildCallbackBase[] _childWdCallbacks;
-        private int _eventCallbackCount;
 
-        private UdonSharpBehaviour[] _eventCallbacks;
+        private int _eventCallbackCount;
+        private UdonSharpBehaviour[] _eventCallbacks = new UdonSharpBehaviour[5];
 
         private bool _isDebugGunHandleVisible;
 
