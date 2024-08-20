@@ -211,8 +211,8 @@ namespace CenturionCC.System.Gun
             if (Behaviour != null)
                 Behaviour.OnGunUpdate(this);
 
-            if (Input.GetKeyDown(KeyCode.B))
-                FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
+            if (!IsVR)
+                Internal_HandleDesktopInputs();
 
             if (IsInWall)
             {
@@ -545,7 +545,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public virtual bool IsDoubleHandedGun => isDoubleHanded;
         [PublicAPI] public virtual float MainHandleRePickupDelay => mainHandleRePickupDelay;
         [PublicAPI] public virtual float MainHandlePitchOffset => mainHandlePitchOffset;
-        [PublicAPI] public virtual float CurrentMainHandlePitchOffset { get; protected set; }
+        [PublicAPI] [field: UdonSynced] public virtual float CurrentMainHandlePitchOffset { get; protected set; }
 
         [PublicAPI] public virtual float SubHandleRePickupDelay => subHandleRePickupDelay;
 
@@ -1114,6 +1114,38 @@ namespace CenturionCC.System.Gun
             return MainHandle != null && MainHandle.CurrentPlayer.SafeGetPlayerId() == playerId ||
                    SubHandle != null && SubHandle.CurrentPlayer.SafeGetPlayerId() == playerId ||
                    CustomHandle != null && CustomHandle.CurrentPlayer.SafeGetPlayerId() == playerId;
+        }
+
+        protected void Internal_HandleDesktopInputs()
+        {
+            if (Input.GetKeyDown(KeyCode.B))
+            {
+                FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
+            }
+
+            if (Input.GetKeyDown(KeyCode.LeftShift))
+            {
+                CurrentMainHandlePitchOffset = 90;
+                RequestSerialization();
+            }
+
+            if (Input.GetKeyUp(KeyCode.LeftShift))
+            {
+                CurrentMainHandlePitchOffset = 0;
+                RequestSerialization();
+            }
+
+            if (Input.GetKeyDown(KeyCode.PageUp))
+            {
+                CurrentMainHandlePitchOffset -= 5;
+                RequestSerialization();
+            }
+
+            if (Input.GetKeyDown(KeyCode.PageDown))
+            {
+                CurrentMainHandlePitchOffset += 5;
+                RequestSerialization();
+            }
         }
 
         #endregion
