@@ -28,6 +28,12 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public abstract bool IsLocal { get; }
 
+        /// <summary>
+        /// Is the <see cref="CurrentHolder"/> in VR?
+        /// </summary>
+        [PublicAPI]
+        public abstract bool IsVR { get; }
+
         [PublicAPI] public virtual TriggerState Trigger { get; set; }
         [PublicAPI] public virtual GunState State { get; set; }
 
