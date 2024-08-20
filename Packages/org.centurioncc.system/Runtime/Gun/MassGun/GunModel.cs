@@ -11,7 +11,8 @@ namespace CenturionCC.System.Gun.MassGun
     - [] synced information of gun (handle pos, shot data, gun states)
     */
 
-    [DefaultExecutionOrder(110)] [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+    [DefaultExecutionOrder(110)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class GunModel : ManagedGun
     {
         public Vector3 Position => IsOccupied ? MainHandle.transform.position : Vector3.positiveInfinity;
@@ -52,8 +53,8 @@ namespace CenturionCC.System.Gun.MassGun
             if (Behaviour != null)
                 Behaviour.OnGunUpdate(this);
 
-            if (Input.GetKeyDown(KeyCode.B))
-                FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
+            if (!IsVR)
+                Internal_HandleDesktopInputs();
 
             if (IsInWall)
             {

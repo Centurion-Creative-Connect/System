@@ -30,6 +30,7 @@ namespace CenturionCC.System.Gun
 
         private bool _isLocal;
         private bool _isPickedUp;
+        private bool _isVR;
         private int _lastShotCount;
         private bool _mainHandleIsPickedUp;
 
@@ -210,8 +211,8 @@ namespace CenturionCC.System.Gun
             if (Behaviour != null)
                 Behaviour.OnGunUpdate(this);
 
-            if (Input.GetKeyDown(KeyCode.B))
-                FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
+            if (!IsVR)
+                Internal_HandleDesktopInputs();
 
             if (IsInWall)
             {
@@ -518,6 +519,7 @@ namespace CenturionCC.System.Gun
 
         [PublicAPI] public override bool IsPickedUp => _isPickedUp;
         [PublicAPI] public override bool IsLocal => _isLocal;
+        [PublicAPI] public override bool IsVR => _isVR;
 
         [PublicAPI] public override MovementOption MovementOption => movementOption;
         [PublicAPI] public override float WalkSpeed => walkSpeed;
@@ -543,7 +545,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public virtual bool IsDoubleHandedGun => isDoubleHanded;
         [PublicAPI] public virtual float MainHandleRePickupDelay => mainHandleRePickupDelay;
         [PublicAPI] public virtual float MainHandlePitchOffset => mainHandlePitchOffset;
-        [PublicAPI] public virtual float CurrentMainHandlePitchOffset { get; protected set; }
+        [PublicAPI] [field: UdonSynced] public virtual float CurrentMainHandlePitchOffset { get; protected set; }
 
         [PublicAPI] public virtual float SubHandleRePickupDelay => subHandleRePickupDelay;
 
@@ -831,10 +833,9 @@ namespace CenturionCC.System.Gun
                     TargetHolster = null;
                     MainHandle.UnHolster();
                     IsHolstered = false;
+                    _isVR = CurrentHolder != null && CurrentHolder.IsUserInVR();
                     Internal_SetPivot(mainHandleIsPickedUp ? HandleType.MainHandle : HandleType.SubHandle);
-                    CurrentMainHandlePitchOffset = CurrentHolder != null && CurrentHolder.IsUserInVR()
-                        ? MainHandlePitchOffset
-                        : 0;
+                    CurrentMainHandlePitchOffset = IsVR ? MainHandlePitchOffset : 0;
                 }
             }
 
@@ -890,27 +891,27 @@ namespace CenturionCC.System.Gun
             if (IsLocal && IsPickedUp)
             {
                 var localPlayer = Networking.LocalPlayer;
-                var inVR = localPlayer.IsUserInVR();
                 var leftHand = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.LeftHand).position;
                 var rightHand = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.RightHand).position;
                 var currentTime = Time.time;
 
                 MainHandle.SetPickupable(currentTime > _nextMainHandlePickupableTime &&
-                                         GetPickupProximity(MainHandle, leftHand, rightHand, inVR, false));
+                                         GetPickupProximity(MainHandle, leftHand, rightHand, IsVR, false));
                 SubHandle.SetPickupable(IsDoubleHandedGun && currentTime > _nextSubHandlePickupableTime &&
-                                        GetPickupProximity(SubHandle, leftHand, rightHand, inVR, false));
+                                        GetPickupProximity(SubHandle, leftHand, rightHand, IsVR, false));
                 CustomHandle.SetPickupable(Behaviour != null &&
                                            Behaviour.RequireCustomHandle &&
                                            IsPickedUp &&
-                                           localPlayer.IsUserInVR() &&
-                                           GetPickupProximity(CustomHandle, leftHand, rightHand, inVR, true));
+                                           IsVR &&
+                                           GetPickupProximity(CustomHandle, leftHand, rightHand, IsVR, true));
             }
             else
             {
+                var localInVR = Networking.LocalPlayer.IsUserInVR();
                 MainHandle.SetPickupable(true);
-                SubHandle.SetPickupable(IsDoubleHandedGun);
+                SubHandle.SetPickupable(IsDoubleHandedGun && localInVR);
                 CustomHandle.SetPickupable(Behaviour != null && Behaviour.RequireCustomHandle && IsPickedUp &&
-                                           Networking.LocalPlayer.IsUserInVR());
+                                           localInVR);
             }
         }
 
@@ -1113,6 +1114,38 @@ namespace CenturionCC.System.Gun
             return MainHandle != null && MainHandle.CurrentPlayer.SafeGetPlayerId() == playerId ||
                    SubHandle != null && SubHandle.CurrentPlayer.SafeGetPlayerId() == playerId ||
                    CustomHandle != null && CustomHandle.CurrentPlayer.SafeGetPlayerId() == playerId;
+        }
+
+        protected void Internal_HandleDesktopInputs()
+        {
+            if (Input.GetKeyDown(KeyCode.B))
+            {
+                FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
+            }
+
+            if (Input.GetKeyDown(KeyCode.LeftShift))
+            {
+                CurrentMainHandlePitchOffset = 90;
+                RequestSerialization();
+            }
+
+            if (Input.GetKeyUp(KeyCode.LeftShift))
+            {
+                CurrentMainHandlePitchOffset = 0;
+                RequestSerialization();
+            }
+
+            if (Input.GetKeyDown(KeyCode.PageUp))
+            {
+                CurrentMainHandlePitchOffset -= 5;
+                RequestSerialization();
+            }
+
+            if (Input.GetKeyDown(KeyCode.PageDown))
+            {
+                CurrentMainHandlePitchOffset += 5;
+                RequestSerialization();
+            }
         }
 
         #endregion
