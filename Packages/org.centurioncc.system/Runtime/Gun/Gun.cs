@@ -21,6 +21,7 @@ namespace CenturionCC.System.Gun
         private const string RightHandTrigger = "Oculus_CrossPlatform_SecondaryIndexTrigger";
         private const float FreeHandPickupProximity = .1F;
         private const float SwapHandDisallowPickupProximity = 0.15F;
+        private const float DesktopPickupProximity = 2F;
         private const float DisallowPickupFromBelowRange = -0.1F;
 
         [UdonSynced] [FieldChangeCallback(nameof(RawState))]
@@ -908,6 +909,7 @@ namespace CenturionCC.System.Gun
             else
             {
                 var localInVR = Networking.LocalPlayer.IsUserInVR();
+                MainHandle.Proximity = localInVR ? FreeHandPickupProximity : DesktopPickupProximity;
                 MainHandle.SetPickupable(true);
                 SubHandle.SetPickupable(IsDoubleHandedGun && localInVR);
                 CustomHandle.SetPickupable(Behaviour != null && Behaviour.RequireCustomHandle && IsPickedUp &&

@@ -4,7 +4,8 @@ using VRC.SDKBase;
 
 namespace CenturionCC.System.Gun
 {
-    [DefaultExecutionOrder(-1)] [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+    [DefaultExecutionOrder(-1)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
     public class GunHandle : UdonSharpBehaviour
     {
         public GunHandleCallbackBase callback;
@@ -28,19 +29,28 @@ namespace CenturionCC.System.Gun
                     _mesh.enabled = value;
             }
         }
+
         public bool IsAttached
         {
             get => _isAttached || IsHolstered;
             private set => _isAttached = value;
         }
+
         public bool IsHolstered { get; private set; }
         public bool IsPickupable => _pickup.pickupable;
+
+        public float Proximity
+        {
+            get => _pickup.proximity;
+            set => _pickup.proximity = value;
+        }
 
         public string UseText
         {
             get => _pickup.UseText;
             set => _pickup.UseText = value;
         }
+
         public bool IsPickedUp => _pickup.IsHeld;
         public VRC_Pickup.PickupHand CurrentHand => _pickup.currentHand;
         public VRCPlayerApi CurrentPlayer => _pickup.currentPlayer;
