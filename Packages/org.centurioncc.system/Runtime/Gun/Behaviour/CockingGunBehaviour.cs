@@ -8,56 +8,47 @@ namespace CenturionCC.System.Gun.Behaviour
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class CockingGunBehaviour : GunBehaviourBase
     {
-        [SerializeField]
-        private bool returnToCockingPositionOnDrop;
+        [SerializeField] private bool returnToCockingPositionOnDrop;
 
-        [Header("Cocking")]
-        [SerializeField]
-        private bool canCockAfterCock;
-        [SerializeField]
-        private bool isBlowBack;
-        [SerializeField]
-        private bool isDoubleAction;
-        [SerializeField]
-        private Transform cockingPosition;
-        [SerializeField]
-        private float cockingLength;
-        [SerializeField] [Range(0, 1)]
-        private float cockingMargin;
-        [SerializeField] [Range(0, 1)]
-        private float cockingAutoLoadMargin;
+        [Header("Cocking")] [SerializeField] private bool canCockAfterCock;
 
-        [Header("Twisting")]
-        [SerializeField]
-        private bool requireTwist;
-        [SerializeField]
-        private bool useHandleRotation;
-        [SerializeField]
-        private Transform idleTwistPosition;
-        [SerializeField]
-        private Transform activeTwistPosition;
-        [SerializeField]
-        private float twistAngleOffset;
-        [SerializeField]
-        private float twistMaxAngle;
-        [SerializeField]
-        private float twistMinAngle;
-        [SerializeField] [Range(0, 1)]
-        private float twistMargin;
-        [SerializeField] [Range(0, 1)]
-        private float twistAutoLoadMargin;
+        [SerializeField] private bool isBlowBack;
 
-        [Header("Desktop")]
-        [SerializeField]
-        private bool doDesktopCockingAutomatically = true;
-        [SerializeField]
-        private KeyCode desktopCockingKey = KeyCode.F;
-        [SerializeField]
-        private float desktopCockingTime = 1F;
+        [SerializeField] private bool isDoubleAction;
 
-        [Header("Haptic")]
-        [SerializeField]
-        private GunCockingHapticDataStore cockingHapticData;
+        [SerializeField] private Transform cockingPosition;
+
+        [SerializeField] private float cockingLength;
+
+        [SerializeField] [Range(0, 1)] private float cockingMargin;
+
+        [SerializeField] [Range(0, 1)] private float cockingAutoLoadMargin;
+
+        [Header("Twisting")] [SerializeField] private bool requireTwist;
+
+        [SerializeField] private bool useHandleRotation;
+
+        [SerializeField] private Transform idleTwistPosition;
+
+        [SerializeField] private Transform activeTwistPosition;
+
+        [SerializeField] private float twistAngleOffset;
+
+        [SerializeField] private float twistMaxAngle;
+
+        [SerializeField] private float twistMinAngle;
+
+        [SerializeField] [Range(0, 1)] private float twistMargin;
+
+        [SerializeField] [Range(0, 1)] private float twistAutoLoadMargin;
+
+        [Header("Desktop")] [SerializeField] private bool doDesktopCockingAutomatically = true;
+
+        [SerializeField] private KeyCode desktopCockingKey = KeyCode.F;
+
+        [SerializeField] private float desktopCockingTime = 1F;
+
+        [Header("Haptic")] [SerializeField] private GunCockingHapticDataStore cockingHapticData;
 
         private float _desktopCockingTimer;
         private bool _isDesktopCockingCurrentlyPulling;
@@ -254,7 +245,7 @@ namespace CenturionCC.System.Gun.Behaviour
 
 
             // Calculate cocking/twist progress
-            if (Networking.LocalPlayer.IsUserInVR())
+            if (instance.IsVR)
             {
                 GetNormalizedProgressAndTwist(instance, out progressNormalized, out twistNormalized);
             }

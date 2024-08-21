@@ -392,7 +392,7 @@ namespace CenturionCC.System.Gun
         {
             if (!IsLocal || !MainHandle.IsPickedUp) return 0F;
 
-            if (!Networking.LocalPlayer.IsUserInVR())
+            if (!IsVR)
                 return Trigger == TriggerState.Fired || Trigger == TriggerState.Firing ? 1 : 0;
 
             return MainHandle.CurrentHand == VRC_Pickup.PickupHand.Left
