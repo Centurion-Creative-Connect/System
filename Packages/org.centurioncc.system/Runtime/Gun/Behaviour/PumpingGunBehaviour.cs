@@ -6,23 +6,21 @@ namespace CenturionCC.System.Gun.Behaviour
 {
     public class PumpingGunBehaviour : GunBehaviourBase
     {
-        [SerializeField]
-        private float cockingLength;
-        [SerializeField] [Range(0, 1)]
-        private float maxAutoLoadMargin = 0.8F;
-        [SerializeField] [Range(0, 1)]
-        private float minAutoLoadMargin = 0.2F;
-        [SerializeField]
-        private float minimumZOffset = 0.1F;
-        [SerializeField]
-        private GunCockingHapticDataStore cockingHapticData;
-        [Header("Desktop")]
-        [SerializeField]
-        private bool doDesktopCockingAutomatically = true;
-        [SerializeField]
-        private KeyCode desktopCockingKey = KeyCode.F;
-        [SerializeField]
-        private float desktopCockingTime;
+        [SerializeField] private float cockingLength;
+
+        [SerializeField] [Range(0, 1)] private float maxAutoLoadMargin = 0.8F;
+
+        [SerializeField] [Range(0, 1)] private float minAutoLoadMargin = 0.2F;
+
+        [SerializeField] private float minimumZOffset = 0.1F;
+
+        [SerializeField] private GunCockingHapticDataStore cockingHapticData;
+
+        [Header("Desktop")] [SerializeField] private bool doDesktopCockingAutomatically = true;
+
+        [SerializeField] private KeyCode desktopCockingKey = KeyCode.F;
+
+        [SerializeField] private float desktopCockingTime;
 
         private float _cockingRefZ;
 
@@ -102,7 +100,7 @@ namespace CenturionCC.System.Gun.Behaviour
             }
 
             // Calculate cocking progress
-            if (Networking.LocalPlayer.IsUserInVR())
+            if (instance.IsVR)
             {
                 var worldToLocalMatrix = instance.Target.worldToLocalMatrix;
                 var subHandleLocalPos = worldToLocalMatrix.MultiplyPoint3x4(instance.SubHandle.transform.position);
