@@ -4,7 +4,8 @@ using VRC.SDKBase;
 
 namespace CenturionCC.System.Gun
 {
-    [DefaultExecutionOrder(-1)] [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+    [DefaultExecutionOrder(-1)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
     public class GunHandle : UdonSharpBehaviour
     {
         public GunHandleCallbackBase callback;
@@ -12,9 +13,11 @@ namespace CenturionCC.System.Gun
         public Transform target;
         public Transform free;
         public Material pickupableMaterial;
+        public float desktopScaleMultiplier = 10F;
         private Collider _collider;
         private Material _defaultMaterial;
 
+        private Vector3 _initialScale;
         private bool _isAttached;
         private MeshRenderer _mesh;
         private VRC_Pickup _pickup;
@@ -28,19 +31,28 @@ namespace CenturionCC.System.Gun
                     _mesh.enabled = value;
             }
         }
+
         public bool IsAttached
         {
             get => _isAttached || IsHolstered;
             private set => _isAttached = value;
         }
+
         public bool IsHolstered { get; private set; }
         public bool IsPickupable => _pickup.pickupable;
+
+        public float Proximity
+        {
+            get => _pickup.proximity;
+            set => _pickup.proximity = value;
+        }
 
         public string UseText
         {
             get => _pickup.UseText;
             set => _pickup.UseText = value;
         }
+
         public bool IsPickedUp => _pickup.IsHeld;
         public VRC_Pickup.PickupHand CurrentHand => _pickup.currentHand;
         public VRCPlayerApi CurrentPlayer => _pickup.currentPlayer;
@@ -64,6 +76,8 @@ namespace CenturionCC.System.Gun
                 free = transform.root;
             if (_collider)
                 _collider.enabled = _pickup.pickupable;
+
+            _initialScale = transform.localScale;
         }
 
         public void MoveToLocalPosition(Vector3 pos, Quaternion rot)
@@ -72,6 +86,11 @@ namespace CenturionCC.System.Gun
             var expectedPos = localToWorld.MultiplyPoint3x4(pos);
             var expectedRot = localToWorld.rotation * rot;
             transform.SetPositionAndRotation(expectedPos, expectedRot);
+        }
+
+        public void AdjustScaleForDesktop(bool isVR)
+        {
+            transform.localScale = isVR ? _initialScale : _initialScale * desktopScaleMultiplier;
         }
 
         public void SetPickupable(bool isPickupable)
