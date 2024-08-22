@@ -13,9 +13,11 @@ namespace CenturionCC.System.Gun
         public Transform target;
         public Transform free;
         public Material pickupableMaterial;
+        public float desktopScaleMultiplier = 10F;
         private Collider _collider;
         private Material _defaultMaterial;
 
+        private Vector3 _initialScale;
         private bool _isAttached;
         private MeshRenderer _mesh;
         private VRC_Pickup _pickup;
@@ -74,6 +76,8 @@ namespace CenturionCC.System.Gun
                 free = transform.root;
             if (_collider)
                 _collider.enabled = _pickup.pickupable;
+
+            _initialScale = transform.localScale;
         }
 
         public void MoveToLocalPosition(Vector3 pos, Quaternion rot)
@@ -82,6 +86,11 @@ namespace CenturionCC.System.Gun
             var expectedPos = localToWorld.MultiplyPoint3x4(pos);
             var expectedRot = localToWorld.rotation * rot;
             transform.SetPositionAndRotation(expectedPos, expectedRot);
+        }
+
+        public void AdjustScaleForDesktop(bool isVR)
+        {
+            transform.localScale = isVR ? _initialScale : _initialScale * desktopScaleMultiplier;
         }
 
         public void SetPickupable(bool isPickupable)

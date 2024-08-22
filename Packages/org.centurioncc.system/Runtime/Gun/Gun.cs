@@ -910,6 +910,7 @@ namespace CenturionCC.System.Gun
             {
                 var localInVR = Networking.LocalPlayer.IsUserInVR();
                 MainHandle.Proximity = localInVR ? FreeHandPickupProximity : DesktopPickupProximity;
+                MainHandle.AdjustScaleForDesktop(localInVR);
                 MainHandle.SetPickupable(true);
                 SubHandle.SetPickupable(IsDoubleHandedGun && localInVR);
                 CustomHandle.SetPickupable(Behaviour != null && Behaviour.RequireCustomHandle && IsPickedUp &&
