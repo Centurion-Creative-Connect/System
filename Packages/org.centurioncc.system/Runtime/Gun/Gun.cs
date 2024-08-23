@@ -1126,27 +1126,10 @@ namespace CenturionCC.System.Gun
                 FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
             }
 
-            if (Input.GetKeyDown(KeyCode.LeftShift))
+            var scrollDelta = Input.GetAxisRaw("Mouse ScrollWheel") * 80F;
+            if (!Mathf.Approximately(scrollDelta, 0) && !Input.GetKey(KeyCode.LeftShift))
             {
-                CurrentMainHandlePitchOffset = 90;
-                RequestSerialization();
-            }
-
-            if (Input.GetKeyUp(KeyCode.LeftShift))
-            {
-                CurrentMainHandlePitchOffset = 0;
-                RequestSerialization();
-            }
-
-            if (Input.GetKeyDown(KeyCode.PageUp))
-            {
-                CurrentMainHandlePitchOffset -= 5;
-                RequestSerialization();
-            }
-
-            if (Input.GetKeyDown(KeyCode.PageDown))
-            {
-                CurrentMainHandlePitchOffset += 5;
+                CurrentMainHandlePitchOffset += scrollDelta;
                 RequestSerialization();
             }
         }
