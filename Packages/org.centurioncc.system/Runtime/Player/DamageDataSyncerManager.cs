@@ -226,6 +226,8 @@ namespace CenturionCC.System.Player
                     return;
                 }
 
+                logger.LogVerbose(
+                    $"{Prefix}Resolved to {DamageDataSyncer.GetResultName(result)}, {SyncResultContext.GetContextMessage(context)}");
                 requester.UpdateResult(result, context);
             }
 
