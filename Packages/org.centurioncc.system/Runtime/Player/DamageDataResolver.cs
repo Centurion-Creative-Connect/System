@@ -18,6 +18,8 @@ namespace CenturionCC.System.Player
 
         private VRCPlayerApi _local;
 
+        [NonSerialized] public bool UseTimeBasedCheck = true;
+
         private void Start()
         {
             _local = Networking.LocalPlayer;
@@ -49,17 +51,20 @@ namespace CenturionCC.System.Player
                 return true;
             }
 
-            var hitResult = ComputeHitResultFromDateTime(
-                syncer.ActivatedTime,
-                GetAssumedDiedTime(syncer.AttackerId),
-                GetAssumedRevivedTime(syncer.AttackerId)
-            );
-
-            if (!hitResult)
+            if (UseTimeBasedCheck)
             {
-                result = SyncResult.Cancelled;
-                resultContext = SyncResultContext.AttackerAlreadyDead;
-                return true;
+                var hitResult = ComputeHitResultFromDateTime(
+                    syncer.ActivatedTime,
+                    GetAssumedDiedTime(syncer.AttackerId),
+                    GetAssumedRevivedTime(syncer.AttackerId)
+                );
+
+                if (!hitResult)
+                {
+                    result = SyncResult.Cancelled;
+                    resultContext = SyncResultContext.AttackerAlreadyDead;
+                    return true;
+                }
             }
 
             if (syncer.Type == KillType.FriendlyFire && playerManager.FriendlyFireMode == FriendlyFireMode.Both)
@@ -107,6 +112,7 @@ namespace CenturionCC.System.Player
             DateTime attackerDiedTime,
             DateTime attackerRevivedTime)
         {
+#if FALSE
             // Handle edge case where player was instantly revived 
             if (attackerRevivedTime == attackerDiedTime) return true;
 
@@ -115,6 +121,14 @@ namespace CenturionCC.System.Player
 
             // When attacker is dead
             return damageOriginatedTime <= attackerDiedTime;
+#else
+            return damageOriginatedTime <= attackerDiedTime ||
+                   damageOriginatedTime == attackerRevivedTime ||
+                   attackerDiedTime == attackerRevivedTime ||
+                   (attackerDiedTime < attackerRevivedTime &&
+                    attackerDiedTime <= damageOriginatedTime &&
+                    attackerRevivedTime <= damageOriginatedTime);
+#endif
         }
 
         #region Callbacks
@@ -184,6 +198,10 @@ namespace CenturionCC.System.Player
 
             _assumedRevivedTimeDict.Remove(oldId);
             _assumedRevivedTimeDict.Remove(newId);
+
+            SetAssumedDiedTime(newId, DateTime.MinValue);
+            SetConfirmedDiedTime(newId, DateTime.MinValue);
+            SetAssumedRevivedTime(newId, Networking.GetNetworkDateTime());
         }
 
         #endregion
@@ -197,14 +215,14 @@ namespace CenturionCC.System.Player
         [PublicAPI]
         public DateTime GetConfirmedDiedTime(int playerId)
         {
-            return _confirmedDiedTimeDict.TryGetValue(new DataToken(playerId), TokenType.Long, out var timeToken)
+            return _confirmedDiedTimeDict.TryGetValue(playerId.ToString(), TokenType.Long, out var timeToken)
                 ? new DateTime(timeToken.Long)
                 : DateTime.MinValue;
         }
 
         private void SetConfirmedDiedTime(int playerId, DateTime time)
         {
-            _confirmedDiedTimeDict.SetValue(playerId, time.Ticks);
+            _confirmedDiedTimeDict.SetValue(playerId.ToString(), time.Ticks);
         }
 
         private void UpdateConfirmedDiedTime(int playerId)
@@ -215,14 +233,14 @@ namespace CenturionCC.System.Player
         [PublicAPI]
         public DateTime GetAssumedDiedTime(int playerId)
         {
-            return _assumedDiedTimeDict.TryGetValue(playerId, TokenType.Long, out var timeToken)
+            return _assumedDiedTimeDict.TryGetValue(playerId.ToString(), TokenType.Long, out var timeToken)
                 ? new DateTime(timeToken.Long)
                 : DateTime.MinValue;
         }
 
         private void SetAssumedDiedTime(int playerId, DateTime time)
         {
-            _assumedDiedTimeDict.SetValue(playerId, time.Ticks);
+            _assumedDiedTimeDict.SetValue(playerId.ToString(), time.Ticks);
         }
 
         private void RevertAssumedDiedTime(int playerId)
@@ -233,14 +251,31 @@ namespace CenturionCC.System.Player
         [PublicAPI]
         public DateTime GetAssumedRevivedTime(int playerId)
         {
-            return _assumedRevivedTimeDict.TryGetValue(playerId, TokenType.Long, out var timeToken)
+            return _assumedRevivedTimeDict.TryGetValue(playerId.ToString(), TokenType.Long, out var timeToken)
                 ? new DateTime(timeToken.Long)
                 : DateTime.MinValue;
         }
 
         private void SetAssumedRevivedTime(int playerId, DateTime time)
         {
-            _assumedRevivedTimeDict.SetValue(playerId, time.Ticks);
+            _assumedRevivedTimeDict.SetValue(playerId.ToString(), time.Ticks);
+            if (GetAssumedDiedTime(playerId) == DateTime.MinValue)
+            {
+                SetAssumedDiedTime(playerId, time);
+            }
+        }
+
+        public void DumpTimeData()
+        {
+            var dict = new DataDictionary();
+            dict.Add("confirmed_died_time", _confirmedDiedTimeDict);
+            dict.Add("assumed_died_time", _assumedDiedTimeDict);
+            dict.Add("assumed_revived_time", _assumedRevivedTimeDict);
+
+            if (VRCJson.TrySerializeToJson(dict, JsonExportType.Beautify, out var result))
+            {
+                Debug.Log(result.String);
+            }
         }
 
         #endregion
