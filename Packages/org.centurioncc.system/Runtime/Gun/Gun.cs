@@ -23,15 +23,34 @@ namespace CenturionCC.System.Gun
         private const float SwapHandDisallowPickupProximity = 0.15F;
         private const float DesktopPickupProximity = 2F;
         private const float DisallowPickupFromBelowRange = -0.1F;
+        protected readonly int CockingProgressAnimHash = Animator.StringToHash(GunUtility.CockingProgressParamName);
+        protected readonly int CockingTwistAnimHash = Animator.StringToHash(GunUtility.CockingTwistParamName);
+        protected readonly int HasBulletAnimHash = Animator.StringToHash(GunUtility.HasBulletParamName);
+        protected readonly int HasCockedAnimHash = Animator.StringToHash(GunUtility.HasCockedParamName);
+        protected readonly int IsInWallAnimHash = Animator.StringToHash(GunUtility.IsInWallParamName);
+        protected readonly int IsLocalAnimHash = Animator.StringToHash(GunUtility.IsLocalParamName);
+        protected readonly int IsPickedUpGlobalAnimHash = Animator.StringToHash(GunUtility.IsPickedUpGlobalParamName);
+        protected readonly int IsPickedUpLocalAnimHash = Animator.StringToHash(GunUtility.IsPickedUpLocalParamName);
+        protected readonly int IsShootingAnimHash = Animator.StringToHash(GunUtility.IsShootingParamName);
+        protected readonly int IsShootingEmptyAnimHash = Animator.StringToHash(GunUtility.IsShootingEmptyParamName);
+        protected readonly int IsVRAnimHash = Animator.StringToHash(GunUtility.IsVRParamName);
+        protected readonly int SelectorTypeAnimHash = Animator.StringToHash(GunUtility.SelectorTypeParamName);
+        protected readonly int StateAnimHash = Animator.StringToHash(GunUtility.StateParamName);
+
+        protected readonly int TriggerProgressAnimHash = Animator.StringToHash(GunUtility.TriggerProgressParamName);
+        protected readonly int TriggerStateAnimHash = Animator.StringToHash(GunUtility.TriggerStateParamName);
 
         [UdonSynced] [FieldChangeCallback(nameof(RawState))]
         private byte _currentState;
 
         private FireMode _fireMode;
+        private bool _hasBulletInChamber;
+        private bool _hasCocked;
 
         private bool _isLocal;
         private bool _isPickedUp;
         private bool _isVR;
+
         private int _lastShotCount;
         private bool _mainHandleIsPickedUp;
 
@@ -208,7 +227,7 @@ namespace CenturionCC.System.Gun
             Internal_CheckForHandleDistance();
 
             if (TargetAnimator != null)
-                TargetAnimator.SetFloat(GunUtility.TriggerProgressParameter(), GetMainTriggerPull());
+                TargetAnimator.SetFloat(TriggerProgressAnimHash, GetMainTriggerPull());
             if (Behaviour != null)
                 Behaviour.OnGunUpdate(this);
 
@@ -507,8 +526,34 @@ namespace CenturionCC.System.Gun
             set
             {
                 _trigger = value;
+                if (TargetAnimator != null)
+                    TargetAnimator.SetInteger(TriggerStateAnimHash, (int)_trigger);
                 if (value == TriggerState.Armed || value == TriggerState.Idle)
                     BurstCount = 0;
+            }
+        }
+
+        [PublicAPI]
+        public override bool HasCocked
+        {
+            get => _hasCocked;
+            set
+            {
+                _hasCocked = value;
+                if (TargetAnimator != null)
+                    TargetAnimator.SetBool(HasCockedAnimHash, value);
+            }
+        }
+
+        [PublicAPI]
+        public override bool HasBulletInChamber
+        {
+            get => _hasBulletInChamber;
+            protected set
+            {
+                _hasBulletInChamber = value;
+                if (TargetAnimator != null)
+                    TargetAnimator.SetBool(HasBulletAnimHash, value);
             }
         }
 
@@ -656,7 +701,7 @@ namespace CenturionCC.System.Gun
                 var lastState = _currentState;
                 _currentState = value;
                 if (TargetAnimator != null)
-                    TargetAnimator.SetInteger(GunUtility.StateParameter(), value);
+                    TargetAnimator.SetInteger(StateAnimHash, value);
                 if (lastState != value)
                     OnProcessStateChange(lastState, value);
             }
@@ -785,7 +830,7 @@ namespace CenturionCC.System.Gun
             }
 
             if (TargetAnimator != null)
-                TargetAnimator.SetTrigger(GunUtility.IsShootingParameter());
+                TargetAnimator.SetTrigger(IsShootingAnimHash);
             if (AudioData != null)
                 Internal_PlayAudio(AudioData.Shooting, AudioData.ShootingOffset);
             if (IsLocal && HapticData != null && HapticData.Shooting)
@@ -800,6 +845,8 @@ namespace CenturionCC.System.Gun
         public virtual void Internal_EmptyShoot()
         {
             OnEmptyShoot();
+            if (TargetAnimator != null)
+                TargetAnimator.SetTrigger(IsShootingEmptyAnimHash);
             if (AudioData != null)
                 Internal_PlayAudio(AudioData.EmptyShooting, AudioData.EmptyShootingOffset);
         }
@@ -837,6 +884,13 @@ namespace CenturionCC.System.Gun
                     _isVR = CurrentHolder != null && CurrentHolder.IsUserInVR();
                     Internal_SetPivot(mainHandleIsPickedUp ? HandleType.MainHandle : HandleType.SubHandle);
                     CurrentMainHandlePitchOffset = IsVR ? MainHandlePitchOffset : 0;
+                }
+
+                if (TargetAnimator != null)
+                {
+                    TargetAnimator.SetBool(IsVRAnimHash, IsVR);
+                    TargetAnimator.SetBool(IsLocalAnimHash, IsLocal);
+                    TargetAnimator.SetBool(IsPickedUpGlobalAnimHash, IsPickedUp);
                 }
             }
 
@@ -1108,7 +1162,7 @@ namespace CenturionCC.System.Gun
         {
             _fireMode = fireMode;
             if (TargetAnimator != null)
-                TargetAnimator.SetInteger(GunUtility.SelectorTypeParameter(), (int)fireMode);
+                TargetAnimator.SetInteger(SelectorTypeAnimHash, (int)fireMode);
         }
 
         protected bool Internal_IsHeldBy(VRCPlayerApi api)
@@ -1239,7 +1293,7 @@ namespace CenturionCC.System.Gun
                 }
 
                 if (TargetAnimator != null && !IsLocal)
-                    TargetAnimator.SetFloat(GunUtility.CockingTwistParameter(), 1);
+                    TargetAnimator.SetFloat(CockingTwistAnimHash, 1);
             }
             else if (nextState == GunState.InCockingPush && previousState == GunState.InCockingPull)
             {
@@ -1247,8 +1301,8 @@ namespace CenturionCC.System.Gun
 
                 if (TargetAnimator != null && !IsLocal)
                 {
-                    TargetAnimator.SetFloat(GunUtility.CockingProgressParameter(), 1);
-                    TargetAnimator.SetFloat(GunUtility.CockingTwistParameter(), 1);
+                    TargetAnimator.SetFloat(CockingProgressAnimHash, 1);
+                    TargetAnimator.SetFloat(CockingTwistAnimHash, 1);
                 }
             }
             else if (nextState == GunState.Idle && previousState != GunState.Idle)
@@ -1257,8 +1311,8 @@ namespace CenturionCC.System.Gun
 
                 if (TargetAnimator != null && !IsLocal)
                 {
-                    TargetAnimator.SetFloat(GunUtility.CockingProgressParameter(), 0);
-                    TargetAnimator.SetFloat(GunUtility.CockingTwistParameter(), 0);
+                    TargetAnimator.SetFloat(CockingProgressAnimHash, 0);
+                    TargetAnimator.SetFloat(CockingTwistAnimHash, 0);
                 }
             }
         }
@@ -1327,8 +1381,8 @@ namespace CenturionCC.System.Gun
 
             if (TargetAnimator != null)
             {
-                TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), true);
-                TargetAnimator.SetFloat(GunUtility.TriggerProgressParameter(), 0F);
+                TargetAnimator.SetBool(IsPickedUpLocalAnimHash, true);
+                TargetAnimator.SetFloat(TriggerProgressAnimHash, 0F);
             }
 
             // When only one handle is picked up at this time
@@ -1431,8 +1485,8 @@ namespace CenturionCC.System.Gun
 
                 if (TargetAnimator != null)
                 {
-                    TargetAnimator.SetBool(GunUtility.IsPickedUpLocallyParameter(), false);
-                    TargetAnimator.SetFloat(GunUtility.TriggerProgressParameter(), 0F);
+                    TargetAnimator.SetBool(IsPickedUpLocalAnimHash, false);
+                    TargetAnimator.SetFloat(TriggerProgressAnimHash, 0F);
                 }
 
                 if (PlayerController != null)

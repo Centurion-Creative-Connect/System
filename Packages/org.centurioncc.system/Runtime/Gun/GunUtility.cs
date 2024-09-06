@@ -7,6 +7,22 @@ namespace CenturionCC.System.Gun
 {
     public static class GunUtility
     {
+        public const string TriggerProgressParamName = "TriggerProgress";
+        public const string CockingProgressParamName = "CockingProgress";
+        public const string CockingTwistParamName = "CockingTwist";
+        public const string IsPickedUpLocalParamName = "IsPickedUp";
+        public const string IsPickedUpGlobalParamName = "IsPickedUpGlobal";
+        public const string IsInWallParamName = "IsInWall";
+        public const string IsLocalParamName = "IsLocal";
+        public const string IsVRParamName = "IsVR";
+        public const string HasBulletParamName = "HasBullet";
+        public const string HasCockedParamName = "HasCocked";
+        public const string IsShootingParamName = "IsShooting";
+        public const string IsShootingEmptyParamName = "IsShootingEmpty";
+        public const string SelectorTypeParamName = "SelectorType";
+        public const string StateParamName = "State";
+        public const string TriggerStateParamName = "Trigger";
+
         public static FireMode CycleFireMode(FireMode fireMode, FireMode[] allowedFireModes)
         {
             if (allowedFireModes == null || allowedFireModes.Length == 0)
@@ -74,9 +90,6 @@ namespace CenturionCC.System.Gun
             {
                 anim.SetFloat(CockingProgressParameter(), progressNormalized);
                 anim.SetFloat(CockingTwistParameter(), twistNormalized);
-                anim.SetInteger(StateParameter(), (int)next);
-                anim.SetBool(HasBulletParameter(), target.HasBulletInChamber);
-                anim.SetBool(HasCockedParameter(), target.HasCocked);
             }
 
             if (curr != next)
@@ -124,9 +137,6 @@ namespace CenturionCC.System.Gun
             if (anim)
             {
                 anim.SetFloat(CockingProgressParameter(), progressNormalized);
-                anim.SetInteger(StateParameter(), (int)next);
-                anim.SetBool(HasBulletParameter(), target.HasBulletInChamber);
-                anim.SetBool(HasCockedParameter(), target.HasCocked);
             }
 
             if (curr != next)
@@ -141,52 +151,52 @@ namespace CenturionCC.System.Gun
 
         public static int TriggerProgressParameter()
         {
-            return Animator.StringToHash("TriggerProgress");
+            return Animator.StringToHash(TriggerProgressParamName);
         }
 
         public static int CockingProgressParameter()
         {
-            return Animator.StringToHash("CockingProgress");
+            return Animator.StringToHash(CockingProgressParamName);
         }
 
         public static int CockingTwistParameter()
         {
-            return Animator.StringToHash("CockingTwist");
+            return Animator.StringToHash(CockingTwistParamName);
         }
 
         public static int IsPickedUpLocallyParameter()
         {
-            return Animator.StringToHash("IsPickedUp");
+            return Animator.StringToHash(IsPickedUpLocalParamName);
         }
 
         public static int HasBulletParameter()
         {
-            return Animator.StringToHash("HasBullet");
+            return Animator.StringToHash(HasBulletParamName);
         }
 
         public static int HasCockedParameter()
         {
-            return Animator.StringToHash("HasCocked");
+            return Animator.StringToHash(HasCockedParamName);
         }
 
         public static int IsShootingParameter()
         {
-            return Animator.StringToHash("IsShooting");
+            return Animator.StringToHash(IsShootingParamName);
         }
 
         public static int IsShootingEmptyParameter()
         {
-            return Animator.StringToHash("IsShootingEmpty");
+            return Animator.StringToHash(IsShootingEmptyParamName);
         }
 
         public static int SelectorTypeParameter()
         {
-            return Animator.StringToHash("SelectorType");
+            return Animator.StringToHash(SelectorTypeParamName);
         }
 
         public static int StateParameter()
         {
-            return Animator.StringToHash("State");
+            return Animator.StringToHash(StateParamName);
         }
     }
 }
