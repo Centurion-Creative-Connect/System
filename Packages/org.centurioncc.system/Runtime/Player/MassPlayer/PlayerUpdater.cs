@@ -11,15 +11,13 @@ namespace CenturionCC.System.Player.MassPlayer
     /// Pairs <see cref="PlayerModel"/> and <see cref="PlayerView"/> then updates collider position.
     /// </summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    [DefaultExecutionOrder(21)]
     public class PlayerUpdater : PlayerManagerCallbackBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
 
-        [SerializeField] private PlayerModel[] models;
-
         [SerializeField] private PlayerViewBase[] views;
-
         [SerializeField] private int sortStep = 5;
 
         public int sortStepCount;
@@ -28,13 +26,15 @@ namespace CenturionCC.System.Player.MassPlayer
         private int _lastSortStepIndex;
         private VRCPlayerApi _localPlayer;
 
-        [PublicAPI] public int ModelCount => models.Length;
+        [PublicAPI] public int ModelCount => _distanceSortedModels.Length;
 
         private void Start()
         {
             _localPlayer = Networking.LocalPlayer;
-            _distanceSortedModels = new PlayerModel[models.Length];
-            Array.Copy(models, _distanceSortedModels, models.Length);
+            var playerModels = playerManager.GetPlayers();
+
+            _distanceSortedModels = new PlayerModel[playerModels.Length];
+            Array.Copy(playerModels, _distanceSortedModels, playerModels.Length);
 
             sortStepCount = sortStep;
 
