@@ -125,6 +125,7 @@ namespace CenturionCC.System.Gun
             if (HasBulletInChamber)
                 EjectBullet();
             HasBulletInChamber = true;
+            RequestSerialization();
             return HasBulletInChamber;
         }
 
@@ -135,6 +136,7 @@ namespace CenturionCC.System.Gun
         public virtual void EjectBullet()
         {
             HasBulletInChamber = false;
+            RequestSerialization();
         }
     }
 }

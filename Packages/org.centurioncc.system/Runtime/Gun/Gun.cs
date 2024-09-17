@@ -45,8 +45,8 @@ namespace CenturionCC.System.Gun
         private byte _currentState;
 
         private FireMode _fireMode;
-        private bool _hasBulletInChamber;
-        private bool _hasCocked;
+        [UdonSynced] private bool _hasBulletInChamber;
+        [UdonSynced] private bool _hasCocked;
 
         private bool _isLocal;
         private bool _isPickedUp;
