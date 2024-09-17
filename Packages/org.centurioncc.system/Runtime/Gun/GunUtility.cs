@@ -89,8 +89,8 @@ namespace CenturionCC.System.Gun
             var anim = target.TargetAnimator;
             if (anim)
             {
-                anim.SetFloat(CockingProgressParameter(), progressNormalized);
-                anim.SetFloat(CockingTwistParameter(), twistNormalized);
+                anim.SetFloat(CockingProgressParamName, progressNormalized);
+                anim.SetFloat(CockingTwistParamName, twistNormalized);
             }
 
             if (curr != next)
@@ -137,7 +137,7 @@ namespace CenturionCC.System.Gun
             var anim = target.TargetAnimator;
             if (anim)
             {
-                anim.SetFloat(CockingProgressParameter(), progressNormalized);
+                anim.SetFloat(CockingProgressParamName, progressNormalized);
             }
 
             if (curr != next)
@@ -148,56 +148,6 @@ namespace CenturionCC.System.Gun
             }
 
             return next;
-        }
-
-        public static int TriggerProgressParameter()
-        {
-            return Animator.StringToHash(TriggerProgressParamName);
-        }
-
-        public static int CockingProgressParameter()
-        {
-            return Animator.StringToHash(CockingProgressParamName);
-        }
-
-        public static int CockingTwistParameter()
-        {
-            return Animator.StringToHash(CockingTwistParamName);
-        }
-
-        public static int IsPickedUpLocallyParameter()
-        {
-            return Animator.StringToHash(IsPickedUpLocalParamName);
-        }
-
-        public static int HasBulletParameter()
-        {
-            return Animator.StringToHash(HasBulletParamName);
-        }
-
-        public static int HasCockedParameter()
-        {
-            return Animator.StringToHash(HasCockedParamName);
-        }
-
-        public static int IsShootingParameter()
-        {
-            return Animator.StringToHash(IsShootingParamName);
-        }
-
-        public static int IsShootingEmptyParameter()
-        {
-            return Animator.StringToHash(IsShootingEmptyParamName);
-        }
-
-        public static int SelectorTypeParameter()
-        {
-            return Animator.StringToHash(SelectorTypeParamName);
-        }
-
-        public static int StateParameter()
-        {
-            return Animator.StringToHash(StateParamName);
         }
     }
 }
