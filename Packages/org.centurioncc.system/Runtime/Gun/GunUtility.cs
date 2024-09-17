@@ -12,6 +12,7 @@ namespace CenturionCC.System.Gun
         public const string CockingTwistParamName = "CockingTwist";
         public const string IsPickedUpLocalParamName = "IsPickedUp";
         public const string IsPickedUpGlobalParamName = "IsPickedUpGlobal";
+        public const string IsInSafeZoneParamName = "IsInSafeZone";
         public const string IsInWallParamName = "IsInWall";
         public const string IsLocalParamName = "IsLocal";
         public const string IsVRParamName = "IsVR";

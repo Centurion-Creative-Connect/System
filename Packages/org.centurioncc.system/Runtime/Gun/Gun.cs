@@ -27,6 +27,7 @@ namespace CenturionCC.System.Gun
         protected readonly int CockingTwistAnimHash = Animator.StringToHash(GunUtility.CockingTwistParamName);
         protected readonly int HasBulletAnimHash = Animator.StringToHash(GunUtility.HasBulletParamName);
         protected readonly int HasCockedAnimHash = Animator.StringToHash(GunUtility.HasCockedParamName);
+        protected readonly int IsInSafeZoneAnimHash = Animator.StringToHash(GunUtility.IsInSafeZoneParamName);
         protected readonly int IsInWallAnimHash = Animator.StringToHash(GunUtility.IsInWallParamName);
         protected readonly int IsLocalAnimHash = Animator.StringToHash(GunUtility.IsLocalParamName);
         protected readonly int IsPickedUpGlobalAnimHash = Animator.StringToHash(GunUtility.IsPickedUpGlobalParamName);
@@ -138,6 +139,8 @@ namespace CenturionCC.System.Gun
             if (otherName.StartsWith("safezone"))
             {
                 safetyAreaCollisionCount++;
+                if (TargetAnimator != null)
+                    TargetAnimator.SetBool(IsInSafeZoneAnimHash, IsInSafeZone);
                 return;
             }
 
@@ -156,6 +159,8 @@ namespace CenturionCC.System.Gun
             }
 
             ++CollisionCount;
+            if (TargetAnimator != null)
+                TargetAnimator.SetBool(IsInWallAnimHash, IsInWall);
 
             OnProcessCollisionAudio(other);
         }
@@ -167,6 +172,8 @@ namespace CenturionCC.System.Gun
             if (otherName.StartsWith("safezone"))
             {
                 safetyAreaCollisionCount--;
+                if (TargetAnimator != null)
+                    TargetAnimator.SetBool(IsInSafeZoneAnimHash, IsInSafeZone);
                 return;
             }
 
@@ -186,6 +193,9 @@ namespace CenturionCC.System.Gun
             // To make sure there arent negative values on it (might happen when turning off this collider)
             if (CollisionCount < 0)
                 CollisionCount = 0;
+
+            if (TargetAnimator != null)
+                TargetAnimator.SetBool(IsInWallAnimHash, IsInWall);
         }
 
         public override void OnDeserialization()
