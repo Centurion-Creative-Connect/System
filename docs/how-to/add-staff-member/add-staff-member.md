@@ -1,6 +1,6 @@
 # スタッフメンバーを追加する
 
-スタッフ･ﾒﾝﾊﾞｰを追加するには、[RoleManager](https://docs.derpynewbie.dev/newbie-commons/rolemanager) を編集する必要があります。
+スタッフメンバーを追加するには、[RoleManager](https://docs.derpynewbie.dev/newbie-commons/rolemanager) を編集する必要があります。
 
 1. ヒエラルキー上で `Logics/System/RoleManager` を選択します
 2.  `RoleManager` コンポーネントの `Players` リストにある `+` ボタンから `Add and assign generated RolePlayerData` を選択します
