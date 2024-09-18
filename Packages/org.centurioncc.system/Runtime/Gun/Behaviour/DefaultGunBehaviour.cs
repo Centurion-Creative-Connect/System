@@ -9,14 +9,13 @@ namespace CenturionCC.System.Gun.Behaviour
 
         public override void OnGunPickup(GunBase instance)
         {
-            var animator = instance.TargetAnimator;
-            if (animator) animator.SetBool(GunUtility.HasBulletParameter(), true);
+            if (!instance.HasBulletInChamber)
+                instance.LoadBullet();
+            instance.HasCocked = true;
         }
 
         public override void OnGunDrop(GunBase instance)
         {
-            var animator = instance.TargetAnimator;
-            if (animator) animator.SetBool(GunUtility.HasBulletParameter(), true);
         }
 
         public override void OnGunUpdate(GunBase instance)
@@ -27,7 +26,8 @@ namespace CenturionCC.System.Gun.Behaviour
                 var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
                 if (hasSucceeded)
                 {
-                    instance.LoadBullet();
+                    if (!instance.HasBulletInChamber)
+                        instance.LoadBullet();
                     instance.HasCocked = true;
                 }
             }
@@ -36,7 +36,8 @@ namespace CenturionCC.System.Gun.Behaviour
         public override void Setup(GunBase instance)
         {
             instance.State = GunState.Idle;
-            instance.LoadBullet();
+            if (!instance.HasBulletInChamber)
+                instance.LoadBullet();
             instance.HasCocked = true;
         }
 
