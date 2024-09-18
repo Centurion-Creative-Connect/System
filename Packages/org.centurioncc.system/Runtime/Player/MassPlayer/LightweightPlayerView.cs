@@ -5,15 +5,17 @@ using VRC.SDKBase;
 
 namespace CenturionCC.System.Player.MassPlayer
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.None)] [DefaultExecutionOrder(-10000)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    [DefaultExecutionOrder(-10000)]
     public class LightweightPlayerView : PlayerViewBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
-        [SerializeField]
-        private PlayerCollider lwCollider;
-        [SerializeField]
-        private Transform groundPivot;
+
+        [SerializeField] private PlayerCollider lwCollider;
+
+        [SerializeField] private Transform groundPivot;
+
         private PlayerBase _playerModel;
 
         private Transform _transform;
@@ -34,6 +36,11 @@ namespace CenturionCC.System.Player.MassPlayer
         }
 
         private void Start()
+        {
+            Init();
+        }
+
+        public override void Init()
         {
             _transform = transform;
         }

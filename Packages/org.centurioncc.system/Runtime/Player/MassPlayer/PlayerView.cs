@@ -8,22 +8,14 @@ namespace CenturionCC.System.Player.MassPlayer
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PlayerView : PlayerViewBase
     {
-        [SerializeField]
-        private PlayerCollider headCollider;
-        [SerializeField]
-        private PlayerCollider bodyCollider;
-        [SerializeField]
-        private PlayerCollider leftUpperArmCollider;
-        [SerializeField]
-        private PlayerCollider rightUpperArmCollider;
-        [SerializeField]
-        private PlayerCollider leftUpperLegCollider;
-        [SerializeField]
-        private PlayerCollider rightUpperLegCollider;
-        [SerializeField]
-        private PlayerCollider leftLowerLegCollider;
-        [SerializeField]
-        private PlayerCollider rightLowerLegCollider;
+        [SerializeField] private PlayerCollider headCollider;
+        [SerializeField] private PlayerCollider bodyCollider;
+        [SerializeField] private PlayerCollider leftUpperArmCollider;
+        [SerializeField] private PlayerCollider rightUpperArmCollider;
+        [SerializeField] private PlayerCollider leftUpperLegCollider;
+        [SerializeField] private PlayerCollider rightUpperLegCollider;
+        [SerializeField] private PlayerCollider leftLowerLegCollider;
+        [SerializeField] private PlayerCollider rightLowerLegCollider;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
@@ -58,6 +50,11 @@ namespace CenturionCC.System.Player.MassPlayer
         }
 
         private void Start()
+        {
+            Init();
+        }
+
+        public override void Init()
         {
             _headTransform = headCollider.transform;
             _bodyTransform = bodyCollider.transform;
