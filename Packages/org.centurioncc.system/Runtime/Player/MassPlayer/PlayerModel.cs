@@ -17,16 +17,19 @@ namespace CenturionCC.System.Player.MassPlayer
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
 
-        [CanBeNull]
-        public PlayerViewBase playerView;
+        [CanBeNull] public PlayerViewBase playerView;
+
         private AudioManager _audioManager;
         private RoleData _cachedRoleData;
 
         private FootstepAudioStore _footstepAudio;
+
         [UdonSynced] [FieldChangeCallback(nameof(SyncedIsDead))]
         private bool _syncedIsDead;
+
         [UdonSynced] [FieldChangeCallback(nameof(SyncedPlayerId))]
         private int _syncedPlayerId = -1;
+
         [UdonSynced] [FieldChangeCallback(nameof(SyncedTeamId))]
         private int _syncedTeamId;
 
@@ -52,6 +55,7 @@ namespace CenturionCC.System.Player.MassPlayer
                 UpdateView();
             }
         }
+
         public int SyncedTeamId
         {
             get => _syncedTeamId;
@@ -67,6 +71,7 @@ namespace CenturionCC.System.Player.MassPlayer
                 UpdateView();
             }
         }
+
         public bool SyncedIsDead
         {
             get => _syncedIsDead;
@@ -107,6 +112,7 @@ namespace CenturionCC.System.Player.MassPlayer
 
         public override void SetPlayer(int vrcPlayerId)
         {
+            ResetPlayer();
             SyncedPlayerId = vrcPlayerId;
             Sync();
         }
