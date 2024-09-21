@@ -61,10 +61,10 @@ namespace CenturionCC.System.Player.MassPlayer
         private void Start()
         {
             _localPlayer = Networking.LocalPlayer;
-            var playerModels = playerManager.GetPlayers();
 
-            _distanceSortedModels = new PlayerModel[playerModels.Length];
-            Array.Copy(playerModels, _distanceSortedModels, playerModels.Length);
+            UpdateModels();
+            if (_distanceSortedModels.Length == 0)
+                SendCustomEventDelayedFrames(nameof(UpdateModels), 1);
 
             sortStepCount = sortStep;
 
@@ -95,6 +95,13 @@ namespace CenturionCC.System.Player.MassPlayer
             ViewCount = viewCount; // construct views by assigning property
 
             playerManager.SubscribeCallback(this);
+        }
+
+        private void UpdateModels()
+        {
+            var playerModels = playerManager.GetPlayers();
+            _distanceSortedModels = new PlayerModel[playerModels.Length];
+            Array.Copy(playerModels, _distanceSortedModels, playerModels.Length);
         }
 
         public override void PostLateUpdate()
