@@ -703,6 +703,7 @@ namespace CenturionCC.System.Utils
             var head = _localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
             var headForward = head.rotation * Vector3.forward;
             var now = Networking.GetNetworkDateTime();
+            var lastCombatTagged = _combatTagged;
 
             _canRun = true;
             _combatTagged = false;
@@ -713,6 +714,8 @@ namespace CenturionCC.System.Utils
                 if (now.Subtract(gun.LastShotTime).Seconds < _cachedCombatTagTime && _useCombatTag)
                 {
                     _combatTagged = true;
+                    if (!lastCombatTagged)
+                        Debug.Log($"[PlayerController] CombatTag is now activated due to {gun.name}");
                     break;
                 }
 
@@ -725,6 +728,9 @@ namespace CenturionCC.System.Utils
                     break;
                 }
             }
+
+            if (lastCombatTagged && !_combatTagged)
+                Debug.Log($"[PlayerController] CombatTag is now deactivated");
         }
 
         private void UpdateLowestGunProperty()
