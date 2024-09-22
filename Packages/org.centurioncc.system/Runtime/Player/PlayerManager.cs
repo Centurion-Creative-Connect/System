@@ -234,6 +234,8 @@ namespace CenturionCC.System.Player
                 callbacks[i] = (WatchdogChildCallbackBase)(UdonSharpBehaviour)playerInstancePool[i];
             _callbacks = callbacks;
 
+            RequestSerialization();
+
             Logger.LogVerbose($"{Prefix}Start complete");
         }
 
