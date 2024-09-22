@@ -1,28 +1,28 @@
-﻿using JetBrains.Annotations;
+﻿using DerpyNewbie.Common;
+using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 
 namespace CenturionCC.System.Gun.GunCamera
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.None)] [DefaultExecutionOrder(50000000)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    [DefaultExecutionOrder(50000000)]
     public class GunCamera : GunManagerCallbackBase
     {
-        [SerializeField]
+        [SerializeField] [HideInInspector] [NewbieInject]
         private GunManager gunManager;
-        [SerializeField]
-        private Transform targetTransform;
-        [SerializeField]
-        private Camera targetGunCamera;
-        [SerializeField]
-        private GameObject targetCameraObject;
-        [SerializeField]
-        private VRC_Pickup targetPickup;
+
+        [SerializeField] private Transform targetTransform;
+        [SerializeField] private Camera targetGunCamera;
+        [SerializeField] private GameObject targetCameraObject;
+        [SerializeField] private VRC_Pickup targetPickup;
+        [SerializeField] private GunCameraDataStore defaultGunCameraDataStore;
 
         private bool _hasCustomOffset;
-        private GunCameraDataStore _lastGunCameraData;
+        [CanBeNull] private GunCameraDataStore _lastGunCameraData;
         private int _lastGunOffsetIndex;
-        private Transform _lastGunTransform;
+        [CanBeNull] private Transform _lastGunTransform;
 
         [PublicAPI]
         public bool IsOn
@@ -30,6 +30,7 @@ namespace CenturionCC.System.Gun.GunCamera
             get => targetGunCamera.enabled;
             set => targetGunCamera.enabled = value;
         }
+
         [PublicAPI]
         public bool IsPickupable
         {
@@ -41,12 +42,14 @@ namespace CenturionCC.System.Gun.GunCamera
                     _hasCustomOffset = true;
             }
         }
+
         [PublicAPI]
         public bool IsVisible
         {
             get => targetCameraObject.activeSelf;
             set => targetCameraObject.SetActive(value);
         }
+
         [PublicAPI]
         public int OffsetIndex
         {
@@ -89,6 +92,7 @@ namespace CenturionCC.System.Gun.GunCamera
         {
             _lastGunTransform = target;
             _lastGunCameraData = cameraData;
+            if (cameraData == null) _lastGunCameraData = defaultGunCameraDataStore;
             UpdateGunCameraPosition();
         }
 
