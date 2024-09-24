@@ -37,6 +37,43 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public virtual TriggerState Trigger { get; set; }
         [PublicAPI] public virtual GunState State { get; set; }
 
+
+        /// <summary>
+        /// Bullets remaining in the reserve (not in magazine)
+        /// </summary>
+        [PublicAPI]
+        public virtual int ReservedBulletsCount { get; protected set; }
+
+        /// <summary>
+        /// Bullets remaining in the magazine (not in reserve)
+        /// </summary>
+        [PublicAPI]
+        public virtual int CurrentBulletsCount { get; protected set; }
+
+        /// <summary>
+        /// Size of the magazine.
+        /// </summary>
+        [PublicAPI]
+        public virtual int CurrentMagazineSize { get; protected set; }
+
+        /// <summary>
+        /// Initial reserved bullets count
+        /// </summary>
+        [PublicAPI]
+        public virtual int InitialTotalBullets { get; set; }
+
+        /// <summary>
+        /// Time it takes to reload in desktop or simple reload mode
+        /// </summary>
+        [PublicAPI]
+        public virtual float ReloadTimeInSeconds { get; }
+
+        /// <summary>
+        /// Is the gun currently in reloading?
+        /// </summary>
+        [PublicAPI]
+        public virtual bool IsReloading { get; protected set; }
+
         /// <summary>
         /// Has the gun bullet in chamber?
         /// </summary>
@@ -112,7 +149,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual bool HasNextBullet()
         {
-            return true;
+            return CurrentBulletsCount > 0;
         }
 
         /// <summary>
@@ -124,8 +161,13 @@ namespace CenturionCC.System.Gun
         {
             if (HasBulletInChamber)
                 EjectBullet();
-            HasBulletInChamber = true;
-            RequestSerialization();
+            if (HasNextBullet())
+            {
+                CurrentBulletsCount--;
+                HasBulletInChamber = true;
+                RequestSerialization();
+            }
+
             return HasBulletInChamber;
         }
 
@@ -137,6 +179,24 @@ namespace CenturionCC.System.Gun
         {
             HasBulletInChamber = false;
             RequestSerialization();
+        }
+
+        /// <summary>
+        /// Reloads a magazine from reserve ammo
+        /// </summary>
+        [PublicAPI]
+        public virtual void ReloadMagazine()
+        {
+            var diff = CurrentMagazineSize - CurrentBulletsCount;
+            ReservedBulletsCount -= diff;
+            if (ReservedBulletsCount < 0)
+            {
+                diff += ReservedBulletsCount; // Add overdrawn bullets to mitigate
+                ReservedBulletsCount = 0;
+            }
+
+            CurrentBulletsCount += diff;
+            IsReloading = false;
         }
     }
 }

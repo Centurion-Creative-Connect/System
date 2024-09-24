@@ -22,6 +22,9 @@ namespace CenturionCC.System.Gun.Behaviour
         {
             if (instance.Trigger == TriggerState.Firing)
             {
+                if (!instance.HasBulletInChamber)
+                    instance.LoadBullet();
+
                 var shotResult = instance.TryToShoot();
                 var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
                 if (hasSucceeded)

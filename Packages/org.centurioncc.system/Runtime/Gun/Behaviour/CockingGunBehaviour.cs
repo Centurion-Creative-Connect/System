@@ -238,8 +238,8 @@ namespace CenturionCC.System.Gun.Behaviour
                 var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
                 if (hasSucceeded && isBlowBack)
                 {
-                    instance.HasCocked = true;
                     instance.LoadBullet();
+                    instance.HasCocked = true;
                 }
             }
 
