@@ -882,6 +882,17 @@ namespace CenturionCC.System.Player
         }
 
         [PublicAPI]
+        [CanBeNull]
+        public PlayerBase GetPlayerByDisplayName(string displayName)
+        {
+            foreach (var player in GetPlayers())
+                if (player != null && player.IsAssigned && player.VrcPlayer.SafeGetDisplayName() == displayName)
+                    return player;
+
+            return null;
+        }
+
+        [PublicAPI]
         public bool HasPlayerIdOf(int playerId)
         {
             return GetPlayerById(playerId) != null;
