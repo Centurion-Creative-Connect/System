@@ -16,10 +16,13 @@ namespace CenturionCC.System
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private GunManager gunManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private PrintableBase logger;
+
         private readonly DataDictionary _currentMatchEvents = new DataDictionary();
         private readonly DataDictionary _currentMatchStatistics = new DataDictionary();
         private readonly DataDictionary _totalMatchLog = new DataDictionary();
@@ -29,6 +32,7 @@ namespace CenturionCC.System
         private string _currentMatchGuid = Guid.Empty.ToString("D");
 
         private bool _hasLoggedMatch;
+
         // [UdonSynced] [FieldChangeCallback(nameof(IsInMatch))]
         private bool _isInMatch;
         private DateTime _matchStartTime;
@@ -45,12 +49,7 @@ namespace CenturionCC.System
             set
             {
                 if (CurrentMatchGuid == value) return;
-
-                _currentMatchStatistics.Clear();
-                _currentMatchEvents.Clear();
-
                 _currentMatchGuid = value.ToString("D");
-                _hasLoggedMatch = false;
             }
         }
 
@@ -67,19 +66,6 @@ namespace CenturionCC.System
                     _matchStartTime = Networking.GetNetworkDateTime();
                     return;
                 }
-
-                if (_hasLoggedMatch) return;
-
-                _hasLoggedMatch = true;
-
-                var matchDataDict = new DataDictionary();
-                matchDataDict.Add("gameMode", "Unknown");
-                matchDataDict.Add("start", _matchStartTime.ToString("O"));
-                matchDataDict.Add("end", Networking.GetNetworkDateTime().ToString("O"));
-                matchDataDict.Add("statistics", _currentMatchStatistics.DeepClone());
-                matchDataDict.Add("events", _currentMatchEvents.DeepClone());
-
-                _totalMatchLog.Add(CurrentMatchGuid.ToString("D"), matchDataDict);
             }
         }
 
@@ -88,27 +74,34 @@ namespace CenturionCC.System
             playerManager.SubscribeCallback(this);
         }
 
-        public void BeginMatch()
+        public void BeginMatch(string gameMode)
         {
-            if (_isInMatch)
+            if (IsInMatch)
             {
                 logger.LogError("[Match] Could not begin match: already running");
                 return;
             }
 
+            // clears all statistics
+            _currentMatchStatistics.Clear();
+            _currentMatchEvents.Clear();
+
+            // adds all players into statistics
             var allPlayers = playerManager.GetPlayers();
             AddPlayersToStats(_totalStatistics, allPlayers);
             AddPlayersToStats(_currentMatchStatistics, allPlayers);
 
+            // set new guid and mark current state as in match
             CurrentMatchGuid = Guid.NewGuid();
             IsInMatch = true;
 
+            // update current weapon information
             UpdateMatch();
         }
 
         public void UpdateMatch()
         {
-            if (!_isInMatch)
+            if (!IsInMatch)
             {
                 logger.LogError("[Match] Could not update match: not running");
                 return;
@@ -119,7 +112,7 @@ namespace CenturionCC.System
 
         public void EndMatch()
         {
-            if (!_isInMatch)
+            if (!IsInMatch)
             {
                 logger.LogError("[Match] Could not end match: not running");
                 return;
@@ -130,6 +123,14 @@ namespace CenturionCC.System
             AddPlayersToStats(_currentMatchStatistics, allPlayers);
             UpdateMatch();
 
+            var matchDataDict = new DataDictionary();
+            matchDataDict.Add("gameMode", "Unknown");
+            matchDataDict.Add("start", _matchStartTime.ToString("O"));
+            matchDataDict.Add("end", Networking.GetNetworkDateTime().ToString("O"));
+            matchDataDict.Add("statistics", _currentMatchStatistics.DeepClone());
+            matchDataDict.Add("events", _currentMatchEvents.DeepClone());
+
+            _totalMatchLog.Add(CurrentMatchGuid.ToString("D"), matchDataDict);
             IsInMatch = false;
         }
 
@@ -150,10 +151,28 @@ namespace CenturionCC.System
             Debug.Log("====== END MATCH LOG ======");
         }
 
+        public DataList GetTotalRecordedDisplayNames()
+        {
+            return _totalStatistics.GetKeys();
+        }
+
+        public DataList GetCurrentRecordedDisplayNames()
+        {
+            return _currentMatchStatistics.GetKeys();
+        }
+
+        public bool GetCurrentStatisticOf(string displayName, out DataToken value)
+        {
+            return _currentMatchStatistics.TryGetValue(displayName, out value);
+        }
+
+        public bool GetTotalStatisticOf(string displayName, out DataToken value)
+        {
+            return _totalStatistics.TryGetValue(displayName, out value);
+        }
+
         public override void OnKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
-            if (!_isInMatch) return;
-
             var dict = new DataDictionary();
             dict.Add("type", "killed");
             dict.Add("data", victim.LastHitData.ToDictionary());
@@ -171,8 +190,6 @@ namespace CenturionCC.System
 
         public override void OnPlayerRevived(PlayerBase player)
         {
-            if (!_isInMatch) return;
-
             var dict = new DataDictionary();
             dict.Add("type", "revived");
 
@@ -188,11 +205,11 @@ namespace CenturionCC.System
 
         private void AddMatchEventLog(DataDictionary dict)
         {
-            var key = Guid.NewGuid().ToString("D");
-            while (_currentMatchEvents.ContainsKey(key))
+            string key;
+            do
             {
                 key = Guid.NewGuid().ToString("D");
-            }
+            } while (_currentMatchEvents.ContainsKey(key));
 
             _currentMatchEvents.Add(key, dict);
         }
@@ -223,8 +240,6 @@ namespace CenturionCC.System
             if (playerTable["killStreak"].Int > playerTable["highestKillStreak"].Int)
                 playerTable["highestKillStreak"] = playerTable["killStreak"];
             playerTable["killStreak"] = 0;
-
-            // statsDict[key] = playerTable;
         }
 
         private static void IncrementKill(DataDictionary statsDict, PlayerBase playerBase, string weapon,
@@ -241,6 +256,9 @@ namespace CenturionCC.System
                 playerTable["highestKillStreak"] = playerTable["killStreak"];
             if (!playerTable["weapons"].DataList.Contains(weapon))
                 playerTable["weapons"].DataList.Add(weapon);
+            if (playerTable["longestShot"].Float < distance)
+                playerTable["longestShot"] = distance;
+            playerTable["recentWeapon"] = weapon;
             playerTable["score"] = playerTable["score"].Int + 100 * playerTable["killStreak"].Int;
         }
 
@@ -249,6 +267,7 @@ namespace CenturionCC.System
             if (EnsureStatsTableExist(statsDict, playerBase)) return;
             var key = playerBase.VrcPlayer.SafeGetDisplayName();
             var playerTable = statsDict[key].DataDictionary;
+            playerTable["recentWeapon"] = weapon;
             if (playerTable["weapons"].DataList.Contains(weapon)) return;
             playerTable["weapons"].DataList.Add(weapon);
         }
@@ -266,12 +285,15 @@ namespace CenturionCC.System
             if (statsDict.ContainsKey(key)) return false;
 
             var d = new DataDictionary();
+            d.Add("displayName", playerBase.VrcPlayer.SafeGetDisplayName());
             d.Add("kill", 0);
             d.Add("death", 0);
             d.Add("killStreak", 0);
             d.Add("highestKillStreak", 0);
             d.Add("score", 0);
             d.Add("team", playerBase.TeamId);
+            d.Add("recentWeapon", "");
+            d.Add("longestShot", 0.0F);
             d.Add("weapons", new DataList());
 
             statsDict.Add(key, d);
