@@ -10,28 +10,28 @@ namespace CenturionCC.System.Gun
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private GunManager gunManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private NotificationProvider notification;
-        [Header("Messages")]
-        [SerializeField]
-        private TranslatableMessage onGunsResetMessage;
-        [SerializeField]
-        private TranslatableMessage onCantShootInSafeZone;
-        [SerializeField]
-        private TranslatableMessage onCantShootInWall;
-        [SerializeField]
-        private TranslatableMessage onCantShootWhenSelectorSafety;
-        [SerializeField]
-        private TranslatableMessage onCantShootBecauseCallback;
-        [SerializeField]
-        private TranslatableMessage onCantShootUnknown;
-        [SerializeField]
-        private TranslatableMessage onFireModeChangeFormatMessage;
-        [SerializeField]
-        private TranslatableMessage[] fireModeNames;
 
-        [Header("Defaults")]
-        public bool notifyGunsReset = true;
+        [Header("Messages")] [SerializeField] private TranslatableMessage onGunsResetMessage;
+
+        [SerializeField] private TranslatableMessage onCantShootInSafeZone;
+
+        [SerializeField] private TranslatableMessage onCantShootInWall;
+
+        [SerializeField] private TranslatableMessage onCantShootWhenSelectorSafety;
+
+        [SerializeField] private TranslatableMessage onCantShootBecauseCallback;
+
+        [SerializeField] private TranslatableMessage onCantShootUnknown;
+
+        [SerializeField] private TranslatableMessage onFireModeChangeFormatMessage;
+
+        [SerializeField] private TranslatableMessage[] fireModeNames;
+
+        [Header("Defaults")] public bool notifyGunsReset = true;
+
         public bool notifyCancelled = true;
         public bool notifyFireModeChange = true;
 
@@ -76,6 +76,7 @@ namespace CenturionCC.System.Gun
             // 10  = ShootNext flag is false
             // 11  = RemoteInstance is null
             // 12  = RemoteInstance.FireMode is 0 == safety
+            // 13  = !HasBulletInChamber
             // 100 = in wall
             // 101 = in safe zone
             // 200 = callback returned false

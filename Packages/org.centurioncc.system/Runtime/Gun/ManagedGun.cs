@@ -182,6 +182,12 @@ namespace CenturionCC.System.Gun
 
             CollisionCount = 0;
 
+            // Apply magazine setting
+            InitialTotalBullets = VariantData.ReservedBulletsCount;
+            ReservedBulletsCount = VariantData.ReservedBulletsCount;
+            CurrentBulletsCount = 0;
+            CurrentMagazineSize = VariantData.MagazineSize;
+
             // Update behaviour related properties
             FireMode = AvailableFireModes[0];
 
@@ -326,6 +332,12 @@ namespace CenturionCC.System.Gun
                 result = ShotResult.Failed;
             }
 
+            if (!HasBulletInChamber)
+            {
+                ParentManager.Invoke_OnShootFailed(this, 13);
+                result = ShotResult.Failed;
+            }
+
             if (ParentManager.useCollisionCheck)
             {
                 if (IsInWall && VariantData.UseWallCheck)
@@ -466,6 +478,9 @@ namespace CenturionCC.System.Gun
 
         public override float RoundsPerSecond =>
             VariantData != null ? VariantData.MaxRoundsPerSecond : float.PositiveInfinity;
+
+        public override float ReloadTimeInSeconds =>
+            VariantData != null ? VariantData.ReloadTimeInSeconds : 0F;
 
         [PublicAPI]
         public override FireMode[] AvailableFireModes =>
