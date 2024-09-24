@@ -49,7 +49,12 @@ namespace CenturionCC.System.Gun.MassGun
             Internal_CheckForHandleDistance();
 
             if (TargetAnimator)
+            {
                 TargetAnimator.SetFloat(TriggerProgressAnimHash, GetMainTriggerPull());
+                TargetAnimator.SetInteger(CurrentBulletsCountAnimHash, CurrentBulletsCount);
+                TargetAnimator.SetInteger(ReservedBulletsCountAnimHash, ReservedBulletsCount);
+            }
+
             if (Behaviour)
                 Behaviour.OnGunUpdate(this);
 
