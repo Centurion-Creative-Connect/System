@@ -39,6 +39,10 @@ Please see the sample scene included in this package!
 
 You can Import the sample [using Unity's Package Manager](https://docs.unity3d.com/2019.4/Documentation/Manual/upm-ui.html)!
 
+### Where is the documentation?
+
+[Here's the link to the documentation!](https://system.centurioncc.org/)
+
 ### How do I attribute this in my world?
 
 Placing `NewbieConsole` with `GameManagerCommand` (which allows `game license` to work) should be good enough for
