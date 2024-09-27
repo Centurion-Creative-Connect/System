@@ -12,7 +12,7 @@ VariantData) のセットアップが必要になります。
 
 ### サンプルを複製する
 
-サンプルシーン上では `Logics/System/GunManager/VariantData` にそのサンプルがあります。
+サンプルシーン上では `Logics/System/SamplelMassGun/VariantData/` にそのサンプルがあります。
 
 最初はこれらの中であなたの銃に一番近い VariantData を複製し、モデルを変更して改変していくのが良いでしょう。
 
@@ -51,6 +51,8 @@ VariantData の `Main Handle Offset`、`Sub Handle Offset` に設定されてい
 これらの位置をあなたの銃に合わせて調整し、使いやすい位置に設定してください。
 
 ### 音を変更する
+
+VariantData の `Gun Audio`
 
 ### 弾道を変更する
 
