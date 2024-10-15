@@ -35,43 +35,50 @@ namespace CenturionCC.System
 
         // [UdonSynced] [FieldChangeCallback(nameof(IsInMatch))]
         private bool _isInMatch;
+        private DateTime _matchEndTime;
         private DateTime _matchStartTime;
 
-        private string CurrentMatchGuidString
+        public string CurrentMatchGuidString
         {
             get => _currentMatchGuid;
-            set => CurrentMatchGuid = Guid.Parse(value);
+            private set => CurrentMatchGuid = Guid.Parse(value);
         }
 
-        private Guid CurrentMatchGuid
+        public Guid CurrentMatchGuid
         {
             get => Guid.Parse(_currentMatchGuid);
-            set
+            private set
             {
                 if (CurrentMatchGuid == value) return;
                 _currentMatchGuid = value.ToString("D");
             }
         }
 
-        private bool IsInMatch
+        public bool IsInMatch
         {
             get => _isInMatch;
-            set
-            {
-                if (_isInMatch == value) return;
-
-                _isInMatch = value;
-                if (value)
-                {
-                    _matchStartTime = Networking.GetNetworkDateTime();
-                    return;
-                }
-            }
+            private set { _isInMatch = value; }
         }
+
+        public DateTime MatchStartTime
+        {
+            get => _matchStartTime;
+            private set => _matchStartTime = value;
+        }
+
+        public DateTime MatchEndTime
+        {
+            get => _matchEndTime;
+            private set => _matchEndTime = value;
+        }
+
+        public string CurrentGameMode { get; private set; }
 
         private void Start()
         {
             playerManager.SubscribeCallback(this);
+            MatchStartTime = Networking.GetNetworkDateTime();
+            MatchEndTime = Networking.GetNetworkDateTime();
         }
 
         public void BeginMatch(string gameMode)
@@ -86,6 +93,22 @@ namespace CenturionCC.System
             _currentMatchStatistics.Clear();
             _currentMatchEvents.Clear();
 
+            Internal_BeginMatch(gameMode, Networking.GetNetworkDateTime());
+        }
+
+        public void LateBeginMatch(string gameMode)
+        {
+            if (IsInMatch)
+            {
+                logger.LogError("[Match] Could not begin match: already running");
+                return;
+            }
+
+            Internal_BeginMatch(gameMode, _matchEndTime);
+        }
+
+        private void Internal_BeginMatch(string gameMode, DateTime matchStartTime)
+        {
             // adds all players into statistics
             var allPlayers = playerManager.GetPlayers();
             AddPlayersToStats(_totalStatistics, allPlayers);
@@ -93,7 +116,9 @@ namespace CenturionCC.System
 
             // set new guid and mark current state as in match
             CurrentMatchGuid = Guid.NewGuid();
+            CurrentGameMode = gameMode;
             IsInMatch = true;
+            MatchStartTime = matchStartTime;
 
             // update current weapon information
             UpdateMatch();
@@ -118,15 +143,17 @@ namespace CenturionCC.System
                 return;
             }
 
+            MatchEndTime = Networking.GetNetworkDateTime();
+
             var allPlayers = playerManager.GetPlayers();
             AddPlayersToStats(_totalStatistics, allPlayers);
             AddPlayersToStats(_currentMatchStatistics, allPlayers);
             UpdateMatch();
 
             var matchDataDict = new DataDictionary();
-            matchDataDict.Add("gameMode", "Unknown");
-            matchDataDict.Add("start", _matchStartTime.ToString("O"));
-            matchDataDict.Add("end", Networking.GetNetworkDateTime().ToString("O"));
+            matchDataDict.Add("gameMode", CurrentGameMode);
+            matchDataDict.Add("start", MatchStartTime.ToString("O"));
+            matchDataDict.Add("end", MatchEndTime.ToString("O"));
             matchDataDict.Add("statistics", _currentMatchStatistics.DeepClone());
             matchDataDict.Add("events", _currentMatchEvents.DeepClone());
 
@@ -169,6 +196,18 @@ namespace CenturionCC.System
         public bool GetTotalStatisticOf(string displayName, out DataToken value)
         {
             return _totalStatistics.TryGetValue(displayName, out value);
+        }
+
+        public override void OnPlayerChanged(PlayerBase player, int oldId, int newId)
+        {
+            EnsureStatsTableExist(_totalStatistics, player);
+            EnsureStatsTableExist(_currentMatchStatistics, player);
+        }
+
+        public override void OnTeamChanged(PlayerBase player, int oldTeamId)
+        {
+            UpdateTeam(_currentMatchStatistics, player);
+            UpdateTeam(_totalStatistics, player);
         }
 
         public override void OnKilled(PlayerBase attacker, PlayerBase victim, KillType type)
@@ -260,6 +299,15 @@ namespace CenturionCC.System
                 playerTable["longestShot"] = distance;
             playerTable["recentWeapon"] = weapon;
             playerTable["score"] = playerTable["score"].Int + 100 * playerTable["killStreak"].Int;
+        }
+
+        private static void UpdateTeam(DataDictionary statsDict, PlayerBase playerBase)
+        {
+            if (EnsureStatsTableExist(statsDict, playerBase)) return;
+            var key = playerBase.VrcPlayer.SafeGetDisplayName();
+            var playerTable = statsDict[key].DataDictionary;
+
+            playerTable["team"] = playerBase.TeamId;
         }
 
         private static void AddWeapon(DataDictionary statsDict, PlayerBase playerBase, string weapon)
