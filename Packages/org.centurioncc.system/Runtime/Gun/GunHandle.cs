@@ -53,6 +53,8 @@ namespace CenturionCC.System.Gun
             set => _pickup.UseText = value;
         }
 
+        public bool IsPickedUpLocally { get; private set; }
+
         public bool IsPickedUp => _pickup.IsHeld;
         public VRC_Pickup.PickupHand CurrentHand => _pickup.currentHand;
         public VRCPlayerApi CurrentPlayer => _pickup.currentPlayer;
@@ -130,6 +132,7 @@ namespace CenturionCC.System.Gun
 
         public override void OnPickup()
         {
+            IsPickedUpLocally = true;
             if (callback)
                 callback.OnHandlePickup(this, handleType);
         }
@@ -148,6 +151,7 @@ namespace CenturionCC.System.Gun
 
         public override void OnDrop()
         {
+            IsPickedUpLocally = false;
             if (callback)
                 callback.OnHandleDrop(this, handleType);
         }
