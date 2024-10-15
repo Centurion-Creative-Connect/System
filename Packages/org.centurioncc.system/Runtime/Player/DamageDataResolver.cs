@@ -16,6 +16,9 @@ namespace CenturionCC.System.Player
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
 
+        [SerializeField] [Header("Experimental")]
+        public bool useTimeBasedCheck;
+
         private VRCPlayerApi _local;
 
         private void Start()
@@ -49,17 +52,20 @@ namespace CenturionCC.System.Player
                 return true;
             }
 
-            var hitResult = ComputeHitResultFromDateTime(
-                syncer.ActivatedTime,
-                GetAssumedDiedTime(syncer.AttackerId),
-                GetAssumedRevivedTime(syncer.AttackerId)
-            );
-
-            if (!hitResult)
+            if (useTimeBasedCheck)
             {
-                result = SyncResult.Cancelled;
-                resultContext = SyncResultContext.AttackerAlreadyDead;
-                return true;
+                var hitResult = ComputeHitResultFromDateTime(
+                    syncer.ActivatedTime,
+                    GetAssumedDiedTime(syncer.AttackerId),
+                    GetAssumedRevivedTime(syncer.AttackerId)
+                );
+
+                if (!hitResult)
+                {
+                    result = SyncResult.Cancelled;
+                    resultContext = SyncResultContext.AttackerAlreadyDead;
+                    return true;
+                }
             }
 
             if (syncer.Type == KillType.FriendlyFire && playerManager.FriendlyFireMode == FriendlyFireMode.Both)
