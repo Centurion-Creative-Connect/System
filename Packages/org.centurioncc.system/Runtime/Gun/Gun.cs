@@ -424,7 +424,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public float GetMainTriggerPull()
         {
-            if (!IsLocal || !MainHandle.IsPickedUp) return 0F;
+            if (!IsLocal || !MainHandle.IsPickedUpLocally) return 0F;
 
             if (!IsVR)
                 return Trigger == TriggerState.Fired || Trigger == TriggerState.Firing ? 1 : 0;
@@ -441,7 +441,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public float GetSubTriggerPull()
         {
-            if (!IsLocal || !SubHandle.IsPickedUp) return 0F;
+            if (!IsLocal || !SubHandle.IsPickedUpLocally) return 0F;
 
             return SubHandle.CurrentHand == VRC_Pickup.PickupHand.Left
                 ? Input.GetAxis(LeftHandTrigger)
@@ -1179,14 +1179,6 @@ namespace CenturionCC.System.Gun
                 TargetAnimator.SetInteger(SelectorTypeAnimHash, (int)fireMode);
         }
 
-        protected bool Internal_IsHeldBy(VRCPlayerApi api)
-        {
-            var playerId = api.SafeGetPlayerId();
-            return MainHandle != null && MainHandle.CurrentPlayer.SafeGetPlayerId() == playerId ||
-                   SubHandle != null && SubHandle.CurrentPlayer.SafeGetPlayerId() == playerId ||
-                   CustomHandle != null && CustomHandle.CurrentPlayer.SafeGetPlayerId() == playerId;
-        }
-
         protected void Internal_HandleDesktopInputs()
         {
             if (Input.GetKeyDown(KeyCode.B))
@@ -1400,9 +1392,9 @@ namespace CenturionCC.System.Gun
             }
 
             // When only one handle is picked up at this time
-            if ((MainHandle != null && MainHandle.IsPickedUp) ^
-                (SubHandle != null && SubHandle.IsPickedUp) ^
-                (CustomHandle != null && CustomHandle.IsPickedUp))
+            if ((MainHandle != null && MainHandle.IsPickedUpLocally) ^
+                (SubHandle != null && SubHandle.IsPickedUpLocally) ^
+                (CustomHandle != null && CustomHandle.IsPickedUpLocally))
             {
                 if (PlayerController != null)
                 {
@@ -1493,7 +1485,10 @@ namespace CenturionCC.System.Gun
                     break;
             }
 
-            if (!Internal_IsHeldBy(Networking.LocalPlayer))
+            // When dropped entirely for local player
+            if (!((MainHandle != null && MainHandle.IsPickedUpLocally) ||
+                  (SubHandle != null && SubHandle.IsPickedUpLocally) ||
+                  (CustomHandle != null && CustomHandle.IsPickedUpLocally)))
             {
                 _isLocal = false;
 
@@ -1507,13 +1502,7 @@ namespace CenturionCC.System.Gun
                 {
                     PlayerController.RemoveHoldingObject(this);
                 }
-            }
 
-            // When dropped entirely
-            if (!((MainHandle != null && MainHandle.IsPickedUp) ||
-                  (SubHandle != null && SubHandle.IsPickedUp) ||
-                  (CustomHandle != null && CustomHandle.IsPickedUp)))
-            {
                 OnGunDrop();
                 b.OnGunDrop(this);
 
