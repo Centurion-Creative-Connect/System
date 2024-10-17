@@ -16,9 +16,10 @@ namespace CenturionCC.System.Player
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
 
-        private VRCPlayerApi _local;
+        [SerializeField] [Header("Experimental")]
+        public bool useTimeBasedCheck;
 
-        [NonSerialized] public bool UseTimeBasedCheck = true;
+        private VRCPlayerApi _local;
 
         private void Start()
         {
@@ -51,7 +52,7 @@ namespace CenturionCC.System.Player
                 return true;
             }
 
-            if (UseTimeBasedCheck)
+            if (useTimeBasedCheck)
             {
                 var hitResult = ComputeHitResultFromDateTime(
                     syncer.ActivatedTime,
