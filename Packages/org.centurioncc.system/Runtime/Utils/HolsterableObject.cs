@@ -8,7 +8,7 @@ using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.Utils
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
     public class HolsterableObject : PickupEventSenderCallback
     {
         [SerializeField] private Transform target;
