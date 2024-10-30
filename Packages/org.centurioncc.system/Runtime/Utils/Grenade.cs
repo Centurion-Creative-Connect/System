@@ -1,9 +1,12 @@
-﻿using CenturionCC.System.Gun;
+﻿using CenturionCC.System.Audio;
+using CenturionCC.System.Gun;
 using CenturionCC.System.Gun.DataStore;
 using DerpyNewbie.Common;
 using DerpyNewbie.Common.ObjectPool;
+using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
+using UnityEngine.Serialization;
 using VRC.SDK3.Components;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
@@ -33,6 +36,9 @@ namespace CenturionCC.System.Utils
         [SerializeField] [HideInInspector] [NewbieInject]
         private UpdateManager updateManager;
 
+        [SerializeField] [HideInInspector] [NewbieInject]
+        private AudioManager audioManager;
+
         [SerializeField] private ObjectPoolProxy objectPoolProxy;
         [SerializeField] private Animator animator;
         [SerializeField] private ProjectileDataProvider projectileData;
@@ -42,6 +48,9 @@ namespace CenturionCC.System.Utils
 
         [SerializeField]
         private float safetyPinPullDistance = .1F;
+
+        [SerializeField]
+        private float safetyPinInteractionProximity = .1F;
 
         [SerializeField] [InspectorName("Weapon Name (Damage Type)")]
         private string damageType = "Grenade";
@@ -81,6 +90,21 @@ namespace CenturionCC.System.Utils
 
         [SerializeField] [Tooltip("Distance until explosion bullets reduction will fully disable bullets. in meters")]
         private float bulletsReductionFar = 15;
+
+        [Header("Audio Settings")]
+        [SerializeField] private AudioDataStore pinPulledAudio;
+
+        [FormerlySerializedAs("leverReleasedAudio")] [SerializeField]
+        private AudioDataStore safetyLeverReleasedAudio;
+
+        [SerializeField] private AudioDataStore explosionAudio;
+
+        [Header("Mouth Interaction")]
+        [SerializeField]
+        private bool useMouthSafetyPinInteraction = true;
+
+        [SerializeField]
+        private Vector3 mouthPositionOffset = Vector3.forward * 0.05F;
 
         [Header("Debug Settings")]
         [SerializeField]
@@ -190,9 +214,7 @@ namespace CenturionCC.System.Utils
                 _hasExploded = true;
                 _pickup.pickupable = true;
 
-                Debug.Log($"[Grenade] Used bullets: {_currentBulletsCount}, expInterval: {_currentExplosionInterval}");
-
-                // TODO: might not be called
+                // Debug.Log($"[Grenade] Used bullets: {_currentBulletsCount}, expInterval: {_currentExplosionInterval}");
                 SendCustomEventDelayedSeconds(nameof(_RespawnGrenade), 3);
             }
         }
@@ -277,6 +299,7 @@ namespace CenturionCC.System.Utils
         {
             _isSafetyPinHeld = false;
             _hasSafetyPin = false;
+            _PlayAudio(pinPulledAudio);
         }
 
         public void RemoveSafetyLever()
@@ -284,6 +307,7 @@ namespace CenturionCC.System.Utils
             _hasSafetyLever = false;
             if (useTimedTrigger)
                 SendCustomEventDelayedSeconds(nameof(_Explode), timedTriggerDelay);
+            _PlayAudio(safetyLeverReleasedAudio);
         }
 
         public void IgniteByImpact()
@@ -339,9 +363,11 @@ namespace CenturionCC.System.Utils
                 (bulletsReductionFar - bulletsReductionNear);
             _currentExplosionInterval = explosionShootingInterval + (explosionDuration * reductionRate);
 
-            Debug.Log($"Reduction Rate: {reductionRate}");
+            // Debug.Log($"Reduction Rate: {reductionRate}");
 
             if (_isHeld) _pickup.Drop();
+
+            _PlayAudio(explosionAudio);
         }
 
         private void _CheckInteraction()
@@ -353,35 +379,56 @@ namespace CenturionCC.System.Utils
         {
             if (!_hasSafetyPin) return;
 
-            // Check for safety pin interaction
-            var trigger = Input.GetAxisRaw(
-                _pickup.currentHand == VRC_Pickup.PickupHand.Left
-                    ? TriggerRight
-                    : TriggerLeft
-            );
-            var finger = _pickup.currentHand == VRC_Pickup.PickupHand.Left
-                ? HumanBodyBones.RightIndexDistal
-                : HumanBodyBones.LeftIndexDistal;
-            var fingerPos = Networking.LocalPlayer.GetBonePosition(finger);
-            var distance = Vector3.Distance(safetyPinReference.position, fingerPos);
-            var dot = Vector3.Dot(safetyPinReference.forward, fingerPos - safetyPinReference.position);
+            _safetyPinPullProgress = 0;
 
-            if (!_isSafetyPinHeld)
+            // Check for hand safety pin interaction
+            var nonDominantHandTrigger =
+                Input.GetAxisRaw(_pickup.currentHand == VRC_Pickup.PickupHand.Left ? TriggerRight : TriggerLeft);
+            var nonDominantHandFinger = Networking.LocalPlayer.GetBonePosition(
+                _pickup.currentHand == VRC_Pickup.PickupHand.Left
+                    ? HumanBodyBones.RightIndexDistal
+                    : HumanBodyBones.LeftIndexDistal);
+
+            var fingerHeld =
+                _CheckSafetyPinInteraction(nonDominantHandTrigger, nonDominantHandFinger, safetyPinInteractionProximity,
+                    _isSafetyPinHeld);
+
+            if (!useMouthSafetyPinInteraction)
             {
-                if (distance < 0.1F && trigger > 0.2F && dot > 0)
+                _isSafetyPinHeld = fingerHeld;
+                return;
+            }
+
+            // Check for head safety pin interaction
+            var dominantHandTrigger =
+                Input.GetAxisRaw(_pickup.currentHand == VRC_Pickup.PickupHand.Left ? TriggerLeft : TriggerRight);
+            var headTrackingData = Networking.LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+            var head = headTrackingData.position + (headTrackingData.rotation * mouthPositionOffset);
+
+            var headHeld =
+                _CheckSafetyPinInteraction(dominantHandTrigger, head, safetyPinInteractionProximity, _isSafetyPinHeld);
+
+            _isSafetyPinHeld = fingerHeld || headHeld;
+        }
+
+        private bool _CheckSafetyPinInteraction(float trigger, Vector3 refPos, float proximity, bool lastPinHeld)
+        {
+            var distance = Vector3.Distance(safetyPinReference.position, refPos);
+            var dot = Vector3.Dot(safetyPinReference.forward, refPos - safetyPinReference.position);
+
+            if (!lastPinHeld)
+            {
+                if (trigger > 0.2F && dot > 0 && distance < proximity)
                 {
-                    _isSafetyPinHeld = true;
-                    Debug.Log("[Grenade] Pin Held");
+                    lastPinHeld = true;
                 }
 
-                return;
+                return lastPinHeld;
             }
 
             if (trigger < 0.1F)
             {
-                _isSafetyPinHeld = false;
-                Debug.Log("[Grenade] Pin Released");
-                return;
+                return false;
             }
 
             if (dot > 0)
@@ -390,22 +437,13 @@ namespace CenturionCC.System.Utils
             }
             else
             {
-                _safetyPinPullProgress = 0;
+                _safetyPinPullProgress = Mathf.Max(_safetyPinPullProgress, 0);
             }
 
-            if (distance < safetyPinPullDistance || dot < 0) return;
+            if (distance < safetyPinPullDistance || dot < 0) return true;
 
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(RemoveSafetyPin));
-        }
-
-        private void _HandleSafetyLeverInteraction()
-        {
-            if (_hasSafetyPin || !_hasSafetyLever) return;
-
-            var grip = Input.GetAxisRaw(_pickup.currentHand == VRC_Pickup.PickupHand.Left ? GripLeft : GripRight);
-            if (0.1F < grip) return;
-
-            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(RemoveSafetyLever));
+            return true;
         }
 
         private void _UpdateAnimation()
@@ -414,6 +452,13 @@ namespace CenturionCC.System.Utils
             animator.SetBool(_hashedHasSafetyPin, _hasSafetyPin);
             animator.SetBool(_hashedHasSafetyPinHeld, _isSafetyPinHeld);
             animator.SetFloat(_hashedSafetyPinPull, _safetyPinPullProgress);
+        }
+
+        private void _PlayAudio([CanBeNull] AudioDataStore dataStore)
+        {
+            if (dataStore == null) return;
+
+            audioManager.PlayAudioAtTransform(dataStore, transform);
         }
     }
 }
