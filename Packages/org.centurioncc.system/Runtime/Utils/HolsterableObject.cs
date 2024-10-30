@@ -22,6 +22,7 @@ namespace CenturionCC.System.Utils
 
         private void Start()
         {
+            if (target == null) target = transform;
             _originalParent = target.parent;
         }
 
