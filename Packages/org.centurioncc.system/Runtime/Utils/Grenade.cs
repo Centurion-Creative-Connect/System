@@ -19,8 +19,6 @@ namespace CenturionCC.System.Utils
     {
         private const string TriggerLeft = "Oculus_CrossPlatform_PrimaryIndexTrigger";
         private const string TriggerRight = "Oculus_CrossPlatform_SecondaryIndexTrigger";
-        private const string GripLeft = "Oculus_CrossPlatform_PrimaryHandTrigger";
-        private const string GripRight = "Oculus_CrossPlatform_SecondaryHandTrigger";
 
         private const string AnimParamHasSafetyLever = "HasSafetyLever";
         private const string AnimParamHasSafetyPin = "HasSafetyPin";
@@ -66,13 +64,13 @@ namespace CenturionCC.System.Utils
         private float timedTriggerDelay = 3;
 
         [SerializeField]
-        private bool useImpactTrigger = false;
+        private bool useImpactTrigger;
 
         [SerializeField] [Tooltip("Threshold of impact triggering in relative velocity magnitude")]
         private float impactTriggerThreshold = 0.2F;
 
         [SerializeField] [Tooltip("Delay after impact occurred. in seconds")]
-        private float impactTriggerDelay = 0;
+        private float impactTriggerDelay;
 
         [Header("Explosion Settings")]
         [SerializeField] private Vector3 explosionRelativeTorque = new Vector3(1.5F, .3F, 0F);
@@ -117,7 +115,7 @@ namespace CenturionCC.System.Utils
         private readonly int _hashedHasSafetyPin = Animator.StringToHash(AnimParamHasSafetyPin);
         private readonly int _hashedHasSafetyPinHeld = Animator.StringToHash(AnimParamHasSafetyPinHeld);
         private readonly int _hashedSafetyPinPull = Animator.StringToHash(AnimParamSafetyPinPull);
-        private int _currentBulletsCount;
+
         private float _currentExplosionInterval;
 
         private float _explosionTimer;
@@ -203,9 +201,8 @@ namespace CenturionCC.System.Utils
                         grad,
                         lifeTimeInSeconds
                     );
-                    ++_currentBulletsCount;
 
-                    proj.SetDamageSetting(DetectionType.VictimSide, false, true, true, true);
+                    proj.SetDamageSetting(DetectionType.VictimSide, false, true);
                 }
             }
 
@@ -295,7 +292,6 @@ namespace CenturionCC.System.Utils
             _isSafetyPinHeld = false;
             _isExploding = false;
             _hasExploded = false;
-            _currentBulletsCount = 0;
         }
 
         public void RemoveSafetyPin()
@@ -349,7 +345,6 @@ namespace CenturionCC.System.Utils
                 return;
             }
 
-            _currentBulletsCount = 0;
             _explosionTimer = explosionDuration;
             _lastShotTime = _explosionTimer;
             var t = transform;
