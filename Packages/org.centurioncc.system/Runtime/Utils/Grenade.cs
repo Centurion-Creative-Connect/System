@@ -52,6 +52,9 @@ namespace CenturionCC.System.Utils
         [SerializeField]
         private float safetyPinInteractionProximity = .1F;
 
+        [SerializeField]
+        private bool safetyPinPullDirectionCheck;
+
         [SerializeField] [InspectorName("Weapon Name (Damage Type)")]
         private string damageType = "Grenade";
 
@@ -414,7 +417,9 @@ namespace CenturionCC.System.Utils
         private bool _CheckSafetyPinInteraction(float trigger, Vector3 refPos, float proximity, bool lastPinHeld)
         {
             var distance = Vector3.Distance(safetyPinReference.position, refPos);
-            var dot = Vector3.Dot(safetyPinReference.forward, refPos - safetyPinReference.position);
+            var dot = safetyPinPullDirectionCheck
+                ? Vector3.Dot(safetyPinReference.forward, refPos - safetyPinReference.position)
+                : 1;
 
             if (!lastPinHeld)
             {
