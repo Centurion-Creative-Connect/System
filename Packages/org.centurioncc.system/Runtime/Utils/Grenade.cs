@@ -214,7 +214,6 @@ namespace CenturionCC.System.Utils
                 _hasExploded = true;
                 _pickup.pickupable = true;
 
-                // Debug.Log($"[Grenade] Used bullets: {_currentBulletsCount}, expInterval: {_currentExplosionInterval}");
                 SendCustomEventDelayedSeconds(nameof(_RespawnGrenade), 3);
             }
         }
@@ -229,7 +228,17 @@ namespace CenturionCC.System.Utils
             _rb.AddForce(explosionForce);
         }
 
-        public void OnCollisionEnter(Collision other)
+        private void OnEnable()
+        {
+            ResetGrenade();
+        }
+
+        private void OnDisable()
+        {
+            ResetGrenade();
+        }
+
+        private void OnCollisionEnter(Collision other)
         {
             if (!useImpactTrigger || !Networking.IsOwner(gameObject)) return;
 
@@ -292,6 +301,7 @@ namespace CenturionCC.System.Utils
             _isSafetyPinHeld = false;
             _isExploding = false;
             _hasExploded = false;
+            _safetyPinPullProgress = 0;
         }
 
         public void RemoveSafetyPin()
