@@ -85,13 +85,6 @@ namespace CenturionCC.System.Utils
         [SerializeField] [Tooltip("Must be non-zero or else it'll throw division by zero")]
         private float explosionShootingInterval = 0.01F;
 
-        [Header("Optimization Settings")]
-        [SerializeField] [Tooltip("Distance until explosion bullets reduction will begin. in meters")]
-        private float bulletsReductionNear = 10;
-
-        [SerializeField] [Tooltip("Distance until explosion bullets reduction will fully disable bullets. in meters")]
-        private float bulletsReductionFar = 15;
-
         [Header("Audio Settings")]
         [SerializeField] private AudioDataStore pinPulledAudio;
 
@@ -366,9 +359,9 @@ namespace CenturionCC.System.Utils
             var playerPos = Networking.LocalPlayer.GetPosition();
             var grenadePos = transform.position;
             var distance = Vector3.Distance(playerPos, grenadePos);
+            var farNearDiff = grenadeManager.BulletReductionFar - grenadeManager.BulletReductionNear;
             var reductionRate =
-                Mathf.Clamp(distance - bulletsReductionNear, 0, bulletsReductionFar - bulletsReductionNear) /
-                (bulletsReductionFar - bulletsReductionNear);
+                Mathf.Clamp(distance - grenadeManager.BulletReductionFar, 0, farNearDiff) / farNearDiff;
             _currentExplosionInterval = explosionShootingInterval + (explosionDuration * reductionRate);
 
             // Debug.Log($"Reduction Rate: {reductionRate}");
