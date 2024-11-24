@@ -46,7 +46,13 @@ namespace CenturionCC.System.Utils
                 var holster = other.GetComponent<GunHolster>();
                 if (holster.HoldableSize < objectSize)
                     return;
+
+                if (_currentHolster != null)
+                    _currentHolster.IsHighlighting = false;
+
+
                 _currentHolster = holster;
+                holster.IsHighlighting = true;
                 Networking.LocalPlayer.PlayHapticEventInHand(pickup.currentHand, .5F, 1F, .1F);
                 Debug.Log($"[Holsterable-{name}] holster enter");
             }
@@ -56,6 +62,7 @@ namespace CenturionCC.System.Utils
         {
             if (other.name.ToLower().StartsWith("holster"))
             {
+                if (_currentHolster != null) _currentHolster.IsHighlighting = false;
                 _currentHolster = null;
                 Networking.LocalPlayer.PlayHapticEventInHand(pickup.currentHand, .5F, 1F, .1F);
                 Debug.Log($"[Holsterable-{name}] holster exit");

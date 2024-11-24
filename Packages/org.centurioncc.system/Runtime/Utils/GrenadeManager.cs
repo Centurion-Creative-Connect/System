@@ -2,6 +2,7 @@
 using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
+using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.Utils
 {
@@ -11,11 +12,21 @@ namespace CenturionCC.System.Utils
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
 
+        [Header("Optimization Settings")]
+        [SerializeField] [Tooltip("Distance until explosion bullets reduction will begin. in meters")]
+        private float bulletReductionNear = 10;
+
+        [SerializeField] [Tooltip("Distance until explosion bullets reduction will fully disable bullets. in meters")]
+        private float bulletsReductionFar = 15;
+
         private Grenade[] _localGrenades = new Grenade[0];
 
         // NOTE: Checked with HasLocalPlayer
         // ReSharper disable once PossibleNullReferenceException
         public bool CanExplode => playerManager.HasLocalPlayer() && !playerManager.GetLocalPlayer().IsDead;
+
+        public float BulletReductionNear => bulletReductionNear;
+        public float BulletReductionFar => bulletsReductionFar;
 
         public void AddLocalGrenade(Grenade grenade)
         {
@@ -33,7 +44,8 @@ namespace CenturionCC.System.Utils
 
             foreach (var grenade in _localGrenades)
             {
-                grenade.ResetGrenade();
+                grenade.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(grenade.ResetGrenade));
+                ;
             }
         }
     }

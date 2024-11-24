@@ -19,8 +19,6 @@ namespace CenturionCC.System.Utils
     {
         private const string TriggerLeft = "Oculus_CrossPlatform_PrimaryIndexTrigger";
         private const string TriggerRight = "Oculus_CrossPlatform_SecondaryIndexTrigger";
-        private const string GripLeft = "Oculus_CrossPlatform_PrimaryHandTrigger";
-        private const string GripRight = "Oculus_CrossPlatform_SecondaryHandTrigger";
 
         private const string AnimParamHasSafetyLever = "HasSafetyLever";
         private const string AnimParamHasSafetyPin = "HasSafetyPin";
@@ -52,6 +50,9 @@ namespace CenturionCC.System.Utils
         [SerializeField]
         private float safetyPinInteractionProximity = .1F;
 
+        [SerializeField]
+        private bool safetyPinPullDirectionCheck;
+
         [SerializeField] [InspectorName("Weapon Name (Damage Type)")]
         private string damageType = "Grenade";
 
@@ -63,13 +64,13 @@ namespace CenturionCC.System.Utils
         private float timedTriggerDelay = 3;
 
         [SerializeField]
-        private bool useImpactTrigger = false;
+        private bool useImpactTrigger;
 
         [SerializeField] [Tooltip("Threshold of impact triggering in relative velocity magnitude")]
         private float impactTriggerThreshold = 0.2F;
 
         [SerializeField] [Tooltip("Delay after impact occurred. in seconds")]
-        private float impactTriggerDelay = 0;
+        private float impactTriggerDelay;
 
         [Header("Explosion Settings")]
         [SerializeField] private Vector3 explosionRelativeTorque = new Vector3(1.5F, .3F, 0F);
@@ -83,13 +84,6 @@ namespace CenturionCC.System.Utils
 
         [SerializeField] [Tooltip("Must be non-zero or else it'll throw division by zero")]
         private float explosionShootingInterval = 0.01F;
-
-        [Header("Optimization Settings")]
-        [SerializeField] [Tooltip("Distance until explosion bullets reduction will begin. in meters")]
-        private float bulletsReductionNear = 10;
-
-        [SerializeField] [Tooltip("Distance until explosion bullets reduction will fully disable bullets. in meters")]
-        private float bulletsReductionFar = 15;
 
         [Header("Audio Settings")]
         [SerializeField] private AudioDataStore pinPulledAudio;
@@ -114,7 +108,7 @@ namespace CenturionCC.System.Utils
         private readonly int _hashedHasSafetyPin = Animator.StringToHash(AnimParamHasSafetyPin);
         private readonly int _hashedHasSafetyPinHeld = Animator.StringToHash(AnimParamHasSafetyPinHeld);
         private readonly int _hashedSafetyPinPull = Animator.StringToHash(AnimParamSafetyPinPull);
-        private int _currentBulletsCount;
+
         private float _currentExplosionInterval;
 
         private float _explosionTimer;
@@ -200,9 +194,8 @@ namespace CenturionCC.System.Utils
                         grad,
                         lifeTimeInSeconds
                     );
-                    ++_currentBulletsCount;
 
-                    proj.SetDamageSetting(DetectionType.VictimSide, false, true, true, true);
+                    proj.SetDamageSetting(DetectionType.VictimSide, false, true);
                 }
             }
 
@@ -214,7 +207,6 @@ namespace CenturionCC.System.Utils
                 _hasExploded = true;
                 _pickup.pickupable = true;
 
-                // Debug.Log($"[Grenade] Used bullets: {_currentBulletsCount}, expInterval: {_currentExplosionInterval}");
                 SendCustomEventDelayedSeconds(nameof(_RespawnGrenade), 3);
             }
         }
@@ -229,7 +221,17 @@ namespace CenturionCC.System.Utils
             _rb.AddForce(explosionForce);
         }
 
-        public void OnCollisionEnter(Collision other)
+        private void OnEnable()
+        {
+            ResetGrenade();
+        }
+
+        private void OnDisable()
+        {
+            ResetGrenade();
+        }
+
+        private void OnCollisionEnter(Collision other)
         {
             if (!useImpactTrigger || !Networking.IsOwner(gameObject)) return;
 
@@ -292,7 +294,7 @@ namespace CenturionCC.System.Utils
             _isSafetyPinHeld = false;
             _isExploding = false;
             _hasExploded = false;
-            _currentBulletsCount = 0;
+            _safetyPinPullProgress = 0;
         }
 
         public void RemoveSafetyPin()
@@ -346,7 +348,6 @@ namespace CenturionCC.System.Utils
                 return;
             }
 
-            _currentBulletsCount = 0;
             _explosionTimer = explosionDuration;
             _lastShotTime = _explosionTimer;
             var t = transform;
@@ -358,9 +359,9 @@ namespace CenturionCC.System.Utils
             var playerPos = Networking.LocalPlayer.GetPosition();
             var grenadePos = transform.position;
             var distance = Vector3.Distance(playerPos, grenadePos);
+            var farNearDiff = grenadeManager.BulletReductionFar - grenadeManager.BulletReductionNear;
             var reductionRate =
-                Mathf.Clamp(distance - bulletsReductionNear, 0, bulletsReductionFar - bulletsReductionNear) /
-                (bulletsReductionFar - bulletsReductionNear);
+                Mathf.Clamp(distance - grenadeManager.BulletReductionFar, 0, farNearDiff) / farNearDiff;
             _currentExplosionInterval = explosionShootingInterval + (explosionDuration * reductionRate);
 
             // Debug.Log($"Reduction Rate: {reductionRate}");
@@ -414,7 +415,9 @@ namespace CenturionCC.System.Utils
         private bool _CheckSafetyPinInteraction(float trigger, Vector3 refPos, float proximity, bool lastPinHeld)
         {
             var distance = Vector3.Distance(safetyPinReference.position, refPos);
-            var dot = Vector3.Dot(safetyPinReference.forward, refPos - safetyPinReference.position);
+            var dot = safetyPinPullDirectionCheck
+                ? Vector3.Dot(safetyPinReference.forward, refPos - safetyPinReference.position)
+                : 1;
 
             if (!lastPinHeld)
             {
