@@ -6343,6 +6343,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 490939454}
   targetProxy: {fileID: 516811857}
+  spawnOverride: {fileID: 0}
 --- !u!65 &490939456
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -21316,6 +21317,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 867179207}
   targetProxy: {fileID: 1612309941}
+  spawnOverride: {fileID: 0}
 --- !u!65 &867179209
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -21754,7 +21756,7 @@ PrefabInstance:
     - target: {fileID: 476004574328205125, guid: 5f5cd7ab3b5ba944caaef24a8aca360c,
         type: 3}
       propertyPath: m_SizeDelta.y
-      value: 62
+      value: 84
       objectReference: {fileID: 0}
     - target: {fileID: 476004574328205125, guid: 5f5cd7ab3b5ba944caaef24a8aca360c,
         type: 3}
@@ -21837,6 +21839,56 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 476004574578664501, guid: 5f5cd7ab3b5ba944caaef24a8aca360c,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 851133066453747534, guid: 5f5cd7ab3b5ba944caaef24a8aca360c,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 851133066453747534, guid: 5f5cd7ab3b5ba944caaef24a8aca360c,
+        type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 851133066453747534, guid: 5f5cd7ab3b5ba944caaef24a8aca360c,
+        type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 851133066453747534, guid: 5f5cd7ab3b5ba944caaef24a8aca360c,
+        type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 851133066453747534, guid: 5f5cd7ab3b5ba944caaef24a8aca360c,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1398486144013969403, guid: 5f5cd7ab3b5ba944caaef24a8aca360c,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1398486144013969403, guid: 5f5cd7ab3b5ba944caaef24a8aca360c,
+        type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1398486144013969403, guid: 5f5cd7ab3b5ba944caaef24a8aca360c,
+        type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1398486144013969403, guid: 5f5cd7ab3b5ba944caaef24a8aca360c,
+        type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1398486144013969403, guid: 5f5cd7ab3b5ba944caaef24a8aca360c,
         type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
@@ -34028,6 +34080,8 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1840768445}
   playerManager: {fileID: 392230535}
+  bulletReductionNear: 10
+  bulletsReductionFar: 15
 --- !u!1 &1843878887 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5379271389128194794, guid: 72ba120136dc5a547b8a6fa2b4c4b9e1,
@@ -34117,6 +34171,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1853171864}
   targetProxy: {fileID: 2008162265}
+  spawnOverride: {fileID: 0}
 --- !u!65 &1853171866
 BoxCollider:
   m_ObjectHideFlags: 0

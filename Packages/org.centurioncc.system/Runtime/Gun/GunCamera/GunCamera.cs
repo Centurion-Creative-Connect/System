@@ -18,11 +18,14 @@ namespace CenturionCC.System.Gun.GunCamera
         [SerializeField] private GameObject targetCameraObject;
         [SerializeField] private VRC_Pickup targetPickup;
         [SerializeField] private GunCameraDataStore defaultGunCameraDataStore;
+        [SerializeField] private float autoPresetChangeInterval = 10;
 
         private bool _hasCustomOffset;
+        private bool _isAutoPresetChangeCoroutineRunning;
         [CanBeNull] private GunCameraDataStore _lastGunCameraData;
         private int _lastGunOffsetIndex;
         [CanBeNull] private Transform _lastGunTransform;
+        private bool _useAutoPresetChange;
 
         [PublicAPI]
         public bool IsOn
@@ -77,6 +80,27 @@ namespace CenturionCC.System.Gun.GunCamera
             }
         }
 
+        [PublicAPI]
+        public bool UseAutoPresetChange
+        {
+            set
+            {
+                _useAutoPresetChange = value;
+                if (value && !_isAutoPresetChangeCoroutineRunning)
+                {
+                    _AutoPresetChangeCoroutine();
+                }
+            }
+            get => _useAutoPresetChange;
+        }
+
+        [PublicAPI]
+        public float AutoPresetChangeInterval
+        {
+            get => autoPresetChangeInterval;
+            set => autoPresetChangeInterval = value;
+        }
+
         private void Start()
         {
             gunManager.SubscribeCallback(this);
@@ -120,6 +144,20 @@ namespace CenturionCC.System.Gun.GunCamera
                 targetTransform.localPosition = gunCamPoses[OffsetIndex];
                 targetTransform.localRotation = gunCamRots[OffsetIndex];
             }
+        }
+
+        public void _AutoPresetChangeCoroutine()
+        {
+            if (!UseAutoPresetChange)
+            {
+                _isAutoPresetChangeCoroutineRunning = false;
+                return;
+            }
+
+            ++OffsetIndex;
+
+            _isAutoPresetChangeCoroutineRunning = true;
+            SendCustomEventDelayedSeconds(nameof(_AutoPresetChangeCoroutine), autoPresetChangeInterval);
         }
 
         private static bool _GunOffsetExist(int index, GunCameraDataStore camData)
