@@ -197,14 +197,14 @@ namespace CenturionCC.System.Gun
                 Debug.Log(wdCallback != null ? wdCallback.name : "null");
         }
 
-        [CanBeNull]
+        [PublicAPI] [CanBeNull]
         public ManagedGun MasterOnly_Spawn(byte variantId, Vector3 position, Quaternion rotation)
         {
             var variantData = GetVariantData(variantId);
             return MasterOnly_SpawnWithData(variantData, position, rotation);
         }
 
-        [CanBeNull]
+        [PublicAPI] [CanBeNull]
         public ManagedGun MasterOnly_SpawnWithData(GunVariantDataStore data, Vector3 position, Quaternion rotation)
         {
             if (!Networking.IsMaster)
@@ -226,6 +226,7 @@ namespace CenturionCC.System.Gun
             return remote;
         }
 
+        [PublicAPI]
         public void MasterOnly_ResetRemoteGuns()
         {
             if (!Networking.IsMaster)
@@ -267,6 +268,7 @@ namespace CenturionCC.System.Gun
             Logger.Log($"{Prefix}{resetCount} unused ManagedGuns has been reset");
         }
 
+        [PublicAPI]
         public void MasterOnly_SlowlyResetRemoteGuns()
         {
             if (!Networking.IsMaster)
@@ -314,7 +316,7 @@ namespace CenturionCC.System.Gun
                     managedGun.RefreshData(false);
         }
 
-        [CanBeNull]
+        [PublicAPI] [CanBeNull]
         public GunVariantDataStore GetVariantData(byte variantUniqueId)
         {
             foreach (var variant in VariantDataInstances)
@@ -326,7 +328,7 @@ namespace CenturionCC.System.Gun
             return FallbackVariantData;
         }
 
-        [CanBeNull]
+        [PublicAPI] [CanBeNull]
         private ManagedGun GetAvailableManagedGun()
         {
             foreach (var managedGun in ManagedGunInstances)
@@ -338,11 +340,13 @@ namespace CenturionCC.System.Gun
 
         #region CallbackRegisterer
 
+        [PublicAPI]
         public void SubscribeCallback(UdonSharpBehaviour behaviour)
         {
             CallbackUtil.AddBehaviour(behaviour, ref _eventCallbackCount, ref _eventCallbacks);
         }
 
+        [PublicAPI]
         public void UnsubscribeCallback(UdonSharpBehaviour behaviour)
         {
             CallbackUtil.RemoveBehaviour(behaviour, ref _eventCallbackCount, ref _eventCallbacks);
@@ -369,8 +373,7 @@ namespace CenturionCC.System.Gun
             _shootingRules = _shootingRules.RemoveItem(rule);
         }
 
-        [PublicAPI]
-        [CanBeNull]
+        [PublicAPI] [CanBeNull]
         public TranslatableMessage GetCancelledMessageOf(int ruleId)
         {
             return _shootingRuleDict.TryGetValue(ruleId, TokenType.Reference, out var rule)
