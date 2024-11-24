@@ -309,7 +309,14 @@ namespace CenturionCC.System.Gun
             SendCustomEventDelayedSeconds(nameof(MasterOnly_SlowlyResetRemoteGuns), Random.Range(0F, 2F));
         }
 
+        [Obsolete("Use `GunManager#RefreshData` instead")]
         public void ReloadGuns()
+        {
+            RefreshData();
+        }
+
+        [PublicAPI]
+        public void RefreshData()
         {
             foreach (var managedGun in ManagedGunInstances)
                 if (managedGun != null && managedGun.IsOccupied)
