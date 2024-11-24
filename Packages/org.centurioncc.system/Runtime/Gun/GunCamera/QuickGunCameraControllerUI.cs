@@ -11,17 +11,45 @@ namespace CenturionCC.System.Gun.GunCamera
         [Header("Base")]
         [SerializeField]
         private GunCamera instance;
+
+        [SerializeField]
+        private float[] autoPresetChangeIntervals;
+
+        [SerializeField]
+        private string[] autoPresetChangeIntervalsNames;
+
         [Header("UI")]
         [SerializeField]
         private Toggle enableGunCamera;
+
         [SerializeField]
         private Button changeOffsetPos;
+
         [SerializeField]
         private Text changeOffsetPosText;
+
         [SerializeField]
         private Toggle showGunCamera;
+
         [SerializeField]
         private Toggle enableEditPosition;
+
+        [SerializeField]
+        private Toggle enableAutoPresetChange;
+
+        [SerializeField]
+        private Button changeAutoPresetChangeInterval;
+
+        [SerializeField]
+        private Text changeAutoPresetChangeIntervalText;
+
+        private int _autoPresetChangeIntervalIndex = 0;
+
+        private int AutoPresetChangeIntervalIndex
+        {
+            set => _autoPresetChangeIntervalIndex = value % autoPresetChangeIntervals.Length;
+            get => _autoPresetChangeIntervalIndex;
+        }
 
         private void Start()
         {
@@ -33,18 +61,28 @@ namespace CenturionCC.System.Gun.GunCamera
         {
             if (instance == null)
             {
-                _SetInteractable(false, false);
+                _SetInteractable(false, false, false);
                 return;
             }
 
             enableGunCamera.isOn = instance.IsOn;
             showGunCamera.isOn = instance.IsVisible;
             enableEditPosition.isOn = instance.IsPickupable;
+            enableAutoPresetChange.isOn = instance.UseAutoPresetChange;
 
-            _SetInteractable(instance.IsOn, instance.IsPickupable);
+            _SetInteractable(instance.IsOn, instance.IsPickupable, instance.UseAutoPresetChange);
 
             changeOffsetPosText.text =
                 $"プリセットの位置を変更する: {(instance.IsPickupable ? "CUSTOM" : $"{instance.OffsetIndex}")}";
+
+            var isPreset = Mathf.Approximately(
+                autoPresetChangeIntervals[AutoPresetChangeIntervalIndex],
+                instance.AutoPresetChangeInterval
+            );
+
+            changeAutoPresetChangeIntervalText.text = isPreset
+                ? $"プリセット変更時間: {autoPresetChangeIntervalsNames[AutoPresetChangeIntervalIndex]}"
+                : $"プリセット変更時間: CUSTOM({instance.AutoPresetChangeInterval:F1} secs)";
         }
 
         [PublicAPI]
@@ -53,6 +91,8 @@ namespace CenturionCC.System.Gun.GunCamera
             instance.IsOn = enableGunCamera.isOn;
             instance.IsVisible = showGunCamera.isOn;
             instance.IsPickupable = enableEditPosition.isOn;
+            instance.UseAutoPresetChange = enableAutoPresetChange.isOn;
+            instance.AutoPresetChangeInterval = autoPresetChangeIntervals[AutoPresetChangeIntervalIndex];
             UpdateUI();
         }
 
@@ -63,11 +103,21 @@ namespace CenturionCC.System.Gun.GunCamera
             UpdateUI();
         }
 
-        private void _SetInteractable(bool isInteractable, bool isPickupable)
+        [PublicAPI]
+        public void CyclePresetChangeInterval()
+        {
+            ++AutoPresetChangeIntervalIndex;
+            instance.AutoPresetChangeInterval = autoPresetChangeIntervals[AutoPresetChangeIntervalIndex];
+            UpdateUI();
+        }
+
+        private void _SetInteractable(bool isInteractable, bool isPickupable, bool useAutoPresetChange)
         {
             changeOffsetPos.interactable = isInteractable && !isPickupable;
             showGunCamera.interactable = isInteractable;
             enableEditPosition.interactable = isInteractable;
+            enableAutoPresetChange.interactable = isInteractable;
+            changeAutoPresetChangeInterval.interactable = isInteractable && useAutoPresetChange;
         }
     }
 }
