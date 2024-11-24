@@ -8,9 +8,14 @@ namespace CenturionCC.System.Gun
         {
             return true;
         }
-        
+
         public virtual void OnGunsReset()
         {
+        }
+
+        public virtual void OnGunsReset(GunManagerResetType type)
+        {
+            OnGunsReset();
         }
 
         public virtual void OnOccupyChanged(ManagedGun instance)

@@ -243,6 +243,30 @@ namespace CenturionCC.System.Gun
             Logger.Log($"{Prefix}ManagedGuns reset complete");
         }
 
+        [PublicAPI]
+        public void MasterOnly_ResetUnusedGuns()
+        {
+            if (!Networking.IsMaster)
+            {
+                Logger.LogError(string.Format(MustBeMasterError, nameof(MasterOnly_ResetUnusedGuns)));
+                return;
+            }
+
+            Logger.Log($"{Prefix}Resetting unused ManagedGuns");
+            int resetCount = 0;
+            foreach (var managedGun in ManagedGunInstances)
+            {
+                if (managedGun == null || !managedGun.IsOccupied ||
+                    managedGun.IsPickedUp || managedGun.IsHolstered) continue;
+
+                managedGun.MasterOnly_Dispose();
+                resetCount++;
+            }
+
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Invoke_OnGunsResetUnused));
+            Logger.Log($"{Prefix}{resetCount} unused ManagedGuns has been reset");
+        }
+
         public void MasterOnly_SlowlyResetRemoteGuns()
         {
             if (!Networking.IsMaster)
@@ -374,11 +398,21 @@ namespace CenturionCC.System.Gun
 
         public void Invoke_OnGunsReset()
         {
-            Logger.Log($"{Prefix}OnGunsReset");
+            Logger.Log($"{Prefix}OnGunsResetAll");
             foreach (var callback in _eventCallbacks)
             {
                 if (callback == null) continue;
-                ((GunManagerCallbackBase)callback).OnGunsReset();
+                ((GunManagerCallbackBase)callback).OnGunsReset(GunManagerResetType.All);
+            }
+        }
+
+        public void Invoke_OnGunsResetUnused()
+        {
+            Logger.Log($"{Prefix}OnGunsResetUnused");
+            foreach (var callback in _eventCallbacks)
+            {
+                if (callback == null) continue;
+                ((GunManagerCallbackBase)callback).OnGunsReset(GunManagerResetType.Unused);
             }
         }
 

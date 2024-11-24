@@ -122,6 +122,12 @@ namespace CenturionCC.System.Gun
         Disable
     }
 
+    public enum GunManagerResetType
+    {
+        All,
+        Unused
+    }
+
     public static class GunStateHelper
     {
         public const byte MaxValue = (byte)GunState.InCockingTwisting;
