@@ -1010,19 +1010,22 @@ namespace CenturionCC.System.Player
             Logger.Log(
                 $"{Prefix}Invoke_OnPlayerChanged: {player.name}, {NewbieUtils.GetPlayerName(lastId)}, {NewbieUtils.GetPlayerName(player.PlayerId)}");
 
-            if (player.IsAssigned && !lastActive)
+            var playerIdAssigned = player.PlayerId != -1;
+            var lastPlayerIdAssigned = lastId != -1;
+
+            if (playerIdAssigned && !lastPlayerIdAssigned)
             {
                 ++PlayerCount;
                 if (player.Role.HasPermission())
                     ++ModeratorPlayerCount;
             }
-            else if (!player.IsAssigned && lastActive)
+            else if (!playerIdAssigned && lastPlayerIdAssigned)
             {
                 --PlayerCount;
                 if (lastIsMod)
                     --ModeratorPlayerCount;
             }
-            else if (player.IsAssigned)
+            else if (playerIdAssigned)
             {
                 if (player.Role.HasPermission() && !lastIsMod)
                     ++ModeratorPlayerCount;
