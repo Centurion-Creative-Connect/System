@@ -1,5 +1,6 @@
 ﻿using CenturionCC.System.Player;
 using DerpyNewbie.Common;
+using DerpyNewbie.Common.Line;
 using UdonSharp;
 using UnityEngine;
 
@@ -10,8 +11,10 @@ namespace CenturionCC.System.Utils
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerMgr;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private DamageDataSyncerManager syncerMgr;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private LineManager lineManager;
 
