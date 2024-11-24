@@ -2,7 +2,7 @@
 using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
-using UnityEngine.Serialization;
+using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.Utils
 {
@@ -44,7 +44,8 @@ namespace CenturionCC.System.Utils
 
             foreach (var grenade in _localGrenades)
             {
-                grenade.ResetGrenade();
+                grenade.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(grenade.ResetGrenade));
+                ;
             }
         }
     }
