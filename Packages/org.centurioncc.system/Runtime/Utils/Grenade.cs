@@ -233,7 +233,7 @@ namespace CenturionCC.System.Utils
 
         private void OnCollisionEnter(Collision other)
         {
-            if (!useImpactTrigger || !Networking.IsOwner(gameObject)) return;
+            if (!useImpactTrigger || !Networking.IsOwner(gameObject) || _isExploding || _hasExploded) return;
 
             if (other.relativeVelocity.magnitude < impactTriggerThreshold) return;
 
@@ -336,15 +336,12 @@ namespace CenturionCC.System.Utils
 
         public void _Explode()
         {
-            if (_hasSafetyLever)
+            if (_hasSafetyLever || _isExploding || _hasExploded)
             {
-                Debug.LogError("[Grenade] Will not be exploding as safety lever has been reset");
-                return;
-            }
-
-            if (_isExploding)
-            {
-                Debug.LogError("[Grenade] Will not be exploding as it is already exploding");
+                Debug.LogError(_hasSafetyLever
+                    ? "[Grenade] Will not be exploding as safety lever has been reset"
+                    : "[Grenade] Will not be exploding as it is already exploding or exploded"
+                );
                 return;
             }
 
