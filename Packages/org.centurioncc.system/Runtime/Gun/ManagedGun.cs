@@ -161,6 +161,8 @@ namespace CenturionCC.System.Gun
             if (refreshHandleOffset)
             {
                 Internal_SetPivot(HandleType.MainHandle);
+                MainHandle.FlagDiscontinuity();
+                SubHandle.FlagDiscontinuity();
                 MainHandle.MoveToLocalPosition(MainHandlePositionOffset, MainHandleRotationOffset);
                 SubHandle.MoveToLocalPosition(SubHandlePositionOffset, SubHandleRotationOffset);
             }
