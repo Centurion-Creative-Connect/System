@@ -1,5 +1,8 @@
-﻿using UdonSharp;
+﻿using DerpyNewbie.Common;
+using UdonSharp;
 using UnityEngine;
+using UnityEngine.Serialization;
+using VRC.SDK3.Components;
 using VRC.SDKBase;
 
 namespace CenturionCC.System.Gun
@@ -14,6 +17,10 @@ namespace CenturionCC.System.Gun
         public Transform free;
         public Material pickupableMaterial;
         public float desktopScaleMultiplier = 10F;
+
+        [SerializeField] [NewbieInject(SearchScope.Self)]
+        private VRCObjectSync objectSync;
+
         private Collider _collider;
         private Material _defaultMaterial;
 
@@ -187,6 +194,11 @@ namespace CenturionCC.System.Gun
         {
             transform.SetParent(_isAttached ? target : free);
             IsHolstered = false;
+        }
+
+        public void FlagDiscontinuity()
+        {
+            if (objectSync != null) objectSync.FlagDiscontinuity();
         }
     }
 }
