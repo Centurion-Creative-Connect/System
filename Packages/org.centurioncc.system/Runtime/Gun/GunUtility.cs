@@ -23,7 +23,6 @@ namespace CenturionCC.System.Gun
         public const string SelectorTypeParamName = "SelectorType";
         public const string StateParamName = "State";
         public const string TriggerStateParamName = "Trigger";
-        public const string ReservedBulletsCountParamName = "ReservedBulletsCount";
         public const string CurrentBulletsCountParamName = "CurrentBulletsCount";
 
         public static FireMode CycleFireMode(FireMode fireMode, FireMode[] allowedFireModes)

@@ -40,14 +40,14 @@ namespace CenturionCC.System.Gun
         protected readonly int IsShootingEmptyAnimHash = Animator.StringToHash(GunUtility.IsShootingEmptyParamName);
         protected readonly int IsVRAnimHash = Animator.StringToHash(GunUtility.IsVRParamName);
 
-        protected readonly int ReservedBulletsCountAnimHash =
-            Animator.StringToHash(GunUtility.ReservedBulletsCountParamName);
-
         protected readonly int SelectorTypeAnimHash = Animator.StringToHash(GunUtility.SelectorTypeParamName);
         protected readonly int StateAnimHash = Animator.StringToHash(GunUtility.StateParamName);
 
         protected readonly int TriggerProgressAnimHash = Animator.StringToHash(GunUtility.TriggerProgressParamName);
         protected readonly int TriggerStateAnimHash = Animator.StringToHash(GunUtility.TriggerStateParamName);
+
+        [UdonSynced] [FieldChangeCallback(nameof(CurrentMagazineType))]
+        private int _currentMagazineType;
 
         [UdonSynced] [FieldChangeCallback(nameof(RawState))]
         private byte _currentState;
@@ -93,10 +93,6 @@ namespace CenturionCC.System.Gun
 
         protected virtual void Start()
         {
-            InitialTotalBullets = totalBulletsCount;
-            ReservedBulletsCount = totalBulletsCount;
-            CurrentMagazineSize = magazineSize;
-
             FireMode = AvailableFireModes.Length != 0 ? AvailableFireModes[0] : FireMode.Safety;
             Trigger = FireMode == FireMode.Safety ? TriggerState.Idle : TriggerState.Armed;
 
@@ -104,6 +100,7 @@ namespace CenturionCC.System.Gun
             {
                 State = GunState.Idle;
                 ShotCount = 0;
+                CurrentMagazineType = -1;
             }
 
             MainHandle.callback = this;
@@ -138,14 +135,20 @@ namespace CenturionCC.System.Gun
 
             if (Behaviour != null)
                 Behaviour.Setup(this);
+
+            if (MagazineReceiver != null)
+                MagazineReceiver.Setup(this);
         }
 
         protected virtual void OnTriggerEnter(Collider other)
         {
+            // TODO: improve perf
+            if (other.gameObject.layer == 27) return;
+
             var otherName = other.name.ToLower();
 
 #if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            Logger.LogVerbose($"{Prefix}OnTriggerEnter: {otherName}");
+            Logger.LogVerbose($"{Prefix}OnTriggerEnter: {otherName} with layer {other.gameObject.layer}");
 #endif
 
             if (otherName.StartsWith("holster"))
@@ -171,6 +174,9 @@ namespace CenturionCC.System.Gun
 
         protected virtual void OnTriggerExit(Collider other)
         {
+            // TODO: improve perf
+            if (other.gameObject.layer == 27) return;
+
             var otherName = other.name.ToLower();
 
             if (otherName.StartsWith("holster") && IsLocal)
@@ -212,9 +218,6 @@ namespace CenturionCC.System.Gun
             if (Behaviour != null)
                 Behaviour.OnGunUpdate(this);
 
-            if (!IsVR)
-                Internal_HandleDesktopInputs();
-
             if (IsInWall)
             {
                 Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .2F, .02F, .1F);
@@ -234,16 +237,6 @@ namespace CenturionCC.System.Gun
 
             Internal_UpdateIsPickedUpState();
             UpdatePosition();
-        }
-
-        public override void InputJump(bool value, UdonInputEventArgs args)
-        {
-            if (!value || !IsLocal || IsReloading)
-                return;
-
-            IsReloading = true;
-            SendCustomEventDelayedSeconds(nameof(ReloadMagazine), ReloadTimeInSeconds);
-            FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
         }
 
         [PublicAPI]
@@ -329,6 +322,12 @@ namespace CenturionCC.System.Gun
 
             Internal_UpdatePosition(method);
         }
+
+        // [PublicAPI]
+        // public override void OnMagazineCollision()
+        // {
+        //     CollisionExclusionCount++;
+        // }
 
         [PublicAPI]
         public void UpdatePositionForSync()
@@ -422,6 +421,7 @@ namespace CenturionCC.System.Gun
         [SerializeField] protected GunHandle customHandle;
         [SerializeField] protected GunBulletHolder bulletHolder;
         [SerializeField] protected Animator animator;
+        [SerializeField] protected MagazineReceiver magazineReceiver;
         [SerializeField] protected GunBehaviourBase behaviour;
         [SerializeField] protected FireMode[] availableFireModes = { FireMode.SemiAuto };
         [SerializeField] protected ProjectileDataProvider projectileData;
@@ -434,10 +434,6 @@ namespace CenturionCC.System.Gun
         [SerializeField] protected float mainHandlePitchOffset;
         [SerializeField] protected float mainHandleRePickupDelay;
         [SerializeField] protected float subHandleRePickupDelay;
-
-        [SerializeField] protected int totalBulletsCount = 240;
-        [SerializeField] protected int magazineSize = 30;
-        [SerializeField] protected float reloadTimeInSeconds = 3F;
 
         [Header("ObjectMarker Properties")] [SerializeField]
         protected ObjectType objectType = ObjectType.Metallic;
@@ -482,10 +478,10 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public override GunHandle SubHandle => subHandle;
         [PublicAPI] public override GunHandle CustomHandle => customHandle;
         [PublicAPI] public override Transform Target => target ? target : transform;
-        [PublicAPI] [CanBeNull] public override Animator TargetAnimator => animator;
+        [PublicAPI] public override Animator TargetAnimator => animator;
+        [PublicAPI] public override MagazineReceiver MagazineReceiver => magazineReceiver;
 
         [PublicAPI]
-        [CanBeNull]
         public override VRCPlayerApi CurrentHolder => MainHandle.CurrentPlayer ?? SubHandle.CurrentPlayer;
 
         [PublicAPI]
@@ -515,13 +511,15 @@ namespace CenturionCC.System.Gun
         }
 
         [PublicAPI]
-        public override int CurrentMagazineSize
+        public override int CurrentMagazineType
         {
-            get => magazineSize;
-            protected set => magazineSize = value;
+            get => _currentMagazineType;
+            protected set
+            {
+                _currentMagazineType = value;
+                if (MagazineReceiver != null) MagazineReceiver.SetMagazineType(value);
+            }
         }
-
-        [PublicAPI] public override float ReloadTimeInSeconds => reloadTimeInSeconds;
 
         [PublicAPI]
         public override bool HasCocked
@@ -581,7 +579,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public virtual bool IsDoubleHandedGun => isDoubleHanded;
         [PublicAPI] public virtual float MainHandleRePickupDelay => mainHandleRePickupDelay;
         [PublicAPI] public virtual float MainHandlePitchOffset => mainHandlePitchOffset;
-        [PublicAPI] [field: UdonSynced] public virtual float CurrentMainHandlePitchOffset { get; protected set; }
+        [PublicAPI] [field: UdonSynced] public virtual float CurrentMainHandlePitchOffset { get; set; }
 
         [PublicAPI] public virtual float SubHandleRePickupDelay => subHandleRePickupDelay;
 
@@ -741,7 +739,7 @@ namespace CenturionCC.System.Gun
         /// Is this Gun inside of a wall?
         /// </summary>
         [PublicAPI]
-        public virtual bool IsInWall => CollisionCount != 0;
+        public virtual bool IsInWall => CollisionCount > 0;
 
         #endregion
 
@@ -1149,21 +1147,6 @@ namespace CenturionCC.System.Gun
             _fireMode = fireMode;
             if (TargetAnimator != null)
                 TargetAnimator.SetInteger(SelectorTypeAnimHash, (int)fireMode);
-        }
-
-        protected void Internal_HandleDesktopInputs()
-        {
-            if (Input.GetKeyDown(KeyCode.B))
-            {
-                FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
-            }
-
-            var scrollDelta = Input.GetAxisRaw("Mouse ScrollWheel") * 80F;
-            if (!Mathf.Approximately(scrollDelta, 0) && !Input.GetKey(KeyCode.LeftShift))
-            {
-                CurrentMainHandlePitchOffset += scrollDelta;
-                RequestSerialization();
-            }
         }
 
         #endregion

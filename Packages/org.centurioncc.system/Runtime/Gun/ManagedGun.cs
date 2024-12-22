@@ -149,6 +149,7 @@ namespace CenturionCC.System.Gun
                 mt.localPosition = data.ModelPositionOffset;
                 mt.localRotation = data.ModelRotationOffset;
                 _animator = Model.GetComponentInChildren<Animator>();
+                magazineReceiver = Model.GetComponentInChildren<MagazineReceiver>();
             }
 
             VariantData = data;
@@ -182,18 +183,15 @@ namespace CenturionCC.System.Gun
 
             CollisionCount = 0;
 
-            // Apply magazine setting
-            InitialTotalBullets = VariantData.ReservedBulletsCount;
-            ReservedBulletsCount = VariantData.ReservedBulletsCount;
-            CurrentBulletsCount = 0;
-            CurrentMagazineSize = VariantData.MagazineSize;
-
             // Update behaviour related properties
             FireMode = AvailableFireModes[0];
 
             // Finally call setup for behaviour
             if (Behaviour != null)
                 Behaviour.Setup(this);
+
+            if (MagazineReceiver != null)
+                MagazineReceiver.Setup(this);
 
             ParentManager.Invoke_OnVariantChanged(this);
         }
@@ -470,9 +468,6 @@ namespace CenturionCC.System.Gun
 
         public override float RoundsPerSecond =>
             VariantData ? VariantData.MaxRoundsPerSecond : float.PositiveInfinity;
-
-        public override float ReloadTimeInSeconds =>
-            VariantData != null ? VariantData.ReloadTimeInSeconds : 0F;
 
         [PublicAPI]
         public override FireMode[] AvailableFireModes =>

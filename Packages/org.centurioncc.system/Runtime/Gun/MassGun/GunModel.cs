@@ -51,15 +51,11 @@ namespace CenturionCC.System.Gun.MassGun
             if (TargetAnimator)
             {
                 TargetAnimator.SetFloat(TriggerProgressAnimHash, GetMainTriggerPull());
-                TargetAnimator.SetInteger(CurrentBulletsCountAnimHash, CurrentBulletsCount);
-                TargetAnimator.SetInteger(ReservedBulletsCountAnimHash, ReservedBulletsCount);
+                TargetAnimator.SetInteger(CurrentBulletsCountAnimHash, MagazineRoundsRemaining);
             }
 
             if (Behaviour)
                 Behaviour.OnGunUpdate(this);
-
-            if (!IsVR)
-                Internal_HandleDesktopInputs();
 
             if (IsInWall)
             {
