@@ -95,7 +95,7 @@ namespace CenturionCC.System.Gun
                 return;
             }
 
-            Magazine.Attach(transform);
+            Magazine.AttachToReceiver(this);
         }
 
         public virtual void Setup(GunBase gun)

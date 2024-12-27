@@ -32,6 +32,7 @@ namespace CenturionCC.System.Gun
 
         protected readonly int HasBulletAnimHash = Animator.StringToHash(GunUtility.HasBulletParamName);
         protected readonly int HasCockedAnimHash = Animator.StringToHash(GunUtility.HasCockedParamName);
+        protected readonly int HasMagazineAnimHash = Animator.StringToHash(GunUtility.HasMagazineParamName);
         protected readonly int IsInWallAnimHash = Animator.StringToHash(GunUtility.IsInWallParamName);
         protected readonly int IsLocalAnimHash = Animator.StringToHash(GunUtility.IsLocalParamName);
         protected readonly int IsPickedUpGlobalAnimHash = Animator.StringToHash(GunUtility.IsPickedUpGlobalParamName);
@@ -59,6 +60,8 @@ namespace CenturionCC.System.Gun
 
         [UdonSynced] [FieldChangeCallback(nameof(HasCocked))]
         private bool _hasCocked;
+
+        private bool _isInStateChangeCallback;
 
         private bool _isLocal;
         private bool _isPickedUp;
@@ -142,8 +145,11 @@ namespace CenturionCC.System.Gun
 
         protected virtual void OnTriggerEnter(Collider other)
         {
-            // TODO: improve perf
-            if (other.gameObject.layer == 27) return;
+            if (other.gameObject.layer == 27)
+            {
+                Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .2F, .02F, .1F);
+                return;
+            }
 
             var otherName = other.name.ToLower();
 
@@ -198,6 +204,16 @@ namespace CenturionCC.System.Gun
 
             if (TargetAnimator != null)
                 TargetAnimator.SetBool(IsInWallAnimHash, IsInWall);
+        }
+
+        protected void OnTriggerStay(Collider other)
+        {
+            if (other.gameObject.layer != 27) return;
+
+            if (MagazineReceiver != null && MagazineReceiver.HasMagazine) return;
+
+            Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .2F, .01F, .1F);
+            Networking.LocalPlayer.PlayHapticEventInHand(SubHandle.CurrentHand, .2F, .01F, .1F);
         }
 
         public virtual void _Update()
@@ -323,11 +339,12 @@ namespace CenturionCC.System.Gun
             Internal_UpdatePosition(method);
         }
 
-        // [PublicAPI]
-        // public override void OnMagazineCollision()
-        // {
-        //     CollisionExclusionCount++;
-        // }
+        public override void OnMagazineChanged()
+        {
+            base.OnMagazineChanged();
+            if (TargetAnimator != null && MagazineReceiver != null)
+                TargetAnimator.SetBool(HasMagazineAnimHash, MagazineReceiver.HasMagazine);
+        }
 
         [PublicAPI]
         public void UpdatePositionForSync()
@@ -335,21 +352,6 @@ namespace CenturionCC.System.Gun
             SendCustomEventDelayedSeconds(nameof(UpdatePosition), 0.5F);
             SendCustomEventDelayedSeconds(nameof(UpdatePosition), 1F);
             SendCustomEventDelayedSeconds(nameof(UpdatePosition), 5F);
-        }
-
-        [PublicAPI]
-        public void SetState(GunState state)
-        {
-            SetState(Convert.ToByte(state));
-        }
-
-        [PublicAPI]
-        public void SetState(byte state)
-        {
-            if (RawState == state) return;
-            RawState = state;
-            Networking.SetOwner(Networking.LocalPlayer, gameObject);
-            RequestSerialization();
         }
 
         /// <summary>
@@ -493,7 +495,7 @@ namespace CenturionCC.System.Gun
                     return GunState.Unknown;
                 return (GunState)RawState;
             }
-            set => SetState(value);
+            set => Internal_SetState(value);
         }
 
         [PublicAPI]
@@ -690,8 +692,12 @@ namespace CenturionCC.System.Gun
                 _currentState = value;
                 if (TargetAnimator != null)
                     TargetAnimator.SetInteger(StateAnimHash, value);
-                if (lastState != value)
+                if (lastState != value && !_isInStateChangeCallback)
+                {
+                    _isInStateChangeCallback = true;
                     OnProcessStateChange(lastState, value);
+                    _isInStateChangeCallback = false;
+                }
             }
         }
 
@@ -1142,6 +1148,19 @@ namespace CenturionCC.System.Gun
                 Networking.SetOwner(api, customHandle.gameObject);
         }
 
+        protected void Internal_SetState(GunState state)
+        {
+            Internal_SetState(Convert.ToByte(state));
+        }
+
+        protected void Internal_SetState(byte state)
+        {
+            if (RawState == state) return;
+            RawState = state;
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            RequestSerialization();
+        }
+
         protected void Internal_SetFireModeWithoutNotify(FireMode fireMode)
         {
             _fireMode = fireMode;
@@ -1282,6 +1301,8 @@ namespace CenturionCC.System.Gun
                     TargetAnimator.SetFloat(CockingTwistAnimHash, 0);
                 }
             }
+
+            if (Behaviour != null) Behaviour.OnGunStateChanged(this, previousState);
         }
 
         protected virtual void OnProcessCollisionAudio(Collider other)

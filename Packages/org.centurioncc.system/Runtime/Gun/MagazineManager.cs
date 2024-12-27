@@ -35,6 +35,7 @@ namespace CenturionCC.System.Gun
         {
             var instantiatedMagazine = Instantiate(sourceMagazine);
             instantiatedMagazine.SetActive(true);
+            instantiatedMagazine.name = $"{instantiatedMagazine.name}-{dataStore.Type}-{_spawnedMagazines.Count}";
 
             var magazine = instantiatedMagazine.GetComponent<Magazine>();
             magazine.SetVariantData(dataStore);

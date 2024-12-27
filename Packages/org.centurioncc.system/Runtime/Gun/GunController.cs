@@ -19,12 +19,12 @@ namespace CenturionCC.System.Gun
 
             if (Input.GetKeyDown(KeyCode.B))
             {
-                ChangeFireMode();
+                FireModeChangeAction();
             }
 
             if (Input.GetKeyDown(KeyCode.E))
             {
-                ReleaseMagazine();
+                LoadingAction();
             }
 
             var scrollDelta = Input.GetAxisRaw("Mouse ScrollWheel") * 80F;
@@ -38,11 +38,11 @@ namespace CenturionCC.System.Gun
         {
             if (!value) return;
 
-            ReleaseMagazine();
+            LoadingAction();
         }
 
         [PublicAPI]
-        public void ChangeFireMode()
+        public void FireModeChangeAction()
         {
             var localGuns = gunManager.LocalHeldGuns;
             foreach (var gun in localGuns)
@@ -53,13 +53,15 @@ namespace CenturionCC.System.Gun
         }
 
         [PublicAPI]
-        public void ReleaseMagazine()
+        public void LoadingAction()
         {
             var localGuns = gunManager.LocalHeldGuns;
             foreach (var gun in localGuns)
             {
                 if (gun == null || gun.MagazineReceiver == null) continue;
-                gun.MagazineReceiver.ReleaseMagazine();
+
+                if (gun.State == GunState.InCockingPush && gun.MagazineRoundsRemaining != 0) gun.State = GunState.Idle;
+                else gun.MagazineReceiver.ReleaseMagazine();
             }
         }
 

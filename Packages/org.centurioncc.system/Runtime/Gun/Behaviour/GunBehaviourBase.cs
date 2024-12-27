@@ -72,6 +72,15 @@ namespace CenturionCC.System.Gun.Behaviour
         }
 
         /// <summary>
+        /// Gets called when state was changed.
+        /// </summary>
+        /// <param name="instance"></param>
+        /// <param name="previousState"></param>
+        public virtual void OnGunStateChanged(GunBase instance, GunState previousState)
+        {
+        }
+
+        /// <summary>
         /// Gets called when assigned to a <see cref="Gun" />.
         /// </summary>
         /// <param name="instance">instance of LocalGun which was assigned</param>
