@@ -238,7 +238,12 @@ namespace CenturionCC.System.Gun.Behaviour
                 var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
                 if (hasSucceeded && isBlowBack)
                 {
-                    instance.LoadBullet();
+                    if (!instance.LoadBullet())
+                    {
+                        instance.State = GunState.InCockingPush;
+                        UpdateCustomHandlePosition(instance);
+                    }
+
                     instance.HasCocked = true;
                 }
             }
@@ -324,6 +329,19 @@ namespace CenturionCC.System.Gun.Behaviour
                     cockingAutoLoadMargin,
                     1 - cockingAutoLoadMargin
                 );
+        }
+
+        public override void OnGunStateChanged(GunBase instance, GunState previousState)
+        {
+            if (instance.CustomHandle.IsPickedUp) return;
+
+            UpdateCustomHandlePosition(instance);
+
+            if (previousState == GunState.InCockingPush && instance.State == GunState.Idle &&
+                instance.HasCocked && !instance.HasBulletInChamber)
+            {
+                instance.LoadBullet();
+            }
         }
 
         public override void Setup(GunBase instance)
