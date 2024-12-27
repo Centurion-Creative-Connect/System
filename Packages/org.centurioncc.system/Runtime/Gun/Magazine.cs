@@ -27,6 +27,8 @@ namespace CenturionCC.System.Gun
         [SerializeField] [NewbieInject(SearchScope.Self)]
         protected VRCPickup pickup;
 
+        private bool _hasSetOriginal;
+
         private bool _isPullingTrigger;
         private bool _originalGravity;
         private bool _originalKinematic;
@@ -34,6 +36,11 @@ namespace CenturionCC.System.Gun
         private Transform _originalParent;
 
         protected Transform PickupTarget;
+
+
+        [PublicAPI] public bool IsHeld => pickup.IsHeld;
+        [PublicAPI] public VRCPlayerApi CurrentPlayer => pickup.currentPlayer;
+        [PublicAPI] public VRC_Pickup.PickupHand CurrentHand => pickup.currentHand;
 
 
         [PublicAPI] public int Type => type;
@@ -49,11 +56,21 @@ namespace CenturionCC.System.Gun
 
         private void Start()
         {
+            Debug.Log($"[Magazine-{name}] Start");
             PickupTarget = pickup.ExactGun;
 
-            _originalParent = transform.parent;
-            _originalGravity = rb.useGravity;
-            _originalKinematic = rb.isKinematic;
+            if (!_hasSetOriginal)
+            {
+                Debug.Log($"[Magazine-{name}] Init original: g: {rb.useGravity}, k: {rb.isKinematic}");
+                _hasSetOriginal = true;
+                _originalParent = transform.parent;
+                _originalGravity = rb.useGravity;
+                _originalKinematic = rb.isKinematic;
+            }
+            else
+            {
+                Debug.Log($"[Magazine-{name}] Original has already been set. Preserving!");
+            }
         }
 
         private void OnTriggerEnter(Collider other)
@@ -81,8 +98,9 @@ namespace CenturionCC.System.Gun
             PickupTarget.localPosition = offset.localPosition;
             PickupTarget.localRotation = offset.localRotation;
 
-            if (IsAttachedToMagazine)
+            if (IsAttached)
             {
+                Debug.Log($"[Magazine-{name}] Detaching because its being picked up");
                 Detach();
             }
         }
@@ -106,6 +124,15 @@ namespace CenturionCC.System.Gun
             if (ChildMagazine != null)
             {
                 ChildMagazine.Detach();
+            }
+
+            // HACK: Workaround for VRCPickup reverting changes while it's picked up
+            if (!IsAttached)
+            {
+                Debug.Log($"[Magazine-{name}] Setting to original state as it was no longer attached");
+                transform.SetParent(_originalParent);
+                rb.useGravity = _originalGravity;
+                rb.isKinematic = _originalKinematic;
             }
         }
 
@@ -164,23 +191,32 @@ namespace CenturionCC.System.Gun
         }
 
         [PublicAPI]
-        public void Attach(Transform target)
+        public void Attach(Transform target, bool preserveOriginal = true)
         {
             if (IsAttached) Detach();
-            Debug.Log($"[Magazine-{name}] Attach");
+            Debug.Log($"[Magazine-{name}] Attach: {target.name}, g: {rb.useGravity}, k: {rb.isKinematic}");
 
             IsAttached = true;
 
-            _originalParent = transform.parent;
-            _originalGravity = rb.useGravity;
-            _originalKinematic = rb.isKinematic;
+            if (!preserveOriginal || !_hasSetOriginal)
+            {
+                Debug.Log($"[Magazine-{name}] Updating original");
+                _hasSetOriginal = true;
+                _originalParent = transform.parent;
+                _originalGravity = rb.useGravity;
+                _originalKinematic = rb.isKinematic;
+            }
+            else
+            {
+                Debug.Log($"[Magazine-{name}] Preserving original");
+            }
 
             rb.useGravity = false;
             rb.isKinematic = true;
 
             pickup.Drop();
 
-            transform.SetParent(target, target);
+            transform.SetParent(target, true);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
         }
@@ -188,7 +224,8 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public void Detach()
         {
-            Debug.Log($"[Magazine-{name}] Detach");
+            Debug.Log(
+                $"[Magazine-{name}] Detach: {transform.name}->{(_originalParent != null ? _originalParent.name : "null")}, g: {_originalGravity}, k: {_originalKinematic}");
 
             transform.SetParent(_originalParent);
 

@@ -173,6 +173,10 @@ namespace CenturionCC.System.Gun
         {
             if (MagazineReceiver == null) return;
             CurrentMagazineType = MagazineReceiver.MagazineType;
+
+            if (!IsLocal) return;
+
+            Networking.LocalPlayer.PlayHapticEventInHand(SubHandle.CurrentHand, .2F, .2F, .1F);
         }
 
         public virtual void OnMagazineCollision()
