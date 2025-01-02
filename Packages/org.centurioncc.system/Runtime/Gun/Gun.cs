@@ -214,7 +214,7 @@ namespace CenturionCC.System.Gun
 
 #if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             Logger.LogVerbose(
-                $"{Prefix}Received new shot: {ShotCount}:{QueuedShotCount}, {_shotPosition.ToString("2F")}, {_shotRotation.eulerAngles.ToString("2F")}");
+                $"{Prefix}Received new shot: {ShotCount}:{_shotPosition.ToString("2F")}, {_shotRotation.eulerAngles.ToString("2F")}");
 #endif
 
             if (ShotCount <= 0 || _lastShotCount == -1)
