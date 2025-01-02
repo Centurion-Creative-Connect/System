@@ -56,13 +56,14 @@ namespace CenturionCC.System.Utils
         [SerializeField] [InspectorName("Weapon Name (Damage Type)")]
         private string damageType = "Grenade";
 
-        [Header("Trigger Settings")]
+        [Header("Trigger Settings: Timed")]
         [SerializeField]
         private bool useTimedTrigger = true;
 
         [SerializeField] [Tooltip("Delay after safety lever has released. in seconds")]
         private float timedTriggerDelay = 3;
 
+        [Header("Trigger Settings: Impact")]
         [SerializeField]
         private bool useImpactTrigger;
 
@@ -71,6 +72,9 @@ namespace CenturionCC.System.Utils
 
         [SerializeField] [Tooltip("Delay after impact occurred. in seconds")]
         private float impactTriggerDelay;
+
+        [SerializeField] [Tooltip("Ignoring impacts caused with specified colliders")]
+        private Collider[] impactTriggerExclusions;
 
         [Header("Explosion Settings")]
         [SerializeField] private Vector3 explosionRelativeTorque = new Vector3(1.5F, .3F, 0F);
@@ -108,6 +112,8 @@ namespace CenturionCC.System.Utils
         private readonly int _hashedHasSafetyPin = Animator.StringToHash(AnimParamHasSafetyPin);
         private readonly int _hashedHasSafetyPinHeld = Animator.StringToHash(AnimParamHasSafetyPinHeld);
         private readonly int _hashedSafetyPinPull = Animator.StringToHash(AnimParamSafetyPinPull);
+
+        private ContactPoint[] _contactPoints = new ContactPoint[2];
 
         private float _currentExplosionInterval;
 
@@ -236,6 +242,16 @@ namespace CenturionCC.System.Utils
             if (!useImpactTrigger || !Networking.IsOwner(gameObject) || _isExploding || _hasExploded) return;
 
             if (other.relativeVelocity.magnitude < impactTriggerThreshold) return;
+
+            var contacts = other.GetContacts(_contactPoints);
+            for (var i = 0; i < contacts; i++)
+            {
+                var cp = _contactPoints[i];
+                if (!impactTriggerExclusions.ContainsItem(cp.thisCollider)) continue;
+
+                Debug.Log($"[Grenade] Hit exclusion collider: {cp.thisCollider.name}", this);
+                return;
+            }
 
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(IgniteByImpact));
         }
