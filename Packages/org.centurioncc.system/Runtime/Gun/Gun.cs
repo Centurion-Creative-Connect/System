@@ -25,6 +25,10 @@ namespace CenturionCC.System.Gun
         private const float DisallowPickupFromBelowRange = -0.1F;
         protected readonly int CockingProgressAnimHash = Animator.StringToHash(GunUtility.CockingProgressParamName);
         protected readonly int CockingTwistAnimHash = Animator.StringToHash(GunUtility.CockingTwistParamName);
+
+        protected readonly int CurrentBulletsCountAnimHash =
+            Animator.StringToHash(GunUtility.CurrentBulletsCountParamName);
+
         protected readonly int HasBulletAnimHash = Animator.StringToHash(GunUtility.HasBulletParamName);
         protected readonly int HasCockedAnimHash = Animator.StringToHash(GunUtility.HasCockedParamName);
         protected readonly int IsInSafeZoneAnimHash = Animator.StringToHash(GunUtility.IsInSafeZoneParamName);
@@ -35,6 +39,10 @@ namespace CenturionCC.System.Gun
         protected readonly int IsShootingAnimHash = Animator.StringToHash(GunUtility.IsShootingParamName);
         protected readonly int IsShootingEmptyAnimHash = Animator.StringToHash(GunUtility.IsShootingEmptyParamName);
         protected readonly int IsVRAnimHash = Animator.StringToHash(GunUtility.IsVRParamName);
+
+        protected readonly int ReservedBulletsCountAnimHash =
+            Animator.StringToHash(GunUtility.ReservedBulletsCountParamName);
+
         protected readonly int SelectorTypeAnimHash = Animator.StringToHash(GunUtility.SelectorTypeParamName);
         protected readonly int StateAnimHash = Animator.StringToHash(GunUtility.StateParamName);
 
@@ -89,6 +97,10 @@ namespace CenturionCC.System.Gun
 
         protected virtual void Start()
         {
+            InitialTotalBullets = totalBulletsCount;
+            ReservedBulletsCount = totalBulletsCount;
+            CurrentMagazineSize = magazineSize;
+
             FireMode = AvailableFireModes.Length != 0 ? AvailableFireModes[0] : FireMode.Safety;
             Trigger = FireMode == FireMode.Safety ? TriggerState.Idle : TriggerState.Armed;
 
@@ -271,9 +283,11 @@ namespace CenturionCC.System.Gun
 
         public override void InputJump(bool value, UdonInputEventArgs args)
         {
-            if (!value || !IsLocal)
+            if (!value || !IsLocal || IsReloading)
                 return;
 
+            IsReloading = true;
+            SendCustomEventDelayedSeconds(nameof(ReloadMagazine), ReloadTimeInSeconds);
             FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
         }
 
@@ -291,8 +305,8 @@ namespace CenturionCC.System.Gun
                 case ShotResult.SucceededContinuously:
                 {
                     Shoot();
+                    EjectBullet();
                     ++BurstCount;
-                    HasBulletInChamber = false;
 
                     if (!FireMode.HasFiredEnough(BurstCount))
                         return ShotResult.SucceededContinuously;
@@ -472,6 +486,10 @@ namespace CenturionCC.System.Gun
         [SerializeField] protected float mainHandleRePickupDelay;
         [SerializeField] protected float subHandleRePickupDelay;
 
+        [SerializeField] protected int totalBulletsCount = 240;
+        [SerializeField] protected int magazineSize = 30;
+        [SerializeField] protected float reloadTimeInSeconds = 3F;
+
         [Header("ObjectMarker Properties")] [SerializeField]
         protected ObjectType objectType = ObjectType.Metallic;
 
@@ -546,6 +564,15 @@ namespace CenturionCC.System.Gun
                     BurstCount = 0;
             }
         }
+
+        [PublicAPI]
+        public override int CurrentMagazineSize
+        {
+            get => magazineSize;
+            protected set => magazineSize = value;
+        }
+
+        [PublicAPI] public override float ReloadTimeInSeconds => reloadTimeInSeconds;
 
         [PublicAPI]
         public override bool HasCocked
@@ -850,6 +877,7 @@ namespace CenturionCC.System.Gun
             if (IsLocal && HapticData != null && HapticData.Shooting)
                 HapticData.Shooting.PlayBothHand();
 
+            HasBulletInChamber = false;
             HasCocked = false;
         }
 
@@ -1231,6 +1259,12 @@ namespace CenturionCC.System.Gun
             }
 
             if (State != GunState.Idle)
+            {
+                Trigger = TriggerState.Fired;
+                return ShotResult.Failed;
+            }
+
+            if (!HasBulletInChamber)
             {
                 Trigger = TriggerState.Fired;
                 return ShotResult.Failed;
