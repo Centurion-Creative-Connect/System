@@ -316,24 +316,43 @@ namespace CenturionCC.System.Gun
 
         protected override ShotResult CanShoot()
         {
-            var result = base.CanShoot();
-
             if (VariantData == null)
             {
                 ParentManager.Invoke_OnShootCancelled(this, 1);
                 return ShotResult.Cancelled;
             }
 
+            if (!CanShootWithoutMagazine && !HasMagazine)
+            {
+                ParentManager.Invoke_OnShootCancelled(this, 20);
+                Trigger = TriggerState.Fired;
+                return ShotResult.Cancelled;
+            }
+
             if (FireMode == FireMode.Safety)
             {
                 ParentManager.Invoke_OnShootFailed(this, 12);
-                result = ShotResult.Failed;
+                return ShotResult.Cancelled;
+            }
+
+            if (State != GunState.Idle)
+            {
+                ParentManager.Invoke_OnShootCancelled(this, 15);
+                Trigger = TriggerState.Fired;
+                return ShotResult.Cancelled;
+            }
+
+            if (!HasCocked)
+            {
+                ParentManager.Invoke_OnShootCancelled(this, 14);
+                Trigger = TriggerState.Fired;
+                return ShotResult.Cancelled;
             }
 
             if (!HasBulletInChamber)
             {
                 ParentManager.Invoke_OnShootFailed(this, 13);
-                result = ShotResult.Failed;
+                return CanShootWithoutMagazine || HasMagazine ? ShotResult.Failed : ShotResult.Cancelled;
             }
 
             if (ParentManager.useCollisionCheck)
@@ -341,29 +360,29 @@ namespace CenturionCC.System.Gun
                 if (IsInWall && VariantData.UseWallCheck)
                 {
                     ParentManager.Invoke_OnShootFailed(this, 100);
-                    result = ShotResult.Failed;
+                    return ShotResult.Cancelled;
                 }
 
                 if (IsInSafeZone && VariantData.UseSafeZoneCheck)
                 {
                     ParentManager.Invoke_OnShootCancelled(this, 101);
-                    result = ShotResult.Cancelled;
+                    return ShotResult.Cancelled;
                 }
             }
 
             if (ParentManager.CanLocalShoot == false)
             {
                 ParentManager.Invoke_OnShootCancelled(this, 200);
-                result = ShotResult.Cancelled;
+                return ShotResult.Cancelled;
             }
 
             if (ParentManager.CheckCanLocalShoot(this, out var ruleId) == false)
             {
                 ParentManager.Invoke_OnShootCancelled(this, ruleId);
-                result = ShotResult.Cancelled;
+                return ShotResult.Cancelled;
             }
 
-            return result;
+            return ShotResult.Succeeded;
         }
 
         protected override void OnShoot(ProjectileBase bullet, bool isPellet)
@@ -476,6 +495,12 @@ namespace CenturionCC.System.Gun
 
         public override float RoundsPerSecond =>
             VariantData ? VariantData.MaxRoundsPerSecond : float.PositiveInfinity;
+
+        public override int[] AllowedMagazineTypes =>
+            VariantData != null ? VariantData.AllowedMagazineTypes : new int[0];
+
+        public override bool CanShootWithoutMagazine =>
+            VariantData == null || VariantData.CanShootWithoutMagazine;
 
         [PublicAPI]
         public override FireMode[] AvailableFireModes =>

@@ -8,10 +8,15 @@ namespace CenturionCC.System.Gun
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class MagazineReceiver : UdonSharpBehaviour
     {
-        private const float ReattachTimeoutInSeconds = 0.1F;
+        protected const float ReattachTimeoutInSeconds = 0.2F;
 
         [SerializeField] [NewbieInject]
-        private MagazineManager magazineManager;
+        protected MagazineManager magazineManager;
+
+        [SerializeField] protected bool releaseMagazineOnReleaseButton = true;
+        [SerializeField] protected bool makeMagazinePickupableOnReleaseButton = true;
+        [SerializeField] protected Transform downReference;
+        [SerializeField] protected float releaseImpulseMultiplier = 0.5F;
 
         protected float LastDetachedTime = 0;
 
@@ -25,14 +30,24 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public virtual int MagazineRoundsCapacity => Magazine != null ? Magazine.RoundsCapacity : 0;
         [PublicAPI] public virtual int MagazineRoundsRemaining => Magazine != null ? Magazine.RoundsRemaining : 0;
 
-        private void OnTriggerEnter(Collider other)
+        protected virtual void Start()
+        {
+            if (downReference == null)
+                downReference = transform;
+        }
+
+        protected virtual void OnTriggerEnter(Collider other)
         {
             // Possible as Udon protects player objects
             if (other == null) return;
 
             Debug.Log($"[{name}-MagReceiver] OnTriggerEnter: {other.name}");
-            var mag = other.GetComponent<Magazine>();
-            if (mag == null) return;
+            var mag = other.GetComponentInParent<Magazine>();
+            if (mag == null)
+            {
+                Debug.Log($"[{name}-MagReceiver] Magazine not found");
+                return;
+            }
 
             InsertMagazine(mag);
         }
@@ -49,13 +64,7 @@ namespace CenturionCC.System.Gun
 
         public virtual void InsertMagazine(Magazine magazine)
         {
-            if (magazine == null || Magazine != null || magazine.IsAttachedToReceiver) return;
-
-            // Cooldown check
-            if (Time.timeSinceLevelLoad - LastDetachedTime < ReattachTimeoutInSeconds) return;
-
-            // Alignment Check
-            if (Vector3.Dot(transform.forward, magazine.transform.forward) <= 0.8) return;
+            if (!CanAttach(magazine)) return;
 
             Magazine = magazine.AttachToReceiver(this);
 
@@ -69,6 +78,7 @@ namespace CenturionCC.System.Gun
             Debug.Log($"[MagazineReceiver-{name}] Releasing Magazine");
 
             Magazine.Detach();
+            Magazine.Rigidbody.AddForce(downReference.up * (-1 * releaseImpulseMultiplier), ForceMode.Impulse);
             Magazine = null;
             LastDetachedTime = Time.timeSinceLevelLoad;
 
@@ -96,6 +106,67 @@ namespace CenturionCC.System.Gun
             }
 
             Magazine.AttachToReceiver(this);
+        }
+
+        public virtual void OnMagazineReleaseButtonDown()
+        {
+            if (Magazine == null) return;
+
+            if (releaseMagazineOnReleaseButton)
+            {
+                ReleaseMagazine();
+                return;
+            }
+
+            if (makeMagazinePickupableOnReleaseButton)
+            {
+                Magazine.Pickupable = true;
+            }
+        }
+
+        public virtual void OnMagazineReleaseButtonUp()
+        {
+            if (Magazine == null) return;
+
+            if (makeMagazinePickupableOnReleaseButton)
+            {
+                Magazine.Pickupable = false;
+            }
+        }
+
+        [PublicAPI]
+        public virtual bool IsCompatibleWith(Magazine magazine)
+        {
+            return magazine != null && ParentGun != null && ParentGun.AllowedMagazineTypes.ContainsItem(magazine.Type);
+        }
+
+        [PublicAPI]
+        public virtual bool CanAttach(Magazine magazine)
+        {
+            if (magazine == null || Magazine != null || magazine.IsAttachedToReceiver) return false;
+
+            // Magazine type check
+            if (!IsCompatibleWith(magazine))
+            {
+                Debug.Log($"[{name}-MagReceiver] Incompatible magazine type: {magazine.Type}");
+                return false;
+            }
+
+            // Cooldown check
+            if (Time.timeSinceLevelLoad - LastDetachedTime < ReattachTimeoutInSeconds)
+            {
+                Debug.Log($"[{name}-MagReceiver] In cooldown");
+                return false;
+            }
+
+            // Alignment Check
+            if (Vector3.Dot(transform.forward, magazine.transform.forward) <= 0.8)
+            {
+                Debug.Log($"[{name}-MagReceiver] Wrong alignment");
+                return false;
+            }
+
+            return true;
         }
 
         public virtual void Setup(GunBase gun)

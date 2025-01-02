@@ -23,6 +23,10 @@ namespace CenturionCC.System.Gun.DataStore
 
         [SerializeField] private float maxRoundsPerSecond;
 
+        [SerializeField] private bool canShootWithoutMagazine = true;
+
+        [SerializeField] private int[] allowedMagazineTypes;
+
         [SerializeField] private GameObject model;
 
         [SerializeField] private ProjectileDataProvider projectileData;
@@ -93,6 +97,8 @@ namespace CenturionCC.System.Gun.DataStore
         public int HolsterSize => holsterSize;
         public FireMode[] AvailableFiringModes => availableFiringModes;
         public float MaxRoundsPerSecond => maxRoundsPerSecond;
+        public bool CanShootWithoutMagazine => canShootWithoutMagazine;
+        public int[] AllowedMagazineTypes => allowedMagazineTypes;
 
         [CanBeNull] public GameObject Model => model;
 
