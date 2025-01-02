@@ -84,6 +84,13 @@ MonoBehaviour:
   objectWeight: 0
   tags:
   - NoFootstep
+  movementOption: 0
+  walkSpeed: 1
+  sprintSpeed: 1
+  sprintThresholdMultiplier: 1
+  combatTag: 0
+  combatTagSpeedMultiplier: 1
+  combatTagTime: 1
   logger: {fileID: 0}
   updateManager: {fileID: 0}
   audioManager: {fileID: 0}
@@ -273,7 +280,8 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 8867494980231511705, guid: 270316a0ca5404e4485b58d6f9731baa, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 270316a0ca5404e4485b58d6f9731baa, type: 3}
 --- !u!4 &5862062731356601620 stripped
 Transform:
