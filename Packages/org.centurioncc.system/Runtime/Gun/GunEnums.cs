@@ -49,7 +49,8 @@ namespace CenturionCC.System.Gun
         /// <summary>
         /// When it's twisting state. For most of guns in this state should not be able to shoot.
         /// </summary>
-        InCockingTwisting = 3
+        InCockingTwisting = 3,
+        InHoldOpen = 4
     }
 
     public enum TriggerState
@@ -101,7 +102,7 @@ namespace CenturionCC.System.Gun
         Cancelled,
 
         /// <summary>
-        /// When shot was failed due to mechanical issue such as fire mode being in safety. will make a trigger sound.
+        /// Empty! When shot was failed due to mechanical issue such as fire mode being in safety. will make a trigger sound.
         /// </summary>
         Failed,
     }
@@ -130,7 +131,7 @@ namespace CenturionCC.System.Gun
 
     public static class GunStateHelper
     {
-        public const byte MaxValue = (byte)GunState.InCockingTwisting;
+        public const byte MaxValue = (byte)GunState.InHoldOpen;
         public const byte MinValue = (byte)GunState.Idle;
 
         public static string GetStateString(byte value)
@@ -141,6 +142,7 @@ namespace CenturionCC.System.Gun
                 value == (int)GunState.InCockingPull ? "InCockingPull" :
                 value == (int)GunState.InCockingPush ? "InCockingPush" :
                 value == (int)GunState.InCockingTwisting ? "InCockingTwisting" :
+                value == (int)GunState.InHoldOpen ? "InHoldOpen" :
                 $"Unknown ({value})";
         }
 

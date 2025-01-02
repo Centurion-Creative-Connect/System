@@ -1,5 +1,4 @@
-﻿using System;
-using CenturionCC.System.Gun.DataStore;
+﻿using CenturionCC.System.Gun.DataStore;
 using DerpyNewbie.Common;
 using JetBrains.Annotations;
 using UdonSharp;
@@ -41,6 +40,14 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public bool IsHeld => pickup.IsHeld;
         [PublicAPI] public VRCPlayerApi CurrentPlayer => pickup.currentPlayer;
         [PublicAPI] public VRC_Pickup.PickupHand CurrentHand => pickup.currentHand;
+
+        [PublicAPI] public bool Pickupable
+        {
+            get => pickup.pickupable;
+            set => pickup.pickupable = value;
+        }
+
+        [PublicAPI] public Rigidbody Rigidbody => rb;
 
 
         [PublicAPI] public int Type => type;
@@ -97,6 +104,12 @@ namespace CenturionCC.System.Gun
             var offset = rightPickup ? rightHandOffset : leftHandOffset;
             PickupTarget.localPosition = offset.localPosition;
             PickupTarget.localRotation = offset.localRotation;
+
+            if (IsAttachedToReceiver && ParentReceiver != null)
+            {
+                Debug.Log($"[Magazine-{name}] Requesting to release magazine as magazine has been picked up");
+                ParentReceiver.ReleaseMagazine();
+            }
 
             if (IsAttached)
             {
@@ -157,6 +170,7 @@ namespace CenturionCC.System.Gun
 
             if (ChildMagazine != null)
             {
+                Debug.Log($"[Magazine-{name}] Attaching child magazine");
                 var childMagazine = ChildMagazine;
                 ChildMagazine = null;
                 Swap(childMagazine);
