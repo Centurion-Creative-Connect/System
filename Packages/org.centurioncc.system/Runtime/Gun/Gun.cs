@@ -210,7 +210,7 @@ namespace CenturionCC.System.Gun
         {
             if (other.gameObject.layer != 27) return;
 
-            if (MagazineReceiver != null && MagazineReceiver.HasMagazine) return;
+            if (HasMagazine) return;
 
             Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .2F, .01F, .1F);
             Networking.LocalPlayer.PlayHapticEventInHand(SubHandle.CurrentHand, .2F, .01F, .1F);
@@ -289,6 +289,8 @@ namespace CenturionCC.System.Gun
                 default:
                 {
                     Trigger = TriggerState.Fired;
+
+                    if (IsLocal && Behaviour != null) Behaviour.OnGunCancelShoot(this);
                     return ShotResult.Cancelled;
                 }
             }
@@ -305,6 +307,7 @@ namespace CenturionCC.System.Gun
         public override void EmptyShoot()
         {
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_EmptyShoot));
+            if (Behaviour != null) Behaviour.OnGunEmptyShoot(this);
         }
 
         [PublicAPI]
@@ -342,8 +345,8 @@ namespace CenturionCC.System.Gun
         public override void OnMagazineChanged()
         {
             base.OnMagazineChanged();
-            if (TargetAnimator != null && MagazineReceiver != null)
-                TargetAnimator.SetBool(HasMagazineAnimHash, MagazineReceiver.HasMagazine);
+            if (TargetAnimator != null)
+                TargetAnimator.SetBool(HasMagazineAnimHash, HasMagazine);
         }
 
         [PublicAPI]
@@ -415,7 +418,6 @@ namespace CenturionCC.System.Gun
         #region SerializeFields
 
         [SerializeField] protected string weaponName;
-
         [SerializeField] protected Transform target;
         [SerializeField] protected Transform shooter;
         [SerializeField] protected GunHandle mainHandle;
@@ -424,6 +426,8 @@ namespace CenturionCC.System.Gun
         [SerializeField] protected GunBulletHolder bulletHolder;
         [SerializeField] protected Animator animator;
         [SerializeField] protected MagazineReceiver magazineReceiver;
+        [SerializeField] protected int[] allowedMagazineTypes;
+        [SerializeField] protected bool canShootWithoutMagazine = true;
         [SerializeField] protected GunBehaviourBase behaviour;
         [SerializeField] protected FireMode[] availableFireModes = { FireMode.SemiAuto };
         [SerializeField] protected ProjectileDataProvider projectileData;
@@ -505,6 +509,8 @@ namespace CenturionCC.System.Gun
             set
             {
                 _trigger = value;
+                if (_trigger == TriggerState.Fired)
+                    HasCocked = false;
                 if (TargetAnimator != null)
                     TargetAnimator.SetInteger(TriggerStateAnimHash, (int)_trigger);
                 if (value == TriggerState.Armed || value == TriggerState.Idle)
@@ -519,9 +525,19 @@ namespace CenturionCC.System.Gun
             protected set
             {
                 _currentMagazineType = value;
-                if (MagazineReceiver != null) MagazineReceiver.SetMagazineType(value);
+                if (MagazineReceiver == null) return;
+
+                MagazineReceiver.SetMagazineType(value);
+                if (TargetAnimator != null)
+                    TargetAnimator.SetBool(HasMagazineAnimHash, HasMagazine);
             }
         }
+
+        [PublicAPI]
+        public override int[] AllowedMagazineTypes => allowedMagazineTypes;
+
+        [PublicAPI]
+        public override bool CanShootWithoutMagazine => canShootWithoutMagazine;
 
         [PublicAPI]
         public override bool HasCocked
@@ -839,6 +855,7 @@ namespace CenturionCC.System.Gun
                 TargetAnimator.SetTrigger(IsShootingEmptyAnimHash);
             if (AudioData)
                 Internal_PlayAudio(AudioData.EmptyShooting, AudioData.EmptyShootingOffset);
+            HasCocked = false;
         }
 
         protected virtual void Internal_PlayAudio(AudioDataStore audioStore, Vector3 offset)
@@ -1198,22 +1215,34 @@ namespace CenturionCC.System.Gun
 
         protected virtual ShotResult CanShoot()
         {
+            if (!CanShootWithoutMagazine && !HasMagazine)
+            {
+                Trigger = TriggerState.Fired;
+                return ShotResult.Cancelled;
+            }
+
             if (FireMode == FireMode.Safety)
             {
                 Trigger = TriggerState.Idle;
-                return ShotResult.Failed;
+                return ShotResult.Cancelled;
             }
 
             if (State != GunState.Idle)
             {
                 Trigger = TriggerState.Fired;
-                return ShotResult.Failed;
+                return ShotResult.Cancelled;
+            }
+
+            if (!HasCocked)
+            {
+                Trigger = TriggerState.Fired;
+                return ShotResult.Cancelled;
             }
 
             if (!HasBulletInChamber)
             {
                 Trigger = TriggerState.Fired;
-                return ShotResult.Failed;
+                return CanShootWithoutMagazine ? ShotResult.Failed : ShotResult.Cancelled;
             }
 
             if (Networking.GetNetworkDateTime().Subtract(LastShotTime).TotalSeconds < SecondsPerRound)

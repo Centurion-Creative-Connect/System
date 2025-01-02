@@ -15,10 +15,12 @@ namespace CenturionCC.System.Gun
         private MagazineManager magazineManager;
 
         [SerializeField] private Vector3 offsetFromHips;
+        private GunBase _activeGun;
         private Magazine _activeMagazine;
 
         private bool _hasGun;
         private VRCPlayerApi _localPlayer;
+        private int _requiredMagazineType;
 
         private void Start()
         {
@@ -47,12 +49,19 @@ namespace CenturionCC.System.Gun
         {
             Debug.Log("[MagazinePouch] Now holding a gun");
             _hasGun = true;
+            _activeGun = instance;
             CreateFollowingMagazine();
         }
 
         public override void OnDropLocally(ManagedGun instance)
         {
-            if (gunManager.LocalHeldGuns.Length != 0) return;
+            if (gunManager.LocalHeldGuns.Length != 0)
+            {
+                _activeGun = gunManager.LocalHeldGuns[0];
+                DestroyFollowingMagazine();
+                CreateFollowingMagazine();
+                return;
+            }
 
             Debug.Log("[MagazinePouch] No longer holding a gun");
             _hasGun = false;
@@ -67,7 +76,21 @@ namespace CenturionCC.System.Gun
                 return;
             }
 
-            var magazine = magazineManager.SpawnMagazine(1, transform.position, transform.rotation);
+            if (_activeGun == null)
+            {
+                Debug.LogWarning("[MagazinePouch] There is no active gun. ignoring create!");
+                return;
+            }
+
+            if (_activeGun.AllowedMagazineTypes.Length == 0)
+            {
+                Debug.LogWarning("[MagazinePouch] There is no magazine allowed for active gun. ignoring create!");
+                return;
+            }
+
+            var targetMagazineType =
+                _activeGun.AllowedMagazineTypes[Random.Range(0, _activeGun.AllowedMagazineTypes.Length)];
+            var magazine = magazineManager.SpawnMagazine(targetMagazineType, transform.position, transform.rotation);
             magazine.Attach(transform);
             magazine.transform.localPosition = offsetFromHips;
             _activeMagazine = magazine;

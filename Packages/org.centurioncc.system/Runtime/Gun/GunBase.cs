@@ -39,6 +39,13 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public virtual GunState State { get; set; }
 
         /// <summary>
+        /// Has magazine?
+        /// </summary>
+        [PublicAPI]
+        public virtual bool HasMagazine =>
+            MagazineReceiver == null || MagazineReceiver.HasMagazine;
+
+        /// <summary>
         /// Bullets remaining in the magazine (not in reserve)
         /// </summary>
         [PublicAPI]
@@ -57,6 +64,18 @@ namespace CenturionCC.System.Gun
         /// </summary>
         [PublicAPI]
         public abstract int CurrentMagazineType { get; protected set; }
+
+        /// <summary>
+        /// Which magazine the gun can take?
+        /// </summary>
+        [PublicAPI]
+        public abstract int[] AllowedMagazineTypes { get; }
+
+        /// <summary>
+        /// Can the gun shoot without magazine inserted?
+        /// </summary>
+        [PublicAPI]
+        public abstract bool CanShootWithoutMagazine { get; }
 
         /// <summary>
         /// Has the gun bullet in chamber?
@@ -177,6 +196,7 @@ namespace CenturionCC.System.Gun
             if (!IsLocal) return;
 
             Networking.LocalPlayer.PlayHapticEventInHand(SubHandle.CurrentHand, .2F, .2F, .1F);
+            RequestSerialization();
         }
 
         public virtual void OnMagazineCollision()

@@ -80,6 +80,18 @@ namespace CenturionCC.System.Gun.Behaviour
         {
         }
 
+        public virtual void OnGunShoot(GunBase instance)
+        {
+        }
+
+        public virtual void OnGunEmptyShoot(GunBase instance)
+        {
+        }
+
+        public virtual void OnGunCancelShoot(GunBase instance)
+        {
+        }
+
         /// <summary>
         /// Gets called when assigned to a <see cref="Gun" />.
         /// </summary>

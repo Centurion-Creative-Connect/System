@@ -15,8 +15,6 @@ namespace CenturionCC.System.Gun
 
         private void Update()
         {
-            // TODO: somehow spawn magazine corresponding to gun 
-
             if (Input.GetKeyDown(KeyCode.B))
             {
                 FireModeChangeAction();
@@ -24,7 +22,7 @@ namespace CenturionCC.System.Gun
 
             if (Input.GetKeyDown(KeyCode.E))
             {
-                LoadingAction();
+                LoadingActionDown();
             }
 
             var scrollDelta = Input.GetAxisRaw("Mouse ScrollWheel") * 80F;
@@ -36,9 +34,8 @@ namespace CenturionCC.System.Gun
 
         public override void InputJump(bool value, UdonInputEventArgs args)
         {
-            if (!value) return;
-
-            LoadingAction();
+            if (!value) LoadingActionUp();
+            else LoadingActionDown();
         }
 
         [PublicAPI]
@@ -53,15 +50,29 @@ namespace CenturionCC.System.Gun
         }
 
         [PublicAPI]
-        public void LoadingAction()
+        public void LoadingActionDown()
         {
             var localGuns = gunManager.LocalHeldGuns;
             foreach (var gun in localGuns)
             {
                 if (gun == null || gun.MagazineReceiver == null) continue;
 
-                if (gun.State == GunState.InCockingPush && gun.MagazineRoundsRemaining != 0) gun.State = GunState.Idle;
-                else gun.MagazineReceiver.ReleaseMagazine();
+                if (gun.State != GunState.Idle && gun.MagazineRoundsRemaining != 0 || !gun.HasMagazine)
+                    gun.State = GunState.Idle;
+                else gun.MagazineReceiver.OnMagazineReleaseButtonDown();
+            }
+        }
+
+        [PublicAPI]
+        public void LoadingActionUp()
+        {
+            var localGuns = gunManager.LocalHeldGuns;
+            foreach (var gun in localGuns)
+            {
+                if (gun == null || gun.MagazineReceiver == null) continue;
+
+                if (gun.State != GunState.InHoldOpen && gun.MagazineRoundsRemaining != 0 || !gun.HasMagazine) continue;
+                gun.MagazineReceiver.OnMagazineReleaseButtonUp();
             }
         }
 

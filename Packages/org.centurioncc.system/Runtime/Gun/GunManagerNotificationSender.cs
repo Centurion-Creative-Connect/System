@@ -77,6 +77,8 @@ namespace CenturionCC.System.Gun
             // 11  = RemoteInstance is null
             // 12  = RemoteInstance.FireMode is 0 == safety
             // 13  = !HasBulletInChamber
+            // 14  = !CanShootWithoutMagazine && !MagazineReceiver.HasMagazine
+            // 15  = State == InHoldOpen
             // 100 = in wall
             // 101 = in safe zone
             // 200 = callback returned false
