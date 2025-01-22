@@ -28,8 +28,7 @@ namespace CenturionCC.System.Player.MassPlayer
             get => _playerModel;
             set
             {
-                if (_playerModel == value)
-                    return;
+                if (_playerModel == value) return;
 
                 _playerModel = value;
                 lwCollider.player = value;

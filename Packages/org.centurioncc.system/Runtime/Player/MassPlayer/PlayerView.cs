@@ -41,6 +41,8 @@ namespace CenturionCC.System.Player.MassPlayer
             get => _playerModel;
             set
             {
+                if (_playerModel == value) return;
+
                 _playerModel = value;
                 var pcs = GetColliders();
                 foreach (var pc in pcs) pc.player = value;
