@@ -11,7 +11,7 @@ namespace CenturionCC.System.Player.MassPlayer
         {
         }
 
-        public abstract void UpdateView();
+        public abstract void UpdateTarget();
         public abstract void UpdateCollider();
     }
 }
