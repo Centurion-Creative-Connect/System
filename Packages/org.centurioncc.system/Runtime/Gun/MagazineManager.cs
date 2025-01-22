@@ -1,6 +1,7 @@
 ﻿using System;
 using CenturionCC.System.Gun.DataStore;
 using DerpyNewbie.Common;
+using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
@@ -11,6 +12,9 @@ namespace CenturionCC.System.Gun
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class MagazineManager : UdonSharpBehaviour
     {
+        [SerializeField] [NewbieInject]
+        private NewbieLogger logger;
+
         [SerializeField] [NewbieInject]
         private MagazineVariantDataStore[] magazineVariants;
 
@@ -47,6 +51,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public void ResetMagazines()
         {
+            logger.Log("MagazineManager::ResetMagazines");
             // foreach cannot be used to DataList in UdonSharp
             // ReSharper disable once ForCanBeConvertedToForeach
             for (var i = 0; i < _spawnedMagazines.Count; i++)
