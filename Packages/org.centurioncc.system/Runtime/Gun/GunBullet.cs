@@ -69,8 +69,10 @@ namespace CenturionCC.System.Gun
         {
             ++_ricochetCount;
             _rigidbody.velocity /= DampingCoefficient;
-            if (gunManager.RicochetHandler != null)
-                gunManager.RicochetHandler.OnRicochet(this, collision);
+            foreach (var handler in gunManager.RicochetHandler)
+            {
+                handler.OnRicochet(this, collision);
+            }
         }
 
         public override void Shoot(Guid eventId,
