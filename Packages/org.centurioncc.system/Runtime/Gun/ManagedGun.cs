@@ -392,111 +392,111 @@ namespace CenturionCC.System.Gun
 
         #region OverridenProperties
 
-        public override string WeaponName => VariantData != null ? VariantData.WeaponName : null;
+        public override string WeaponName => VariantData ? VariantData.WeaponName : null;
         public override Animator TargetAnimator => _animator;
 
         public override ProjectilePool ProjectilePool =>
-            VariantData != null && VariantData.ProjectilePoolOverride != null ? VariantData.ProjectilePoolOverride :
-            ParentManager != null ? ParentManager.BulletHolder : null;
+            VariantData && VariantData.ProjectilePoolOverride ? VariantData.ProjectilePoolOverride :
+            ParentManager ? ParentManager.BulletHolder : null;
 
         public override GunBehaviourBase Behaviour =>
-            VariantData != null ? VariantData.Behaviour : null;
+            VariantData ? VariantData.Behaviour : null;
 
         [PublicAPI]
         public override ProjectileDataProvider ProjectileData =>
-            VariantData != null ? VariantData.ProjectileData : null;
+            VariantData ? VariantData.ProjectileData : null;
 
         [PublicAPI]
         public override GunAudioDataStore AudioData =>
-            VariantData != null ? VariantData.AudioData : null;
+            VariantData ? VariantData.AudioData : null;
 
         [PublicAPI]
         public override GunHapticDataStore HapticData =>
-            VariantData != null ? VariantData.HapticData : null;
+            VariantData ? VariantData.HapticData : null;
 
 
         [PublicAPI]
         public override Vector3 MainHandlePositionOffset =>
-            VariantData != null ? VariantData.MainHandlePositionOffset : Vector3.zero;
+            VariantData ? VariantData.MainHandlePositionOffset : Vector3.zero;
 
         [PublicAPI]
         public override Quaternion MainHandleRotationOffset =>
-            VariantData != null ? VariantData.MainHandleRotationOffset : Quaternion.identity;
+            VariantData ? VariantData.MainHandleRotationOffset : Quaternion.identity;
 
 
         [PublicAPI]
         public override Vector3 SubHandlePositionOffset =>
-            VariantData != null ? VariantData.SubHandlePositionOffset : Vector3.forward;
+            VariantData ? VariantData.SubHandlePositionOffset : Vector3.forward;
 
         [PublicAPI]
         public override Quaternion SubHandleRotationOffset =>
-            VariantData != null ? VariantData.SubHandleRotationOffset : Quaternion.identity;
+            VariantData ? VariantData.SubHandleRotationOffset : Quaternion.identity;
 
 
         [PublicAPI]
-        public override float MainHandlePitchOffset => VariantData != null ? VariantData.MainHandlePitchOffset : 0F;
+        public override float MainHandlePitchOffset => VariantData ? VariantData.MainHandlePitchOffset : 0F;
 
 
-        public override bool IsDoubleHandedGun => VariantData != null && VariantData.IsDoubleHanded;
+        public override bool IsDoubleHandedGun => VariantData && VariantData.IsDoubleHanded;
 
-        [PublicAPI] public override int RequiredHolsterSize => VariantData != null ? VariantData.HolsterSize : 0;
+        [PublicAPI] public override int RequiredHolsterSize => VariantData ? VariantData.HolsterSize : 0;
 
         [PublicAPI]
         public override float MainHandleRePickupDelay =>
-            VariantData != null && ParentManager != null && VariantData.UseRePickupDelayForMainHandle
+            VariantData && ParentManager && VariantData.UseRePickupDelayForMainHandle
                 ? ParentManager.handleRePickupDelay
                 : 0F;
 
         [PublicAPI]
         public override float SubHandleRePickupDelay =>
-            VariantData != null && ParentManager != null && VariantData.UseRePickupDelayForSubHandle
+            VariantData && ParentManager && VariantData.UseRePickupDelayForSubHandle
                 ? ParentManager.handleRePickupDelay
                 : 0F;
 
         [PublicAPI]
         [Obsolete]
         public override float OptimizationRange =>
-            ParentManager != null ? ParentManager.optimizationRange : 0F;
+            ParentManager ? ParentManager.optimizationRange : 0F;
 
-        public override float MaxHoldDistance => ParentManager != null ? ParentManager.maxHoldDistance : 0F;
+        public override float MaxHoldDistance => ParentManager ? ParentManager.maxHoldDistance : 0F;
 
-        public override bool IsInWall => VariantData != null && ParentManager != null
+        public override bool IsInWall => VariantData && ParentManager
             ? ParentManager.useCollisionCheck && VariantData.UseWallCheck && CollisionCount != 0
             : CollisionCount != 0;
 
         public override float RoundsPerSecond =>
-            VariantData != null ? VariantData.MaxRoundsPerSecond : float.PositiveInfinity;
+            VariantData ? VariantData.MaxRoundsPerSecond : float.PositiveInfinity;
 
         [PublicAPI]
         public override FireMode[] AvailableFireModes =>
-            VariantData != null ? VariantData.AvailableFiringModes : new[] { FireMode.Safety };
+            VariantData ? VariantData.AvailableFiringModes : new[] { FireMode.Safety };
 
         public override ObjectType ObjectType =>
-            VariantData != null ? VariantData.ObjectType : ObjectType.Prototype;
+            VariantData ? VariantData.ObjectType : ObjectType.Prototype;
 
         public override float ObjectWeight =>
-            VariantData != null ? VariantData.ObjectWeight : 0;
+            VariantData ? VariantData.ObjectWeight : 0;
 
         public override string[] Tags =>
-            VariantData != null ? VariantData.Tags : new string[0];
+            VariantData ? VariantData.Tags : new string[0];
 
         public override MovementOption MovementOption =>
-            VariantData != null ? VariantData.Movement : MovementOption.Inherit;
+            VariantData ? VariantData.Movement : MovementOption.Inherit;
 
         public override float WalkSpeed =>
-            VariantData != null ? VariantData.WalkSpeed : 1F;
+            VariantData ? VariantData.WalkSpeed : 1F;
 
         public override float SprintSpeed =>
-            VariantData != null ? VariantData.SprintSpeed : 1F;
+            VariantData ? VariantData.SprintSpeed : 1F;
 
         public override CombatTagOption CombatTagOption =>
-            VariantData != null ? VariantData.CombatTag : CombatTagOption.Inherit;
+            VariantData ? VariantData.CombatTag : CombatTagOption.Inherit;
 
         public override float CombatTagSpeedMultiplier =>
-            VariantData != null ? VariantData.CombatTagSpeedMultiplier : 1F;
+            VariantData ? VariantData.CombatTagSpeedMultiplier : 1F;
 
         public override float CombatTagTime =>
-            VariantData != null ? VariantData.CombatTagTime : 1F;
+            VariantData ? VariantData.CombatTagTime : 1F;
 
         #endregion
     }
