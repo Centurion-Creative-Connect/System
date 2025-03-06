@@ -16,52 +16,38 @@ namespace CenturionCC.System.UI
     [DefaultExecutionOrder(50000000)]
     public class SafetyAreaPlatformUI : UdonSharpBehaviour
     {
-        [SerializeField]
-        private Sprite resetNotYet;
-        [SerializeField]
-        private Sprite resetDone;
-
-        [SerializeField]
-        private Button resetButton;
-        [SerializeField]
-        private Button[] teamButtons;
-
-        [SerializeField]
-        private GameObject[] moderatorOnlyObjects;
-
-        [SerializeField]
-        private Image resetStatusImage;
-        [SerializeField]
-        private Text lastResetText;
-        [SerializeField]
-        private Text gunStatusText;
-        [SerializeField]
-        private Text playerStatusText;
-        [SerializeField]
-        private Text teamStatusText;
-        [SerializeField]
-        private Text activeModeratorListText;
-        [SerializeField]
-        private Text statisticsText;
-        [SerializeField]
-        private Text statusText;
-        [SerializeField]
-        private Toggle showTeamTagToggle;
-        [SerializeField]
-        private Toggle showStaffTagToggle;
+        [SerializeField] private Sprite resetNotYet;
+        [SerializeField] private Sprite resetDone;
+        [SerializeField] private Button resetButton;
+        [SerializeField] private Button[] teamButtons;
+        [SerializeField] private GameObject[] moderatorOnlyObjects;
+        [SerializeField] private Image resetStatusImage;
+        [SerializeField] private Text lastResetText;
+        [SerializeField] private Text gunStatusText;
+        [SerializeField] private Text playerStatusText;
+        [SerializeField] private Text teamStatusText;
+        [SerializeField] private Text activeModeratorListText;
+        [SerializeField] private Text statisticsText;
+        [SerializeField] private Text statusText;
+        [SerializeField] private Toggle showTeamTagToggle;
+        [SerializeField] private Toggle showStaffTagToggle;
 
         [SerializeField] [TextArea]
         private string lastResetMessage = "{0}前にリセットしました!";
+
         [SerializeField] [TextArea]
         private string gunStatusMessage = "{0} 丁がフィールド上に出てます!";
+
         [SerializeField] [TextArea]
         private string playerStatusMessage = "{0} ({1}) 人がプレイヤーとして居ます!";
+
         [SerializeField] [TextArea]
         private string teamStatusMessage = "うち " +
                                            "<color=red>{2} ({3})</color> 人が<color=red>赤</color>, " +
                                            "<color=yellow>{4} ({5})</color> 人が<color=yellow>黄</color>" +
                                            "チームです!\n" +
                                            "<color=gray>{0} ({1}) 人はチームに入っていません!</color>";
+
         [SerializeField] [TextArea]
         private string statisticsMessage = "{0} 回ヒット判定が出ました!\n" +
                                            "  {1} 回はあなたが撃たれたヒット判定でした!\n" +
@@ -70,11 +56,13 @@ namespace CenturionCC.System.UI
                                            "{4} 回BB弾が撃たれました!\n" +
                                            "  {5} 回はあなたが撃ったBB弾でした!\n";
 
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
         private RoleProvider roleProvider;
-        [SerializeField] [HideInInspector] [NewbieInject]
+
+        [SerializeField] [NewbieInject]
         private GunManager gunManager;
-        [SerializeField] [HideInInspector] [NewbieInject]
+
+        [SerializeField] [NewbieInject]
         private PlayerManager playerManager;
 
         private bool _currentResetStatusImage;
@@ -337,7 +325,7 @@ namespace CenturionCC.System.UI
             return true;
         }
 
-        public void OnGunsReset()
+        public void OnGunsReset(GunManagerResetType type)
         {
             _lastGunResetTime = DateTime.Now;
             UpdateResetStatusText();
