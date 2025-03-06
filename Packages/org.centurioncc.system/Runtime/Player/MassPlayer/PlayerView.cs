@@ -22,30 +22,32 @@ namespace CenturionCC.System.Player.MassPlayer
 
         private Transform _bodyTransform;
 
+        private PlayerCollider[] _colliders;
+        private VRCPlayerApi _followingPlayer;
+
         private Transform _headTransform;
         private Transform _leftLowerLegTransform;
         private Transform _leftUpperArmTransform;
         private Transform _leftUpperLegTransform;
-
         private PlayerBase _playerModel;
+
         private Transform _rightLowerLegTransform;
         private Transform _rightUpperArmTransform;
         private Transform _rightUpperLegTransform;
+        private bool _vrcPlayerInvalid = true;
 
         public override PlayerBase PlayerModel
         {
             get => _playerModel;
             set
             {
-                if (_playerModel == value)
-                    return;
+                if (_playerModel == value) return;
 
                 _playerModel = value;
-
                 var pcs = GetColliders();
                 foreach (var pc in pcs) pc.player = value;
 
-                UpdateView();
+                UpdateTarget();
             }
         }
 
@@ -67,11 +69,8 @@ namespace CenturionCC.System.Player.MassPlayer
 
             _leftLowerLegTransform = leftLowerLegCollider.transform;
             _rightLowerLegTransform = rightLowerLegCollider.transform;
-        }
 
-        public override PlayerCollider[] GetColliders()
-        {
-            return new[]
+            _colliders = new[]
             {
                 headCollider, bodyCollider,
                 leftUpperArmCollider, rightUpperArmCollider,
@@ -80,23 +79,23 @@ namespace CenturionCC.System.Player.MassPlayer
             };
         }
 
-        public override void UpdateView()
+        public override PlayerCollider[] GetColliders()
         {
+            return _colliders;
+        }
+
+        public override void UpdateTarget()
+        {
+            _followingPlayer = _playerModel ? _playerModel.VrcPlayer : null;
+            _vrcPlayerInvalid = !_playerModel || !Utilities.IsValid(_followingPlayer);
+
             foreach (var playerCollider in GetColliders())
-                playerCollider.IsVisible = playerManager.IsDebug && _playerModel != null && _playerModel.IsAssigned;
+                playerCollider.IsVisible = playerManager.IsDebug && _playerModel && _playerModel.IsAssigned;
         }
 
         public override void UpdateCollider()
         {
-            if (_playerModel == null)
-            {
-                MoveViewToOrigin();
-                MoveCollidersToOrigin();
-                return;
-            }
-
-            var vrcPlayer = _playerModel.VrcPlayer;
-            if (!Utilities.IsValid(vrcPlayer))
+            if (_vrcPlayerInvalid)
             {
                 MoveViewToOrigin();
                 MoveCollidersToOrigin();
@@ -105,22 +104,22 @@ namespace CenturionCC.System.Player.MassPlayer
 
             // Utilities.IsValid will null-check vrcPlayer
             // ReSharper disable once PossibleNullReferenceException
-            var head = vrcPlayer.GetBonePosition(HumanBodyBones.Head);
-            var neck = vrcPlayer.GetBonePosition(HumanBodyBones.Neck);
-            var chest = vrcPlayer.GetBonePosition(HumanBodyBones.Chest);
-            var hips = vrcPlayer.GetBonePosition(HumanBodyBones.Hips);
-            var leftUpperArm = vrcPlayer.GetBonePosition(HumanBodyBones.LeftUpperArm);
-            var leftLowerArm = vrcPlayer.GetBonePosition(HumanBodyBones.LeftLowerArm);
-            var leftUpperLeg = vrcPlayer.GetBonePosition(HumanBodyBones.LeftUpperLeg);
-            var leftLowerLeg = vrcPlayer.GetBonePosition(HumanBodyBones.LeftLowerLeg);
-            var leftFoot = vrcPlayer.GetBonePosition(HumanBodyBones.LeftFoot);
-            var rightUpperArm = vrcPlayer.GetBonePosition(HumanBodyBones.RightUpperArm);
-            var rightLowerArm = vrcPlayer.GetBonePosition(HumanBodyBones.RightLowerArm);
-            var rightUpperLeg = vrcPlayer.GetBonePosition(HumanBodyBones.RightUpperLeg);
-            var rightLowerLeg = vrcPlayer.GetBonePosition(HumanBodyBones.RightLowerLeg);
-            var rightFoot = vrcPlayer.GetBonePosition(HumanBodyBones.RightFoot);
+            var head = _followingPlayer.GetBonePosition(HumanBodyBones.Head);
+            var neck = _followingPlayer.GetBonePosition(HumanBodyBones.Neck);
+            var chest = _followingPlayer.GetBonePosition(HumanBodyBones.Chest);
+            var hips = _followingPlayer.GetBonePosition(HumanBodyBones.Hips);
+            var leftUpperArm = _followingPlayer.GetBonePosition(HumanBodyBones.LeftUpperArm);
+            var leftLowerArm = _followingPlayer.GetBonePosition(HumanBodyBones.LeftLowerArm);
+            var leftUpperLeg = _followingPlayer.GetBonePosition(HumanBodyBones.LeftUpperLeg);
+            var leftLowerLeg = _followingPlayer.GetBonePosition(HumanBodyBones.LeftLowerLeg);
+            var leftFoot = _followingPlayer.GetBonePosition(HumanBodyBones.LeftFoot);
+            var rightUpperArm = _followingPlayer.GetBonePosition(HumanBodyBones.RightUpperArm);
+            var rightLowerArm = _followingPlayer.GetBonePosition(HumanBodyBones.RightLowerArm);
+            var rightUpperLeg = _followingPlayer.GetBonePosition(HumanBodyBones.RightUpperLeg);
+            var rightLowerLeg = _followingPlayer.GetBonePosition(HumanBodyBones.RightLowerLeg);
+            var rightFoot = _followingPlayer.GetBonePosition(HumanBodyBones.RightFoot);
 
-            transform.SetPositionAndRotation(vrcPlayer.GetPosition(), vrcPlayer.GetRotation());
+            transform.SetPositionAndRotation(_followingPlayer.GetPosition(), _followingPlayer.GetRotation());
 
             if (playerManager.IsStaffTeamId(_playerModel.TeamId))
             {

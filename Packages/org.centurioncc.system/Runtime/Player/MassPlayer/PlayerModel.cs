@@ -17,12 +17,17 @@ namespace CenturionCC.System.Player.MassPlayer
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
 
-        [CanBeNull] public PlayerViewBase playerView;
-
         private AudioManager _audioManager;
         private RoleData _cachedRoleData;
 
+        private VRCPlayerApi _cachedVrcPlayerApi;
+
         private FootstepAudioStore _footstepAudio;
+
+        [CanBeNull]
+        private PlayerViewBase _playerView;
+
+        private bool _playerViewNull = true;
 
         [UdonSynced] [FieldChangeCallback(nameof(SyncedIsDead))]
         private bool _syncedIsDead;
@@ -33,7 +38,16 @@ namespace CenturionCC.System.Player.MassPlayer
         [UdonSynced] [FieldChangeCallback(nameof(SyncedTeamId))]
         private int _syncedTeamId;
 
-        public VRCPlayerApi cachedVrcPlayerApi;
+        [CanBeNull]
+        public PlayerViewBase PlayerView
+        {
+            get => _playerView;
+            set
+            {
+                _playerView = value;
+                _playerViewNull = !value;
+            }
+        }
 
         public int SyncedPlayerId
         {
@@ -45,8 +59,8 @@ namespace CenturionCC.System.Player.MassPlayer
                 var lastAssigned = IsAssigned;
 
                 _syncedPlayerId = value;
-                cachedVrcPlayerApi = VRCPlayerApi.GetPlayerById(value);
-                _cachedRoleData = playerManager.RoleManager.GetPlayerRole(cachedVrcPlayerApi);
+                _cachedVrcPlayerApi = VRCPlayerApi.GetPlayerById(value);
+                _cachedRoleData = playerManager.RoleManager.GetPlayerRole(_cachedVrcPlayerApi);
 
                 playerManager.Invoke_OnPlayerChanged(this, lastPlayerId, lastRole.HasPermission(), lastAssigned);
                 if (Networking.IsMaster && lastPlayerId != value)
@@ -92,7 +106,7 @@ namespace CenturionCC.System.Player.MassPlayer
         public override bool IsDead => SyncedIsDead;
 
         public override bool IsAssigned => VrcPlayer != null && VrcPlayer.IsValid();
-        public override VRCPlayerApi VrcPlayer => cachedVrcPlayerApi;
+        public override VRCPlayerApi VrcPlayer => _cachedVrcPlayerApi;
         public override RoleData Role => _cachedRoleData;
 
         // Utilities.IsValid checks if it is null or not.
@@ -125,10 +139,10 @@ namespace CenturionCC.System.Player.MassPlayer
 
         public override void UpdateView()
         {
-            if (playerView == null)
-                return;
-
-            playerView.UpdateView();
+            if (_playerViewNull) return;
+            // playerViewNull will be set when playerView was changed
+            // ReSharper disable once PossibleNullReferenceException
+            _playerView.UpdateTarget();
         }
 
         public override void Sync()

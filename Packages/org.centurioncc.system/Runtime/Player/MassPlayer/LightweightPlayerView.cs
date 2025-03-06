@@ -15,23 +15,25 @@ namespace CenturionCC.System.Player.MassPlayer
         [SerializeField] private PlayerCollider lwCollider;
 
         [SerializeField] private Transform groundPivot;
+        private PlayerCollider[] _colliders;
+        private VRCPlayerApi _followingPlayer;
 
         private PlayerBase _playerModel;
 
         private Transform _transform;
+        private bool _vrcPlayerInvalid = true;
 
         public override PlayerBase PlayerModel
         {
             get => _playerModel;
             set
             {
-                if (_playerModel == value)
-                    return;
+                if (_playerModel == value) return;
 
                 _playerModel = value;
                 lwCollider.player = value;
 
-                UpdateView();
+                UpdateTarget();
             }
         }
 
@@ -43,29 +45,24 @@ namespace CenturionCC.System.Player.MassPlayer
         public override void Init()
         {
             _transform = transform;
+            _colliders = new[] { lwCollider };
         }
 
         public override PlayerCollider[] GetColliders()
         {
-            return new[] { lwCollider };
+            return _colliders;
         }
 
-        public override void UpdateView()
+        public override void UpdateTarget()
         {
+            _followingPlayer = _playerModel ? _playerModel.VrcPlayer : null;
+            _vrcPlayerInvalid = !_playerModel || Utilities.IsValid(_followingPlayer);
             lwCollider.IsVisible = playerManager.IsDebug && _playerModel != null && _playerModel.IsAssigned;
         }
 
         public override void UpdateCollider()
         {
-            if (_playerModel == null)
-            {
-                MoveViewToOrigin();
-                MoveCollidersToOrigin();
-                return;
-            }
-
-            var vrcPlayer = _playerModel.VrcPlayer;
-            if (!Utilities.IsValid(vrcPlayer))
+            if (_vrcPlayerInvalid)
             {
                 MoveViewToOrigin();
                 MoveCollidersToOrigin();
@@ -74,11 +71,11 @@ namespace CenturionCC.System.Player.MassPlayer
 
             // Utilities.IsValid will null-check vrcPlayer
             // ReSharper disable once PossibleNullReferenceException
-            var head = vrcPlayer.GetBonePosition(HumanBodyBones.Head);
-            var foot = (vrcPlayer.GetBonePosition(HumanBodyBones.LeftFoot) +
-                        vrcPlayer.GetBonePosition(HumanBodyBones.RightFoot)) / 2F;
+            var head = _followingPlayer.GetBonePosition(HumanBodyBones.Head);
+            var foot = (_followingPlayer.GetBonePosition(HumanBodyBones.LeftFoot) +
+                        _followingPlayer.GetBonePosition(HumanBodyBones.RightFoot)) / 2F;
 
-            _transform.SetPositionAndRotation(vrcPlayer.GetPosition(), vrcPlayer.GetRotation());
+            _transform.SetPositionAndRotation(_followingPlayer.GetPosition(), _followingPlayer.GetRotation());
 
             if (playerManager.IsStaffTeamId(_playerModel.TeamId))
             {

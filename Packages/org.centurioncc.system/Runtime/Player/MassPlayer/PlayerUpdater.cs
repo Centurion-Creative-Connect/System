@@ -127,7 +127,7 @@ namespace CenturionCC.System.Player.MassPlayer
             {
                 var m = _distanceSortedModels[i];
                 r +=
-                    $"\n{i}: {m.name}, {(m.playerView != null ? m.playerView.name : null)}, {m.Position.ToString("F2")}, {NewbieUtils.GetPlayerName(m.PlayerId)}";
+                    $"\n{i}: {m.name}, {(m.PlayerView != null ? m.PlayerView.name : null)}, {m.Position.ToString("F2")}, {NewbieUtils.GetPlayerName(m.PlayerId)}";
             }
 
             return r;
@@ -166,11 +166,11 @@ namespace CenturionCC.System.Player.MassPlayer
                 {
                     var view = _views[index];
                     view.PlayerModel = modelAtIndex;
-                    modelAtIndex.playerView = view;
+                    modelAtIndex.PlayerView = view;
                 }
                 else
                 {
-                    modelAtIndex.playerView = null;
+                    modelAtIndex.PlayerView = null;
                 }
             }
 
@@ -185,49 +185,19 @@ namespace CenturionCC.System.Player.MassPlayer
             {
                 if (i < _views.Length)
                 {
-                    _distanceSortedModels[i].playerView = _views[i];
+                    _distanceSortedModels[i].PlayerView = _views[i];
                     _views[i].PlayerModel = _distanceSortedModels[i];
                 }
                 else
                 {
-                    _distanceSortedModels[i].playerView = null;
+                    _distanceSortedModels[i].PlayerView = null;
                 }
             }
         }
 
         private void ViewUpdate()
         {
-            foreach (var view in _views)
-                view.UpdateCollider();
-
-            // if (!playerManager.IsDebug) return;
-            //
-            // foreach (var view in views)
-            // {
-            //     var modelName = "N/A";
-            //     var playerId = 0;
-            //     var teamId = 0;
-            //     var kills = 0;
-            //     var deaths = 0;
-            //     var kdr = float.NaN;
-            //
-            //     if (view.playerModel != null)
-            //     {
-            //         var model = view.playerModel;
-            //         modelName = model.name;
-            //         playerId = model.PlayerId;
-            //         teamId = model.TeamId;
-            //         kills = model.Kills;
-            //         deaths = model.Deaths;
-            //         kdr = kills / (float)deaths;
-            //     }
-            //
-            //     view.playerTag.SetDebugTagText($"Name  : {view.name}\n" +
-            //                                    $"Model : {modelName}\n" +
-            //                                    $"Player: {playerId}\n" +
-            //                                    $"Team  : {teamId}\n" +
-            //                                    $"KD(R) : {kills}/{deaths} ({kdr})");
-            // }
+            foreach (var view in _views) view.UpdateCollider();
         }
     }
 }

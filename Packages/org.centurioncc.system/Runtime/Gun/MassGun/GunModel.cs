@@ -48,9 +48,9 @@ namespace CenturionCC.System.Gun.MassGun
 
             Internal_CheckForHandleDistance();
 
-            if (TargetAnimator != null)
+            if (TargetAnimator)
                 TargetAnimator.SetFloat(TriggerProgressAnimHash, GetMainTriggerPull());
-            if (Behaviour != null)
+            if (Behaviour)
                 Behaviour.OnGunUpdate(this);
 
             if (!IsVR)
