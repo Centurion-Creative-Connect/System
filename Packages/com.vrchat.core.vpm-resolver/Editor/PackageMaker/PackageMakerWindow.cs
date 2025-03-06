@@ -28,7 +28,9 @@ namespace VRC.PackageManagement.PackageMaker
         private TextField _authorEmailField;
         private TextField _authorNameField;
         private TextField _authorUrlField;
+
         private TextField _packageIDField;
+
         // VisualElements
         private VisualElement _rootView;
         private TextField _targetAssetFolderField;
@@ -53,7 +55,10 @@ namespace VRC.PackageManagement.PackageMaker
                 _windowData = PackageMakerWindowData.GetOrCreate();
             }
 
-            _rootView = rootVisualElement;
+            ScrollView scrollView = new();
+            rootVisualElement.Add(scrollView);
+
+            _rootView = scrollView;
             _rootView.name = "root-view";
             _rootView.styleSheets.Add((StyleSheet)Resources.Load("PackageMakerWindowStyle"));
 
