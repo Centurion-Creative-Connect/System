@@ -12,6 +12,7 @@ namespace CenturionCC.System.Gun.DataStore
         [SerializeField] private Transform modelOffset;
         [SerializeField] private Transform leftHandOffset;
         [SerializeField] private Transform rightHandOffset;
+        [SerializeField] private BoxCollider pickupCollider;
         [SerializeField] private BoxCollider secondaryMagazineDetectionCollider;
 
         public int Type => type;
@@ -25,6 +26,7 @@ namespace CenturionCC.System.Gun.DataStore
         public Transform LeftHandOffset => leftHandOffset;
         public Transform RightHandOffset => rightHandOffset;
 
+        public BoxCollider PickupCollider => pickupCollider;
         public BoxCollider SecondaryMagazineDetectionCollider => secondaryMagazineDetectionCollider;
     }
 }

@@ -18,6 +18,7 @@ namespace CenturionCC.System.Gun
         [SerializeField] protected GameObject model;
         [SerializeField] protected Transform leftHandOffset;
         [SerializeField] protected Transform rightHandOffset;
+        [SerializeField] protected BoxCollider pickupCollider;
         [SerializeField] protected BoxCollider secondaryMagazineCollider;
 
         [SerializeField] [NewbieInject(SearchScope.Self)]
@@ -267,6 +268,9 @@ namespace CenturionCC.System.Gun
             roundsRemaining = loadMagazine ? roundsCapacity : 0;
             leftHandOffset = dataStore.LeftHandOffset;
             rightHandOffset = dataStore.RightHandOffset;
+
+            pickupCollider.center = dataStore.PickupCollider.center;
+            pickupCollider.size = dataStore.PickupCollider.size;
 
             secondaryMagazineCollider.center = dataStore.SecondaryMagazineDetectionCollider.center;
             secondaryMagazineCollider.size = dataStore.SecondaryMagazineDetectionCollider.size;
