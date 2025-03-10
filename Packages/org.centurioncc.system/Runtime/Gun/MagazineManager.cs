@@ -22,6 +22,7 @@ namespace CenturionCC.System.Gun
         private GameObject sourceMagazine;
 
         private readonly DataList _spawnedMagazines = new DataList();
+        private readonly DataDictionary _storedMagazines = new DataDictionary();
 
         private void Start()
         {
@@ -58,10 +59,13 @@ namespace CenturionCC.System.Gun
             {
                 var token = _spawnedMagazines[i];
                 if (token.TokenType != TokenType.Reference) continue;
-                Destroy((GameObject)token.Reference);
+                var go = (GameObject)token.Reference;
+                var magazine = GetComponent<Magazine>();
+                if (magazine.IsAttached) continue;
+                _spawnedMagazines.Remove(token);
+                Destroy(go);
+                --i;
             }
-
-            _spawnedMagazines.Clear();
         }
 
         [PublicAPI] [CanBeNull]
@@ -73,6 +77,47 @@ namespace CenturionCC.System.Gun
                 if (dataStore.Type == type)
                     return dataStore;
             return null;
+        }
+
+        [PublicAPI]
+        public bool StoreMagazine(Magazine magazine)
+        {
+            if (!_storedMagazines.ContainsKey(magazine.Type)) _storedMagazines.Add(magazine.Type, new DataList());
+            var remainingBullets = _storedMagazines[magazine.Type].DataList;
+            remainingBullets.Add(magazine.RoundsRemaining);
+            remainingBullets.Sort();
+            return true;
+        }
+
+        [PublicAPI] [CanBeNull]
+        public Magazine RestoreMagazine(int type)
+        {
+            if (!_storedMagazines.ContainsKey(type)) return null;
+            var remainingBullets = _storedMagazines[type].DataList;
+            if (!remainingBullets.TryGetValue(0, out var bullets)) return null;
+            var magazine = SpawnMagazine(type, Vector3.zero, Quaternion.identity);
+            magazine.RoundsRemaining = bullets.Int;
+            remainingBullets.RemoveAt(0);
+            return magazine;
+        }
+
+        [PublicAPI]
+        public void FillMagazineStore(int type, int count)
+        {
+            var variantData = GetMagazineVariant(type);
+            if (variantData == null) return;
+
+            ClearMagazineStore(type);
+
+            _storedMagazines.Add(type, new DataList());
+            for (var i = 0; i < count; i++)
+                _storedMagazines[type].DataList.Add(variantData.RoundsCapacity);
+        }
+
+        [PublicAPI]
+        public void ClearMagazineStore(int type)
+        {
+            _storedMagazines.Remove(type);
         }
     }
 }

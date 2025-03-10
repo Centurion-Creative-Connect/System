@@ -2,6 +2,7 @@
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
+using Random = UnityEngine.Random;
 
 namespace CenturionCC.System.Gun
 {
@@ -43,6 +44,21 @@ namespace CenturionCC.System.Gun
 
             _activeMagazine = null;
             CreateFollowingMagazine();
+        }
+
+        private void OnTriggerExit(Collider other)
+        {
+            if (other == null) return;
+            var magazine = other.GetComponent<Magazine>();
+            if (magazine == null) return;
+            if (magazine == _activeMagazine) return;
+            if (magazine.IsAttached) return;
+            if (magazine.IsHeld) return;
+
+            if (!magazineManager.StoreMagazine(magazine)) return;
+            Destroy(magazine.gameObject);
+
+            if (_activeMagazine == null) CreateFollowingMagazine();
         }
 
         public override void OnPickedUpLocally(ManagedGun instance)
@@ -90,9 +106,16 @@ namespace CenturionCC.System.Gun
 
             var targetMagazineType =
                 _activeGun.AllowedMagazineTypes[Random.Range(0, _activeGun.AllowedMagazineTypes.Length)];
-            var magazine = magazineManager.SpawnMagazine(targetMagazineType, transform.position, transform.rotation);
+            var magazine = magazineManager.RestoreMagazine(targetMagazineType);
+            if (magazine == null)
+            {
+                Debug.LogWarning("[MagazinePouch] There is no magazine stored. ignoring create!");
+                return;
+            }
+
             magazine.Attach(transform);
             magazine.transform.localPosition = offsetFromHips;
+            magazine.transform.rotation = transform.rotation;
             _activeMagazine = magazine;
         }
 
@@ -103,6 +126,7 @@ namespace CenturionCC.System.Gun
                 return;
             }
 
+            magazineManager.StoreMagazine(_activeMagazine);
             Destroy(_activeMagazine.gameObject);
         }
     }

@@ -14,27 +14,45 @@ namespace CenturionCC.System.Gun
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class GunSummoner : UdonSharpBehaviour
     {
-        [SerializeField]
+        [SerializeField] [NewbieInject]
+        private GunManager gunManager;
+
+        [SerializeField] [NewbieInject]
+        private MagazineManager magazineManager;
+
+        [SerializeField] [NewbieInject]
+        private RoleProvider roleProvider;
+
+        [SerializeField] [NewbieInject]
+        private NewbieLogger logger;
+
+        [SerializeField] [Header("Base Settings")]
         private byte gunVariationId;
+
         [SerializeField]
         private bool useRandomIds;
+
         [SerializeField]
         private byte[] randomPoolIds;
+
         [SerializeField]
+        private bool refillMagazines = true;
+
+        [SerializeField]
+        private int magazineCount = 4;
+
+        [SerializeField] [Header("Positions")]
         private Transform summonPosition;
+
         [SerializeField]
         private Transform popupPosition;
+
         [SerializeField]
         private float summonTime = 5F;
+
         [SerializeField]
         private bool staffOnly;
 
-        [SerializeField] [HideInInspector] [NewbieInject]
-        private GunManager gunManager;
-        [SerializeField] [HideInInspector] [NewbieInject]
-        private RoleProvider roleProvider;
-        [SerializeField] [HideInInspector] [NewbieInject]
-        private NewbieLogger logger;
         private readonly string[] _summoningPopupHints =
         {
             "Logics/System/UI/SummonerUI/SummoningImage",
@@ -68,12 +86,16 @@ namespace CenturionCC.System.Gun
             SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(MasterOnly_TryToSpawn));
             logger.Log(
                 $"[GunSummoner-{gunVariationId}{(useRandomIds ? "*" : "")}] Requested to spawn a gun as {gunVariationId}");
+
+            var variantData = gunManager.GetVariantData(gunVariationId);
+            if (variantData != null && variantData.AllowedMagazineTypes.Length > 0)
+                magazineManager.FillMagazineStore(variantData.AllowedMagazineTypes[0], 4);
+
             if (_summoningPopUp)
             {
                 var par = _summoningPopUp.transform.parent;
                 par.SetParent(popupPosition, false);
                 par.localPosition = summonPosition == popupPosition ? new Vector3(0, -.2F, 0.3F) : Vector3.zero;
-
                 _summoningPopUp.ShowAndHideLater(summonTime);
             }
         }
