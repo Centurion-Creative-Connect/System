@@ -145,6 +145,12 @@ namespace CenturionCC.System.Gun
         {
             if (magazine == null || Magazine != null || magazine.IsAttachedToReceiver) return false;
 
+            if (magazine.IsAttached && !magazine.IsAttachedToMagazine && !magazine.IsAttachedToReceiver)
+            {
+                Debug.Log($"[{name}-MagReceiver] Attached to pouch");
+                return false;
+            }
+
             // Magazine type check
             if (!IsCompatibleWith(magazine))
             {
