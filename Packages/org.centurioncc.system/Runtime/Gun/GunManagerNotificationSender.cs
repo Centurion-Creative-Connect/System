@@ -16,6 +16,8 @@ namespace CenturionCC.System.Gun
 
         [Header("Messages")] [SerializeField] private TranslatableMessage onGunsResetMessage;
 
+        [SerializeField] private TranslatableMessage onCantShootNoBulletInChamber;
+
         [SerializeField] private TranslatableMessage onCantShootInSafeZone;
 
         [SerializeField] private TranslatableMessage onCantShootInWall;
@@ -89,6 +91,9 @@ namespace CenturionCC.System.Gun
             {
                 case 12:
                     SendNotification(onCantShootWhenSelectorSafety, true);
+                    break;
+                case 13:
+                    SendNotification(onCantShootNoBulletInChamber, true);
                     break;
                 case 100:
                     SendNotification(onCantShootInWall, true);
