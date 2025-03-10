@@ -53,7 +53,13 @@ namespace CenturionCC.System.Gun
 
         [PublicAPI] public int Type => type;
         [PublicAPI] public int RoundsCapacity => roundsCapacity;
-        [PublicAPI] public int RoundsRemaining => roundsRemaining;
+
+        [PublicAPI] public int RoundsRemaining
+        {
+            get => roundsRemaining;
+            set => roundsRemaining = Mathf.Clamp(value, 0, RoundsCapacity);
+        }
+
         [PublicAPI] public bool IsAttached { get; protected set; }
         [PublicAPI] public bool IsAttachedToReceiver { get; protected set; }
         [PublicAPI] public bool IsAttachedToMagazine { get; protected set; }
