@@ -21,7 +21,6 @@ namespace CenturionCC.System.Player.MassPlayer
         private PlayerManager playerManager;
 
         private Transform _bodyTransform;
-
         private PlayerCollider[] _colliders;
         private VRCPlayerApi _followingPlayer;
 
@@ -34,6 +33,9 @@ namespace CenturionCC.System.Player.MassPlayer
         private Transform _rightLowerLegTransform;
         private Transform _rightUpperArmTransform;
         private Transform _rightUpperLegTransform;
+
+        private Transform _transform;
+
         private bool _vrcPlayerInvalid = true;
 
         public override PlayerBase PlayerModel
@@ -58,6 +60,8 @@ namespace CenturionCC.System.Player.MassPlayer
 
         public override void Init()
         {
+            _transform = transform;
+
             _headTransform = headCollider.transform;
             _bodyTransform = bodyCollider.transform;
 
@@ -119,7 +123,7 @@ namespace CenturionCC.System.Player.MassPlayer
             var rightLowerLeg = _followingPlayer.GetBonePosition(HumanBodyBones.RightLowerLeg);
             var rightFoot = _followingPlayer.GetBonePosition(HumanBodyBones.RightFoot);
 
-            transform.SetPositionAndRotation(_followingPlayer.GetPosition(), _followingPlayer.GetRotation());
+            _transform.SetPositionAndRotation(_followingPlayer.GetPosition(), _followingPlayer.GetRotation());
 
             if (playerManager.IsStaffTeamId(_playerModel.TeamId))
             {
@@ -148,7 +152,7 @@ namespace CenturionCC.System.Player.MassPlayer
 
         private void MoveViewToOrigin()
         {
-            transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            _transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
         }
 
         private void MoveCollidersToOrigin()
