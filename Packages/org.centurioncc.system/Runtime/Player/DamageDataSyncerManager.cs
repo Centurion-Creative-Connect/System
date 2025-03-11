@@ -81,6 +81,7 @@ namespace CenturionCC.System.Player
                 return;
             }
 
+            // TODO: ensure player id is not negative
             var victimId = pCol.player.PlayerId;
             var attackerId = damageData.DamagerPlayerId;
 

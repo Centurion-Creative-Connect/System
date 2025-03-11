@@ -15,13 +15,16 @@ namespace CenturionCC.System.Gun
 
         [SerializeField]
         private GunManager gunManager;
+
         [SerializeField]
         private TrailRenderer trailRenderer;
+
         [SerializeField]
         private TrailRenderer debugTrailRenderer;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private UpdateManager updateManager;
+
         private Collider _collider;
 
         private Vector3 _damageOriginPos;
@@ -43,6 +46,7 @@ namespace CenturionCC.System.Gun
 
         public override bool ShouldApplyDamage =>
             gunManager.allowedRicochetCount + 1 >= _ricochetCount;
+
         public override int DamagerPlayerId => _damagerPlayerId;
         public override Vector3 DamageOriginPosition => _damageOriginPos;
         public override Quaternion DamageOriginRotation => _damageOriginRot;
@@ -60,8 +64,10 @@ namespace CenturionCC.System.Gun
         {
             ++_ricochetCount;
             _rigidbody.velocity /= DampingCoefficient;
-            if (gunManager.RicochetHandler != null)
-                gunManager.RicochetHandler.OnRicochet(this, collision);
+            foreach (var handler in gunManager.RicochetHandler)
+            {
+                handler.OnRicochet(this, collision);
+            }
         }
 
         public override void Shoot(Vector3 pos, Quaternion rot, Vector3 velocity, Vector3 torque, float drag,

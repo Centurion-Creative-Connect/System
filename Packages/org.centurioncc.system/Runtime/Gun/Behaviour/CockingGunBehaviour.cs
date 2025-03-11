@@ -1,7 +1,6 @@
 ﻿using CenturionCC.System.Gun.DataStore;
 using UdonSharp;
 using UnityEngine;
-using VRC.SDKBase;
 
 namespace CenturionCC.System.Gun.Behaviour
 {
@@ -15,6 +14,12 @@ namespace CenturionCC.System.Gun.Behaviour
         [SerializeField] private bool isBlowBack;
 
         [SerializeField] private bool isDoubleAction;
+
+        [SerializeField] private bool doHoldOpen = true;
+
+        [SerializeField] private bool pullOnHoldOpen;
+
+        [SerializeField] private bool holdOpenOnEmptyShoot = true;
 
         [SerializeField] private Transform cockingPosition;
 
@@ -116,7 +121,13 @@ namespace CenturionCC.System.Gun.Behaviour
         {
             Vector3 targetPos;
             Quaternion targetRot;
-            switch (instance.State)
+            var gunState = instance.State;
+            if (gunState == GunState.InHoldOpen)
+            {
+                gunState = pullOnHoldOpen ? GunState.InCockingPull : GunState.Idle;
+            }
+
+            switch (gunState)
             {
                 default:
                 case GunState.Idle:
@@ -155,7 +166,7 @@ namespace CenturionCC.System.Gun.Behaviour
         {
             return target.Trigger == TriggerState.Firing &&
                    target.State == GunState.Idle &&
-                   (target.HasBulletInChamber || isDoubleAction);
+                   (target.HasBulletInChamber && (target.HasCocked || isDoubleAction));
         }
 
         #endregion
@@ -208,11 +219,14 @@ namespace CenturionCC.System.Gun.Behaviour
 
         public override void OnTriggerDown(GunBase instance)
         {
-            if (!CanShoot(instance))
-            {
-                instance.EmptyShoot();
-                instance.Trigger = TriggerState.Armed;
-            }
+            // if (instance.Trigger == TriggerState.Firing &&
+            //     instance.State == GunState.Idle &&
+            //     (instance.CanShootWithoutMagazine || instance.HasMagazine) &&
+            //     (instance.HasCocked || isDoubleAction))
+            // {
+            //     instance.EmptyShoot();
+            //     instance.Trigger = TriggerState.Fired;
+            // }
         }
 
         public override void OnGunPickup(GunBase instance)
@@ -232,17 +246,35 @@ namespace CenturionCC.System.Gun.Behaviour
             float progressNormalized, twistNormalized;
 
             // Shoot a gun whenever it's able to shoot. load new bullet if it's blow back variant
-            if (CanShoot(instance))
+
+            if (instance.Trigger == TriggerState.Firing)
             {
-                var shotResult = instance.TryToShoot();
-                var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
-                if (hasSucceeded && isBlowBack)
+                if (instance.State == GunState.Idle &&
+                    (instance.CanShootWithoutMagazine || instance.HasMagazine) &&
+                    (instance.HasCocked || isDoubleAction))
                 {
-                    instance.HasCocked = true;
-                    instance.LoadBullet();
+                    var shotResult = instance.TryToShoot();
+                    var hasPlayedShoot = shotResult == ShotResult.Succeeded ||
+                                         shotResult == ShotResult.SucceededContinuously ||
+                                         shotResult == ShotResult.Failed;
+                    if (hasPlayedShoot && isBlowBack)
+                    {
+                        if (!instance.LoadBullet() && instance.HasMagazine && doHoldOpen)
+                        {
+                            instance.State = GunState.InHoldOpen;
+                            UpdateCustomHandlePosition(instance);
+                        }
+
+                        instance.HasCocked = true;
+                    }
+                }
+                else
+                {
+                    instance.Trigger = TriggerState.Fired;
                 }
             }
 
+            if (instance.State == GunState.InHoldOpen && !instance.CustomHandle.IsPickedUp) return;
 
             // Calculate cocking/twist progress
             if (instance.IsVR)
@@ -324,6 +356,38 @@ namespace CenturionCC.System.Gun.Behaviour
                     cockingAutoLoadMargin,
                     1 - cockingAutoLoadMargin
                 );
+        }
+
+        public override void OnGunStateChanged(GunBase instance, GunState previousState)
+        {
+            if (instance.CustomHandle.IsPickedUp) return;
+
+            UpdateCustomHandlePosition(instance);
+
+            if (previousState == GunState.InHoldOpen && instance.State == GunState.Idle && !instance.HasBulletInChamber)
+            {
+                instance.LoadBullet();
+                // TODO: may not be realistic
+                instance.HasCocked = true;
+            }
+        }
+
+        public override void OnGunEmptyShoot(GunBase instance)
+        {
+            if (holdOpenOnEmptyShoot && instance.HasMagazine)
+            {
+                if (instance.MagazineRoundsRemaining <= 0) instance.State = GunState.InHoldOpen;
+                else instance.LoadBullet();
+                instance.HasCocked = true;
+                UpdateCustomHandlePosition(instance);
+                return;
+            }
+
+            if (isBlowBack && !doHoldOpen)
+            {
+                instance.LoadBullet();
+                instance.HasCocked = true;
+            }
         }
 
         public override void Setup(GunBase instance)

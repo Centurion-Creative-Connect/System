@@ -25,8 +25,13 @@ namespace CenturionCC.System.Gun
         private const float DisallowPickupFromBelowRange = -0.1F;
         protected readonly int CockingProgressAnimHash = Animator.StringToHash(GunUtility.CockingProgressParamName);
         protected readonly int CockingTwistAnimHash = Animator.StringToHash(GunUtility.CockingTwistParamName);
+
+        protected readonly int CurrentBulletsCountAnimHash =
+            Animator.StringToHash(GunUtility.CurrentBulletsCountParamName);
+
         protected readonly int HasBulletAnimHash = Animator.StringToHash(GunUtility.HasBulletParamName);
         protected readonly int HasCockedAnimHash = Animator.StringToHash(GunUtility.HasCockedParamName);
+        protected readonly int HasMagazineAnimHash = Animator.StringToHash(GunUtility.HasMagazineParamName);
         protected readonly int IsInSafeZoneAnimHash = Animator.StringToHash(GunUtility.IsInSafeZoneParamName);
         protected readonly int IsInWallAnimHash = Animator.StringToHash(GunUtility.IsInWallParamName);
         protected readonly int IsLocalAnimHash = Animator.StringToHash(GunUtility.IsLocalParamName);
@@ -35,11 +40,15 @@ namespace CenturionCC.System.Gun
         protected readonly int IsShootingAnimHash = Animator.StringToHash(GunUtility.IsShootingParamName);
         protected readonly int IsShootingEmptyAnimHash = Animator.StringToHash(GunUtility.IsShootingEmptyParamName);
         protected readonly int IsVRAnimHash = Animator.StringToHash(GunUtility.IsVRParamName);
+
         protected readonly int SelectorTypeAnimHash = Animator.StringToHash(GunUtility.SelectorTypeParamName);
         protected readonly int StateAnimHash = Animator.StringToHash(GunUtility.StateParamName);
 
         protected readonly int TriggerProgressAnimHash = Animator.StringToHash(GunUtility.TriggerProgressParamName);
         protected readonly int TriggerStateAnimHash = Animator.StringToHash(GunUtility.TriggerStateParamName);
+
+        [UdonSynced] [FieldChangeCallback(nameof(CurrentMagazineType))]
+        private int _currentMagazineType;
 
         [UdonSynced] [FieldChangeCallback(nameof(RawState))]
         private byte _currentState;
@@ -51,6 +60,8 @@ namespace CenturionCC.System.Gun
 
         [UdonSynced] [FieldChangeCallback(nameof(HasCocked))]
         private bool _hasCocked;
+
+        private bool _isInStateChangeCallback;
 
         private bool _isLocal;
         private bool _isPickedUp;
@@ -96,6 +107,7 @@ namespace CenturionCC.System.Gun
             {
                 State = GunState.Idle;
                 ShotCount = 0;
+                CurrentMagazineType = -1;
             }
 
             MainHandle.callback = this;
@@ -130,14 +142,23 @@ namespace CenturionCC.System.Gun
 
             if (Behaviour != null)
                 Behaviour.Setup(this);
+
+            if (MagazineReceiver != null)
+                MagazineReceiver.Setup(this);
         }
 
         protected virtual void OnTriggerEnter(Collider other)
         {
+            if (other.gameObject.layer == 27)
+            {
+                Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .2F, .02F, .1F);
+                return;
+            }
+
             var otherName = other.name.ToLower();
 
 #if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            Logger.LogVerbose($"{Prefix}OnTriggerEnter: {otherName}");
+            Logger.LogVerbose($"{Prefix}OnTriggerEnter: {otherName} with layer {other.gameObject.layer}");
 #endif
 
             if (otherName.StartsWith("safezone"))
@@ -171,7 +192,14 @@ namespace CenturionCC.System.Gun
 
         protected virtual void OnTriggerExit(Collider other)
         {
+            // TODO: improve perf
+            if (other.gameObject.layer == 27) return;
+
             var otherName = other.name.ToLower();
+
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
+            Logger.LogVerbose($"{Prefix}OnTriggerExit: {otherName} with layer {other.gameObject.layer}");
+#endif
 
             if (otherName.StartsWith("safezone"))
             {
@@ -200,6 +228,16 @@ namespace CenturionCC.System.Gun
 
             if (TargetAnimator != null)
                 TargetAnimator.SetBool(IsInWallAnimHash, IsInWall);
+        }
+
+        protected void OnTriggerStay(Collider other)
+        {
+            if (other.gameObject.layer != 27) return;
+
+            if (HasMagazine) return;
+
+            Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .2F, .01F, .1F);
+            Networking.LocalPlayer.PlayHapticEventInHand(SubHandle.CurrentHand, .2F, .01F, .1F);
         }
 
         public override void OnDeserialization()
@@ -245,9 +283,6 @@ namespace CenturionCC.System.Gun
             if (Behaviour != null)
                 Behaviour.OnGunUpdate(this);
 
-            if (!IsVR)
-                Internal_HandleDesktopInputs();
-
             if (IsInWall)
             {
                 Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .2F, .02F, .1F);
@@ -269,14 +304,6 @@ namespace CenturionCC.System.Gun
             UpdatePosition();
         }
 
-        public override void InputJump(bool value, UdonInputEventArgs args)
-        {
-            if (!value || !IsLocal)
-                return;
-
-            FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
-        }
-
         [PublicAPI]
         public override ShotResult TryToShoot()
         {
@@ -291,8 +318,8 @@ namespace CenturionCC.System.Gun
                 case ShotResult.SucceededContinuously:
                 {
                     Shoot();
+                    EjectBullet();
                     ++BurstCount;
-                    HasBulletInChamber = false;
 
                     if (!FireMode.HasFiredEnough(BurstCount))
                         return ShotResult.SucceededContinuously;
@@ -311,6 +338,8 @@ namespace CenturionCC.System.Gun
                 default:
                 {
                     Trigger = TriggerState.Fired;
+
+                    if (IsLocal && Behaviour != null) Behaviour.OnGunCancelShoot(this);
                     return ShotResult.Cancelled;
                 }
             }
@@ -327,12 +356,15 @@ namespace CenturionCC.System.Gun
             Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
             RequestSerialization();
             ProcessShotCountData();
+
+            if (Behaviour != null) Behaviour.OnGunShoot(this);
         }
 
         [PublicAPI]
         public override void EmptyShoot()
         {
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_EmptyShoot));
+            if (Behaviour != null) Behaviour.OnGunEmptyShoot(this);
         }
 
         [PublicAPI]
@@ -367,27 +399,19 @@ namespace CenturionCC.System.Gun
             Internal_UpdatePosition(method);
         }
 
+        public override void OnMagazineChanged()
+        {
+            base.OnMagazineChanged();
+            if (TargetAnimator != null)
+                TargetAnimator.SetBool(HasMagazineAnimHash, HasMagazine);
+        }
+
         [PublicAPI]
         public void UpdatePositionForSync()
         {
             SendCustomEventDelayedSeconds(nameof(UpdatePosition), 0.5F);
             SendCustomEventDelayedSeconds(nameof(UpdatePosition), 1F);
             SendCustomEventDelayedSeconds(nameof(UpdatePosition), 5F);
-        }
-
-        [PublicAPI]
-        public void SetState(GunState state)
-        {
-            SetState(Convert.ToByte(state));
-        }
-
-        [PublicAPI]
-        public void SetState(byte state)
-        {
-            if (RawState == state) return;
-            RawState = state;
-            Networking.SetOwner(Networking.LocalPlayer, gameObject);
-            RequestSerialization();
         }
 
         /// <summary>
@@ -451,7 +475,6 @@ namespace CenturionCC.System.Gun
         #region SerializeFields
 
         [SerializeField] protected string weaponName;
-
         [SerializeField] protected Transform target;
         [SerializeField] protected Transform shooter;
         [SerializeField] protected GunHandle mainHandle;
@@ -459,6 +482,9 @@ namespace CenturionCC.System.Gun
         [SerializeField] protected GunHandle customHandle;
         [SerializeField] protected GunBulletHolder bulletHolder;
         [SerializeField] protected Animator animator;
+        [SerializeField] protected MagazineReceiver magazineReceiver;
+        [SerializeField] protected int[] allowedMagazineTypes;
+        [SerializeField] protected bool canShootWithoutMagazine = true;
         [SerializeField] protected GunBehaviourBase behaviour;
         [SerializeField] protected FireMode[] availableFireModes = { FireMode.SemiAuto };
         [SerializeField] protected ProjectileDataProvider projectileData;
@@ -515,10 +541,10 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public override GunHandle SubHandle => subHandle;
         [PublicAPI] public override GunHandle CustomHandle => customHandle;
         [PublicAPI] public override Transform Target => target ? target : transform;
-        [PublicAPI] [CanBeNull] public override Animator TargetAnimator => animator;
+        [PublicAPI] public override Animator TargetAnimator => animator;
+        [PublicAPI] public override MagazineReceiver MagazineReceiver => magazineReceiver;
 
         [PublicAPI]
-        [CanBeNull]
         public override VRCPlayerApi CurrentHolder => MainHandle.CurrentPlayer ?? SubHandle.CurrentPlayer;
 
         [PublicAPI]
@@ -530,7 +556,7 @@ namespace CenturionCC.System.Gun
                     return GunState.Unknown;
                 return (GunState)RawState;
             }
-            set => SetState(value);
+            set => Internal_SetState(value);
         }
 
         [PublicAPI]
@@ -540,12 +566,35 @@ namespace CenturionCC.System.Gun
             set
             {
                 _trigger = value;
+                if (_trigger == TriggerState.Fired)
+                    HasCocked = false;
                 if (TargetAnimator != null)
                     TargetAnimator.SetInteger(TriggerStateAnimHash, (int)_trigger);
                 if (value == TriggerState.Armed || value == TriggerState.Idle)
                     BurstCount = 0;
             }
         }
+
+        [PublicAPI]
+        public override int CurrentMagazineType
+        {
+            get => _currentMagazineType;
+            protected set
+            {
+                _currentMagazineType = value;
+                if (MagazineReceiver == null) return;
+
+                MagazineReceiver.SetMagazineType(value);
+                if (TargetAnimator != null)
+                    TargetAnimator.SetBool(HasMagazineAnimHash, HasMagazine);
+            }
+        }
+
+        [PublicAPI]
+        public override int[] AllowedMagazineTypes => allowedMagazineTypes;
+
+        [PublicAPI]
+        public override bool CanShootWithoutMagazine => canShootWithoutMagazine;
 
         [PublicAPI]
         public override bool HasCocked
@@ -605,7 +654,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public virtual bool IsDoubleHandedGun => isDoubleHanded;
         [PublicAPI] public virtual float MainHandleRePickupDelay => mainHandleRePickupDelay;
         [PublicAPI] public virtual float MainHandlePitchOffset => mainHandlePitchOffset;
-        [PublicAPI] [field: UdonSynced] public virtual float CurrentMainHandlePitchOffset { get; protected set; }
+        [PublicAPI] [field: UdonSynced] public virtual float CurrentMainHandlePitchOffset { get; set; }
 
         [PublicAPI] public virtual float SubHandleRePickupDelay => subHandleRePickupDelay;
 
@@ -716,8 +765,12 @@ namespace CenturionCC.System.Gun
                 _currentState = value;
                 if (TargetAnimator != null)
                     TargetAnimator.SetInteger(StateAnimHash, value);
-                if (lastState != value)
+                if (lastState != value && !_isInStateChangeCallback)
+                {
+                    _isInStateChangeCallback = true;
                     OnProcessStateChange(lastState, value);
+                    _isInStateChangeCallback = false;
+                }
             }
         }
 
@@ -765,7 +818,7 @@ namespace CenturionCC.System.Gun
         /// Is this Gun inside of a wall?
         /// </summary>
         [PublicAPI]
-        public virtual bool IsInWall => CollisionCount != 0;
+        public virtual bool IsInWall => CollisionCount > 0;
 
         /// <summary>
         /// Is this Gun inside of safezone?
@@ -850,6 +903,7 @@ namespace CenturionCC.System.Gun
             if (IsLocal && HapticData != null && HapticData.Shooting)
                 HapticData.Shooting.PlayBothHand();
 
+            HasBulletInChamber = false;
             HasCocked = false;
         }
 
@@ -863,6 +917,7 @@ namespace CenturionCC.System.Gun
                 TargetAnimator.SetTrigger(IsShootingEmptyAnimHash);
             if (AudioData != null)
                 Internal_PlayAudio(AudioData.EmptyShooting, AudioData.EmptyShootingOffset);
+            HasCocked = false;
         }
 
         protected virtual void Internal_PlayAudio(AudioDataStore audioStore, Vector3 offset)
@@ -1172,26 +1227,24 @@ namespace CenturionCC.System.Gun
                 Networking.SetOwner(api, customHandle.gameObject);
         }
 
+        protected void Internal_SetState(GunState state)
+        {
+            Internal_SetState(Convert.ToByte(state));
+        }
+
+        protected void Internal_SetState(byte state)
+        {
+            if (RawState == state) return;
+            RawState = state;
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            RequestSerialization();
+        }
+
         protected void Internal_SetFireModeWithoutNotify(FireMode fireMode)
         {
             _fireMode = fireMode;
             if (TargetAnimator != null)
                 TargetAnimator.SetInteger(SelectorTypeAnimHash, (int)fireMode);
-        }
-
-        protected void Internal_HandleDesktopInputs()
-        {
-            if (Input.GetKeyDown(KeyCode.B))
-            {
-                FireMode = GunUtility.CycleFireMode(FireMode, AvailableFireModes);
-            }
-
-            var scrollDelta = Input.GetAxisRaw("Mouse ScrollWheel") * 80F;
-            if (!Mathf.Approximately(scrollDelta, 0) && !Input.GetKey(KeyCode.LeftShift))
-            {
-                CurrentMainHandlePitchOffset += scrollDelta;
-                RequestSerialization();
-            }
         }
 
         #endregion
@@ -1224,16 +1277,34 @@ namespace CenturionCC.System.Gun
 
         protected virtual ShotResult CanShoot()
         {
+            if (!CanShootWithoutMagazine && !HasMagazine)
+            {
+                Trigger = TriggerState.Fired;
+                return ShotResult.Cancelled;
+            }
+
             if (FireMode == FireMode.Safety)
             {
                 Trigger = TriggerState.Idle;
-                return ShotResult.Failed;
+                return ShotResult.Cancelled;
             }
 
             if (State != GunState.Idle)
             {
                 Trigger = TriggerState.Fired;
-                return ShotResult.Failed;
+                return ShotResult.Cancelled;
+            }
+
+            if (!HasCocked)
+            {
+                Trigger = TriggerState.Fired;
+                return ShotResult.Cancelled;
+            }
+
+            if (!HasBulletInChamber)
+            {
+                Trigger = TriggerState.Fired;
+                return CanShootWithoutMagazine ? ShotResult.Failed : ShotResult.Cancelled;
             }
 
             if (Networking.GetNetworkDateTime().Subtract(LastShotTime).TotalSeconds < SecondsPerRound)
@@ -1321,6 +1392,8 @@ namespace CenturionCC.System.Gun
                     TargetAnimator.SetFloat(CockingTwistAnimHash, 0);
                 }
             }
+
+            if (Behaviour != null) Behaviour.OnGunStateChanged(this, previousState);
         }
 
         protected virtual void OnProcessCollisionAudio(Collider other)
