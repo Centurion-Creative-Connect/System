@@ -56,8 +56,8 @@ namespace CenturionCC.System.Player.MassPlayer
         public override void UpdateTarget()
         {
             _followingPlayer = _playerModel ? _playerModel.VrcPlayer : null;
-            _vrcPlayerInvalid = !_playerModel || Utilities.IsValid(_followingPlayer);
-            lwCollider.IsVisible = playerManager.IsDebug && _playerModel != null && _playerModel.IsAssigned;
+            _vrcPlayerInvalid = !_playerModel || !Utilities.IsValid(_followingPlayer);
+            lwCollider.IsVisible = playerManager.IsDebug && !_playerModel && _playerModel.IsAssigned;
         }
 
         public override void UpdateCollider()
