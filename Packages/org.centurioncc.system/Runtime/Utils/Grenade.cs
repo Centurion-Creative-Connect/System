@@ -239,7 +239,8 @@ namespace CenturionCC.System.Utils
 
         private void OnCollisionEnter(Collision other)
         {
-            if (!useImpactTrigger || !Networking.IsOwner(gameObject) || _isExploding || _hasExploded) return;
+            if (!useImpactTrigger || !Networking.IsOwner(gameObject) || _hasSafetyLever || _isExploding || _hasExploded)
+                return;
 
             if (other.relativeVelocity.magnitude < impactTriggerThreshold) return;
 
