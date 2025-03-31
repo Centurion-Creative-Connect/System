@@ -99,7 +99,7 @@ namespace CenturionCC.System.Player.MassPlayer
 
         public override void UpdateCollider()
         {
-            if (_vrcPlayerInvalid)
+            if (_vrcPlayerInvalid || !_followingPlayer.IsValid())
             {
                 MoveViewToOrigin();
                 MoveCollidersToOrigin();
