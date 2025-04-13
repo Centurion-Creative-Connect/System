@@ -14,8 +14,10 @@ namespace CenturionCC.System.Player.External.PlayerTag
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private RoleManager roleManager;
+
         [SerializeField]
         private GameObject sourceRemotePlayerTag;
 
@@ -23,9 +25,13 @@ namespace CenturionCC.System.Player.External.PlayerTag
         [SerializeField]
         [Tooltip("Shows team tag even if local player is not in same team as remote")]
         private bool showOtherTeamsTag;
+
         [SerializeField]
         [Tooltip("Shows staff tag even if staff player is not in special team")]
         private bool showStaffTagWhileInTeam;
+
+        [SerializeField]
+        private bool showStaffTagOnlyInStaffTeam;
 
         private ExternalPlayerTagBase[] _remotePlayerTags = new ExternalPlayerTagBase[0];
 
@@ -150,14 +156,20 @@ namespace CenturionCC.System.Player.External.PlayerTag
             var taggedPlayer = playerManager.GetPlayerById(taggedPlayerApi.playerId);
             var taggedPlayerRole = roleManager.GetPlayerRole(taggedPlayerApi);
             var taggedPlayerTeamId = taggedPlayer != null ? taggedPlayer.TeamId : 0;
-            var inSameTeam = localPlayerTeamId == taggedPlayerTeamId;
-            var isDead = taggedPlayer != null && taggedPlayer.IsDead;
-            var showAlways = localPlayerInSpecialTeam || playerManager.IsSpecialTeamId(taggedPlayerTeamId);
-            var showTeam = playerManager.ShowTeamTag && (showOtherTeamsTag || showAlways || inSameTeam);
             var teamTagColor = playerManager.GetTeamColor(taggedPlayerTeamId);
+
+            var inSameTeam = localPlayerTeamId == taggedPlayerTeamId;
             var isStaffTeam = playerManager.IsStaffTeamId(taggedPlayerTeamId);
-            var showStaff = playerManager.ShowStaffTag && (showStaffTagWhileInTeam || showAlways);
-            var showCreator = playerManager.ShowCreatorTag && (showStaffTagWhileInTeam || showAlways);
+            var isDead = taggedPlayer != null && taggedPlayer.IsDead;
+
+            var isSpecialTeam = localPlayerInSpecialTeam || playerManager.IsSpecialTeamId(taggedPlayerTeamId);
+            var isStaffTagVisible =
+                (!showStaffTagOnlyInStaffTeam || isStaffTeam) && (showStaffTagWhileInTeam || isSpecialTeam);
+
+            var showTeam = playerManager.ShowTeamTag && (showOtherTeamsTag || isSpecialTeam || inSameTeam);
+            var showMaster = playerManager.ShowStaffTag && isSpecialTeam;
+            var showStaff = playerManager.ShowStaffTag && isStaffTagVisible;
+            var showCreator = playerManager.ShowCreatorTag && isStaffTagVisible;
 
             playerTag.SetTagOn(TagType.Hit, isDead);
 
@@ -165,7 +177,7 @@ namespace CenturionCC.System.Player.External.PlayerTag
             playerTag.SetTeamTag(taggedPlayerTeamId, teamTagColor, isStaffTeam);
 
             playerTag.SetTagOn(GetStaffTagType(taggedPlayerRole), showStaff && taggedPlayerRole.IsGameStaff());
-            playerTag.SetTagOn(TagType.Master, showStaff && taggedPlayerApi.isMaster);
+            playerTag.SetTagOn(TagType.Master, showMaster && taggedPlayerApi.isMaster);
 
             playerTag.SetTagOn(TagType.Creator, showCreator && taggedPlayerRole.IsGameCreator());
         }
