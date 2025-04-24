@@ -1,13 +1,16 @@
-﻿using UdonSharp;
+﻿using System;
+using UdonSharp;
 using UnityEngine;
 
 namespace CenturionCC.System.Audio
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    [Obsolete("Use AudioManager#PlayAudioAtPosition(AudioDataStore, Vector3) instead")]
     public class AudioHolder : UdonSharpBehaviour
     {
         [SerializeField]
         private AudioDataStore audioData;
+
         [SerializeField]
         private AudioManager audioManager;
 

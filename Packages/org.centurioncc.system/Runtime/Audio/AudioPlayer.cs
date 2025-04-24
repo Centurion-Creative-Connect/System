@@ -1,10 +1,11 @@
-﻿using UdonSharp;
+﻿using System;
+using UdonSharp;
 using UnityEngine;
 using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.Audio
 {
-    [RequireComponent(typeof(AudioSource))]
+    [RequireComponent(typeof(AudioSource))] [Obsolete("Legacy behaviour. No longer supported.")]
     public class AudioPlayer : UdonSharpBehaviour
     {
         public AudioClip[] clips;
