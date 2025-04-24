@@ -73,7 +73,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
                     _useRangePreview = EditorGUILayout.Toggle("Use Range Preview", _useRangePreview);
                     _shootingRef =
                         (Transform)EditorGUILayout.ObjectField("Shooting Ref", _shootingRef, typeof(Transform), true);
-                    EditorGUILayout.MinMaxSlider("Bullet Count", ref _offsetMin, ref _offsetMax, 1F, 10F);
+                    EditorGUILayout.MinMaxSlider("Bullet Count", ref _offsetMin, ref _offsetMax, 0F, 10F);
                     _simPoints = EditorGUILayout.IntField("Sim Points", _simPoints);
                 }
 
