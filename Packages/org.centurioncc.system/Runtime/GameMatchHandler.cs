@@ -84,7 +84,7 @@ namespace CenturionCC.System
                 matchDataDict.Add("statistics", _currentMatchStatistics.DeepClone());
                 matchDataDict.Add("events", _currentMatchEvents.DeepClone());
 
-                _totalMatchLog.Add(CurrentMatchGuid.ToString("D"), matchDataDict);
+                _totalMatchLog.SetValue(CurrentMatchGuid.ToString("D"), matchDataDict);
             }
         }
 
