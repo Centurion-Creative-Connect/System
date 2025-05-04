@@ -2,13 +2,19 @@
 using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
+using UnityEngine.Serialization;
+using VRC.Udon.Common;
 
 namespace CenturionCC.System.Objective
 {
     public abstract class ObjectiveBase : UdonSharpBehaviour
     {
         [SerializeField] [NewbieInject]
-        protected ObjectiveManager objectiveManager;
+        protected ObjectiveCollection objectives;
+
+        private bool _lastHasCompleted = false;
+
+        private int _lastOwningTeamId = -1;
 
         /// <summary>
         /// Objective's current team id.
@@ -18,7 +24,8 @@ namespace CenturionCC.System.Objective
         /// Might change dynamically depending on objective.
         /// Should never change when HasCompleted is true.
         /// </remarks>
-        public abstract int OwningTeamId { get; }
+        [field: UdonSynced]
+        public virtual int OwningTeamId { get; protected set; }
 
         /// <summary>
         /// Has the objective been completed? 
@@ -26,13 +33,54 @@ namespace CenturionCC.System.Objective
         /// <remarks>
         /// OwningTeamId should never change when this returns true.
         /// </remarks>
-        public abstract bool HasCompleted { get; }
+        [field: UdonSynced]
+        public virtual bool HasCompleted { get; protected set; }
+
+        public override void OnDeserialization()
+        {
+            CheckSyncedData();
+        }
+
+        public override void OnPostSerialization(SerializationResult result)
+        {
+            if (result.success)
+            {
+                CheckSyncedData();
+            }
+        }
+
+        protected void CheckSyncedData()
+        {
+            var owningTeamIdChanged = _lastOwningTeamId != OwningTeamId;
+            if (owningTeamIdChanged)
+            {
+                objectives.RemoveObjective(this, _lastOwningTeamId);
+                objectives.AddObjective(this, OwningTeamId);
+                _lastOwningTeamId = OwningTeamId;
+            }
+
+            var hasCompletedChanged = _lastHasCompleted != HasCompleted;
+            if (hasCompletedChanged)
+            {
+                _lastHasCompleted = HasCompleted;
+            }
+
+            if (OwningTeamId != 0 && hasCompletedChanged && HasCompleted)
+            {
+                OnObjectiveEnd();
+            }
+        }
 
         /// <summary>
         /// Called when objective should initialize.
         /// </summary>
         /// <param name="teamId"></param>
-        public abstract void OnObjectiveSetup(int teamId);
+        public virtual void OnObjectiveSetup(int teamId)
+        {
+            HasCompleted = false;
+            OwningTeamId = teamId;
+            RequestSerialization();
+        }
 
         /// <summary>
         /// Called when objectyive should activate and start.

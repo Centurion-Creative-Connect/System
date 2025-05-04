@@ -5,7 +5,7 @@ using VRC.SDK3.Data;
 namespace CenturionCC.System.Objective
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class ObjectiveManager : UdonSharpBehaviour
+    public class ObjectiveCollection : UdonSharpBehaviour
     {
         private readonly DataDictionary _teamObjectivesDict = new DataDictionary();
 
@@ -21,39 +21,14 @@ namespace CenturionCC.System.Objective
         }
 
         /// <summary>
-        /// Start all objectives.
+        /// Removes objective for specified team
         /// </summary>
+        /// <param name="objective"></param>
+        /// <param name="teamId"></param>
         [PublicAPI]
-        public void StartObjectives()
+        public void RemoveObjective(ObjectiveBase objective, int teamId)
         {
-            var keys = _teamObjectivesDict.GetKeys().ToArray();
-            foreach (var key in keys)
-            {
-                var objectives = _teamObjectivesDict[key].DataList.ToArray();
-                foreach (var objective in objectives)
-                {
-                    ((ObjectiveBase)objective.Reference).OnObjectiveStart();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Resets objective then clears current objectives list.
-        /// </summary>
-        [PublicAPI]
-        public void EndObjectives()
-        {
-            var keys = _teamObjectivesDict.GetKeys().ToArray();
-            foreach (var key in keys)
-            {
-                var objectives = _teamObjectivesDict[key].DataList.ToArray();
-                foreach (var objective in objectives)
-                {
-                    ((ObjectiveBase)objective.Reference).OnObjectiveEnd();
-                }
-            }
-
-            _teamObjectivesDict.Clear();
+            GetTeamObjectives(teamId).RemoveAll(objective);
         }
 
         /// <summary>
