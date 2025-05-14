@@ -1,8 +1,6 @@
-﻿using System;
-using DerpyNewbie.Common;
+﻿using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
-using UnityEngine.Serialization;
 using VRC.Udon.Common;
 
 namespace CenturionCC.System.Objective
@@ -13,6 +11,8 @@ namespace CenturionCC.System.Objective
         protected ObjectiveCollection objectives;
 
         private bool _lastHasCompleted = false;
+
+        private bool _lastIsPaused = false;
 
         private int _lastOwningTeamId = -1;
 
@@ -35,6 +35,11 @@ namespace CenturionCC.System.Objective
         /// </remarks>
         [field: UdonSynced]
         public virtual bool HasCompleted { get; protected set; }
+
+        [field: UdonSynced]
+        public virtual bool IsPaused { get; protected set; }
+
+        public bool IsActiveAndRunning => OwningTeamId != 0 && !IsPaused && !HasCompleted;
 
         public override void OnDeserialization()
         {
@@ -60,9 +65,20 @@ namespace CenturionCC.System.Objective
             }
 
             var hasCompletedChanged = _lastHasCompleted != HasCompleted;
-            if (hasCompletedChanged)
+            _lastHasCompleted = HasCompleted;
+
+            var hasPausedChanged = _lastIsPaused != IsPaused;
+            _lastIsPaused = IsPaused;
+
+            if ((owningTeamIdChanged || hasCompletedChanged) && OwningTeamId != 0 && !HasCompleted)
             {
-                _lastHasCompleted = HasCompleted;
+                OnObjectiveStart();
+            }
+
+            if (OwningTeamId != 0 && !HasCompleted && hasPausedChanged)
+            {
+                if (IsPaused) OnObjectivePause();
+                else OnObjectiveResume();
             }
 
             if (OwningTeamId != 0 && hasCompletedChanged && HasCompleted)
@@ -78,6 +94,7 @@ namespace CenturionCC.System.Objective
         public virtual void OnObjectiveSetup(int teamId)
         {
             HasCompleted = false;
+            IsPaused = false;
             OwningTeamId = teamId;
             RequestSerialization();
         }
@@ -90,7 +107,16 @@ namespace CenturionCC.System.Objective
         /// <summary>
         /// Called when objective should pause and halt updates.
         /// </summary>
-        public abstract void OnObjectivePause();
+        public virtual void OnObjectivePause()
+        {
+        }
+
+        /// <summary>
+        /// Called when objective should resume and continue updating.
+        /// </summary>
+        public virtual void OnObjectiveResume()
+        {
+        }
 
         /// <summary>
         /// Called when objective should end.
