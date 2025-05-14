@@ -11,12 +11,16 @@ namespace CenturionCC.System.Utils
     public class JerryCan : PlayerManagerCallbackBase
     {
         private const float PickupCooldownTime = 10F;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private NotificationProvider notificationProvider;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
+
         [SerializeField]
         private VRCPickup pickup;
+
         [SerializeField]
         private TranslatableMessage dropMessage;
 
