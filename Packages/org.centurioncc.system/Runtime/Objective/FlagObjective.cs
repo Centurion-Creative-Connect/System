@@ -1,24 +1,32 @@
-﻿using UdonSharp;
-using NotImplementedException = System.NotImplementedException;
+﻿using CenturionCC.System.Player;
+using DerpyNewbie.Common;
+using UdonSharp;
+using UnityEngine;
 
 namespace CenturionCC.System.Objective
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class FlagObjective : ObjectiveBase
     {
-        public override void OnObjectiveStart()
+        [SerializeField] [NewbieInject]
+        private PlayerManager playerManager;
+
+        [SerializeField] [NewbieInject(SearchScope.Self)]
+        private AudioSource audioSource;
+
+        private float _lastPlayedTime;
+
+        public override void Interact()
         {
-            throw new NotImplementedException();
+            if (!IsActiveAndRunning) return;
         }
 
-        public override void OnObjectivePause()
+        public override void OnObjectiveStart()
         {
-            throw new NotImplementedException();
         }
 
         public override void OnObjectiveEnd()
         {
-            throw new NotImplementedException();
         }
     }
 }
