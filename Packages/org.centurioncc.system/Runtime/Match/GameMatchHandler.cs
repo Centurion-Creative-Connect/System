@@ -9,10 +9,10 @@ using UnityEngine;
 using VRC.SDK3.Data;
 using VRC.SDKBase;
 
-namespace CenturionCC.System
+namespace CenturionCC.System.Match
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class GameMatchHandler : PlayerManagerCallbackBase
+    public class GameMatchHandler : UdonSharpBehaviour
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private GunManager gunManager;
@@ -28,12 +28,9 @@ namespace CenturionCC.System
         private readonly DataDictionary _totalMatchLog = new DataDictionary();
         private readonly DataDictionary _totalStatistics = new DataDictionary();
 
-        // [UdonSynced] [FieldChangeCallback(nameof(CurrentMatchGuidString))]
         private string _currentMatchGuid = Guid.Empty.ToString("D");
-
         private bool _hasLoggedMatch;
 
-        // [UdonSynced] [FieldChangeCallback(nameof(IsInMatch))]
         private bool _isInMatch;
         private DateTime _matchEndTime;
         private DateTime _matchStartTime;
@@ -50,9 +47,6 @@ namespace CenturionCC.System
             private set
             {
                 if (CurrentMatchGuid == value) return;
-
-                _currentMatchStatistics.Clear();
-                _currentMatchEvents.Clear();
 
                 _currentMatchGuid = value.ToString("D");
                 _hasLoggedMatch = false;
@@ -201,9 +195,7 @@ namespace CenturionCC.System
                 return;
             }
 
-            Debug.Log("====== BEGIN MATCH LOG ======");
-            Debug.Log(jsonLog.String);
-            Debug.Log("====== END MATCH LOG ======");
+            Debug.Log($"====== BEGIN MATCH LOG ======\n{jsonLog}\n====== END MATCH LOG ======");
         }
 
         public DataList GetTotalRecordedDisplayNames()
@@ -226,51 +218,7 @@ namespace CenturionCC.System
             return _totalStatistics.TryGetValue(displayName, out value);
         }
 
-        public override void OnPlayerChanged(PlayerBase player, int oldId, int newId)
-        {
-            EnsureStatsTableExist(_totalStatistics, player);
-            EnsureStatsTableExist(_currentMatchStatistics, player);
-        }
-
-        public override void OnTeamChanged(PlayerBase player, int oldTeamId)
-        {
-            UpdateTeam(_currentMatchStatistics, player);
-            UpdateTeam(_totalStatistics, player);
-        }
-
-        public override void OnKilled(PlayerBase attacker, PlayerBase victim, KillType type)
-        {
-            var dict = new DataDictionary();
-            dict.Add("type", "killed");
-            dict.Add("data", victim.LastHitData.ToDictionary());
-
-            AddMatchEventLog(dict);
-
-            var distance = victim.LastHitData.Distance;
-
-            IncrementDeath(_currentMatchStatistics, victim);
-            IncrementKill(_currentMatchStatistics, attacker, victim.LastHitData.WeaponType, distance);
-
-            IncrementDeath(_totalStatistics, victim);
-            IncrementKill(_totalStatistics, attacker, victim.LastHitData.WeaponType, distance);
-        }
-
-        public override void OnPlayerRevived(PlayerBase player)
-        {
-            var dict = new DataDictionary();
-            dict.Add("type", "revived");
-
-            var dataDict = new DataDictionary();
-            dataDict.Add("id", player.PlayerId);
-            dataDict.Add("name", VRCPlayerApi.GetPlayerById(player.PlayerId).SafeGetDisplayName());
-            dataDict.Add("time", Networking.GetNetworkDateTime().ToString("O"));
-
-            dict.Add("data", dataDict);
-
-            AddMatchEventLog(dict);
-        }
-
-        private void AddMatchEventLog(DataDictionary dict)
+        public void AddMatchEventLog(string type, DataDictionary data)
         {
             string key;
             do
@@ -278,7 +226,34 @@ namespace CenturionCC.System
                 key = Guid.NewGuid().ToString("D");
             } while (_currentMatchEvents.ContainsKey(key));
 
+            var dict = new DataDictionary();
+            dict.Add("type", type);
+            dict.Add("data", data);
             _currentMatchEvents.Add(key, dict);
+        }
+
+        public void IncrementKill(PlayerBase player, string weapon, float distance)
+        {
+            IncrementKill(_totalStatistics, player, weapon, distance);
+            IncrementKill(_currentMatchStatistics, player, weapon, distance);
+        }
+
+        public void IncrementDeath(PlayerBase player)
+        {
+            IncrementDeath(_totalStatistics, player);
+            IncrementDeath(_currentMatchStatistics, player);
+        }
+
+        public void UpdateTeam(PlayerBase player)
+        {
+            UpdateTeam(_totalStatistics, player);
+            UpdateTeam(_currentMatchStatistics, player);
+        }
+
+        public void EnsureStatsTableExist(PlayerBase player)
+        {
+            EnsureStatsTableExist(_totalStatistics, player);
+            EnsureStatsTableExist(_currentMatchStatistics, player);
         }
 
         private void UpdateWeapons(params DataDictionary[] dictionaries)
@@ -295,6 +270,8 @@ namespace CenturionCC.System
                     );
             }
         }
+
+        #region StaticMethods
 
         private static void IncrementDeath(DataDictionary statsDict, PlayerBase playerBase)
         {
@@ -375,5 +352,7 @@ namespace CenturionCC.System
             statsDict.Add(key, d);
             return false;
         }
+
+        #endregion
     }
 }

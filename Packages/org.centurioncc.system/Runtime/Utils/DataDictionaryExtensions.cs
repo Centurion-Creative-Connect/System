@@ -1,4 +1,5 @@
 ﻿using System;
+using CenturionCC.System.Gun;
 using CenturionCC.System.Player;
 using CenturionCC.System.Player.MassPlayer;
 using JetBrains.Annotations;
@@ -10,6 +11,23 @@ namespace CenturionCC.System.Utils
 {
     public static class DataDictionaryExtensions
     {
+        [PublicAPI]
+        public static DataDictionary ToDictionary(this ProjectileBase projectile)
+        {
+            var dict = new DataDictionary();
+            dict.Add("attacker", DataDictionaryExtensions.ToPlayerDictionary(projectile.DamagerPlayerId));
+            dict.Add("damageType", projectile.DamageType);
+            dict.Add("detectionType", (int)projectile.DetectionType);
+
+            var originDict = new DataDictionary();
+            originDict.Add("position", projectile.DamageOriginPosition.ToDictionary());
+            originDict.Add("rotation", projectile.DamageOriginRotation.ToDictionary());
+            originDict.Add("time", projectile.DamageOriginTime.ToString("O"));
+
+            dict.Add("origin", originDict);
+            return dict;
+        }
+
         [PublicAPI]
         public static DataDictionary ToDictionary(this LastHitData hitData)
         {
@@ -59,6 +77,17 @@ namespace CenturionCC.System.Utils
             d.Add("x", vec3.x);
             d.Add("y", vec3.y);
             d.Add("z", vec3.z);
+            return d;
+        }
+
+        [PublicAPI]
+        public static DataDictionary ToDictionary(this Quaternion quat)
+        {
+            var d = new DataDictionary();
+            d.Add("x", quat.x);
+            d.Add("y", quat.y);
+            d.Add("z", quat.z);
+            d.Add("w", quat.w);
             return d;
         }
 
