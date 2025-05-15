@@ -1,141 +1,106 @@
-﻿using CenturionCC.System.Gun;
-using CenturionCC.System.Player;
+﻿using System;
+using CenturionCC.System.Gun;
 using CenturionCC.System.UI;
 using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using DerpyNewbie.Common.Role;
 using UdonSharp;
 using UnityEngine;
-using VRC.SDKBase;
+using VRC.SDK3.Data;
 
 namespace CenturionCC.System.Moderator
 {
     [DefaultExecutionOrder(10000)] [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class ModeratorTool : UdonSharpBehaviour
+    public class ModeratorTool : GunManagerCallbackBase
     {
         [Header("Anti-Cheat")]
         [Header("Anti-Cheat Base")]
         public float detectionCounterResetTimeInSeconds = 5F;
 
-        [Header("Anti-Cheat Zombie")]
-        public float zombieDetectionTime = 10F;
-        public float zombieDetectionTimeCutoff = 5F;
-        public int zombieDetectionWarnCount = 2;
-
         [Header("Anti-Cheat Pitch")]
         public float pitchDetection = -10F;
+
         public int pitchDetectionWarnCount = 20;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private GunManager gunManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private NotificationProvider notification;
-        [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private RoleProvider roleManager;
 
-        private bool _isModeratorMode;
+        private readonly DataDictionary _suspicionDict = new DataDictionary();
 
-        public bool IsModeratorMode
+        [Obsolete("no-op")]
+        public bool IsModeratorMode { get; set; }
+
+        private void OnEnable()
         {
-            get => _isModeratorMode;
-            // Ensure non-moderator cannot enable moderator mode
-            set => _isModeratorMode = roleManager.GetPlayerRole().HasPermission() && value;
+            if (roleManager.GetPlayerRole().IsGameStaff())
+                gunManager.SubscribeCallback(this);
         }
 
-        private void Start()
+        private void OnDisable()
         {
-            // _gunManager.SubscribeCallback(this);
-            playerManager.SubscribeCallback(this);
+            gunManager.UnsubscribeCallback(this);
+        }
+
+        public override void OnShoot(ManagedGun instance, ProjectileBase projectile)
+        {
+            CheckShot(instance);
         }
 
         private void CheckShot(ManagedGun instance)
         {
-            if (!IsModeratorMode) return;
-
             var holder = instance.CurrentHolder;
             if (holder == null)
                 return;
 
-            var holderPlayerId = holder.playerId;
-            var player = playerManager.GetPlayerById(holderPlayerId);
+            var pitch = instance.Target.rotation.GetRoll();
+            if (pitch < pitchDetection)
+            {
+                var susLevel = GetPlayerSuspicionLevel(holder.playerId) + 1;
+                SetPlayerSuspicionLevel(holder.playerId, susLevel);
+                if (susLevel > pitchDetectionWarnCount)
+                    notification.ShowWarn(
+                        $"STAFF ONLY: {NewbieUtils.GetPlayerName(holder)} が曲射撃ちしてるかも!: {pitch:F1} ({susLevel})");
+            }
 
-            if (player == null)
-                return;
-
-            // TODO: fix this
-            // // Pitch Check
-            // var pitch = instance.Target.rotation.GetRoll();
-            // if (pitch < pitchDetection)
-            // {
-            //     player.PlayerStats.AntiCheatSuspicionLevel++;
-            //     if (player.PlayerStats.AntiCheatSuspicionLevel > pitchDetectionWarnCount)
-            //         _notification.ShowWarn(
-            //             $"{GameManager.GetPlayerName(player.VrcPlayer)} が曲射撃ちしてるかも!: {pitch:F1} ({player.PlayerStats.AntiCheatSuspicionLevel})");
-            // }
-            //
-            // // Zombie Check
-            // var hitTimeDiff = DateTime.Now.Subtract(player.PlayerStats.LastHitTime).TotalSeconds;
-            // if (hitTimeDiff > zombieDetectionTimeCutoff && hitTimeDiff < zombieDetectionTime)
-            // {
-            //     player.PlayerStats.AntiCheatSuspicionLevel++;
-            //     if (player.PlayerStats.AntiCheatSuspicionLevel > zombieDetectionWarnCount)
-            //         _notification.ShowWarn(
-            //             $"{GameManager.GetPlayerName(player.VrcPlayer)} がゾンビしてるかも!: {hitTimeDiff:F1} ({player.PlayerStats.AntiCheatSuspicionLevel})");
-            // }
-            //
-            // // Reset Detection Count if not warned for period
-            // if (DateTime.Now.Subtract(player.PlayerStats.AntiCheatLastSuspicionChangedTime).TotalSeconds >
-            //     detectionCounterResetTimeInSeconds)
-            //     player.PlayerStats.AntiCheatSuspicionLevel = 0;
+            if (Time.timeSinceLevelLoad - GetPlayerSuspicionLastUpdated(holder.playerId) >
+                detectionCounterResetTimeInSeconds)
+                SetPlayerSuspicionLevel(holder.playerId, 0);
         }
 
-        // public void OnShoot(ManagedGun instance, ProjectileBase projectile)
-        // {
-        //     // CheckShot(instance);
-        // }
-
-        public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
+        private int GetPlayerSuspicionLevel(int playerId)
         {
-            if (!IsModeratorMode) return;
+            return GetPlayerSuspicionDict(playerId)["suspicionLevel"].Int;
+        }
 
-            var firedVrcPlayer = firedPlayer.VrcPlayer;
+        private void SetPlayerSuspicionLevel(int playerId, int level)
+        {
+            var dict = GetPlayerSuspicionDict(playerId);
+            dict["suspicionLevel"] = level;
+            dict["lastUpdated"] = Time.timeSinceLevelLoad;
+        }
 
-            if (firedVrcPlayer == null) return;
+        private float GetPlayerSuspicionLastUpdated(int playerId)
+        {
+            return GetPlayerSuspicionDict(playerId)["lastUpdated"].Float;
+        }
 
-            var damageType = "Unknown";
+        private DataDictionary GetPlayerSuspicionDict(int playerId)
+        {
+            if (_suspicionDict.ContainsKey(playerId))
+                return _suspicionDict[playerId].DataDictionary;
 
-            foreach (var gun in gunManager.ManagedGunInstances)
-            {
-                if (gun != null && gun.CurrentHolder != null && gun.CurrentHolder.playerId == firedPlayer.PlayerId)
-                    damageType = gun.WeaponName;
-            }
+            var dict = new DataDictionary();
+            dict.Add("suspicionLevel", 0);
+            dict.Add("lastUpdated", 0.0F);
 
-            if (damageType == "Unknown")
-            {
-                var leftPickup = firedVrcPlayer.GetPickupInHand(VRC_Pickup.PickupHand.Left);
-                if (leftPickup != null)
-                {
-                    var dmgData = leftPickup.GetComponentInChildren<DamageData>();
-                    if (dmgData != null) damageType = dmgData.DamageType;
-                }
-
-                var rightPickup = firedVrcPlayer.GetPickupInHand(VRC_Pickup.PickupHand.Right);
-                if (rightPickup != null)
-                {
-                    var dmgData = rightPickup.GetComponentInChildren<DamageData>();
-                    if (dmgData != null) damageType = dmgData.DamageType;
-                }
-            }
-
-            notification.ShowInfo(string.Format
-            (
-                "Staff Only: Hit Info\n{0} => {1}: {2}",
-                NewbieUtils.GetPlayerName(firedVrcPlayer),
-                NewbieUtils.GetPlayerName(hitPlayer.VrcPlayer),
-                damageType
-            ));
+            _suspicionDict.Add(playerId, dict);
+            return dict;
         }
     }
 }
