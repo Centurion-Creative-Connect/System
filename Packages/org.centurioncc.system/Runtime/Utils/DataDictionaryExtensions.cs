@@ -15,9 +15,9 @@ namespace CenturionCC.System.Utils
         public static DataDictionary ToDictionary(this ProjectileBase projectile)
         {
             var dict = new DataDictionary();
-            dict.Add("attacker", DataDictionaryExtensions.ToPlayerDictionary(projectile.DamagerPlayerId));
+            dict.Add("attacker", ToPlayerDictionary(projectile.DamagerPlayerId));
             dict.Add("damageType", projectile.DamageType);
-            dict.Add("detectionType", (int)projectile.DetectionType);
+            dict.Add("detectionType", projectile.DetectionType.ToEnumName());
 
             var originDict = new DataDictionary();
             originDict.Add("position", projectile.DamageOriginPosition.ToDictionary());

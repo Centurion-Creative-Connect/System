@@ -29,6 +29,7 @@ namespace CenturionCC.System.Utils
         /// Friendly damage must only be determined at local.
         /// </remarks>
         All,
+
         /// <summary>
         /// Use only attacker client visual to determine.
         /// </summary>
@@ -36,6 +37,7 @@ namespace CenturionCC.System.Utils
         /// Friendly damage must only be determined at local.
         /// </remarks>
         AttackerSide,
+
         /// <summary>
         /// Use only victim client visual to determine.
         /// </summary>
@@ -43,5 +45,23 @@ namespace CenturionCC.System.Utils
         /// Friendly damage must only be determined at local.
         /// </remarks>
         VictimSide
+    }
+
+    public static class DetectionTypes
+    {
+        public static string ToEnumName(this DetectionType type)
+        {
+            switch (type)
+            {
+                case DetectionType.All:
+                    return "All";
+                case DetectionType.AttackerSide:
+                    return "AttackerSide";
+                case DetectionType.VictimSide:
+                    return "VictimSide";
+                default:
+                    return "UNDEFINED_RANGE";
+            }
+        }
     }
 }
