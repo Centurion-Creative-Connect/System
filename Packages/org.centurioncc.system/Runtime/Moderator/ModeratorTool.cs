@@ -65,7 +65,10 @@ namespace CenturionCC.System.Moderator
                 SetPlayerSuspicionLevel(holder.playerId, susLevel);
                 if (susLevel > pitchDetectionWarnCount)
                     notification.ShowWarn(
-                        $"STAFF ONLY: {NewbieUtils.GetPlayerName(holder)} が曲射撃ちしてるかも!: {pitch:F1} ({susLevel})");
+                        $"STAFF ONLY: {NewbieUtils.GetPlayerName(holder)} が曲射撃ちしてるかも!: {pitch:F1} ({susLevel})",
+                        5F,
+                        1804983 + holder.playerId
+                    );
             }
 
             if (Time.timeSinceLevelLoad - GetPlayerSuspicionLastUpdated(holder.playerId) >
