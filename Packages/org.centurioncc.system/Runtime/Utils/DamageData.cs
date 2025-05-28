@@ -6,6 +6,7 @@ namespace CenturionCC.System.Utils
 {
     public abstract class DamageData : UdonSharpBehaviour
     {
+        public abstract Guid EventId { get; }
         public abstract bool ShouldApplyDamage { get; }
         public abstract int DamagerPlayerId { get; }
         public abstract Vector3 DamageOriginPosition { get; }
@@ -29,6 +30,7 @@ namespace CenturionCC.System.Utils
         /// Friendly damage must only be determined at local.
         /// </remarks>
         All,
+
         /// <summary>
         /// Use only attacker client visual to determine.
         /// </summary>
@@ -36,6 +38,7 @@ namespace CenturionCC.System.Utils
         /// Friendly damage must only be determined at local.
         /// </remarks>
         AttackerSide,
+
         /// <summary>
         /// Use only victim client visual to determine.
         /// </summary>
