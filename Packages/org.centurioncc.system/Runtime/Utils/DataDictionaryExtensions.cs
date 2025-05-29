@@ -14,7 +14,7 @@ namespace CenturionCC.System.Utils
         public static DataDictionary ToDictionary(this LastHitData hitData)
         {
             var d = new DataDictionary();
-            d.Add("eventId", hitData.EventId);
+            d.Add("eventId", hitData.EventId.ToString("D"));
             d.Add("attacker", ToPlayerDictionary(hitData.AttackerId));
             d.Add("victim", ToPlayerDictionary(hitData.Player.PlayerId));
             d.Add("killType", hitData.Type.ToEnumName());
@@ -63,10 +63,39 @@ namespace CenturionCC.System.Utils
         }
 
         [PublicAPI]
+        public static DataDictionary ToDictionary(this Quaternion q)
+        {
+            var d = new DataDictionary();
+            d.Add("x", q.x);
+            d.Add("y", q.y);
+            d.Add("z", q.z);
+            d.Add("w", q.w);
+            return d;
+        }
+
+        [PublicAPI]
         public static DataDictionary ToDamageDictionary(Vector3 position, DateTime time)
         {
             var d = new DataDictionary();
             d.Add("position", ToDictionary(position));
+            d.Add("time", time.ToString("O"));
+            return d;
+        }
+
+        [PublicAPI]
+        public static DataDictionary ToDamageDictionary(Vector3 position, DateTime time, BodyParts parts)
+        {
+            var d = ToDamageDictionary(position, time);
+            d.Add("parts", parts.ToEnumName());
+            return d;
+        }
+
+        [PublicAPI]
+        public static DataDictionary ToDamageDictionary(Vector3 position, Quaternion rotation, DateTime time)
+        {
+            var d = new DataDictionary();
+            d.Add("position", ToDictionary(position));
+            d.Add("rotation", ToDictionary(rotation));
             d.Add("time", time.ToString("O"));
             return d;
         }

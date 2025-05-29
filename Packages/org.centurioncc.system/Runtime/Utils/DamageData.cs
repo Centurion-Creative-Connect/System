@@ -14,6 +14,8 @@ namespace CenturionCC.System.Utils
         public abstract DateTime DamageOriginTime { get; }
         public abstract string DamageType { get; }
 
+        public virtual float DamageAmount => 100;
+
         public virtual DetectionType DetectionType { get; protected set; } = DetectionType.All;
         public virtual bool RespectFriendlyFireSetting { get; protected set; } = true;
         public virtual bool CanDamageSelf { get; protected set; } = false;
@@ -46,5 +48,23 @@ namespace CenturionCC.System.Utils
         /// Friendly damage must only be determined at local.
         /// </remarks>
         VictimSide
+    }
+
+    public static class DetectionTypeExtensions
+    {
+        public static string ToEnumName(this DetectionType type)
+        {
+            switch (type)
+            {
+                case DetectionType.All:
+                    return "All";
+                case DetectionType.AttackerSide:
+                    return "AttackerSide";
+                case DetectionType.VictimSide:
+                    return "VictimSide";
+                default:
+                    return "UNKNOWN";
+            }
+        }
     }
 }

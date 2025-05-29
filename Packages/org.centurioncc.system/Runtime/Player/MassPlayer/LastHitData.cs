@@ -1,4 +1,5 @@
 ﻿using System;
+using CenturionCC.System.Utils;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -11,66 +12,58 @@ namespace CenturionCC.System.Player.MassPlayer
         [SerializeField]
         private PlayerBase player;
 
-        private bool _hasInit;
-        private int _lastEventId;
-
-
         public PlayerBase Player => player;
-
 
         public int AttackerId { get; private set; }
         public int VictimId { get; private set; }
         public KillType Type { get; private set; } = KillType.Default;
         public BodyParts Parts { get; private set; } = BodyParts.Body;
 
+        public Guid EventId { get; private set; }
 
-        [field: UdonSynced]
-        public int EventId { get; private set; }
-
-
-        [field: UdonSynced]
         public Vector3 ActivatedPosition { get; private set; }
-        [field: UdonSynced]
+
         public Vector3 HitPosition { get; private set; }
 
-
-        [field: UdonSynced]
         public long ActivatedTimeTicks { get; private set; }
+
         public DateTime ActivatedTime =>
             DateTime.MinValue.Ticks < ActivatedTimeTicks && DateTime.MaxValue.Ticks > ActivatedTimeTicks
                 ? new DateTime(ActivatedTimeTicks)
                 : DateTime.MinValue;
-        [field: UdonSynced]
+
         public long HitTimeTicks { get; private set; }
+
         public DateTime HitTime =>
             DateTime.MinValue.Ticks < HitTimeTicks && DateTime.MaxValue.Ticks > HitTimeTicks
                 ? new DateTime(HitTimeTicks)
                 : DateTime.MinValue;
 
 
-        [field: UdonSynced]
         public string WeaponType { get; private set; }
-
-        /// <summary>
-        /// 3 bytes encoded in int.
-        /// (byte)AttackerId &lt;&lt; 0;
-        /// (byte)Type &lt;&lt; 8;
-        /// (byte)Parts &lt;&lt; 16;
-        /// </summary>
-        [field: UdonSynced]
-        public int EncodedData { get; private set; }
 
         public float Distance { get; private set; }
 
-        private void Start()
+        public void SetData(DamageInfo info)
         {
-            if (Networking.IsMaster)
-                _hasInit = true;
+            EventId = info.EventId();
+            AttackerId = info.AttackerId();
+            VictimId = info.VictimId();
+
+            HitPosition = info.HitPosition();
+            HitTimeTicks = info.HitTime().Ticks;
+            Parts = info.HitParts();
+
+            ActivatedPosition = info.OriginatedPosition();
+            ActivatedTimeTicks = info.OriginatedTime().Ticks;
+
+            WeaponType = info.DamageType();
+            Distance = Vector3.Distance(ActivatedPosition, HitPosition);
         }
 
         public void SetData(DamageDataSyncer syncer)
         {
-            EventId = syncer.EventId;
+            EventId = Guid.NewGuid();
             AttackerId = syncer.AttackerId;
             VictimId = syncer.VictimId;
             ActivatedPosition = syncer.ActivatedPosition;
@@ -81,8 +74,6 @@ namespace CenturionCC.System.Player.MassPlayer
             Type = syncer.Type;
             Parts = syncer.Parts;
             Distance = Vector3.Distance(ActivatedPosition, HitPosition);
-
-            EncodedData = EncodeData(AttackerId, VictimId, (int)Type, (int)Parts);
         }
 
         public void ResetData()
@@ -97,66 +88,11 @@ namespace CenturionCC.System.Player.MassPlayer
             WeaponType = default;
             Type = default;
             Distance = default;
-
-            EncodedData = EncodeData(default, default, default, default);
         }
 
         public void SyncData()
         {
-            if (!Networking.IsOwner(gameObject))
-                Networking.SetOwner(Networking.LocalPlayer, gameObject);
-            RequestSerialization();
-
-            if (EventId == _lastEventId || EventId == default)
-                return;
-
-            _lastEventId = EventId;
-            player.OnHitDataUpdated();
-        }
-
-        public override void OnDeserialization()
-        {
-            if (!_hasInit)
-            {
-                _hasInit = true;
-                _lastEventId = EventId;
-                return;
-            }
-
-            if (EventId == _lastEventId || EventId == default)
-                return;
-
-            _lastEventId = EventId;
-
-            DecodeData(EncodedData, out var attacker, out var victim, out var type, out var parts);
-
-            AttackerId = attacker;
-            VictimId = victim;
-            Type = type;
-            Parts = parts;
-            Distance = Vector3.Distance(ActivatedPosition, HitPosition);
-
-            player.OnHitDataUpdated();
-        }
-
-        public static int EncodeData(int attacker, int victim, int type, int parts)
-        {
-            int encoded = (byte)attacker;
-            encoded += (int)((byte)victim) << 8;
-            encoded += (int)((byte)type) << 16;
-            encoded += (int)((byte)parts) << 24;
-
-            return encoded;
-        }
-
-        public static void DecodeData(int data, out int attacker, out int victim, out KillType type,
-            out BodyParts parts)
-        {
-            // NOTE: This converts VRCPlayerApi.playerId(int) to byte. Which might cause issues in public instances. 
-            attacker = (byte)(data & 0xFF);
-            victim = (byte)((data >> 8) & 0xFF);
-            type = (KillType)(byte)((data >> 16) & 0xFF);
-            parts = (BodyParts)(byte)((data >> 24) & 0xFF);
+            // do nothing for now
         }
     }
 }
