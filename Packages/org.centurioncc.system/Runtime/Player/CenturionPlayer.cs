@@ -24,7 +24,7 @@ namespace CenturionCC.System.Player
         [SerializeField] [NewbieInject]
         private CenturionPlayerManager playerManager;
 
-        [UdonSynced]
+        [UdonSynced] [FieldChangeCallback(nameof(CurrentHealth))]
         private float _currentHealth = 100;
 
         [UdonSynced]
@@ -42,8 +42,30 @@ namespace CenturionCC.System.Player
         [UdonSynced]
         private byte _teamId;
 
+        public float CurrentHealth
+        {
+            get => _currentHealth;
+            protected set
+            {
+                var lastIsDead = IsDead;
+                _currentHealth = value;
+                if (lastIsDead == IsDead) return;
 
-        public float CurrentHealth => _currentHealth;
+                if (IsDead)
+                {
+                    playerManager.Invoke_OnKilled(
+                        playerManager.GetPlayerById(LastHitData.AttackerId),
+                        this,
+                        KillType.Default
+                    );
+                }
+                else
+                {
+                    playerManager.Invoke_OnPlayerRevived(this);
+                }
+            }
+        }
+
         public int Score => _score;
 
         public override int PlayerId => Networking.GetOwner(gameObject).playerId;
@@ -113,13 +135,13 @@ namespace CenturionCC.System.Player
 
         public override void Kill()
         {
-            _currentHealth = 0;
+            CurrentHealth = 0;
             RequestSerialization();
         }
 
         public override void Revive()
         {
-            _currentHealth = _maxHealth;
+            CurrentHealth = _maxHealth;
             RequestSerialization();
         }
 

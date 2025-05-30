@@ -1,14 +1,20 @@
 ﻿using System;
 using CenturionCC.System.Utils;
+using DerpyNewbie.Common;
 using JetBrains.Annotations;
 using UdonSharp;
+using UnityEngine;
 using VRC.SDK3.Data;
 using VRC.SDK3.UdonNetworkCalling;
 
 namespace CenturionCC.System.Player
 {
+    [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
     public class CenturionDamageResolver : UdonSharpBehaviour
     {
+        [SerializeField] [NewbieInject]
+        private CenturionPlayerManager playerManager;
+
         private readonly DataDictionary _processingEvents = new DataDictionary();
         private readonly DataList _resolvedEventIds = new DataList();
 
@@ -25,13 +31,22 @@ namespace CenturionCC.System.Player
         }
 
         [PublicAPI]
-        public void BroadcastEvent(DamageInfo info)
+        public void BroadcastDamageInfo(DamageInfo info)
         {
+            Internal_BroadcastDamageInfo(info.ToBytes());
         }
 
         [NetworkCallable(100)]
-        public void Internal_BroadcastEvent(byte[] damageInfoBytes)
+        public void Internal_BroadcastDamageInfo(byte[] damageInfoBytes)
         {
+            var damageInfo = DamageInfo.FromBytes(damageInfoBytes);
+            if (IsEventResolved(damageInfo.EventId()))
+            {
+                return;
+            }
+
+            _processingEvents.Add(damageInfo.EventId().ToString("D"), damageInfo);
+            playerManager.Internal_ApplyLocalDamageInfo(damageInfo);
         }
 
         [NetworkCallable(100)]

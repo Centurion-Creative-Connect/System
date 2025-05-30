@@ -1,11 +1,11 @@
-﻿using System;
-using CenturionCC.System.Utils;
+﻿using CenturionCC.System.Utils;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 
 namespace CenturionCC.System.Player
 {
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class CenturionPlayerCollider : UdonSharpBehaviour
     {
         [SerializeField]

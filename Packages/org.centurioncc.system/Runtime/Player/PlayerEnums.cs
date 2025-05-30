@@ -82,5 +82,19 @@
 
             return "UNDEFINED_RANGE";
         }
+
+        public static byte ToByte(this BodyParts parts)
+        {
+            switch (parts)
+            {
+                case BodyParts.Body: return 0;
+                case BodyParts.Head: return 1;
+                case BodyParts.LeftArm: return 2;
+                case BodyParts.RightArm: return 3;
+                case BodyParts.LeftLeg: return 4;
+                case BodyParts.RightLeg: return 5;
+                default: return 0xFF;
+            }
+        }
     }
 }

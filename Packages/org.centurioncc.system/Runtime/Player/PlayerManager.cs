@@ -405,7 +405,7 @@ namespace CenturionCC.System.Player
 
 
         [Obsolete("no-op. LocalPlayer always exists")]
-        public virtual bool HasLocalPlayer() => false;
+        public virtual bool HasLocalPlayer() => true;
 
         [Obsolete]
         public string GetTeamColorString(int teamId)

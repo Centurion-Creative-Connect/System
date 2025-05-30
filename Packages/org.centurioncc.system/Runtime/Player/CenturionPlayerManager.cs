@@ -51,11 +51,6 @@ namespace CenturionCC.System.Player
             return playerBases;
         }
 
-        public override Color GetTeamColor(int teamId)
-        {
-            return Color.cyan;
-        }
-
         [PublicAPI] [CanBeNull]
         public override PlayerBase GetPlayer(VRCPlayerApi vrcPlayer)
         {
@@ -71,6 +66,11 @@ namespace CenturionCC.System.Player
             }
 
             return null;
+        }
+
+        public override Color GetTeamColor(int teamId)
+        {
+            return Color.cyan;
         }
 
         /// <summary>
@@ -96,20 +96,20 @@ namespace CenturionCC.System.Player
                 return false;
             }
 
-            // on special case
-            // if victim was in staff team, ignore it
+            // in special case
+            // if the victim was in a staff team, ignore it
             if (IsInStaffTeam(victimCenturionPlayer))
             {
                 return false;
             }
 
-            // if victim was already dead, ignore it
+            // if the victim was already dead, ignore it
             if (victimCenturionPlayer.IsDead)
             {
                 return false;
             }
 
-            // on self fire
+            // on self-fire
             if (victimCenturionPlayer.PlayerId == attackerCenturionPlayer.PlayerId)
             {
                 // if damage cannot be applied to self, ignore it 
@@ -118,7 +118,7 @@ namespace CenturionCC.System.Player
                     return false;
                 }
 
-                damageResolver.BroadcastEvent(info);
+                damageResolver.BroadcastDamageInfo(info);
                 return true;
             }
 
@@ -143,12 +143,12 @@ namespace CenturionCC.System.Player
                     return false;
                 }
 
-                damageResolver.BroadcastEvent(info);
+                damageResolver.BroadcastDamageInfo(info);
                 return true;
             }
 
             // on enemy fire
-            // if damage cannot be applied to enemy, ignore it
+            // if damage cannot be applied to the enemy, ignore it
             if (!info.CanDamageEnemy())
             {
                 return false;
@@ -160,26 +160,30 @@ namespace CenturionCC.System.Player
                 return false;
             }
 
-            damageResolver.BroadcastEvent(info);
+            damageResolver.BroadcastDamageInfo(info);
             return true;
         }
 
         /// <summary>
-        /// Applies damage to player if victim was local
+        /// Applies damage to player if the victim was local
         /// </summary>
         /// <param name="info">broadcasted damage info</param>
         public void Internal_ApplyLocalDamageInfo(DamageInfo info)
         {
-            // if user is not victim, ignore it
-            if (info.VictimId() != Networking.LocalPlayer.playerId)
+            var victimPlayer = GetPlayerById(info.VictimId());
+            if (!victimPlayer)
             {
+                logger.LogWarn($"{LogPrefix}Victim Player {info.VictimId()} is not found");
                 return;
             }
 
-            var localPlayer = GetLocalPlayer();
-            if (!localPlayer) return;
+            victimPlayer.LastHitData.SetData(info);
 
-            localPlayer.Kill();
+            if (victimPlayer.IsLocal)
+            {
+                victimPlayer.Kill();
+                return;
+            }
         }
 
         public bool CanDamageFriendly()

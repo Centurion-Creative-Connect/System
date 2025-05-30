@@ -26,12 +26,17 @@ namespace CenturionCC.System.Utils
     public enum DetectionType
     {
         /// <summary>
+        /// Disabled.
+        /// </summary>
+        None = 0,
+
+        /// <summary>
         /// Use both Local and Remote detection to determine.
         /// </summary>
         /// <remarks>
         /// Friendly damage must only be determined at local.
         /// </remarks>
-        All,
+        All = 3,
 
         /// <summary>
         /// Use only attacker client visual to determine.
@@ -39,7 +44,7 @@ namespace CenturionCC.System.Utils
         /// <remarks>
         /// Friendly damage must only be determined at local.
         /// </remarks>
-        AttackerSide,
+        AttackerSide = 1,
 
         /// <summary>
         /// Use only victim client visual to determine.
@@ -47,7 +52,7 @@ namespace CenturionCC.System.Utils
         /// <remarks>
         /// Friendly damage must only be determined at local.
         /// </remarks>
-        VictimSide
+        VictimSide = 2,
     }
 
     public static class DetectionTypeExtensions
@@ -64,6 +69,21 @@ namespace CenturionCC.System.Utils
                     return "VictimSide";
                 default:
                     return "UNKNOWN";
+            }
+        }
+
+        public static byte ToByte(this DetectionType type)
+        {
+            switch (type)
+            {
+                case DetectionType.All:
+                    return 3;
+                case DetectionType.AttackerSide:
+                    return 1;
+                case DetectionType.VictimSide:
+                    return 2;
+                default:
+                    return 0;
             }
         }
     }
