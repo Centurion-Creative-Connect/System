@@ -1,4 +1,5 @@
 ﻿using CenturionCC.System.Utils;
+using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -10,6 +11,9 @@ namespace CenturionCC.System.Player
     {
         [SerializeField]
         private CenturionPlayer player;
+
+        [SerializeField] [NewbieInject(SearchScope.Children)]
+        private MeshRenderer meshRenderer;
 
         [SerializeField]
         private CapsuleCollider capsule;
@@ -77,8 +81,20 @@ namespace CenturionCC.System.Player
 
         private void Calibrate()
         {
+            meshRenderer.enabled = true;
+            capsule.enabled = true;
+
             var from = _vrcPlayer.GetBonePosition(boneFrom);
             var to = _vrcPlayer.GetBonePosition(boneTo);
+
+            if (from == Vector3.zero || to == Vector3.zero)
+            {
+                Debug.LogError(
+                    $"[CPlayerCollider] Bone positions are zero for {boneFrom} -> {boneTo} on {_vrcPlayer.displayName}");
+                meshRenderer.enabled = false;
+                capsule.enabled = false;
+                return;
+            }
 
             var len = Vector3.Distance(from, to);
             transform.localScale = new Vector3(1, 1, len + heightOffset);
