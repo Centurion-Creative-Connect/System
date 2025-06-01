@@ -4,8 +4,9 @@ using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.UdonNetworkCalling;
 using VRC.SDKBase;
-using NotImplementedException = System.NotImplementedException;
+using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.Player
 {
@@ -17,14 +18,87 @@ namespace CenturionCC.System.Player
         [SerializeField] [NewbieInject]
         private CenturionDamageResolver damageResolver;
 
-        [UdonSynced]
+        [SerializeField]
+        private Color[] teamColors;
+
+        [SerializeField]
+        private Color staffTeamColor = new Color(0.172549F, 0.4733055F, 0.8117647F, 1F);
+
+        [UdonSynced] [FieldChangeCallback(nameof(FriendlyFireMode))]
         private FriendlyFireMode _friendlyFireMode;
 
-        public override bool IsDebug { get; set; }
-        public override bool ShowTeamTag { get; protected set; }
-        public override bool ShowStaffTag { get; protected set; }
-        public override bool ShowCreatorTag { get; protected set; }
-        public override FriendlyFireMode FriendlyFireMode { get; protected set; }
+        private bool _isDebug;
+
+        [UdonSynced] [FieldChangeCallback(nameof(ShowCreatorTag))]
+        private bool _showCreatorTag;
+
+        [UdonSynced] [FieldChangeCallback(nameof(ShowStaffTag))]
+        private bool _showStaffTag;
+
+        [UdonSynced] [FieldChangeCallback(nameof(ShowTeamTag))]
+        private bool _showTeamTag;
+
+        public override bool IsDebug
+        {
+            get => _isDebug;
+            set
+            {
+                if (_isDebug == value) return;
+                _isDebug = value;
+                var players = GetPlayers();
+                foreach (var player in players)
+                {
+                    player.UpdateView();
+                }
+
+                Invoke_OnDebugModeChanged(value);
+            }
+        }
+
+        public override bool ShowTeamTag
+        {
+            get => _showTeamTag;
+            protected set
+            {
+                if (_showTeamTag == value) return;
+                _showTeamTag = value;
+                Invoke_OnPlayerTagChanged(TagType.Team, value);
+            }
+        }
+
+        public override bool ShowStaffTag
+        {
+            get => _showStaffTag;
+            protected set
+            {
+                if (_showStaffTag == value) return;
+                _showStaffTag = value;
+                Invoke_OnPlayerTagChanged(TagType.Staff, value);
+            }
+        }
+
+        public override bool ShowCreatorTag
+        {
+            get => _showCreatorTag;
+            protected set
+            {
+                if (_showCreatorTag == value) return;
+                _showCreatorTag = value;
+                Invoke_OnPlayerTagChanged(TagType.Creator, value);
+            }
+        }
+
+        public override FriendlyFireMode FriendlyFireMode
+        {
+            get => _friendlyFireMode;
+            protected set
+            {
+                if (_friendlyFireMode == value) return;
+
+                _friendlyFireMode = value;
+                Invoke_OnFriendlyFireModeChanged(value);
+            }
+        }
 
         [PublicAPI] [CanBeNull]
         public override PlayerBase GetLocalPlayer()
@@ -68,9 +142,41 @@ namespace CenturionCC.System.Player
             return null;
         }
 
+        public override void SetPlayerTag(TagType type, bool isOn)
+        {
+            switch (type)
+            {
+                case TagType.Team:
+                    ShowTeamTag = isOn;
+                    break;
+                case TagType.Dev:
+                case TagType.Master:
+                case TagType.Staff:
+                    ShowStaffTag = isOn;
+                    break;
+                case TagType.Creator:
+                    ShowCreatorTag = isOn;
+                    break;
+            }
+
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            RequestSerialization();
+        }
+
+        public override void SetFriendlyFireMode(FriendlyFireMode mode)
+        {
+            FriendlyFireMode = mode;
+
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            RequestSerialization();
+        }
+
         public override Color GetTeamColor(int teamId)
         {
-            return Color.cyan;
+            if (IsStaffTeamId(teamId)) return staffTeamColor;
+            if (teamId < 0 || teamId >= teamColors.Length) return teamColors[0];
+
+            return teamColors[teamId];
         }
 
         /// <summary>
@@ -164,6 +270,11 @@ namespace CenturionCC.System.Player
             return true;
         }
 
+        public void RequestTeamChangeBroadcast(int playerId, int teamId)
+        {
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_ApplyTeamChange), playerId, teamId);
+        }
+
         /// <summary>
         /// Applies damage to player if the victim was local
         /// </summary>
@@ -184,6 +295,16 @@ namespace CenturionCC.System.Player
                 victimPlayer.Kill();
                 return;
             }
+        }
+
+        [NetworkCallable]
+        public void Internal_ApplyTeamChange(int playerId, int teamId)
+        {
+            if (Networking.LocalPlayer.playerId != playerId) return;
+            var localPlayer = GetLocalPlayer();
+
+            if (!localPlayer) return;
+            localPlayer.SetTeam(teamId);
         }
 
         public bool CanDamageFriendly()

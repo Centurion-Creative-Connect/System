@@ -617,6 +617,28 @@ namespace CenturionCC.System.Player
             RequestSerialization();
         }
 
+        public override void SetPlayerTag(TagType type, bool isOn)
+        {
+            switch (type)
+            {
+                case TagType.Staff:
+                    MasterOnly_SetStaffTagShown(isOn);
+                    break;
+                case TagType.Creator:
+                    MasterOnly_SetCreatorTagShown(isOn);
+                    break;
+                case TagType.Team:
+                    MasterOnly_SetTeamTagShown(isOn);
+                    break;
+            }
+        }
+
+        public override void SetFriendlyFireMode(FriendlyFireMode mode)
+        {
+            MasterOnly_SetFriendlyFireMode(mode);
+        }
+
+
         [Obsolete("Use MasterOnly_SetFriendlyFireMode(FriendlyFireMode) instead")]
         public void MasterOnly_SetFriendlyFire(bool isOn)
         {

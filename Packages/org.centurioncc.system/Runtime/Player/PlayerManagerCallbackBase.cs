@@ -120,6 +120,14 @@ namespace CenturionCC.System.Player
         }
 
         /// <summary>
+        /// Called when <see cref="PlayerManager.IsDebug"/> was changed.
+        /// </summary>
+        /// <param name="isOn"></param>
+        public virtual void OnDebugModeChanged(bool isOn)
+        {
+        }
+
+        /// <summary>
         /// Called when <see cref="PlayerManager.MasterOnly_ResetAllPlayerStats"/> was called (Global)
         /// </summary>
         public virtual void OnResetAllPlayerStats()

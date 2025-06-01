@@ -39,7 +39,7 @@ namespace CenturionCC.System.Player
         [UdonSynced]
         private short _score;
 
-        [UdonSynced]
+        [UdonSynced] [FieldChangeCallback(nameof(SyncedTeamId))]
         private byte _teamId;
 
         public float CurrentHealth
@@ -76,27 +76,52 @@ namespace CenturionCC.System.Player
         public override VRCPlayerApi VrcPlayer => Networking.GetOwner(gameObject);
         public override RoleData Role => roleProvider.GetPlayerRole(VrcPlayer);
 
+        private byte SyncedTeamId
+        {
+            get => _teamId;
+            set
+            {
+                var lastTeam = _teamId;
+                _teamId = value;
+                if (lastTeam == _teamId) return;
+
+                playerManager.Invoke_OnTeamChanged(this, lastTeam);
+            }
+        }
+
+        private void Start()
+        {
+            playerManager.Invoke_OnPlayerChanged(this, -1, false, false);
+            if (IsLocal)
+            {
+                playerManager.Invoke_OnLocalPlayerChanged(this, PlayerId);
+            }
+        }
+
         public override void SetPlayer(int vrcPlayerId)
         {
             logger.LogError($"{LogPrefix}Cannot set player id for CenturionPlayer");
         }
 
-        [NetworkCallable]
         public override void SetTeam(int teamId)
         {
             if (!IsLocal)
             {
-                logger.Log($"{LogPrefix}Calling SetTeam({teamId}) on owner...");
-                SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(SetTeam), teamId);
+                playerManager.RequestTeamChangeBroadcast(PlayerId, teamId);
                 return;
             }
 
-            _teamId = (byte)teamId;
+            SyncedTeamId = (byte)teamId;
             RequestSerialization();
         }
 
         public override void UpdateView()
         {
+            var colliders = GetComponentsInChildren<CenturionPlayerCollider>();
+            foreach (var col in colliders)
+            {
+                col.SetVisible(playerManager.IsDebug);
+            }
         }
 
         public override void Sync()
@@ -121,9 +146,9 @@ namespace CenturionCC.System.Player
             _deaths = 0;
             _kills = 0;
             _score = 0;
-            _teamId = 0;
+            SyncedTeamId = 0;
             _maxHealth = 100;
-            _currentHealth = _maxHealth;
+            CurrentHealth = _maxHealth;
 
             RequestSerialization();
         }

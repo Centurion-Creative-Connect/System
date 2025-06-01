@@ -55,6 +55,8 @@ namespace CenturionCC.System.Player
         public abstract PlayerBase GetPlayer(VRCPlayerApi player);
         public abstract PlayerBase GetPlayerById(int vrcPlayerId);
         public abstract PlayerBase[] GetPlayers();
+        public abstract void SetPlayerTag(TagType type, bool isOn);
+        public abstract void SetFriendlyFireMode(FriendlyFireMode mode);
 
         [PublicAPI]
         public virtual int GetTeamPlayerCount(int teamId, bool includeStaff = true)
@@ -73,6 +75,8 @@ namespace CenturionCC.System.Player
         [PublicAPI]
         public abstract Color GetTeamColor(int teamId);
 
+        #region CheckUtilities
+
         [PublicAPI]
         public virtual bool IsStaffTeamId(int teamId)
         {
@@ -90,8 +94,6 @@ namespace CenturionCC.System.Player
         {
             return IsFreeForAllTeamId(teamId) || IsStaffTeamId(teamId);
         }
-
-        #region CheckUtilities
 
         [PublicAPI]
         public bool IsFriendly(PlayerBase lhs, PlayerBase rhs)
@@ -318,6 +320,17 @@ namespace CenturionCC.System.Player
             {
                 if (!callback) continue;
                 ((PlayerManagerCallbackBase)callback).OnFriendlyFireModeChanged(previousMode);
+            }
+        }
+
+        public void Invoke_OnDebugModeChanged(bool isOn)
+        {
+            logger.Log($"{Prefix}Invoke_OnDebugModeChanged: {isOn}");
+
+            foreach (var callback in _eventCallbacks)
+            {
+                if (!callback) continue;
+                ((PlayerManagerCallbackBase)callback).OnDebugModeChanged(isOn);
             }
         }
 

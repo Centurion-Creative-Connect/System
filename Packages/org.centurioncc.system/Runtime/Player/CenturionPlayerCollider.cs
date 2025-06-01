@@ -33,6 +33,8 @@ namespace CenturionCC.System.Player
         private Vector3 _calibratedPosOffset;
         private Quaternion _calibratedRotOffset;
 
+        private bool _isVisible;
+
         private VRCPlayerApi _vrcPlayer;
 
         private void Start()
@@ -79,9 +81,15 @@ namespace CenturionCC.System.Player
             );
         }
 
+        public void SetVisible(bool isVisible)
+        {
+            _isVisible = isVisible;
+            meshRenderer.enabled = isVisible && capsule.enabled;
+        }
+
         private void Calibrate()
         {
-            meshRenderer.enabled = true;
+            meshRenderer.enabled = _isVisible;
             capsule.enabled = true;
 
             var from = _vrcPlayer.GetBonePosition(boneFrom);
