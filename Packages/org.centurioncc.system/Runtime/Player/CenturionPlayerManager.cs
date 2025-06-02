@@ -1,5 +1,5 @@
-﻿using CenturionCC.System.Utils;
-using DerpyNewbie.Common;
+﻿using System;
+using CenturionCC.System.Utils;
 using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
@@ -7,6 +7,7 @@ using UnityEngine;
 using VRC.SDK3.UdonNetworkCalling;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
+using VRC.SDK3.Data;
 
 namespace CenturionCC.System.Player
 {
@@ -15,36 +16,36 @@ namespace CenturionCC.System.Player
     {
         private const string LogPrefix = "[CPlayerManager] ";
 
-        [SerializeField] [NewbieInject]
-        private CenturionDamageResolver damageResolver;
-
         [SerializeField]
         private Color[] teamColors;
 
         [SerializeField]
         private Color staffTeamColor = new Color(0.172549F, 0.4733055F, 0.8117647F, 1F);
 
-        [UdonSynced] [FieldChangeCallback(nameof(FriendlyFireMode))]
-        private FriendlyFireMode _friendlyFireMode;
+        [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(FriendlyFireMode))]
+        private FriendlyFireMode friendlyFireMode = FriendlyFireMode.Never;
 
-        private bool _isDebug;
+        [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowCreatorTag))]
+        private bool showCreatorTag;
 
-        [UdonSynced] [FieldChangeCallback(nameof(ShowCreatorTag))]
-        private bool _showCreatorTag;
+        [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowStaffTag))]
+        private bool showStaffTag = true;
 
-        [UdonSynced] [FieldChangeCallback(nameof(ShowStaffTag))]
-        private bool _showStaffTag;
+        [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(ShowTeamTag))]
+        private bool showTeamTag = true;
 
-        [UdonSynced] [FieldChangeCallback(nameof(ShowTeamTag))]
-        private bool _showTeamTag;
+        [SerializeField]
+        private bool isDebug;
+
+        private readonly DataList _resolvedEventIds = new DataList();
 
         public override bool IsDebug
         {
-            get => _isDebug;
+            get => isDebug;
             set
             {
-                if (_isDebug == value) return;
-                _isDebug = value;
+                if (isDebug == value) return;
+                isDebug = value;
                 var players = GetPlayers();
                 foreach (var player in players)
                 {
@@ -57,45 +58,45 @@ namespace CenturionCC.System.Player
 
         public override bool ShowTeamTag
         {
-            get => _showTeamTag;
+            get => showTeamTag;
             protected set
             {
-                if (_showTeamTag == value) return;
-                _showTeamTag = value;
+                if (showTeamTag == value) return;
+                showTeamTag = value;
                 Invoke_OnPlayerTagChanged(TagType.Team, value);
             }
         }
 
         public override bool ShowStaffTag
         {
-            get => _showStaffTag;
+            get => showStaffTag;
             protected set
             {
-                if (_showStaffTag == value) return;
-                _showStaffTag = value;
+                if (showStaffTag == value) return;
+                showStaffTag = value;
                 Invoke_OnPlayerTagChanged(TagType.Staff, value);
             }
         }
 
         public override bool ShowCreatorTag
         {
-            get => _showCreatorTag;
+            get => showCreatorTag;
             protected set
             {
-                if (_showCreatorTag == value) return;
-                _showCreatorTag = value;
+                if (showCreatorTag == value) return;
+                showCreatorTag = value;
                 Invoke_OnPlayerTagChanged(TagType.Creator, value);
             }
         }
 
         public override FriendlyFireMode FriendlyFireMode
         {
-            get => _friendlyFireMode;
+            get => friendlyFireMode;
             protected set
             {
-                if (_friendlyFireMode == value) return;
+                if (friendlyFireMode == value) return;
 
-                _friendlyFireMode = value;
+                friendlyFireMode = value;
                 Invoke_OnFriendlyFireModeChanged(value);
             }
         }
@@ -224,7 +225,7 @@ namespace CenturionCC.System.Player
                     return false;
                 }
 
-                damageResolver.BroadcastDamageInfo(info);
+                SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_BroadcastDamageInfo), info.ToBytes());
                 return true;
             }
 
@@ -249,7 +250,7 @@ namespace CenturionCC.System.Player
                     return false;
                 }
 
-                damageResolver.BroadcastDamageInfo(info);
+                SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_BroadcastDamageInfo), info.ToBytes());
                 return true;
             }
 
@@ -261,12 +262,12 @@ namespace CenturionCC.System.Player
             }
 
             // if damage has already been resolved, ignore it
-            if (damageResolver.IsEventResolved(info.EventId()))
+            if (IsEventResolved(info.EventId()))
             {
                 return false;
             }
 
-            damageResolver.BroadcastDamageInfo(info);
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_BroadcastDamageInfo), info.ToBytes());
             return true;
         }
 
@@ -275,11 +276,7 @@ namespace CenturionCC.System.Player
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_ApplyTeamChange), playerId, teamId);
         }
 
-        /// <summary>
-        /// Applies damage to player if the victim was local
-        /// </summary>
-        /// <param name="info">broadcasted damage info</param>
-        public void Internal_ApplyLocalDamageInfo(DamageInfo info)
+        public void Internal_ProcessDamageInfo(DamageInfo info)
         {
             var victimPlayer = GetPlayerById(info.VictimId());
             if (!victimPlayer)
@@ -288,13 +285,45 @@ namespace CenturionCC.System.Player
                 return;
             }
 
-            victimPlayer.LastHitData.SetData(info);
-
-            if (victimPlayer.IsLocal)
+            var attackerPlayer = GetPlayerById(info.AttackerId());
+            if (!attackerPlayer)
             {
-                victimPlayer.Kill();
+                logger.LogWarn($"{LogPrefix}Attacker Player {info.AttackerId()} is not found");
                 return;
             }
+
+            _resolvedEventIds.Add(info.EventId().ToString("D"));
+
+            if (IsFriendly(attackerPlayer, victimPlayer) && CanDamageFriendly())
+            {
+                switch (friendlyFireMode)
+                {
+                    case FriendlyFireMode.Never:
+                        break;
+                    case FriendlyFireMode.Always:
+                        victimPlayer.LastHitData.SetData(info, KillType.FriendlyFire);
+                        victimPlayer.Kill();
+                        break;
+                    case FriendlyFireMode.Both:
+                        attackerPlayer.LastHitData.SetData(info, KillType.ReverseFriendlyFire);
+                        attackerPlayer.Kill();
+                        victimPlayer.LastHitData.SetData(info, KillType.FriendlyFire);
+                        victimPlayer.Kill();
+                        break;
+                    case FriendlyFireMode.Reverse:
+                        attackerPlayer.LastHitData.SetData(info, KillType.ReverseFriendlyFire);
+                        attackerPlayer.Kill();
+                        break;
+                    case FriendlyFireMode.Warning:
+                        Invoke_OnFriendlyFireWarning(victimPlayer, null, Vector3.zero);
+                        break;
+                }
+
+                return;
+            }
+
+            victimPlayer.LastHitData.SetData(info, KillType.Default);
+            victimPlayer.Kill();
         }
 
         [NetworkCallable]
@@ -307,9 +336,16 @@ namespace CenturionCC.System.Player
             localPlayer.SetTeam(teamId);
         }
 
+        [NetworkCallable(100)]
+        public void Internal_BroadcastDamageInfo(byte[] info)
+        {
+            var damageInfo = DamageInfo.FromBytes(info);
+            Internal_ProcessDamageInfo(damageInfo);
+        }
+
         public bool CanDamageFriendly()
         {
-            switch (_friendlyFireMode)
+            switch (friendlyFireMode)
             {
                 case FriendlyFireMode.Reverse:
                 case FriendlyFireMode.Both:
@@ -318,6 +354,11 @@ namespace CenturionCC.System.Player
                 default:
                     return false;
             }
+        }
+
+        public bool IsEventResolved(Guid eventId)
+        {
+            return _resolvedEventIds.Contains(eventId.ToString("D"));
         }
     }
 }

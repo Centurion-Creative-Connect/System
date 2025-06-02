@@ -43,7 +43,7 @@ namespace CenturionCC.System.Player.MassPlayer
 
         public float Distance { get; private set; }
 
-        public void SetData(DamageInfo info)
+        public void SetData(DamageInfo info, KillType type)
         {
             EventId = info.EventId();
             AttackerId = info.AttackerId();
@@ -58,6 +58,8 @@ namespace CenturionCC.System.Player.MassPlayer
 
             WeaponType = info.DamageType();
             Distance = Vector3.Distance(ActivatedPosition, HitPosition);
+
+            Type = type;
         }
 
         public void SetData(DamageDataSyncer syncer)
