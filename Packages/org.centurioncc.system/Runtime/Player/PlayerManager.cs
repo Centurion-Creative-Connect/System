@@ -305,6 +305,12 @@ namespace CenturionCC.System.Player
             logger.Log(
                 $"{Prefix}Invoke_OnPlayerTagChanged: {type}, {isOn}");
 
+            var players = GetPlayers();
+            foreach (var player in players)
+            {
+                player.UpdateView();
+            }
+
             foreach (var callback in _eventCallbacks)
             {
                 if (!callback) continue;
