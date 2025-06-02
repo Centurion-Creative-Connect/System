@@ -86,6 +86,7 @@ namespace CenturionCC.System.Player
                 if (lastTeam == _teamId) return;
 
                 playerManager.Invoke_OnTeamChanged(this, lastTeam);
+                UpdateView();
             }
         }
 
@@ -117,10 +118,18 @@ namespace CenturionCC.System.Player
 
         public override void UpdateView()
         {
-            var colliders = GetComponentsInChildren<CenturionPlayerCollider>();
+            logger.LogVerbose($"{LogPrefix}UpdateView");
+
+            var colliders = GetComponentsInChildren<CenturionPlayerCollider>(true);
             foreach (var col in colliders)
             {
                 col.SetVisible(playerManager.IsDebug);
+            }
+
+            var playerTags = GetComponentsInChildren<CenturionPlayerTag>(true);
+            foreach (var playerTag in playerTags)
+            {
+                playerTag.Refresh();
             }
         }
 
@@ -160,12 +169,16 @@ namespace CenturionCC.System.Player
 
         public override void Kill()
         {
+            if (!IsLocal) return;
+
             CurrentHealth = 0;
             RequestSerialization();
         }
 
         public override void Revive()
         {
+            if (!IsLocal) return;
+
             CurrentHealth = _maxHealth;
             RequestSerialization();
         }
