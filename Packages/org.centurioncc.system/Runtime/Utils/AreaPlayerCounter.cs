@@ -15,7 +15,8 @@ namespace CenturionCC.System.Utils
         private const int MaxTeamId = short.MaxValue;
 
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
+
         private int _eventCallbackCount;
 
         private UdonSharpBehaviour[] _eventCallbacks = new UdonSharpBehaviour[0];
@@ -23,12 +24,13 @@ namespace CenturionCC.System.Utils
 
         [PublicAPI]
         public int TotalPlayerCount => _playersInAreaDict.Count;
+
         [PublicAPI]
         public int[] TeamPlayerCount { get; private set; } = new int[MaxTeamId];
 
         private void Start()
         {
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
         }
 
         [PublicAPI]
@@ -115,7 +117,7 @@ namespace CenturionCC.System.Utils
             }
         }
 
-        public override void OnTeamChanged(PlayerBase player, int oldTeam)
+        public override void OnPlayerTeamChanged(PlayerBase player, int oldTeam)
         {
             if (!_playersInAreaDict.ContainsKey(player)) return;
 
@@ -123,7 +125,7 @@ namespace CenturionCC.System.Utils
             IncrementTeamCount(player.TeamId);
         }
 
-        public override void OnPlayerChanged(PlayerBase player, int oldId, int newId)
+        public override void OnPlayerAdded(PlayerBase player)
         {
             if (!_playersInAreaDict.ContainsKey(player)) return;
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using CenturionCC.System.Gun;
 using DerpyNewbie.Common;
+using TMPro;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -16,24 +17,32 @@ namespace CenturionCC.System.Utils
 
         [SerializeField]
         private double resetDonePeriodInMinutes = 3D;
+
         [SerializeField]
         private float statusUpdateFrequencyInSeconds = 10F;
 
         [SerializeField]
         private Image resetStatusImage;
+
         [SerializeField]
         private Text lastResetText;
 
         [SerializeField]
+        private TMP_Text lastResetTextTmp;
+
+        [SerializeField]
         private TranslatableMessage translatableLastResetMessage;
+
         [FormerlySerializedAs("lastResetMessage")]
         [SerializeField]
         private string fallbackLastResetMessage = "{0}以上前にリセットしました!";
 
         [SerializeField]
         private Sprite resetNotYet;
+
         [SerializeField]
         private Sprite resetDone;
+
         private bool _currentResetStatusImage;
 
         private DateTime _lastResetTime = DateTime.MinValue;
@@ -77,17 +86,17 @@ namespace CenturionCC.System.Utils
         {
             var diff = DateTime.Now.Subtract(_lastResetTime);
 
-            if (lastResetText != null)
-            {
-                var timeText = NewbieUtils.IsJapaneseTimeZone() ? JapaneseTimeText(diff) : EnglishTimeText(diff);
-                lastResetText.text = string.Format(
-                    translatableLastResetMessage != null
-                        ? translatableLastResetMessage.Message
-                        : fallbackLastResetMessage, timeText
-                );
-            }
+            var timeText = NewbieUtils.IsJapaneseTimeZone() ? JapaneseTimeText(diff) : EnglishTimeText(diff);
+            var msg = string.Format(
+                translatableLastResetMessage
+                    ? translatableLastResetMessage.Message
+                    : fallbackLastResetMessage, timeText
+            );
 
-            if (resetStatusImage != null)
+            if (lastResetText) lastResetText.text = msg;
+            if (lastResetTextTmp) lastResetTextTmp.text = msg;
+
+            if (resetStatusImage)
             {
                 if (diff.TotalMinutes > resetDonePeriodInMinutes && _currentResetStatusImage)
                 {

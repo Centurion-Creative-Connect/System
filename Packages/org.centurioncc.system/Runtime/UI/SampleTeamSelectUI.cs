@@ -11,9 +11,11 @@ namespace CenturionCC.System.UI
     public class SampleTeamSelectUI : UdonSharpBehaviour
     {
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private NewbieConsole console;
+
         [SerializeField]
         private int customTeamId;
 

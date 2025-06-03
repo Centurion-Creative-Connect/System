@@ -22,6 +22,7 @@ namespace CenturionCC.System
          * Then make it always same path on build for easier resolving?
          */
         private const string GameManagerPath = "Logics/System/GameManager";
+
         private const string ConsolePath = "Logics/System/LogTablet/NewbieConsole";
         private const string PlayerControllerPath = "Logics/System/PlayerController";
 
@@ -53,7 +54,7 @@ namespace CenturionCC.System
         }
 
         [PublicAPI]
-        public static PlayerManager GetPlayerManager()
+        public static PlayerManagerBase GetPlayerManager()
         {
             return GetGameManager().players;
         }

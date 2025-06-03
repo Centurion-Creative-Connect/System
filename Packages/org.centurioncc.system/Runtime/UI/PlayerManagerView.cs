@@ -13,8 +13,9 @@ namespace CenturionCC.System.UI
     {
         [SerializeField]
         private NewbieConsole consoleInstance;
+
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         public Button joinButton;
         public Button leaveButton;
@@ -41,7 +42,7 @@ namespace CenturionCC.System.UI
             resetButton.interactable = false;
             updateButton.interactable = false;
 
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
         }
 
         public void UpdateDisplay(bool hasLocalPlayer, int localPlayerIndex)
@@ -54,11 +55,6 @@ namespace CenturionCC.System.UI
             infoText.text = hasLocalPlayer
                 ? string.Format(youAreInGameMessage, localPlayerIndex)
                 : youAreNotInGameMessage;
-        }
-
-        public override void OnLocalPlayerChanged(PlayerBase playerNullable, int index)
-        {
-            UpdateDisplay(index != -1, index);
         }
 
         #region ButtonEvents

@@ -16,7 +16,7 @@ namespace CenturionCC.System.Utils
         [SerializeField] private bool isDamaging = true;
 
         [SerializeField] [NewbieInject] [HideInInspector]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         private VRCPlayerApi _localPlayer;
 

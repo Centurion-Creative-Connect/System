@@ -19,32 +19,41 @@ namespace CenturionCC.System.Utils
 
         [SerializeField]
         private AudioSource hitSound;
+
         [SerializeField]
         private HitDisplay hitDisplay;
+
         [SerializeField]
         private AudioClip hapticSource;
+
         [SerializeField]
         private Image hitSprite;
+
         [SerializeField]
         private Sprite[] availableSprites;
 
         [FormerlySerializedAs("_updateManager")]
         [SerializeField] [HideInInspector] [NewbieInject]
         private UpdateManager updateManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         [NonSerialized]
         private float _currentTime;
+
         [NonSerialized]
         private int _hapticFrequency;
+
         [NonSerialized]
         private int _hapticPackSize;
+
         [NonSerialized]
         private float[] _hapticSamples;
 
         [NonSerialized]
         private DateTime _lastLocalPlayerHitTime;
+
         [NonSerialized]
         private int _lastSpriteIndex;
 
@@ -59,12 +68,12 @@ namespace CenturionCC.System.Utils
 
             hapticSource.GetData(_hapticSamples, 0);
 
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
         }
 
-        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
+        public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
-            if (!hitPlayer.IsLocal)
+            if (!victim.IsLocal)
                 return;
 
             Play();

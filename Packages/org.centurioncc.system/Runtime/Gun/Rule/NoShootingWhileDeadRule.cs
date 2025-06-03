@@ -10,8 +10,10 @@ namespace CenturionCC.System.Gun.Rule
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private GunManager gunManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
+
         [SerializeField]
         private TranslatableMessage cancelledMessage;
 

@@ -15,18 +15,21 @@ namespace CenturionCC.System.Audio
     /// </summary>
     /// <seealso cref="FootstepMarker"/>
     /// <seealso cref="Utils.ObjectMarker"/>
-    /// <seealso cref="PlayerManager.GetLocalPlayer()"/>
+    /// <seealso cref="PlayerManagerBase.GetLocalPlayer()"/>
     [Obsolete("Use PlayerController instead.")] [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class FootstepGenerator : UdonSharpBehaviour
     {
         [SerializeField]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
+
         [SerializeField] [Range(0, 2)] [UdonSynced]
         [Tooltip("Plays footstep sound if player went amount of further away")]
         public float footstepTime = 1F;
+
         [SerializeField] [Range(0, 2)] [UdonSynced]
         [Tooltip("Plays footstep sound if player went footstepLength far this timeframe in seconds")]
         public float footstepLength = 0.9F;
+
         [SerializeField] [Range(0, 2)] [UdonSynced]
         [Tooltip("Plays slow footstep sound if player played footstep this further than footstep timer")]
         public float slowFootstepThreshold = 0.45F;
@@ -35,6 +38,7 @@ namespace CenturionCC.System.Audio
         private Vector3 _lastPlayedPosition = Vector3.zero;
         private bool _lastPlayerGrounded;
         private float _timer;
+
         [NonSerialized] [UdonSynced]
         public bool PlayFootstep = true;
 
