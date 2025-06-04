@@ -35,15 +35,7 @@ namespace CenturionCC.System.Player
         /// <param name="player">The <see cref="VRCPlayerApi"/> instance representing the player to retrieve.</param>
         /// <returns>The <see cref="PlayerBase"/> instance associated with the specified player, or null if not found.</returns>
         [PublicAPI] [CanBeNull]
-        public abstract PlayerBase GetPlayer(VRCPlayerApi player);
-
-        /// <summary>
-        /// Retrieves a player instance by their VRC player ID.
-        /// </summary>
-        /// <param name="vrcPlayerId">The VRC player ID of the player to retrieve.</param>
-        /// <returns>The <see cref="PlayerBase"/> instance corresponding to the specified VRC player ID, or <c>null</c> if no player is found.</returns>
-        [PublicAPI] [CanBeNull]
-        public abstract PlayerBase GetPlayerById(int vrcPlayerId);
+        public abstract PlayerBase GetPlayer([CanBeNull] VRCPlayerApi player);
 
         /// <summary>
         /// Retrieves an array of all player instances.
@@ -94,12 +86,23 @@ namespace CenturionCC.System.Player
         #region GetUtilities
 
         /// <summary>
+        /// Retrieves a player instance by their VRC player ID.
+        /// </summary>
+        /// <param name="vrcPlayerId">The VRC player ID of the player to retrieve.</param>
+        /// <returns>The <see cref="PlayerBase"/> instance corresponding to the specified VRC player ID, or <c>null</c> if no player is found.</returns>
+        [PublicAPI] [CanBeNull]
+        public virtual PlayerBase GetPlayerById(int vrcPlayerId)
+        {
+            return GetPlayer(VRCPlayerApi.GetPlayerById(vrcPlayerId));
+        }
+
+        /// <summary>
         /// Retrieves an array of players that belong to a specified team.
         /// </summary>
         /// <param name="teamId">The ID of the team whose players are to be retrieved.</param>
         /// <returns>An array of <see cref="PlayerBase"/> instances representing the players in the specified team. Returns an empty array if no players are found for the given team.</returns>
         [PublicAPI]
-        public virtual PlayerBase[] GetTeamPlayers(int teamId)
+        public virtual PlayerBase[] GetPlayersInTeam(int teamId)
         {
             var players = GetPlayers();
             var dataList = new DataList();
@@ -146,13 +149,60 @@ namespace CenturionCC.System.Player
         /// <param name="teamId">The ID of the team whose dead players should be retrieved.</param>
         /// <returns>An array of <see cref="PlayerBase"/> instances representing dead players in the specified team, or an empty array if no such players exist.</returns>
         [PublicAPI]
-        public virtual PlayerBase[] GetDeadTeamPlayers(int teamId)
+        public virtual PlayerBase[] GetDeadPlayersInTeam(int teamId)
         {
             var players = GetPlayers();
             var dataList = new DataList();
             foreach (var player in players)
             {
                 if (player.TeamId == teamId && player.IsDead) dataList.Add(player);
+            }
+
+            var result = new PlayerBase[dataList.Count];
+            for (var i = 0; i < dataList.Count; i++)
+            {
+                result[i] = (PlayerBase)dataList[i].Reference;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Retrieves an array of all players designated as moderators.
+        /// </summary>
+        /// <returns>An array of <see cref="PlayerBase"/> instances representing the moderator players.</returns>
+        [PublicAPI]
+        public virtual PlayerBase[] GetModeratorPlayers()
+        {
+            var players = GetPlayers();
+            var dataList = new DataList();
+            foreach (var player in players)
+            {
+                if (player.Roles.HasPermission()) dataList.Add(player);
+            }
+
+            var result = new PlayerBase[dataList.Count];
+            for (var i = 0; i < dataList.Count; i++)
+            {
+                result[i] = (PlayerBase)dataList[i].Reference;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Retrieves all moderator players belonging to the specified team.
+        /// </summary>
+        /// <param name="teamId">The ID of the team for which to retrieve the moderator players.</param>
+        /// <returns>An array of <see cref="PlayerBase"/> instances representing the moderator players in the specified team, or an empty array if there are none.</returns>
+        [PublicAPI]
+        public virtual PlayerBase[] GetModeratorPlayersInTeam(int teamId)
+        {
+            var players = GetPlayers();
+            var dataList = new DataList();
+            foreach (var player in players)
+            {
+                if (player.TeamId == teamId && player.Roles.HasPermission()) dataList.Add(player);
             }
 
             var result = new PlayerBase[dataList.Count];
