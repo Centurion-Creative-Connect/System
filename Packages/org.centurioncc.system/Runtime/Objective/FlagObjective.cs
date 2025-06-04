@@ -22,6 +22,9 @@ namespace CenturionCC.System.Objective
         private float progressPersistDuration = 5.0F;
 
         [SerializeField]
+        private bool ignoreEnemyInteraction = true;
+
+        [SerializeField]
         private bool ignoreWhileAudioSourceIsPlaying = true;
 
         private float _lastProgressChangedTime;
@@ -29,6 +32,12 @@ namespace CenturionCC.System.Objective
         public override void Interact()
         {
             if (!IsActiveAndRunning) return;
+            if (ignoreEnemyInteraction)
+            {
+                var player = playerManager.GetLocalPlayer();
+                if (!player || player.TeamId != OwningTeamId) return;
+            }
+
             if (ignoreWhileAudioSourceIsPlaying && audioSource.isPlaying) return;
             if (Time.timeSinceLevelLoad - _lastProgressChangedTime > progressPersistDuration)
                 SetProgress(0);

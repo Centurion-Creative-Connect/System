@@ -7,6 +7,7 @@ using VRC.Udon.Common;
 
 namespace CenturionCC.System.Objective
 {
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public abstract class ObjectiveBase : UdonSharpBehaviour
     {
         [SerializeField] [NewbieInject]
@@ -25,7 +26,7 @@ namespace CenturionCC.System.Objective
         /// <summary>
         /// Set up Objective to be used by a team.
         /// </summary>
-        /// <param name="teamId"></param>
+        /// <param name="teamId">New owning team. The Objective will be disabled if set to 0.</param>
         [PublicAPI]
         public void SetupObjective(int teamId)
         {
@@ -36,12 +37,6 @@ namespace CenturionCC.System.Objective
         }
 
         #endregion
-
-        private void RequestSync()
-        {
-            if (!Networking.IsOwner(gameObject)) Networking.SetOwner(Networking.LocalPlayer, gameObject);
-            RequestSerialization();
-        }
 
         #region NetworkingChecks
 
@@ -64,12 +59,16 @@ namespace CenturionCC.System.Objective
             if (owningTeamIdChanged)
             {
                 objectives.Internal_RemoveObjective(this, _lastOwningTeamId);
-                objectives.Internal_AddObjective(this, OwningTeamId);
+                if (OwningTeamId != 0) objectives.Internal_AddObjective(this, OwningTeamId);
                 _lastOwningTeamId = OwningTeamId;
             }
 
             var progressChanged = !Mathf.Approximately(_lastProgress, Progress);
-            if (progressChanged) _lastProgress = Progress;
+            if (progressChanged)
+            {
+                objectives.Internal_OnObjectiveProgress(this);
+                _lastProgress = Progress;
+            }
 
             var hasCompletedChanged = _lastHasCompleted != HasCompleted;
             _lastHasCompleted = HasCompleted;
@@ -114,6 +113,12 @@ namespace CenturionCC.System.Objective
         {
             OwningTeamId = teamId;
             RequestSync();
+        }
+
+        protected void RequestSync()
+        {
+            if (!Networking.IsOwner(gameObject)) Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            RequestSerialization();
         }
 
         #endregion
