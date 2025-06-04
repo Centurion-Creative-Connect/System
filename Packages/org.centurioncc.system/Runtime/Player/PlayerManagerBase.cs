@@ -1,8 +1,5 @@
-﻿using System;
-using CenturionCC.System.Audio;
-using CenturionCC.System.Utils;
+﻿using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
-using DerpyNewbie.Common.Role;
 using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
@@ -58,6 +55,19 @@ namespace CenturionCC.System.Player
 
             return result;
         }
+
+        #region InternalUtilities
+
+        protected void UpdateAllPlayerView()
+        {
+            var players = GetPlayers();
+            foreach (var player in players)
+            {
+                player.UpdateView();
+            }
+        }
+
+        #endregion
 
         #region CheckUtilities
 
@@ -126,6 +136,8 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnPlayerAdded(PlayerBase player)
         {
             logger.Log($"{LogPrefix}OnPlayerAdded: {player.DisplayName}");
+            UpdateAllPlayerView();
+
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
@@ -136,6 +148,8 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnPlayerRemoved(PlayerBase player)
         {
             logger.Log($"{LogPrefix}OnPlayerRemoved: {player.DisplayName}");
+            UpdateAllPlayerView();
+
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
@@ -158,6 +172,8 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnPlayerRevived(PlayerBase player)
         {
             logger.Log($"{LogPrefix}OnPlayerRevived: {player.DisplayName}");
+            UpdateAllPlayerView();
+
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
@@ -169,6 +185,8 @@ namespace CenturionCC.System.Player
         {
             logger.Log(
                 $"{LogPrefix}OnPlayerKilled: {type.ToEnumName()}, {attacker.DisplayName} -> {victim.DisplayName}");
+            victim.UpdateView();
+
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
@@ -180,6 +198,8 @@ namespace CenturionCC.System.Player
         {
             logger.Log(
                 $"{LogPrefix}OnPlayerFriendlyFire: {attacker.DisplayName} -> {victim.DisplayName}");
+            victim.UpdateView();
+
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
@@ -202,6 +222,8 @@ namespace CenturionCC.System.Player
         {
             logger.Log(
                 $"{LogPrefix}OnPlayerTeamChanged: {player.DisplayName}, {oldTeam} -> {player.TeamId}");
+            UpdateAllPlayerView();
+
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
@@ -212,6 +234,8 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnPlayerReset(PlayerBase player)
         {
             logger.Log($"{LogPrefix}OnPlayerReset: {player.DisplayName}");
+            UpdateAllPlayerView();
+
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
@@ -222,6 +246,8 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnPlayerTagChanged(TagType type, bool isOn)
         {
             logger.Log($"{LogPrefix}OnPlayerTagChanged: {type.ToEnumName()}, {isOn}");
+            UpdateAllPlayerView();
+
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
@@ -243,6 +269,8 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnDebugModeChanged(bool isOn)
         {
             logger.Log($"{LogPrefix}OnDebugModeChanged: {isOn}");
+            UpdateAllPlayerView();
+
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;

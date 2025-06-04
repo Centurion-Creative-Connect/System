@@ -45,13 +45,8 @@ namespace CenturionCC.System.Player.Centurion
             set
             {
                 if (isDebug == value) return;
-                isDebug = value;
-                var players = GetPlayers();
-                foreach (var player in players)
-                {
-                    player.UpdateView();
-                }
 
+                isDebug = value;
                 Invoke_OnDebugModeChanged(value);
             }
         }
@@ -62,6 +57,7 @@ namespace CenturionCC.System.Player.Centurion
             protected set
             {
                 if (showTeamTag == value) return;
+
                 showTeamTag = value;
                 Invoke_OnPlayerTagChanged(TagType.Team, value);
             }
@@ -73,6 +69,7 @@ namespace CenturionCC.System.Player.Centurion
             protected set
             {
                 if (showStaffTag == value) return;
+
                 showStaffTag = value;
                 Invoke_OnPlayerTagChanged(TagType.Staff, value);
             }
@@ -84,6 +81,7 @@ namespace CenturionCC.System.Player.Centurion
             protected set
             {
                 if (showCreatorTag == value) return;
+
                 showCreatorTag = value;
                 Invoke_OnPlayerTagChanged(TagType.Creator, value);
             }
@@ -347,7 +345,7 @@ namespace CenturionCC.System.Player.Centurion
             victimPlayer.ApplyDamage(info);
         }
 
-        [NetworkCallable]
+        [NetworkCallable(100)]
         public void Internal_ApplyTeamChange(int playerId, int teamId)
         {
             if (Networking.LocalPlayer.playerId != playerId) return;
@@ -357,7 +355,7 @@ namespace CenturionCC.System.Player.Centurion
             localPlayer.SetTeam(teamId);
         }
 
-        [NetworkCallable]
+        [NetworkCallable(100)]
         public void Internal_ApplyHealthChange(int playerId, float health)
         {
             if (Networking.LocalPlayer.playerId != playerId) return;
