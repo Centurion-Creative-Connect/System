@@ -331,14 +331,14 @@ MonoBehaviour:
   useTeamColor: 1
   showOnDeath: 1
   showOnFriendlyTeam: 0
-  excludeStaffTeamFromFriendlyTeam: 0
   showOnFreeForAllTeam: 0
+  excludeStaffTeam: 0
   showOnStaffTeam: 0
   onlyShowOnMaster: 0
   isTeamTag: 0
   isStaffTag: 0
   isCreatorTag: 0
-  targetRoles: []
+  targetRoleNames: []
 --- !u!114 &2980174491386184434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1058,14 +1058,14 @@ MonoBehaviour:
   useTeamColor: 1
   showOnDeath: 0
   showOnFriendlyTeam: 0
-  excludeStaffTeamFromFriendlyTeam: 0
   showOnFreeForAllTeam: 0
+  excludeStaffTeam: 0
   showOnStaffTeam: 1
   onlyShowOnMaster: 0
   isTeamTag: 1
   isStaffTag: 0
   isCreatorTag: 0
-  targetRoles: []
+  targetRoleNames: []
 --- !u!114 &8443132055909105236
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1198,15 +1198,15 @@ MonoBehaviour:
   useTeamColor: 0
   showOnDeath: 0
   showOnFriendlyTeam: 0
-  excludeStaffTeamFromFriendlyTeam: 0
   showOnFreeForAllTeam: 1
+  excludeStaffTeam: 0
   showOnStaffTeam: 1
   onlyShowOnMaster: 0
   isTeamTag: 0
   isStaffTag: 1
   isCreatorTag: 0
-  targetRoles:
-  - {fileID: 0}
+  targetRoleNames:
+  - Staff
 --- !u!114 &6880914838522479752
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1618,15 +1618,15 @@ MonoBehaviour:
   useTeamColor: 0
   showOnDeath: 0
   showOnFriendlyTeam: 0
-  excludeStaffTeamFromFriendlyTeam: 0
   showOnFreeForAllTeam: 1
+  excludeStaffTeam: 0
   showOnStaffTeam: 1
   onlyShowOnMaster: 0
   isTeamTag: 0
   isStaffTag: 1
   isCreatorTag: 0
-  targetRoles:
-  - {fileID: 0}
+  targetRoleNames:
+  - Dev
 --- !u!114 &9055797631606315451
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1792,7 +1792,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4709463790283079795}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: -1}
+  m_LocalRotation: {x: -0, y: -1, z: -0, w: -0.00000058114523}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.01, y: 0.01, z: 0.01}
   m_ConstrainProportionsScale: 0
@@ -1990,14 +1990,14 @@ MonoBehaviour:
   useTeamColor: 0
   showOnDeath: 0
   showOnFriendlyTeam: 0
-  excludeStaffTeamFromFriendlyTeam: 0
   showOnFreeForAllTeam: 1
+  excludeStaffTeam: 0
   showOnStaffTeam: 1
   onlyShowOnMaster: 1
   isTeamTag: 0
   isStaffTag: 1
   isCreatorTag: 0
-  targetRoles: []
+  targetRoleNames: []
 --- !u!114 &5844938545769143726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2379,14 +2379,14 @@ MonoBehaviour:
   useTeamColor: 1
   showOnDeath: 0
   showOnFriendlyTeam: 1
-  excludeStaffTeamFromFriendlyTeam: 1
   showOnFreeForAllTeam: 1
+  excludeStaffTeam: 1
   showOnStaffTeam: 0
   onlyShowOnMaster: 0
   isTeamTag: 1
   isStaffTag: 0
   isCreatorTag: 0
-  targetRoles: []
+  targetRoleNames: []
 --- !u!114 &7657342832841936441
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2758,15 +2758,15 @@ MonoBehaviour:
   useTeamColor: 0
   showOnDeath: 0
   showOnFriendlyTeam: 0
-  excludeStaffTeamFromFriendlyTeam: 0
   showOnFreeForAllTeam: 1
+  excludeStaffTeam: 0
   showOnStaffTeam: 1
   onlyShowOnMaster: 0
   isTeamTag: 0
   isStaffTag: 0
   isCreatorTag: 1
-  targetRoles:
-  - {fileID: 0}
+  targetRoleNames:
+  - Creator
 --- !u!114 &4752593175592524378
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2899,15 +2899,15 @@ MonoBehaviour:
   useTeamColor: 0
   showOnDeath: 0
   showOnFriendlyTeam: 0
-  excludeStaffTeamFromFriendlyTeam: 0
   showOnFreeForAllTeam: 1
+  excludeStaffTeam: 0
   showOnStaffTeam: 1
   onlyShowOnMaster: 0
   isTeamTag: 0
   isStaffTag: 1
   isCreatorTag: 0
-  targetRoles:
-  - {fileID: 0}
+  targetRoleNames:
+  - Owner
 --- !u!114 &5181512851283127185
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3057,8 +3057,6 @@ GameObject:
   m_Component:
   - component: {fileID: 116566607097802481}
   - component: {fileID: 9070827582715758811}
-  - component: {fileID: 9114601952292593719}
-  - component: {fileID: 6816731253605363629}
   - component: {fileID: 8542596109361465816}
   - component: {fileID: 1094419389740032238}
   m_Layer: 0
@@ -3097,55 +3095,6 @@ MonoBehaviour:
   m_Script: {fileID: 1658641376, guid: 661092b4961be7145bfbe56e1e62337b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &9114601952292593719
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8260998009281142218}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bad62061629e21b4aa4d69f0c0a11acc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  serializationData:
-    SerializedFormat: 2
-    SerializedBytes: 
-    ReferencedUnityObjects: []
-    SerializedBytesString: 
-    Prefab: {fileID: 0}
-    PrefabModificationsReferencedUnityObjects: []
-    PrefabModifications: []
-    SerializationNodes: []
-  _udonSharpBackingUdonBehaviour: {fileID: 6816731253605363629}
-  player: {fileID: 8542596109361465816}
---- !u!114 &6816731253605363629
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8260998009281142218}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 45115577ef41a5b4ca741ed302693907, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  interactTextPlacement: {fileID: 0}
-  interactText: Use
-  interactTextGO: {fileID: 0}
-  proximity: 2
-  SynchronizePosition: 0
-  AllowCollisionOwnershipTransfer: 0
-  Reliable: 0
-  _syncMethod: 3
-  serializedProgramAsset: {fileID: 11400000, guid: b82252f939ec3d244916940e5931cd8d,
-    type: 2}
-  programSource: {fileID: 11400000, guid: a4752b620e8a6b64681049cf53657ef9, type: 2}
-  serializedPublicVariablesBytesString: Ai8AAAAAATIAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAFQAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AAAAAAAYBAAAAAAAAACcBBAAAAHQAeQBwAGUAAWgAAABTAHkAcwB0AGUAbQAuAEMAbwBsAGwAZQBjAHQAaQBvAG4AcwAuAEcAZQBuAGUAcgBpAGMALgBMAGkAcwB0AGAAMQBbAFsAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4ALgBJAG4AdABlAHIAZgBhAGMAZQBzAC4ASQBVAGQAbwBuAFYAYQByAGkAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AXQBdACwAIABtAHMAYwBvAHIAbABpAGIAAQEJAAAAVgBhAHIAaQBhAGIAbABlAHMALwEAAAABaAAAAFMAeQBzAHQAZQBtAC4AQwBvAGwAbABlAGMAdABpAG8AbgBzAC4ARwBlAG4AZQByAGkAYwAuAEwAaQBzAHQAYAAxAFsAWwBWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAEkAbgB0AGUAcgBmAGEAYwBlAHMALgBJAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlACwAIABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgBdAF0ALAAgAG0AcwBjAG8AcgBsAGkAYgABAAAABgEAAAAAAAAAAi8CAAAAAUkAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAGAAMQBbAFsAUwB5AHMAdABlAG0ALgBJAG4AdAAzADIALAAgAG0AcwBjAG8AcgBsAGkAYgBdAF0ALAAgAFYAUgBDAC4AVQBkAG8AbgAuAEMAbwBtAG0AbwBuAAIAAAAGAgAAAAAAAAAnAQQAAAB0AHkAcABlAAEXAAAAUwB5AHMAdABlAG0ALgBTAHQAcgBpAG4AZwAsACAAbQBzAGMAbwByAGwAaQBiACcBCgAAAFMAeQBtAGIAbwBsAE4AYQBtAGUAAR8AAABfAF8AXwBVAGQAbwBuAFMAaABhAHIAcABCAGUAaABhAHYAaQBvAHUAcgBWAGUAcgBzAGkAbwBuAF8AXwBfACcBBAAAAHQAeQBwAGUAARYAAABTAHkAcwB0AGUAbQAuAEkAbgB0ADMAMgAsACAAbQBzAGMAbwByAGwAaQBiABcBBQAAAFYAYQBsAHUAZQACAAAABwUHBQcF
-  publicVariablesUnityEngineObjects: []
-  publicVariablesSerializationDataFormat: 0
 --- !u!114 &8542596109361465816
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3168,7 +3117,6 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1094419389740032238}
-  lastHitData: {fileID: 9114601952292593719}
   logger: {fileID: 0}
   roleProvider: {fileID: 0}
   playerManager: {fileID: 0}
