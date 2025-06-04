@@ -15,12 +15,37 @@ namespace CenturionCC.System.Objective
         [SerializeField] [NewbieInject(SearchScope.Self)]
         private AudioSource audioSource;
 
+        [SerializeField]
+        private float progressStep = 1.0F / 3.0F;
+
+        [SerializeField]
+        private float progressPersistDuration = 5.0F;
+
+        [SerializeField]
+        private bool ignoreWhileAudioSourceIsPlaying = true;
+
+        private float _lastProgressChangedTime;
+
         public override void Interact()
         {
             if (!IsActiveAndRunning) return;
-            Progress = 1;
+            if (ignoreWhileAudioSourceIsPlaying && audioSource.isPlaying) return;
+            if (Time.timeSinceLevelLoad - _lastProgressChangedTime > progressPersistDuration)
+                SetProgress(0);
+
+            SetProgress(Progress + progressStep);
             Networking.SetOwner(Networking.LocalPlayer, gameObject);
             RequestSerialization();
+        }
+
+        protected override void OnObjectiveProgress()
+        {
+            _lastProgressChangedTime = Time.timeSinceLevelLoad;
+        }
+
+        protected override void OnObjectiveCompleted()
+        {
+            audioSource.Play();
         }
     }
 }
