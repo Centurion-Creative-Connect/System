@@ -4,6 +4,7 @@ using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Data;
 using VRC.SDKBase;
 
 namespace CenturionCC.System.Player
@@ -21,40 +22,61 @@ namespace CenturionCC.System.Player
         public abstract bool ShowCreatorTag { get; protected set; }
         public abstract FriendlyFireMode FriendlyFireMode { get; protected set; }
 
-        [PublicAPI]
+        /// <summary>
+        /// Retrieves the local player's <see cref="PlayerBase"/> instance.
+        /// </summary>
+        /// <returns>The local player's <see cref="PlayerBase"/> instance, or null if the player has not been restored.</returns>
+        [PublicAPI] [CanBeNull]
         public abstract PlayerBase GetLocalPlayer();
 
-        [PublicAPI]
+        /// <summary>
+        /// Retrieves the <see cref="PlayerBase"/> instance associated with the specified <see cref="VRCPlayerApi"/> player.
+        /// </summary>
+        /// <param name="player">The <see cref="VRCPlayerApi"/> instance representing the player to retrieve.</param>
+        /// <returns>The <see cref="PlayerBase"/> instance associated with the specified player, or null if not found.</returns>
+        [PublicAPI] [CanBeNull]
         public abstract PlayerBase GetPlayer(VRCPlayerApi player);
 
-        [PublicAPI]
+        /// <summary>
+        /// Retrieves a player instance by their VRC player ID.
+        /// </summary>
+        /// <param name="vrcPlayerId">The VRC player ID of the player to retrieve.</param>
+        /// <returns>The <see cref="PlayerBase"/> instance corresponding to the specified VRC player ID, or <c>null</c> if no player is found.</returns>
+        [PublicAPI] [CanBeNull]
         public abstract PlayerBase GetPlayerById(int vrcPlayerId);
 
+        /// <summary>
+        /// Retrieves an array of all player instances.
+        /// </summary>
+        /// <returns>An array of <see cref="PlayerBase"/> representing all players, or an empty array if no players have been restored.</returns>
         [PublicAPI]
         public abstract PlayerBase[] GetPlayers();
 
+        /// <summary>
+        /// Toggles a player's tag visibility based on the specified <see cref="TagType"/>.
+        /// </summary>
+        /// <remarks>
+        /// Only works for <see cref="TagType.Team"/>, <see cref="TagType.Staff"/>, and <see cref="TagType.Creator"/>.
+        /// </remarks>
+        /// <param name="type">The tag type to toggle.</param>
+        /// <param name="isOn">A boolean value indicating whether the specified tag should be enabled (true) or disabled (false).</param>
         [PublicAPI]
         public abstract void SetPlayerTag(TagType type, bool isOn);
 
+        /// <summary>
+        /// Configures the friendly fire mode.
+        /// </summary>
+        /// <param name="mode">The desired <see cref="FriendlyFireMode"/> to set.</param>
         [PublicAPI]
         public abstract void SetFriendlyFireMode(FriendlyFireMode mode);
 
+        /// <summary>
+        /// Retrieves the color associated with the specified team.
+        /// </summary>
+        /// <param name="teamId">The unique identifier of the team for which to retrieve the color.</param>
+        /// <returns>A <see cref="Color"/> representing the team's color.</returns>
         [PublicAPI]
         public abstract Color GetTeamColor(int teamId);
-
-        [PublicAPI]
-        public virtual int GetTeamPlayerCount(int teamId, bool includeStaff = true)
-        {
-            var players = GetPlayers();
-            var result = 0;
-            foreach (var player in players)
-            {
-                if (player.TeamId == teamId && (!includeStaff || player.Roles.IsGameStaff()))
-                    ++result;
-            }
-
-            return result;
-        }
 
         #region InternalUtilities
 
@@ -65,6 +87,81 @@ namespace CenturionCC.System.Player
             {
                 player.UpdateView();
             }
+        }
+
+        #endregion
+
+        #region GetUtilities
+
+        /// <summary>
+        /// Retrieves an array of players that belong to a specified team.
+        /// </summary>
+        /// <param name="teamId">The ID of the team whose players are to be retrieved.</param>
+        /// <returns>An array of <see cref="PlayerBase"/> instances representing the players in the specified team. Returns an empty array if no players are found for the given team.</returns>
+        [PublicAPI]
+        public virtual PlayerBase[] GetTeamPlayers(int teamId)
+        {
+            var players = GetPlayers();
+            var dataList = new DataList();
+            foreach (var player in players)
+            {
+                if (player.TeamId == teamId) dataList.Add(player);
+            }
+
+            var result = new PlayerBase[dataList.Count];
+            for (var i = 0; i < dataList.Count; i++)
+            {
+                result[i] = (PlayerBase)dataList[i].Reference;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Retrieves an array of all dead players in the game.
+        /// </summary>
+        /// <returns>An array of <see cref="PlayerBase"/> objects representing the dead players.</returns>
+        [PublicAPI]
+        public virtual PlayerBase[] GetDeadPlayers()
+        {
+            var players = GetPlayers();
+            var dataList = new DataList();
+            foreach (var player in players)
+            {
+                if (player.IsDead) dataList.Add(player);
+            }
+
+            var result = new PlayerBase[dataList.Count];
+            for (var i = 0; i < dataList.Count; i++)
+            {
+                result[i] = (PlayerBase)dataList[i].Reference;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Retrieves the array of dead players belonging to the specified team.
+        /// </summary>
+        /// <param name="teamId">The ID of the team whose dead players should be retrieved.</param>
+        /// <returns>An array of <see cref="PlayerBase"/> instances representing dead players in the specified team, or an empty array if no such players exist.</returns>
+        [PublicAPI]
+        public virtual PlayerBase[] GetDeadTeamPlayers(int teamId)
+        {
+            var players = GetPlayers();
+            var dataList = new DataList();
+            foreach (var player in players)
+            {
+                if (player.TeamId == teamId && player.IsDead) dataList.Add(player);
+            }
+
+            var result = new PlayerBase[dataList.Count];
+            for (var i = 0; i < dataList.Count; i++)
+            {
+                result[i] = (PlayerBase)dataList[i].Reference;
+            }
+
+            return result;
         }
 
         #endregion
