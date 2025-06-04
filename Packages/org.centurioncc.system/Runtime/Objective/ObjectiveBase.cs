@@ -2,6 +2,7 @@
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDKBase;
 using VRC.Udon.Common;
 
 namespace CenturionCC.System.Objective
@@ -19,6 +20,30 @@ namespace CenturionCC.System.Objective
 
         private float _lastProgress;
 
+        #region PublicAPI
+
+        /// <summary>
+        /// Set up Objective to be used by a team.
+        /// </summary>
+        /// <param name="teamId"></param>
+        [PublicAPI]
+        public void SetupObjective(int teamId)
+        {
+            Progress = 0;
+            IsPaused = false;
+            OwningTeamId = teamId;
+            RequestSync();
+        }
+
+        #endregion
+
+        private void RequestSync()
+        {
+            if (!Networking.IsOwner(gameObject)) Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            RequestSerialization();
+        }
+
+        #region NetworkingChecks
 
         public override void OnDeserialization()
         {
@@ -75,36 +100,44 @@ namespace CenturionCC.System.Objective
             }
         }
 
-        /// <summary>
-        /// Called when ObjectiveBase should initialize.
-        /// </summary>
-        /// <param name="teamId"></param>
-        public virtual void OnObjectiveSetup(int teamId)
+        #endregion
+
+        #region ObjectiveBaseAPI
+
+        protected void SetProgress(float progress)
         {
-            Progress = 0;
-            IsPaused = false;
-            OwningTeamId = teamId;
-            RequestSerialization();
+            Progress = progress;
+            RequestSync();
         }
+
+        protected void SetOwningTeamId(int teamId)
+        {
+            OwningTeamId = teamId;
+            RequestSync();
+        }
+
+        #endregion
+
+        #region ObjectiveBaseCallbacks
 
         /// <summary>
         /// Called when objective goal has activated and started.
         /// </summary>
-        public virtual void OnObjectiveStart()
+        protected virtual void OnObjectiveStart()
         {
         }
 
         /// <summary>
         /// Called when objective goal is paused and halt updates.
         /// </summary>
-        public virtual void OnObjectivePause()
+        protected virtual void OnObjectivePause()
         {
         }
 
         /// <summary>
         /// Called when objective goal should resume and continue updating.
         /// </summary>
-        public virtual void OnObjectiveResume()
+        protected virtual void OnObjectiveResume()
         {
         }
 
@@ -112,16 +145,18 @@ namespace CenturionCC.System.Objective
         /// <summary>
         /// Called when objective goal has updated progress.
         /// </summary>
-        public virtual void OnObjectiveProgress()
+        protected virtual void OnObjectiveProgress()
         {
         }
 
         /// <summary>
         /// Called when objective goal has completed.
         /// </summary>
-        public virtual void OnObjectiveCompleted()
+        protected virtual void OnObjectiveCompleted()
         {
         }
+
+        #endregion
 
         #region Properties
 
@@ -133,15 +168,15 @@ namespace CenturionCC.System.Objective
         /// </remarks>
         [field: UdonSynced]
         [PublicAPI]
-        public virtual int OwningTeamId { get; protected set; }
+        public virtual int OwningTeamId { get; private set; }
 
         [field: UdonSynced]
         [PublicAPI]
-        public virtual float Progress { get; protected set; }
+        public virtual float Progress { get; private set; }
 
         [field: UdonSynced]
         [PublicAPI]
-        public virtual bool IsPaused { get; protected set; }
+        public virtual bool IsPaused { get; private set; }
 
         /// <summary>
         /// Has the objective goal been completed? 
