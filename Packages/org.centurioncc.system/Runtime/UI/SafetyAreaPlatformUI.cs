@@ -163,23 +163,18 @@ namespace CenturionCC.System.UI
         public void UpdateTeamStatusText()
         {
             var p = playerManager;
-            var nonPlayerCount = p.GetTeamPlayerCount(0);
-            var redPlayerCount = p.GetTeamPlayerCount(1);
-            var yelPlayerCount = p.GetTeamPlayerCount(2);
-            var grePlayerCount = p.GetTeamPlayerCount(3);
-            var bluPlayerCount = p.GetTeamPlayerCount(4);
             teamStatusText.text = string.Format(
                 teamStatusMessage,
-                nonPlayerCount,
-                nonPlayerCount - p.GetTeamPlayerCount(0, false),
-                redPlayerCount,
-                redPlayerCount - p.GetTeamPlayerCount(1, false),
-                yelPlayerCount,
-                yelPlayerCount - p.GetTeamPlayerCount(2, false),
-                grePlayerCount,
-                grePlayerCount - p.GetTeamPlayerCount(3, false),
-                bluPlayerCount,
-                bluPlayerCount - p.GetTeamPlayerCount(4, false)
+                p.GetTeamPlayers(0).Length,
+                0,
+                p.GetTeamPlayers(1).Length,
+                0,
+                p.GetTeamPlayers(2).Length,
+                0,
+                p.GetTeamPlayers(3).Length,
+                0,
+                p.GetTeamPlayers(4).Length,
+                0
             );
         }
 
