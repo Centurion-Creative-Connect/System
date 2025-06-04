@@ -1,4 +1,5 @@
 ﻿using DerpyNewbie.Common;
+using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 using VRC.Udon.Common;
@@ -8,38 +9,16 @@ namespace CenturionCC.System.Objective
     public abstract class ObjectiveBase : UdonSharpBehaviour
     {
         [SerializeField] [NewbieInject]
-        protected ObjectiveCollection objectives;
+        protected ObjectiveManagerBase objectives;
 
-        private bool _lastHasCompleted = false;
+        private bool _lastHasCompleted;
 
-        private bool _lastIsPaused = false;
+        private bool _lastIsPaused;
 
         private int _lastOwningTeamId = -1;
 
-        /// <summary>
-        /// Objective's current team id.
-        /// </summary>
-        /// <remarks>
-        /// Most likely to be set in OnObjectiveStart.
-        /// Might change dynamically depending on objective.
-        /// Should never change when HasCompleted is true.
-        /// </remarks>
-        [field: UdonSynced]
-        public virtual int OwningTeamId { get; protected set; }
+        private float _lastProgress;
 
-        /// <summary>
-        /// Has the objective been completed? 
-        /// </summary>
-        /// <remarks>
-        /// OwningTeamId should never change when this returns true.
-        /// </remarks>
-        [field: UdonSynced]
-        public virtual bool HasCompleted { get; protected set; }
-
-        [field: UdonSynced]
-        public virtual bool IsPaused { get; protected set; }
-
-        public bool IsActiveAndRunning => OwningTeamId != 0 && !IsPaused && !HasCompleted;
 
         public override void OnDeserialization()
         {
@@ -59,16 +38,20 @@ namespace CenturionCC.System.Objective
             var owningTeamIdChanged = _lastOwningTeamId != OwningTeamId;
             if (owningTeamIdChanged)
             {
-                objectives.RemoveObjective(this, _lastOwningTeamId);
-                objectives.AddObjective(this, OwningTeamId);
+                objectives.Internal_RemoveObjective(this, _lastOwningTeamId);
+                objectives.Internal_AddObjective(this, OwningTeamId);
                 _lastOwningTeamId = OwningTeamId;
             }
+
+            var progressChanged = !Mathf.Approximately(_lastProgress, Progress);
+            if (progressChanged) _lastProgress = Progress;
 
             var hasCompletedChanged = _lastHasCompleted != HasCompleted;
             _lastHasCompleted = HasCompleted;
 
             var hasPausedChanged = _lastIsPaused != IsPaused;
             _lastIsPaused = IsPaused;
+
 
             if ((owningTeamIdChanged || hasCompletedChanged) && OwningTeamId != 0 && !HasCompleted)
             {
@@ -81,46 +64,94 @@ namespace CenturionCC.System.Objective
                 else OnObjectiveResume();
             }
 
+            if (progressChanged)
+            {
+                OnObjectiveProgress();
+            }
+
             if (OwningTeamId != 0 && hasCompletedChanged && HasCompleted)
             {
-                OnObjectiveEnd();
+                OnObjectiveCompleted();
             }
         }
 
         /// <summary>
-        /// Called when objective should initialize.
+        /// Called when ObjectiveBase should initialize.
         /// </summary>
         /// <param name="teamId"></param>
         public virtual void OnObjectiveSetup(int teamId)
         {
-            HasCompleted = false;
+            Progress = 0;
             IsPaused = false;
             OwningTeamId = teamId;
             RequestSerialization();
         }
 
         /// <summary>
-        /// Called when objectyive should activate and start.
+        /// Called when objective goal has activated and started.
         /// </summary>
-        public abstract void OnObjectiveStart();
+        public virtual void OnObjectiveStart()
+        {
+        }
 
         /// <summary>
-        /// Called when objective should pause and halt updates.
+        /// Called when objective goal is paused and halt updates.
         /// </summary>
         public virtual void OnObjectivePause()
         {
         }
 
         /// <summary>
-        /// Called when objective should resume and continue updating.
+        /// Called when objective goal should resume and continue updating.
         /// </summary>
         public virtual void OnObjectiveResume()
         {
         }
 
+
         /// <summary>
-        /// Called when objective should end.
+        /// Called when objective goal has updated progress.
         /// </summary>
-        public abstract void OnObjectiveEnd();
+        public virtual void OnObjectiveProgress()
+        {
+        }
+
+        /// <summary>
+        /// Called when objective goal has completed.
+        /// </summary>
+        public virtual void OnObjectiveCompleted()
+        {
+        }
+
+        #region Properties
+
+        /// <summary>
+        /// Objective's current team id.
+        /// </summary>
+        /// <remarks>
+        /// Might change dynamically depending on the objective implementation.
+        /// </remarks>
+        [field: UdonSynced]
+        [PublicAPI]
+        public virtual int OwningTeamId { get; protected set; }
+
+        [field: UdonSynced]
+        [PublicAPI]
+        public virtual float Progress { get; protected set; }
+
+        [field: UdonSynced]
+        [PublicAPI]
+        public virtual bool IsPaused { get; protected set; }
+
+        /// <summary>
+        /// Has the objective goal been completed? 
+        /// </summary>
+        [PublicAPI]
+        public virtual bool HasCompleted => Progress <= 1;
+
+        [PublicAPI]
+        public bool IsActiveAndRunning => OwningTeamId != 0 && !IsPaused && !HasCompleted;
+
+        #endregion
     }
 }

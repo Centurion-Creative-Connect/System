@@ -2,6 +2,7 @@
 using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDKBase;
 
 namespace CenturionCC.System.Objective
 {
@@ -14,19 +15,12 @@ namespace CenturionCC.System.Objective
         [SerializeField] [NewbieInject(SearchScope.Self)]
         private AudioSource audioSource;
 
-        private float _lastPlayedTime;
-
         public override void Interact()
         {
             if (!IsActiveAndRunning) return;
-        }
-
-        public override void OnObjectiveStart()
-        {
-        }
-
-        public override void OnObjectiveEnd()
-        {
+            Progress = 1;
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            RequestSerialization();
         }
     }
 }
