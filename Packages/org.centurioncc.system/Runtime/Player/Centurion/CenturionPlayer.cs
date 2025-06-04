@@ -7,7 +7,6 @@ using UnityEngine;
 using VRC.SDK3.UdonNetworkCalling;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
-using NotImplementedException = System.NotImplementedException;
 
 namespace CenturionCC.System.Player.Centurion
 {
