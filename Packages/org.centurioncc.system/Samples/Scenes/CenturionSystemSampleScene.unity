@@ -1509,18 +1509,6 @@ RectTransform:
     type: 3}
   m_PrefabInstance: {fileID: 61982429}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &61982431 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1646272138524675224, guid: faa19d59765b28840806d50ae7199bb1,
-    type: 3}
-  m_PrefabInstance: {fileID: 61982429}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &61982432 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4946946243967333021, guid: faa19d59765b28840806d50ae7199bb1,
@@ -1578,7 +1566,6 @@ MonoBehaviour:
   callback: {fileID: 1352549401}
   callbackMethod: OnTeamShuffleButton
   text: {fileID: 0}
-  tmpText: {fileID: 61982431}
   confirmDuration: 5
   confirmTextMessage: "\u30B7\u30E3\u30C3\u30D5\u30EB\u3057\u307E\u3059\u304B?"
 --- !u!114 &61982435 stripped
@@ -55891,18 +55878,6 @@ RectTransform:
     type: 3}
   m_PrefabInstance: {fileID: 1345054860}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1345054862 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1646272138524675224, guid: faa19d59765b28840806d50ae7199bb1,
-    type: 3}
-  m_PrefabInstance: {fileID: 1345054860}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1345054863 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4946946243967333021, guid: faa19d59765b28840806d50ae7199bb1,
@@ -55960,7 +55935,6 @@ MonoBehaviour:
   callback: {fileID: 1352549401}
   callbackMethod: OnTeamResetButton
   text: {fileID: 0}
-  tmpText: {fileID: 1345054862}
   confirmDuration: 5
   confirmTextMessage: "\u30EA\u30BB\u30C3\u30C8\u3057\u307E\u3059\u304B?"
 --- !u!114 &1345054866 stripped
@@ -64419,18 +64393,6 @@ RectTransform:
     type: 3}
   m_PrefabInstance: {fileID: 1841878770}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1841878772 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1646272138524675224, guid: faa19d59765b28840806d50ae7199bb1,
-    type: 3}
-  m_PrefabInstance: {fileID: 1841878770}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1841878773 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4946946243967333021, guid: faa19d59765b28840806d50ae7199bb1,
@@ -64488,7 +64450,6 @@ MonoBehaviour:
   callback: {fileID: 1352549401}
   callbackMethod: OnGunResetButton
   text: {fileID: 0}
-  tmpText: {fileID: 1841878772}
   confirmDuration: 5
   confirmTextMessage: "\u30EA\u30BB\u30C3\u30C8\u3057\u307E\u3059\u304B?"
 --- !u!114 &1841878776 stripped
@@ -71267,6 +71228,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2462398296070629249, guid: 283dfa6cf1764ec42b6c5ae807a0a71c,
+        type: 3}
+      propertyPath: m_PresetInfoIsWorld
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2462398296682419778, guid: 283dfa6cf1764ec42b6c5ae807a0a71c,
         type: 3}
