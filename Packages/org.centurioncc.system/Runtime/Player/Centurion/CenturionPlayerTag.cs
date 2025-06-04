@@ -1,5 +1,4 @@
 ﻿using DerpyNewbie.Common;
-using DerpyNewbie.Common.Role;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,9 +17,11 @@ namespace CenturionCC.System.Player.Centurion
         [SerializeField] [NewbieInject(SearchScope.Children)]
         private Image image;
 
+        [Header("Color")]
         [SerializeField]
         private bool useTeamColor;
 
+        [Header("Show")]
         [SerializeField]
         private bool showOnDeath;
 
@@ -28,17 +29,22 @@ namespace CenturionCC.System.Player.Centurion
         private bool showOnFriendlyTeam;
 
         [SerializeField]
-        private bool excludeStaffTeamFromFriendlyTeam = true;
-
-        [SerializeField]
         private bool showOnFreeForAllTeam;
 
         [SerializeField]
         private bool showOnStaffTeam;
 
+        [Header("Exclusions")]
+        [SerializeField]
+        private bool excludeStaffTeam = true;
+
         [SerializeField]
         private bool onlyShowOnMaster;
 
+        [SerializeField]
+        private string[] targetRoleNames;
+
+        [Header("PlayerManager Categories")]
         [SerializeField]
         private bool isTeamTag;
 
@@ -47,9 +53,6 @@ namespace CenturionCC.System.Player.Centurion
 
         [SerializeField]
         private bool isCreatorTag;
-
-        [SerializeField]
-        private RoleData[] targetRoles;
 
         private void Start()
         {
@@ -75,18 +78,20 @@ namespace CenturionCC.System.Player.Centurion
 
         private bool IsEnabledByOptions()
         {
+            var localPlayer = playerManager.GetLocalPlayer();
             var result = false;
             if (showOnFriendlyTeam)
-                result |= playerManager.IsFriendly(playerManager.GetLocalPlayer(), player);
-            if (excludeStaffTeamFromFriendlyTeam)
-                result &= !playerManager.IsInStaffTeam(player);
-
+                result |= playerManager.IsFriendly(localPlayer, player);
             if (showOnFreeForAllTeam)
-                result |= playerManager.IsInFreeForAllTeam(player);
+                result |= playerManager.IsInFreeForAllTeam(player) || playerManager.IsInFreeForAllTeam(localPlayer);
+
             if (showOnStaffTeam)
                 result |= playerManager.IsInStaffTeam(player);
             if (showOnDeath)
                 result |= player.IsDead;
+
+            if (excludeStaffTeam)
+                result &= !playerManager.IsInStaffTeam(player);
 
             if (onlyShowOnMaster && player.VrcPlayer != null)
                 result &= player.VrcPlayer.isMaster;
@@ -103,21 +108,28 @@ namespace CenturionCC.System.Player.Centurion
 
         private bool IsEnabledByRole()
         {
-            var hasTargetRole = false;
-            foreach (var role in targetRoles)
-            {
-                if (!player.Roles.ContainsItem(role)) continue;
-
-                hasTargetRole = true;
-                break;
-            }
-
-            return !IsRoleRestricted() || hasTargetRole;
+            return !IsRoleRestricted() || HasTargetRole();
         }
 
         private bool IsRoleRestricted()
         {
-            return targetRoles.Length != 0;
+            return targetRoleNames.Length != 0;
+        }
+
+        private bool HasTargetRole()
+        {
+            var playerRoles = player.Roles;
+            if (playerRoles == null) return false;
+            foreach (var targetRoleName in targetRoleNames)
+            {
+                foreach (var playerRole in playerRoles)
+                {
+                    if (playerRole.RoleName != targetRoleName) continue;
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
