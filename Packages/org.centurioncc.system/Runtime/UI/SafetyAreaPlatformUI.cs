@@ -165,16 +165,16 @@ namespace CenturionCC.System.UI
             var p = playerManager;
             teamStatusText.text = string.Format(
                 teamStatusMessage,
-                p.GetTeamPlayers(0).Length,
-                p.GetModeratorTeamPlayers(0).Length,
-                p.GetTeamPlayers(1).Length,
-                p.GetModeratorTeamPlayers(1).Length,
-                p.GetTeamPlayers(2).Length,
-                p.GetModeratorTeamPlayers(2).Length,
-                p.GetTeamPlayers(3).Length,
-                p.GetModeratorTeamPlayers(3).Length,
-                p.GetTeamPlayers(4).Length,
-                p.GetModeratorTeamPlayers(4).Length
+                p.GetPlayersInTeam(0).Length,
+                p.GetModeratorPlayersInTeam(0).Length,
+                p.GetPlayersInTeam(1).Length,
+                p.GetModeratorPlayersInTeam(1).Length,
+                p.GetPlayersInTeam(2).Length,
+                p.GetModeratorPlayersInTeam(2).Length,
+                p.GetPlayersInTeam(3).Length,
+                p.GetModeratorPlayersInTeam(3).Length,
+                p.GetPlayersInTeam(4).Length,
+                p.GetModeratorPlayersInTeam(4).Length
             );
         }
 

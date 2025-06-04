@@ -102,7 +102,7 @@ namespace CenturionCC.System.Player
         /// <param name="teamId">The ID of the team whose players are to be retrieved.</param>
         /// <returns>An array of <see cref="PlayerBase"/> instances representing the players in the specified team. Returns an empty array if no players are found for the given team.</returns>
         [PublicAPI]
-        public virtual PlayerBase[] GetTeamPlayers(int teamId)
+        public virtual PlayerBase[] GetPlayersInTeam(int teamId)
         {
             var players = GetPlayers();
             var dataList = new DataList();
@@ -149,7 +149,7 @@ namespace CenturionCC.System.Player
         /// <param name="teamId">The ID of the team whose dead players should be retrieved.</param>
         /// <returns>An array of <see cref="PlayerBase"/> instances representing dead players in the specified team, or an empty array if no such players exist.</returns>
         [PublicAPI]
-        public virtual PlayerBase[] GetDeadTeamPlayers(int teamId)
+        public virtual PlayerBase[] GetDeadPlayersInTeam(int teamId)
         {
             var players = GetPlayers();
             var dataList = new DataList();
@@ -196,7 +196,7 @@ namespace CenturionCC.System.Player
         /// <param name="teamId">The ID of the team for which to retrieve the moderator players.</param>
         /// <returns>An array of <see cref="PlayerBase"/> instances representing the moderator players in the specified team, or an empty array if there are none.</returns>
         [PublicAPI]
-        public virtual PlayerBase[] GetModeratorTeamPlayers(int teamId)
+        public virtual PlayerBase[] GetModeratorPlayersInTeam(int teamId)
         {
             var players = GetPlayers();
             var dataList = new DataList();

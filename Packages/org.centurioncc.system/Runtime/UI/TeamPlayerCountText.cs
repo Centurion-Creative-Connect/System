@@ -48,11 +48,11 @@ namespace CenturionCC.System.UI
         {
             return format
                 .Replace("%total%", VRCPlayerApi.GetPlayerCount().ToString())
-                .Replace("%non%", playerManager.GetTeamPlayers(0).Length.ToString())
-                .Replace("%red%", playerManager.GetTeamPlayers(1).Length.ToString())
-                .Replace("%yel%", playerManager.GetTeamPlayers(2).Length.ToString())
-                .Replace("%gre%", playerManager.GetTeamPlayers(3).Length.ToString())
-                .Replace("%blu%", playerManager.GetTeamPlayers(4).Length.ToString());
+                .Replace("%non%", playerManager.GetPlayersInTeam(0).Length.ToString())
+                .Replace("%red%", playerManager.GetPlayersInTeam(1).Length.ToString())
+                .Replace("%yel%", playerManager.GetPlayersInTeam(2).Length.ToString())
+                .Replace("%gre%", playerManager.GetPlayersInTeam(3).Length.ToString())
+                .Replace("%blu%", playerManager.GetPlayersInTeam(4).Length.ToString());
         }
     }
 }
