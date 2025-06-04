@@ -104,11 +104,6 @@ namespace CenturionCC.System.Player.Centurion
             return GetPlayer(Networking.LocalPlayer);
         }
 
-        public override PlayerBase GetPlayerById(int vrcPlayerId)
-        {
-            return GetPlayer(VRCPlayerApi.GetPlayerById(vrcPlayerId));
-        }
-
         public override PlayerBase[] GetPlayers()
         {
             var players = new VRCPlayerApi[VRCPlayerApi.GetPlayerCount()];

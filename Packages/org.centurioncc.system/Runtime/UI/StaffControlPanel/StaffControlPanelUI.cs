@@ -108,9 +108,9 @@ namespace CenturionCC.System.UI.StaffControlPanel
 
             friendlyFireDropdown.value = (int)playerManager.FriendlyFireMode;
 
-            nonePlayerCountText.text = $"<color=grey>NON: {playerManager.GetTeamPlayerCount(0):00}</color>";
-            redPlayerCountText.text = $"<color=red>RED: {playerManager.GetTeamPlayerCount(1):00}</color>";
-            yellowPlayerCountText.text = $"<color=yellow>YEL: {playerManager.GetTeamPlayerCount(2):00}</color>";
+            nonePlayerCountText.text = $"<color=grey>NON: {playerManager.GetPlayersInTeam(0).Length:00}</color>";
+            redPlayerCountText.text = $"<color=red>RED: {playerManager.GetPlayersInTeam(1).Length:00}</color>";
+            yellowPlayerCountText.text = $"<color=yellow>YEL: {playerManager.GetPlayersInTeam(2).Length:00}</color>";
 
             systemStatistics.text = $"Shots: {_totalShots:0000}\n" +
                                     $"Hits : {_totalKills:0000}\n" +

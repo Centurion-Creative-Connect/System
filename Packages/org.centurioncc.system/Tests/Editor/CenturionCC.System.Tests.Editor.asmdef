@@ -1,24 +1,26 @@
 {
-  "name": "CenturionCC.System.Tests.Editor",
-  "rootNamespace": "CenturionCC.System.Tests.Editor",
-  "references": [
-    "CenturionCC.System",
-    "UdonSharp.Runtime"
-  ],
-  "includePlatforms": [
-    "Editor"
-  ],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": true,
-  "precompiledReferences": [
-    "nunit.framework.dll",
-    "VRCSDK3.dll"
-  ],
-  "autoReferenced": false,
-  "defineConstraints": [
-    "UNITY_INCLUDE_TESTS"
-  ],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "CenturionCC.System.Tests.Editor",
+    "rootNamespace": "CenturionCC.System.Tests.Editor",
+    "references": [
+        "UdonSharp.Runtime",
+        "DerpyNewbie.Common",
+        "CenturionCC.System"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "VRCSDK3.dll",
+        "VRCSDKBase.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
