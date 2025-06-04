@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Text;
-using CenturionCC.System.Player;
+using CenturionCC.System.Utils;
 using UnityEngine;
 using VRC.SDK3.Data;
 using VRC.SDKBase;
 
-namespace CenturionCC.System.Utils
+namespace CenturionCC.System.Player
 {
     public enum DamageInfoFields
     {
