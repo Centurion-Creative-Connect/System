@@ -177,6 +177,7 @@ namespace CenturionCC.System.Player.Centurion
             var colliders = GetComponentsInChildren<CenturionPlayerCollider>(true);
             foreach (var col in colliders)
             {
+                col.gameObject.SetActive(!playerManager.IsInStaffTeam(this));
                 col.IsDebugVisible = playerManager.IsDebug;
             }
 
