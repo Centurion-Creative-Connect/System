@@ -35,15 +35,7 @@ namespace CenturionCC.System.Player
         /// <param name="player">The <see cref="VRCPlayerApi"/> instance representing the player to retrieve.</param>
         /// <returns>The <see cref="PlayerBase"/> instance associated with the specified player, or null if not found.</returns>
         [PublicAPI] [CanBeNull]
-        public abstract PlayerBase GetPlayer(VRCPlayerApi player);
-
-        /// <summary>
-        /// Retrieves a player instance by their VRC player ID.
-        /// </summary>
-        /// <param name="vrcPlayerId">The VRC player ID of the player to retrieve.</param>
-        /// <returns>The <see cref="PlayerBase"/> instance corresponding to the specified VRC player ID, or <c>null</c> if no player is found.</returns>
-        [PublicAPI] [CanBeNull]
-        public abstract PlayerBase GetPlayerById(int vrcPlayerId);
+        public abstract PlayerBase GetPlayer([CanBeNull] VRCPlayerApi player);
 
         /// <summary>
         /// Retrieves an array of all player instances.
@@ -92,6 +84,17 @@ namespace CenturionCC.System.Player
         #endregion
 
         #region GetUtilities
+
+        /// <summary>
+        /// Retrieves a player instance by their VRC player ID.
+        /// </summary>
+        /// <param name="vrcPlayerId">The VRC player ID of the player to retrieve.</param>
+        /// <returns>The <see cref="PlayerBase"/> instance corresponding to the specified VRC player ID, or <c>null</c> if no player is found.</returns>
+        [PublicAPI] [CanBeNull]
+        public virtual PlayerBase GetPlayerById(int vrcPlayerId)
+        {
+            return GetPlayer(VRCPlayerApi.GetPlayerById(vrcPlayerId));
+        }
 
         /// <summary>
         /// Retrieves an array of players that belong to a specified team.
