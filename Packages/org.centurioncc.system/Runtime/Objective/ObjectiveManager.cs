@@ -20,6 +20,11 @@ namespace CenturionCC.System.Objective
             Invoke_OnObjectiveRemoved(objective, teamId);
         }
 
+        public override void Internal_OnObjectiveProgress(ObjectiveBase objective)
+        {
+            Invoke_OnObjectiveProgress(objective, objective.OwningTeamId);
+        }
+
         public override ObjectiveBase[] GetObjectives(int teamId)
         {
             var teamObjectives = GetTeamObjectivesDataList(teamId);

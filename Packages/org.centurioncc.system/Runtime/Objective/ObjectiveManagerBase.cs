@@ -15,7 +15,7 @@ namespace CenturionCC.System.Objective
         protected PrintableBase logger;
 
         /// <summary>
-        /// Called by ObjectiveBase when OwningTeamId is changed.
+        /// Called by ObjectiveBase when OwningTeamId has changed.
         /// </summary>
         /// <param name="objective"></param>
         /// <param name="teamId"></param>
@@ -23,11 +23,17 @@ namespace CenturionCC.System.Objective
 
 
         /// <summary>
-        /// Called by ObjectiveBase when OwningTeamId is changed.
+        /// Called by ObjectiveBase when OwningTeamId has changed.
         /// </summary>
         /// <param name="objective"></param>
         /// <param name="teamId"></param>
         public abstract void Internal_RemoveObjective(ObjectiveBase objective, int teamId);
+
+        /// <summary>
+        /// Called by ObjectiveBase when Progress has changed.
+        /// </summary>
+        /// <param name="objective"></param>
+        public abstract void Internal_OnObjectiveProgress(ObjectiveBase objective);
 
         /// <summary>
         /// Retrieves current active objectives for a specified team.
@@ -42,6 +48,25 @@ namespace CenturionCC.System.Objective
         /// </summary>
         [PublicAPI]
         public abstract void ResetObjectives();
+
+        #region Getters
+
+        [PublicAPI]
+        public virtual float GetObjectiveProgress(int teamId)
+        {
+            var objectives = GetObjectives(teamId);
+            if (objectives.Length == 0) return 0;
+
+            var totalProgress = 0F;
+            foreach (var objective in objectives)
+            {
+                totalProgress += objective.Progress;
+            }
+
+            return totalProgress / objectives.Length;
+        }
+
+        #endregion
 
         #region EventCallbacks
 
@@ -60,7 +85,7 @@ namespace CenturionCC.System.Objective
             CallbackUtil.RemoveBehaviour(callback, ref EventCallbacksCount, ref EventCallbacks);
         }
 
-        public virtual void Invoke_OnObjectiveAdded(ObjectiveBase objective, int teamId)
+        protected virtual void Invoke_OnObjectiveAdded(ObjectiveBase objective, int teamId)
         {
             logger.Log($"{LogPrefix}OnObjectiveAdded: {objective.name}, {teamId}");
             foreach (var callback in EventCallbacks)
@@ -70,7 +95,7 @@ namespace CenturionCC.System.Objective
             }
         }
 
-        public virtual void Invoke_OnObjectiveStarted()
+        protected virtual void Invoke_OnObjectiveStarted()
         {
             logger.Log($"{LogPrefix}OnObjectiveStarted");
             foreach (var callback in EventCallbacks)
@@ -80,7 +105,7 @@ namespace CenturionCC.System.Objective
             }
         }
 
-        public virtual void Invoke_OnObjectivePaused()
+        protected virtual void Invoke_OnObjectivePaused()
         {
             logger.Log($"{LogPrefix}OnObjectivePaused");
             foreach (var callback in EventCallbacks)
@@ -90,7 +115,7 @@ namespace CenturionCC.System.Objective
             }
         }
 
-        public virtual void Invoke_OnObjectiveResumed()
+        protected virtual void Invoke_OnObjectiveResumed()
         {
             logger.Log($"{LogPrefix}OnObjectiveResumed");
             foreach (var callback in EventCallbacks)
@@ -100,7 +125,7 @@ namespace CenturionCC.System.Objective
             }
         }
 
-        public virtual void Invoke_OnObjectiveProgress(ObjectiveBase objective, int teamId)
+        protected virtual void Invoke_OnObjectiveProgress(ObjectiveBase objective, int teamId)
         {
             logger.Log($"{LogPrefix}OnObjectiveProgress: {objective.name}, {teamId}");
             foreach (var callback in EventCallbacks)
@@ -110,7 +135,7 @@ namespace CenturionCC.System.Objective
             }
         }
 
-        public virtual void Invoke_OnObjectiveCompleted(int teamId)
+        protected virtual void Invoke_OnObjectiveCompleted(int teamId)
         {
             logger.Log($"{LogPrefix}OnObjectiveCompleted: {teamId}");
             foreach (var callback in EventCallbacks)
@@ -120,7 +145,7 @@ namespace CenturionCC.System.Objective
             }
         }
 
-        public virtual void Invoke_OnObjectiveRemoved(ObjectiveBase objective, int teamId)
+        protected virtual void Invoke_OnObjectiveRemoved(ObjectiveBase objective, int teamId)
         {
             logger.Log($"{LogPrefix}OnObjectiveRemoved: {objective.name}, {teamId}");
             foreach (var callback in EventCallbacks)
