@@ -10,22 +10,22 @@ namespace CenturionCC.System.Objective.Player
     {
         [Header("Required by PlayerManager related Objectives")]
         [SerializeField] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         [SerializeField] [NewbieInject(SearchScope.Self)]
         private PlayerManagerObjectiveBase[] playerManagerObjectives;
 
         private void OnEnable()
         {
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
         }
 
         private void OnDisable()
         {
-            playerManager.UnsubscribeCallback(this);
+            playerManager.Unsubscribe(this);
         }
 
-        public override void OnKilled(PlayerBase attcker, PlayerBase victim, KillType type)
+        public override void OnPlayerKilled(PlayerBase attcker, PlayerBase victim, KillType type)
         {
             foreach (var pmObjective in playerManagerObjectives)
             {

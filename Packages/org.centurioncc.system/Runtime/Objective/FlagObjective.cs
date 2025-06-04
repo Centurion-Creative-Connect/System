@@ -10,7 +10,7 @@ namespace CenturionCC.System.Objective
     public class FlagObjective : ObjectiveBase
     {
         [SerializeField] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         [SerializeField] [NewbieInject(SearchScope.Self)]
         private AudioSource audioSource;
