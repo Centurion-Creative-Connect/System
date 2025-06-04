@@ -9,7 +9,7 @@ namespace CenturionCC.System.Objective.Player
     public abstract class PlayerManagerObjectiveBase : ObjectiveBase
     {
         [SerializeField] [NewbieInject]
-        private PlayerManagerBase playerManager;
+        protected PlayerManagerBase playerManager;
 
         public virtual void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {

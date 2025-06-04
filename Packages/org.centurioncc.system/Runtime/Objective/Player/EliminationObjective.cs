@@ -1,6 +1,6 @@
-﻿using System;
-using CenturionCC.System.Player;
-using DerpyNewbie.Common;
+﻿using CenturionCC.System.Player;
+using JetBrains.Annotations;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 
@@ -8,6 +8,19 @@ namespace CenturionCC.System.Objective.Player
 {
     public class EliminationObjective : PlayerManagerObjectiveBase
     {
+        [SerializeField] [UdonSynced]
+        private int targetTeamId;
+
+        public int TargetTeamId
+        {
+            get => targetTeamId;
+            private set
+            {
+                targetTeamId = value;
+                UpdateProgress();
+            }
+        }
+
         protected override void OnObjectiveStart()
         {
             UpdateProgress();
@@ -23,8 +36,26 @@ namespace CenturionCC.System.Objective.Player
             UpdateProgress();
         }
 
+        public override void OnPlayerRevived(PlayerBase player)
+        {
+            UpdateProgress();
+        }
+
+        [PublicAPI]
+        public void SetTargetTeamId(int teamId)
+        {
+            TargetTeamId = teamId;
+            RequestSync();
+        }
+
         private void UpdateProgress()
         {
+            if (!Networking.IsMaster) return;
+            if (!IsActiveAndRunning) return;
+
+            var teamPlayersCount = playerManager.GetTeamPlayers(TargetTeamId).Length;
+            var deadTeamPlayersCount = playerManager.GetDeadTeamPlayers(TargetTeamId).Length;
+            SetProgress(deadTeamPlayersCount / (float)teamPlayersCount);
         }
     }
 }
