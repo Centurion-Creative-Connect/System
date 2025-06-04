@@ -164,6 +164,53 @@ namespace CenturionCC.System.Player
             return result;
         }
 
+        /// <summary>
+        /// Retrieves an array of all players designated as moderators.
+        /// </summary>
+        /// <returns>An array of <see cref="PlayerBase"/> instances representing the moderator players.</returns>
+        [PublicAPI]
+        public virtual PlayerBase[] GetModeratorPlayers()
+        {
+            var players = GetPlayers();
+            var dataList = new DataList();
+            foreach (var player in players)
+            {
+                if (player.Roles.HasPermission()) dataList.Add(player);
+            }
+
+            var result = new PlayerBase[dataList.Count];
+            for (var i = 0; i < dataList.Count; i++)
+            {
+                result[i] = (PlayerBase)dataList[i].Reference;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Retrieves all moderator players belonging to the specified team.
+        /// </summary>
+        /// <param name="teamId">The ID of the team for which to retrieve the moderator players.</param>
+        /// <returns>An array of <see cref="PlayerBase"/> instances representing the moderator players in the specified team, or an empty array if there are none.</returns>
+        [PublicAPI]
+        public virtual PlayerBase[] GetModeratorTeamPlayers(int teamId)
+        {
+            var players = GetPlayers();
+            var dataList = new DataList();
+            foreach (var player in players)
+            {
+                if (player.TeamId == teamId && player.Roles.HasPermission()) dataList.Add(player);
+            }
+
+            var result = new PlayerBase[dataList.Count];
+            for (var i = 0; i < dataList.Count; i++)
+            {
+                result[i] = (PlayerBase)dataList[i].Reference;
+            }
+
+            return result;
+        }
+
         #endregion
 
         #region CheckUtilities
