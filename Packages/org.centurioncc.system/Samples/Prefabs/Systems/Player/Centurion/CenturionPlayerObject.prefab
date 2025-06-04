@@ -61,6 +61,7 @@ MonoBehaviour:
   meshRenderer: {fileID: 6846127577321367934}
   capsule: {fileID: 298421036956326812}
   heightOffset: 0.1
+  centerOffset: {x: 0, y: 0, z: 0}
   parts: 3
   boneFrom: 14
   boneTo: 16
@@ -174,6 +175,7 @@ MonoBehaviour:
   meshRenderer: {fileID: 6675175502711218898}
   capsule: {fileID: 1715515774091393768}
   heightOffset: 0.1
+  centerOffset: {x: 0, y: 0, z: 0}
   parts: 5
   boneFrom: 2
   boneTo: 4
@@ -332,13 +334,13 @@ MonoBehaviour:
   showOnDeath: 1
   showOnFriendlyTeam: 0
   showOnFreeForAllTeam: 0
-  excludeStaffTeam: 0
   showOnStaffTeam: 0
+  excludeStaffTeam: 0
   onlyShowOnMaster: 0
+  targetRoleNames: []
   isTeamTag: 0
   isStaffTag: 0
   isCreatorTag: 0
-  targetRoleNames: []
 --- !u!114 &2980174491386184434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -591,7 +593,8 @@ MonoBehaviour:
   player: {fileID: 8542596109361465816}
   meshRenderer: {fileID: 3331035708771460879}
   capsule: {fileID: 2520028022023955008}
-  heightOffset: 0.2
+  heightOffset: 0.6
+  centerOffset: {x: 0, y: 0, z: -0.3}
   parts: 0
   boneFrom: 0
   boneTo: 7
@@ -788,6 +791,7 @@ MonoBehaviour:
   meshRenderer: {fileID: 5279315431311349576}
   capsule: {fileID: 7516997435122681007}
   heightOffset: 0.1
+  centerOffset: {x: 0, y: 0, z: 0}
   parts: 5
   boneFrom: 4
   boneTo: 6
@@ -901,6 +905,7 @@ MonoBehaviour:
   meshRenderer: {fileID: 544268151106928882}
   capsule: {fileID: 1267459974914883591}
   heightOffset: 0.2
+  centerOffset: {x: 0, y: 0, z: 0}
   parts: 0
   boneFrom: 8
   boneTo: 9
@@ -1059,13 +1064,13 @@ MonoBehaviour:
   showOnDeath: 0
   showOnFriendlyTeam: 0
   showOnFreeForAllTeam: 0
-  excludeStaffTeam: 0
   showOnStaffTeam: 1
+  excludeStaffTeam: 0
   onlyShowOnMaster: 0
+  targetRoleNames: []
   isTeamTag: 1
   isStaffTag: 0
   isCreatorTag: 0
-  targetRoleNames: []
 --- !u!114 &8443132055909105236
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1199,14 +1204,14 @@ MonoBehaviour:
   showOnDeath: 0
   showOnFriendlyTeam: 0
   showOnFreeForAllTeam: 1
-  excludeStaffTeam: 0
   showOnStaffTeam: 1
+  excludeStaffTeam: 0
   onlyShowOnMaster: 0
+  targetRoleNames:
+  - Staff
   isTeamTag: 0
   isStaffTag: 1
   isCreatorTag: 0
-  targetRoleNames:
-  - Staff
 --- !u!114 &6880914838522479752
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1460,6 +1465,7 @@ MonoBehaviour:
   meshRenderer: {fileID: 832692283920716976}
   capsule: {fileID: 7450241792176876126}
   heightOffset: 0.1
+  centerOffset: {x: 0, y: 0, z: 0}
   parts: 4
   boneFrom: 1
   boneTo: 3
@@ -1619,14 +1625,14 @@ MonoBehaviour:
   showOnDeath: 0
   showOnFriendlyTeam: 0
   showOnFreeForAllTeam: 1
-  excludeStaffTeam: 0
   showOnStaffTeam: 1
+  excludeStaffTeam: 0
   onlyShowOnMaster: 0
+  targetRoleNames:
+  - Dev
   isTeamTag: 0
   isStaffTag: 1
   isCreatorTag: 0
-  targetRoleNames:
-  - Dev
 --- !u!114 &9055797631606315451
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1714,6 +1720,7 @@ MonoBehaviour:
   meshRenderer: {fileID: 2479626517846718057}
   capsule: {fileID: 3228357660352986276}
   heightOffset: 0.1
+  centerOffset: {x: 0, y: 0, z: 0}
   parts: 3
   boneFrom: 16
   boneTo: 18
@@ -1991,13 +1998,13 @@ MonoBehaviour:
   showOnDeath: 0
   showOnFriendlyTeam: 0
   showOnFreeForAllTeam: 1
-  excludeStaffTeam: 0
   showOnStaffTeam: 1
+  excludeStaffTeam: 0
   onlyShowOnMaster: 1
+  targetRoleNames: []
   isTeamTag: 0
   isStaffTag: 1
   isCreatorTag: 0
-  targetRoleNames: []
 --- !u!114 &5844938545769143726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2380,13 +2387,13 @@ MonoBehaviour:
   showOnDeath: 0
   showOnFriendlyTeam: 1
   showOnFreeForAllTeam: 1
-  excludeStaffTeam: 1
   showOnStaffTeam: 0
+  excludeStaffTeam: 1
   onlyShowOnMaster: 0
+  targetRoleNames: []
   isTeamTag: 1
   isStaffTag: 0
   isCreatorTag: 0
-  targetRoleNames: []
 --- !u!114 &7657342832841936441
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2474,6 +2481,7 @@ MonoBehaviour:
   meshRenderer: {fileID: 5562502025317598276}
   capsule: {fileID: 787073672534819247}
   heightOffset: 0.1
+  centerOffset: {x: 0, y: 0, z: 0}
   parts: 4
   boneFrom: 3
   boneTo: 5
@@ -2759,14 +2767,14 @@ MonoBehaviour:
   showOnDeath: 0
   showOnFriendlyTeam: 0
   showOnFreeForAllTeam: 1
-  excludeStaffTeam: 0
   showOnStaffTeam: 1
+  excludeStaffTeam: 0
   onlyShowOnMaster: 0
+  targetRoleNames:
+  - Creator
   isTeamTag: 0
   isStaffTag: 0
   isCreatorTag: 1
-  targetRoleNames:
-  - Creator
 --- !u!114 &4752593175592524378
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2900,14 +2908,14 @@ MonoBehaviour:
   showOnDeath: 0
   showOnFriendlyTeam: 0
   showOnFreeForAllTeam: 1
-  excludeStaffTeam: 0
   showOnStaffTeam: 1
+  excludeStaffTeam: 0
   onlyShowOnMaster: 0
+  targetRoleNames:
+  - Owner
   isTeamTag: 0
   isStaffTag: 1
   isCreatorTag: 0
-  targetRoleNames:
-  - Owner
 --- !u!114 &5181512851283127185
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2995,6 +3003,7 @@ MonoBehaviour:
   meshRenderer: {fileID: 1269123897737442747}
   capsule: {fileID: 5834204878721837703}
   heightOffset: 0.3
+  centerOffset: {x: 0, y: 0, z: 0}
   parts: 1
   boneFrom: 9
   boneTo: 10
@@ -3290,6 +3299,7 @@ MonoBehaviour:
   meshRenderer: {fileID: 4208281845942573754}
   capsule: {fileID: 8927609112496734351}
   heightOffset: 0.2
+  centerOffset: {x: 0, y: 0, z: 0}
   parts: 0
   boneFrom: 7
   boneTo: 8
@@ -3403,6 +3413,7 @@ MonoBehaviour:
   meshRenderer: {fileID: 7268443384683402286}
   capsule: {fileID: 3968405565974680}
   heightOffset: 0.1
+  centerOffset: {x: 0, y: 0, z: 0}
   parts: 2
   boneFrom: 15
   boneTo: 17
@@ -3682,6 +3693,7 @@ MonoBehaviour:
   meshRenderer: {fileID: 8649366842133351741}
   capsule: {fileID: 1403710398866968324}
   heightOffset: 0.1
+  centerOffset: {x: 0, y: 0, z: 0}
   parts: 2
   boneFrom: 13
   boneTo: 15

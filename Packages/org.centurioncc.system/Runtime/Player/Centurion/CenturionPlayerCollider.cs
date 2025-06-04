@@ -22,6 +22,9 @@ namespace CenturionCC.System.Player.Centurion
         private float heightOffset = 0.25F;
 
         [SerializeField]
+        private Vector3 centerOffset;
+
+        [SerializeField]
         private BodyParts parts;
 
         [SerializeField]
@@ -114,7 +117,7 @@ namespace CenturionCC.System.Player.Centurion
             transform.localScale = new Vector3(1, 1, len + heightOffset);
             _calibratedRotOffset = Quaternion.Inverse(_vrcPlayer.GetBoneRotation(boneFrom)) *
                                    Quaternion.LookRotation(to - from);
-            _calibratedPosOffset = Vector3.forward * ((len + heightOffset) / 2.0F);
+            _calibratedPosOffset = centerOffset + Vector3.forward * ((len + heightOffset) / 2.0F);
         }
 
         private void UpdateVisibility()
