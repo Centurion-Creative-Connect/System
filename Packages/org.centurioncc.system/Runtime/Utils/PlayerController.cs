@@ -29,7 +29,7 @@ namespace CenturionCC.System.Utils
         private GunManager gunManager;
 
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         private readonly DataList _activeTags = new DataList();
         private readonly DataList _heldObjects = new DataList();

@@ -1,6 +1,7 @@
 ﻿using CenturionCC.System.UI;
 using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
+using DerpyNewbie.Common.Role;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -10,6 +11,16 @@ namespace CenturionCC.System.Player
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PlayerManagerNotificationSender : PlayerManagerCallbackBase
     {
+        [SerializeField] [NewbieInject]
+        private PlayerManagerBase playerManager;
+
+        [SerializeField] [NewbieInject]
+        private NotificationProvider notification;
+
+        [SerializeField] [NewbieInject]
+        private RoleProvider roleProvider;
+
+
         [Header("Team Change Messages")] [SerializeField]
         private TranslatableMessage[] teamChangeNotificationMessages;
 
@@ -38,18 +49,12 @@ namespace CenturionCC.System.Player
 
         [SerializeField] private TranslatableMessage[] friendlyFireModes;
 
-        [SerializeField] [HideInInspector] [NewbieInject]
-        private NotificationProvider notification;
-
-        [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
-
         private void Start()
         {
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
         }
 
-        public override void OnTeamChanged(PlayerBase player, int oldTeam)
+        public override void OnPlayerTeamChanged(PlayerBase player, int oldTeam)
         {
             var vrcPlayer = player.VrcPlayer;
             if (vrcPlayer == null || !vrcPlayer.isLocal) return;
@@ -83,7 +88,7 @@ namespace CenturionCC.System.Player
                 case TagType.Dev:
                 case TagType.Staff:
                 {
-                    if (playerManager.RoleManager.GetPlayerRole().HasPermission())
+                    if (roleProvider.GetPlayerRoles().HasPermission())
                         notification.ShowInfo(isOn
                             ? onStaffTagEnabledMessage.Message
                             : onStaffTagDisabledMessage.Message);
@@ -120,7 +125,7 @@ namespace CenturionCC.System.Player
             );
         }
 
-        public override void OnKilled(PlayerBase attacker, PlayerBase victim, KillType type)
+        public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
             string fmt;
             PlayerBase target;
@@ -149,18 +154,18 @@ namespace CenturionCC.System.Player
             }
 
             notification.ShowError(
-                string.Format(fmt, playerManager.GetHumanFriendlyColoredName(target)),
+                string.Format(fmt, target.DisplayName),
                 5F,
                 1325453321 + victim.PlayerId // string.GetHashCode() of "FRIENDLY_FIRE_WARNING" plus victim player id
             );
         }
 
-        public override void OnFriendlyFireWarning(PlayerBase victim, DamageData damageData, Vector3 contactPoint)
+        public override void OnPlayerFriendlyFireWarning(PlayerBase victim, DamageInfo damageInfo)
         {
             if (onFriendlyFireWarningMessage == null) return;
 
             notification.ShowWarn(
-                string.Format(onFriendlyFireWarningMessage.Message, playerManager.GetHumanFriendlyColoredName(victim)),
+                string.Format(onFriendlyFireWarningMessage.Message, victim.DisplayName),
                 5F,
                 1325453321 + victim.PlayerId // string.GetHashCode() of "FRIENDLY_FIRE_WARNING" plus victim player id
             );

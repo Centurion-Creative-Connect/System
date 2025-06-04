@@ -1,5 +1,4 @@
-﻿using CenturionCC.System.Player.MassPlayer;
-using CenturionCC.System.Utils;
+﻿using CenturionCC.System.Utils;
 using DerpyNewbie.Common.Role;
 using JetBrains.Annotations;
 using UdonSharp;
@@ -8,83 +7,107 @@ using VRC.SDKBase;
 
 namespace CenturionCC.System.Player
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)] [RequireComponent(typeof(LastHitData))]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public abstract class PlayerBase : UdonSharpBehaviour
     {
-        [SerializeField]
-        private LastHitData lastHitData;
+        // UdonSharp does not support merge conditional expr
+        // ReSharper disable once MergeConditionalExpression
 
         [PublicAPI]
-        public abstract int PlayerId { get; }
+        public abstract float Health { get; }
 
         [PublicAPI]
-        public virtual int Index { get; protected set; } = -1;
+        public abstract float MaxHealth { get; }
 
         [PublicAPI]
         public abstract int TeamId { get; }
 
         [PublicAPI]
-        public virtual int Kills { get; set; }
+        public abstract int Kills { get; set; }
 
         [PublicAPI]
-        public virtual int Deaths { get; set; }
+        public abstract int Deaths { get; set; }
 
         [PublicAPI]
-        public virtual LastHitData LastHitData => lastHitData;
-
-        [PublicAPI]
-        public virtual bool IsAssigned => PlayerId != -1;
+        public virtual int PlayerId => VrcPlayer != null ? VrcPlayer.playerId : -1;
 
         [PublicAPI]
         public virtual bool IsLocal => PlayerId == Networking.LocalPlayer.playerId;
 
         [PublicAPI]
-        public abstract bool IsDead { get; }
+        public virtual bool IsDead => Health <= 0;
 
         [PublicAPI] [CanBeNull]
         public abstract VRCPlayerApi VrcPlayer { get; }
 
         [PublicAPI] [CanBeNull]
-        public abstract RoleData Role { get; }
+        public abstract RoleData[] Roles { get; }
 
         [PublicAPI]
-        public virtual void SetId(int id)
-        {
-            if (Index != -1)
-                return;
-
-            Index = id;
-        }
+        public virtual DamageInfo LastDamageInfo { get; protected set; }
 
         [PublicAPI]
-        public abstract void SetPlayer(int vrcPlayerId);
+        public virtual string DisplayName => VrcPlayer.SafeGetDisplayName();
 
-        [PublicAPI]
-        public abstract void SetTeam(int teamId);
-
+        /// <summary>
+        /// Update visuals of player.
+        /// </summary>
         [PublicAPI]
         public abstract void UpdateView();
 
+        /// <summary>
+        /// Resets everything to default values.
+        /// </summary>
         [PublicAPI]
-        public abstract void Sync();
+        public abstract void ResetToDefault();
 
+        /// <summary>
+        /// Sets current team.
+        /// </summary>
+        /// <param name="teamId"></param>
         [PublicAPI]
-        public abstract void ResetPlayer();
+        public abstract void SetTeam(int teamId);
 
+        /// <summary>
+        /// Sets current health.
+        /// </summary>
+        /// <param name="health"></param>
         [PublicAPI]
-        public abstract void ResetStats();
+        public abstract void SetHealth(float health);
 
+        /// <summary>
+        /// Sets max health.
+        /// </summary>
+        /// <param name="maxHealth"></param>
         [PublicAPI]
-        public abstract void OnDamage(PlayerCollider playerCollider, DamageData data, Vector3 contactPoint);
+        public abstract void SetMaxHealth(float maxHealth);
 
+        /// <summary>
+        /// Called by PlayerColliderBase when it has collided with DamageData.
+        /// </summary>
+        /// <param name="playerCollider"></param>
+        /// <param name="data"></param>
+        /// <param name="contactPoint"></param>
+        [PublicAPI]
+        public abstract void OnLocalHit(PlayerColliderBase playerCollider, DamageData data, Vector3 contactPoint);
+
+        /// <summary>
+        /// Subtract current health by DamageInfo.
+        /// </summary>
+        /// <param name="info"></param>
+        [PublicAPI]
+        public abstract void ApplyDamage(DamageInfo info);
+
+        /// <summary>
+        /// Set current health to 0.
+        /// </summary>
         [PublicAPI]
         public abstract void Kill();
 
+        /// <summary>
+        /// Set current health to max health.
+        /// </summary>
         [PublicAPI]
         public abstract void Revive();
-
-        public virtual void OnHitDataUpdated()
-        {
-        }
     }
 }

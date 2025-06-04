@@ -3,6 +3,7 @@ using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
+using VRC.SDKBase;
 
 namespace CenturionCC.System.UI
 {
@@ -10,10 +11,11 @@ namespace CenturionCC.System.UI
     public class TeamPlayerCountText : PlayerManagerCallbackBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         [SerializeField]
         private Text text;
+
         [SerializeField] [TextArea]
         private string format = "<b>Players In Team</b>\n" +
                                 "<color=grey>None</color>  : %non%\n" +
@@ -22,17 +24,17 @@ namespace CenturionCC.System.UI
 
         private void Start()
         {
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
             UpdateText();
             SendCustomEventDelayedSeconds(nameof(UpdateText), 10F);
         }
 
-        public override void OnPlayerChanged(PlayerBase player, int oldId, int newId)
+        public override void OnPlayerAdded(PlayerBase player)
         {
             UpdateText();
         }
 
-        public override void OnTeamChanged(PlayerBase player, int oldTeam)
+        public override void OnPlayerTeamChanged(PlayerBase player, int oldTeam)
         {
             UpdateText();
         }
@@ -42,15 +44,15 @@ namespace CenturionCC.System.UI
             text.text = GetFormattedText(playerManager, format);
         }
 
-        private static string GetFormattedText(PlayerManager playerManager, string format)
+        private static string GetFormattedText(PlayerManagerBase playerManager, string format)
         {
             return format
-                .Replace("%total%", playerManager.PlayerCount.ToString())
-                .Replace("%non%", playerManager.NoneTeamPlayerCount.ToString())
-                .Replace("%red%", playerManager.RedTeamPlayerCount.ToString())
-                .Replace("%yel%", playerManager.YellowTeamPlayerCount.ToString())
-                .Replace("%gre%", playerManager.GreenTeamPlayerCount.ToString())
-                .Replace("%blu%", playerManager.BlueTeamPlayerCount.ToString());
+                .Replace("%total%", VRCPlayerApi.GetPlayerCount().ToString())
+                .Replace("%non%", playerManager.GetTeamPlayerCount(0).ToString())
+                .Replace("%red%", playerManager.GetTeamPlayerCount(1).ToString())
+                .Replace("%yel%", playerManager.GetTeamPlayerCount(2).ToString())
+                .Replace("%gre%", playerManager.GetTeamPlayerCount(3).ToString())
+                .Replace("%blu%", playerManager.GetTeamPlayerCount(4).ToString());
         }
     }
 }

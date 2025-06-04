@@ -24,24 +24,17 @@ namespace CenturionCC.System
 
         [Obsolete] public LocalHitEffect hitEffect;
 
-        public PlayerManager players;
+        public PlayerManagerBase players;
         public GunManager guns;
         public WallManager wall;
         public AudioManager audioManager;
         public RoleProvider roleProvider;
         public PlayerMovement movement;
         public PrintableBase logger;
-
-        [Obsolete] public EventLogger eventLogger;
-
         [Obsolete] public FootstepGenerator footstep;
 
         public ModeratorTool moderatorTool;
         public NotificationProvider notification;
-
-        [NewbieInject] public DamageDataResolver resolver;
-
-        [NewbieInject] public DamageDataSyncerManager syncer;
 
         private readonly string _prefix = "<color=yellow>GameManager</color>::";
 
@@ -126,7 +119,7 @@ namespace CenturionCC.System
         }
 
         [PublicAPI]
-        public static PlayerManager GetPlayerManager()
+        public static PlayerManagerBase GetPlayerManager()
         {
             return GetGameManager().players;
         }

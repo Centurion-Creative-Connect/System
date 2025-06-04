@@ -10,31 +10,34 @@ namespace CenturionCC.System.UI.Scoreboard
     {
         [SerializeField]
         private GameObject sourceScoreboardElement;
+
         [SerializeField]
         private Transform reserve;
+
         [SerializeField]
         private Transform yelList;
+
         [SerializeField]
         private Transform redList;
 
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         private ScoreboardPlayerStats[] _generatedScoreboardElement = new ScoreboardPlayerStats[0];
 
         private void Start()
         {
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
         }
 
-        public override void OnPlayerChanged(PlayerBase player, int oldId, int newId)
+        public override void OnPlayerAdded(PlayerBase player)
         {
             var element = GetOrCreateElement(player);
             if (element == null)
                 return;
 
             // If element's referenced player was unassigned, then remove element itself.
-            if (element.Source == null || !element.Source.IsAssigned)
+            if (!element.Source)
             {
                 RemoveElement(element);
                 return;
@@ -43,10 +46,10 @@ namespace CenturionCC.System.UI.Scoreboard
             element.UpdateText();
         }
 
-        public override void OnTeamChanged(PlayerBase player, int oldTeam)
+        public override void OnPlayerTeamChanged(PlayerBase player, int oldTeam)
         {
             var element = GetOrCreateElement(player);
-            if (element == null)
+            if (!element)
                 return;
 
             var target = reserve;
@@ -65,16 +68,16 @@ namespace CenturionCC.System.UI.Scoreboard
             SortScoreboard();
         }
 
-        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
+        public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
             SortScoreboard();
         }
 
-        public override void OnResetPlayerStats(PlayerBase player)
+        public override void OnPlayerReset(PlayerBase player)
         {
             var element = GetOrCreateElement(player);
 
-            if (element != null)
+            if (element)
                 element.UpdateText();
         }
 
@@ -83,7 +86,7 @@ namespace CenturionCC.System.UI.Scoreboard
             foreach (var element in _generatedScoreboardElement)
             {
                 var source = element.Source;
-                if (source != null && source.PlayerId == player.PlayerId)
+                if (source && source.PlayerId == player.PlayerId)
                     return element;
             }
 
