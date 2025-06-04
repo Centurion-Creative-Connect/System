@@ -10,13 +10,18 @@ namespace CenturionCC.System.Utils
     {
         [SerializeField]
         private bool requireTriggerToDamage = true;
+
         [SerializeField]
         private bool hideMeshRendererOnPickup;
+
         [SerializeField]
         private MeshRenderer meshRenderer;
+
         private DateTime _originTime = default;
 
         private bool _shouldApplyDamage;
+
+        public override Guid EventId => Guid.NewGuid();
         public override bool ShouldApplyDamage => _shouldApplyDamage;
         public override int DamagerPlayerId => Networking.LocalPlayer.playerId;
         public override Vector3 DamageOriginPosition => transform.position;

@@ -15,21 +15,25 @@ namespace CenturionCC.System.Gun
 
         [SerializeField]
         private GunManager gunManager;
+
         [SerializeField]
         private TrailRenderer trailRenderer;
+
         [SerializeField]
         private TrailRenderer debugTrailRenderer;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private UpdateManager updateManager;
-        private Collider _collider;
 
+        private Collider _collider;
         private Vector3 _damageOriginPos;
         private Quaternion _damageOriginRot;
         private DateTime _damageOriginTime;
 
         private int _damagerPlayerId;
         private string _damageType;
+
+        private Guid _eventId;
         private float _hopUpStrength;
         private Vector3 _initialRotationUp;
         private Vector3 _nextTorque;
@@ -41,8 +45,11 @@ namespace CenturionCC.System.Gun
         private bool UseTrail => gunManager.useBulletTrail && _nextUseTrail;
         private bool UseDebugTrail => gunManager.useDebugBulletTrail;
 
+        public override Guid EventId => _eventId;
+
         public override bool ShouldApplyDamage =>
             gunManager.allowedRicochetCount + 1 >= _ricochetCount;
+
         public override int DamagerPlayerId => _damagerPlayerId;
         public override Vector3 DamageOriginPosition => _damageOriginPos;
         public override Quaternion DamageOriginRotation => _damageOriginRot;
@@ -64,12 +71,14 @@ namespace CenturionCC.System.Gun
                 gunManager.RicochetHandler.OnRicochet(this, collision);
         }
 
-        public override void Shoot(Vector3 pos, Quaternion rot, Vector3 velocity, Vector3 torque, float drag,
+        public override void Shoot(Guid eventId, Vector3 pos, Quaternion rot, Vector3 velocity, Vector3 torque,
+            float drag,
             string damageType, DateTime time, int playerId,
             float trailTime, Gradient trailGradient,
             float lifeTimeInSeconds)
         {
             // Damage data
+            _eventId = eventId;
             _damageOriginPos = pos;
             _damageOriginRot = rot;
             _damageOriginTime = time;

@@ -8,6 +8,7 @@ using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.UdonNetworkCalling;
 using VRC.SDKBase;
 using VRC.Udon.Common;
 using VRC.Udon.Common.Interfaces;
@@ -64,9 +65,7 @@ namespace CenturionCC.System.Gun
         private float _nextMainHandlePickupableTime;
         private float _nextSubHandlePickupableTime;
 
-        [UdonSynced] private Vector3 _shotPosition;
-        [UdonSynced] private Quaternion _shotRotation;
-        [UdonSynced] private long _shotTime;
+        private long _shotTime;
 
         private bool _subHandleIsPickedUp;
 
@@ -202,31 +201,6 @@ namespace CenturionCC.System.Gun
                 TargetAnimator.SetBool(IsInWallAnimHash, IsInWall);
         }
 
-        public override void OnDeserialization()
-        {
-            ProcessShotCountData();
-        }
-
-        private void ProcessShotCountData()
-        {
-            if (ShotCount == _lastShotCount)
-                return;
-
-#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            Logger.LogVerbose(
-                $"{Prefix}Received new shot: {ShotCount}:{_shotPosition.ToString("2F")}, {_shotRotation.eulerAngles.ToString("2F")}");
-#endif
-
-            if (ShotCount <= 0 || _lastShotCount == -1)
-            {
-                _lastShotCount = ShotCount;
-                return;
-            }
-
-            _lastShotCount = ShotCount;
-            Internal_Shoot();
-        }
-
         public virtual void _Update()
         {
             if (IsOptimized && !IsLocal)
@@ -319,14 +293,8 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public override void Shoot()
         {
-            _shotPosition = ShooterPosition;
-            _shotRotation = ShooterRotation;
-            _shotTime = Networking.GetNetworkDateTime().Ticks;
-            ++ShotCount;
-
-            Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
-            RequestSerialization();
-            ProcessShotCountData();
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_Shoot),
+                ShooterPosition, ShooterRotation, ShotCount++, Guid.NewGuid().ToByteArray());
         }
 
         [PublicAPI]
@@ -777,7 +745,8 @@ namespace CenturionCC.System.Gun
 
         #region Internals
 
-        protected void Internal_Shoot()
+        [NetworkCallable(100)]
+        public void Internal_Shoot(Vector3 position, Quaternion rotation, int shotCount, byte[] shotId)
         {
             var data = ProjectileData;
             if (data == null)
@@ -799,13 +768,16 @@ namespace CenturionCC.System.Gun
                 return;
             }
 
+            _shotTime = Networking.GetNetworkDateTime().Ticks;
+
             var playerId = -1;
-            if (CurrentHolder != null && Utilities.IsValid(CurrentHolder))
+            if (NetworkCalling.InNetworkCall)
+                playerId = NetworkCalling.CallingPlayer.playerId;
+            else if (CurrentHolder != null && Utilities.IsValid(CurrentHolder))
                 playerId = CurrentHolder.playerId;
 
-            var dataIndexOffset = ShotCount * data.ProjectileCount;
-            var pos = _shotPosition;
-            var rot = _shotRotation;
+            var dataIndexOffset = shotCount * data.ProjectileCount;
+            var shotGuid = new Guid(shotId);
 
             for (int i = 0; i < data.ProjectileCount; i++)
             {
@@ -819,11 +791,12 @@ namespace CenturionCC.System.Gun
                     out var lifeTimeInSeconds
                 );
 
-                var tempRot = rot * rotOffset;
-                var tempPos = pos + (tempRot * posOffset);
+                var tempRot = rotation * rotOffset;
+                var tempPos = position + (tempRot * posOffset);
 
                 var projectile = pool.Shoot
                 (
+                    shotGuid,
                     tempPos,
                     tempRot,
                     velocity,
@@ -843,11 +816,11 @@ namespace CenturionCC.System.Gun
                 OnShoot(projectile, i != 0);
             }
 
-            if (TargetAnimator != null)
+            if (TargetAnimator)
                 TargetAnimator.SetTrigger(IsShootingAnimHash);
-            if (AudioData != null)
+            if (AudioData)
                 Internal_PlayAudio(AudioData.Shooting, AudioData.ShootingOffset);
-            if (IsLocal && HapticData != null && HapticData.Shooting)
+            if (IsLocal && HapticData && HapticData.Shooting)
                 HapticData.Shooting.PlayBothHand();
 
             HasCocked = false;
@@ -859,9 +832,9 @@ namespace CenturionCC.System.Gun
         public virtual void Internal_EmptyShoot()
         {
             OnEmptyShoot();
-            if (TargetAnimator != null)
+            if (TargetAnimator)
                 TargetAnimator.SetTrigger(IsShootingEmptyAnimHash);
-            if (AudioData != null)
+            if (AudioData)
                 Internal_PlayAudio(AudioData.EmptyShooting, AudioData.EmptyShootingOffset);
         }
 

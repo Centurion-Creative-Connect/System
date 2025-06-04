@@ -20,7 +20,7 @@ namespace CenturionCC.System.Utils
         private NotificationProvider notification;
 
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         [SerializeField]
         private float resolverWaitDuration = 0.1F;

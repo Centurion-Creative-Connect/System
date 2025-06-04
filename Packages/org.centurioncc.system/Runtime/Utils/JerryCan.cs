@@ -16,7 +16,7 @@ namespace CenturionCC.System.Utils
         private NotificationProvider notificationProvider;
 
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         [SerializeField]
         private VRCPickup pickup;
@@ -29,12 +29,12 @@ namespace CenturionCC.System.Utils
             if (pickup == null)
                 pickup = (VRCPickup)GetComponent(typeof(VRCPickup));
 
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
         }
 
-        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
+        public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
-            if (pickup.currentPlayer == hitPlayer.VrcPlayer && hitPlayer.IsLocal)
+            if (pickup.currentPlayer == victim.VrcPlayer && victim.IsLocal)
                 Drop();
         }
 

@@ -14,7 +14,7 @@ namespace CenturionCC.System.UI
 {
     [RequireComponent(typeof(Renderer))] [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     [DefaultExecutionOrder(50000000)]
-    public class SafetyAreaPlatformUI : UdonSharpBehaviour
+    public class SafetyAreaPlatformUI : PlayerManagerCallbackBase
     {
         [SerializeField] private Sprite resetNotYet;
         [SerializeField] private Sprite resetDone;
@@ -63,7 +63,7 @@ namespace CenturionCC.System.UI
         private GunManager gunManager;
 
         [SerializeField] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         private bool _currentResetStatusImage;
 
@@ -82,7 +82,7 @@ namespace CenturionCC.System.UI
             }
 
             gunManager.SubscribeCallback(this);
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
 
             SendCustomEventDelayedSeconds(nameof(UpdateToggleState), 5F);
             SendCustomEventDelayedSeconds(nameof(UpdateModeratorOnlyObjects), 5F);
@@ -157,24 +157,29 @@ namespace CenturionCC.System.UI
         public void UpdatePlayerStatusText()
         {
             playerStatusText.text =
-                string.Format(playerStatusMessage, playerManager.PlayerCount, playerManager.ModeratorPlayerCount);
+                string.Format(playerStatusMessage, VRCPlayerApi.GetPlayerCount(), "UNKNOWN");
         }
 
         public void UpdateTeamStatusText()
         {
             var p = playerManager;
+            var nonPlayerCount = p.GetTeamPlayerCount(0);
+            var redPlayerCount = p.GetTeamPlayerCount(1);
+            var yelPlayerCount = p.GetTeamPlayerCount(2);
+            var grePlayerCount = p.GetTeamPlayerCount(3);
+            var bluPlayerCount = p.GetTeamPlayerCount(4);
             teamStatusText.text = string.Format(
                 teamStatusMessage,
-                p.NoneTeamPlayerCount + p.UndefinedTeamPlayerCount,
-                p.NoneTeamModeratorPlayerCount + p.UndefinedTeamModeratorPlayerCount,
-                p.RedTeamPlayerCount,
-                p.RedTeamModeratorPlayerCount,
-                p.YellowTeamPlayerCount,
-                p.YellowTeamModeratorPlayerCount,
-                p.GreenTeamPlayerCount,
-                p.GreenTeamModeratorPlayerCount,
-                p.BlueTeamPlayerCount,
-                p.BlueTeamModeratorPlayerCount
+                nonPlayerCount,
+                nonPlayerCount - p.GetTeamPlayerCount(0, false),
+                redPlayerCount,
+                redPlayerCount - p.GetTeamPlayerCount(1, false),
+                yelPlayerCount,
+                yelPlayerCount - p.GetTeamPlayerCount(2, false),
+                grePlayerCount,
+                grePlayerCount - p.GetTeamPlayerCount(3, false),
+                bluPlayerCount,
+                bluPlayerCount - p.GetTeamPlayerCount(4, false)
             );
         }
 
@@ -232,8 +237,7 @@ namespace CenturionCC.System.UI
             foreach (var modPlayerApi in modPlayers)
             {
                 var player = playerManager.GetPlayerById(modPlayerApi.playerId);
-                message +=
-                    $"{(player == null ? NewbieUtils.GetPlayerName(modPlayerApi.playerId) : playerManager.GetTeamColoredName(player))}\n";
+                message += $"{(!player ? NewbieUtils.GetPlayerName(modPlayerApi.playerId) : player.DisplayName)}\n";
             }
 
             activeModeratorListText.text = message;
@@ -280,21 +284,26 @@ namespace CenturionCC.System.UI
 
         #region PlayerManagerCallback
 
-        public void OnPlayerChanged(PlayerBase player, int oldId, int newId)
+        public override void OnPlayerAdded(PlayerBase player)
         {
             _updatePlayerStatusNextFrame = true;
         }
 
-        public void OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint,
-            bool isShooterDetection)
+        public override void OnPlayerRemoved(PlayerBase player)
+        {
+            _updatePlayerStatusNextFrame = true;
+        }
+
+        public override void OnPlayerHitDetection(PlayerColliderBase playerCollider, DamageData damageData,
+            Vector3 contactPoint)
         {
             ++_hitDetectionCount;
             _updateStatisticsNextFrame = true;
         }
 
-        public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
+        public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
-            if (hitPlayer.IsLocal)
+            if (victim.IsLocal)
                 ++_localHitCount;
             else
                 ++_remoteHitCount;
@@ -305,13 +314,13 @@ namespace CenturionCC.System.UI
             _updateStatisticsNextFrame = true;
         }
 
-        public void OnTeamChanged(PlayerBase player, int oldTeam)
+        public override void OnPlayerTeamChanged(PlayerBase player, int oldTeam)
         {
             _updatePlayerStatusNextFrame = true;
             _updateActiveModeratorsNextFrame = true;
         }
 
-        public void OnPlayerTagChanged(TagType type, bool isOn)
+        public override void OnPlayerTagChanged(TagType type, bool isOn)
         {
             UpdateToggleState();
         }

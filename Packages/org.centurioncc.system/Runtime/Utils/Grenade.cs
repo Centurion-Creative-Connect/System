@@ -1,4 +1,5 @@
-﻿using CenturionCC.System.Audio;
+﻿using System;
+using CenturionCC.System.Audio;
 using CenturionCC.System.Gun;
 using CenturionCC.System.Gun.DataStore;
 using DerpyNewbie.Common;
@@ -117,6 +118,8 @@ namespace CenturionCC.System.Utils
 
         private float _currentExplosionInterval;
 
+        private Guid _eventId;
+
         private float _explosionTimer;
         private bool _hasExploded;
         private bool _hasSafetyLever;
@@ -125,7 +128,6 @@ namespace CenturionCC.System.Utils
         private bool _isExploding;
         private bool _isHeld;
         private bool _isSafetyPinHeld;
-
         private Vector3 _lastShotPos;
         private Quaternion _lastShotRot;
         private float _lastShotTime;
@@ -188,6 +190,7 @@ namespace CenturionCC.System.Utils
                     var offIPos = wtlMatrix.MultiplyPoint3x4(iPos);
                     var offIRot = iRot * Quaternion.Inverse(wtlMatrix.rotation);
                     var proj = projectilePool.Shoot(
+                        _eventId,
                         offset.position + offIPos + posOffset,
                         offset.rotation * offIRot * rotOffset,
                         velocity,
@@ -364,6 +367,7 @@ namespace CenturionCC.System.Utils
 
             _explosionTimer = explosionDuration;
             _lastShotTime = _explosionTimer;
+            _eventId = Guid.NewGuid();
             var t = transform;
             _lastShotPos = t.position;
             _lastShotRot = t.rotation;

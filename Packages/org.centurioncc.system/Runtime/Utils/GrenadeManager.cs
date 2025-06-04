@@ -10,7 +10,7 @@ namespace CenturionCC.System.Utils
     public class GrenadeManager : PlayerManagerCallbackBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         [Header("Optimization Settings")]
         [SerializeField] [Tooltip("Distance until explosion bullets reduction will begin. in meters")]
@@ -23,7 +23,7 @@ namespace CenturionCC.System.Utils
 
         // NOTE: Checked with HasLocalPlayer
         // ReSharper disable once PossibleNullReferenceException
-        public bool CanExplode => playerManager.HasLocalPlayer() && !playerManager.GetLocalPlayer().IsDead;
+        public bool CanExplode => playerManager.GetLocalPlayer().IsDead;
 
         public float BulletReductionNear => bulletReductionNear;
         public float BulletReductionFar => bulletsReductionFar;
@@ -38,9 +38,9 @@ namespace CenturionCC.System.Utils
             _localGrenades = _localGrenades.RemoveItem(grenade);
         }
 
-        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
+        public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
-            if (!hitPlayer.IsLocal) return;
+            if (!victim.IsLocal) return;
 
             foreach (var grenade in _localGrenades)
             {
