@@ -10,8 +10,8 @@ namespace CenturionCC.System.Player
     /// <see cref="PlayerManagerBase" /> event callback
     /// </summary>
     /// <seealso cref="PlayerManagerBase" />
-    /// <seealso cref="PlayerManagerBase.SubscribeCallback" />
-    /// <seealso cref="PlayerManagerBase.UnsubscribeCallback" />
+    /// <seealso cref="PlayerManagerBase.Subscribe" />
+    /// <seealso cref="PlayerManagerBase.Unsubscribe" />
     [PublicAPI]
     public abstract class PlayerManagerCallbackBase : UdonSharpBehaviour
     {
@@ -32,15 +32,40 @@ namespace CenturionCC.System.Player
         }
 
         /// <summary>
-        /// Called when <see cref="VRC.SDKBase.Networking.LocalPlayer"/> has hit <see cref="PlayerColliderBase"/>
+        /// Called when DamageInfo is about to be broadcasted.
         /// </summary>
-        /// <param name="playerCollider">which collider got hit by <see cref="DamageData"/></param>
-        /// <param name="damageData">which damager was applied for <see cref="PlayerColliderBase"/></param>
-        /// <param name="contactPoint">contact point of collision</param>
-        public virtual void OnPlayerHitDetection(
-            [CanBeNull] PlayerColliderBase playerCollider,
-            [CanBeNull] DamageData damageData,
-            Vector3 contactPoint)
+        /// <param name="info">info to be broadcasted</param>
+        /// <returns>true to interrupt and halt broadcasts, false to let info broadcasted.</returns>
+        /// <remarks>
+        /// This is called before <see cref="OnDamagePostBroadcast"/>.
+        /// While this call is happening, The <paramref name="info"/> has not been broadcasted to other players yet.
+        /// Returning true will prevent <see cref="PlayerBase.ApplyDamage"/> from being called.
+        /// </remarks>
+        public virtual bool OnDamagePreBroadcast(DamageInfo info)
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// Called when DamageInfo was broadcasted and is about to be applied.
+        /// </summary>
+        /// <param name="info">broadcasted info which is about to be applied</param>
+        /// <returns>true to interrupt and halt appliance, false to let info be applied.</returns>
+        /// <remarks>
+        /// This is called after <see cref="OnDamagePreBroadcast"/>.
+        /// Returning true will prevent <see cref="PlayerBase.ApplyDamage"/> from being called.
+        /// </remarks>
+        public virtual bool OnDamagePostBroadcast(DamageInfo info)
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// Called when the health of a player changes.
+        /// </summary>
+        /// <param name="player">The player whose health has changed.</param>
+        /// <param name="previousHealth">The player's health value before the change.</param>
+        public virtual void OnPlayerHealthChanged(PlayerBase player, float previousHealth)
         {
         }
 
@@ -59,19 +84,6 @@ namespace CenturionCC.System.Player
         /// </summary>
         /// <param name="player">a player which changed <see cref="PlayerBase.IsDead"/></param>
         public virtual void OnPlayerRevived(PlayerBase player)
-        {
-        }
-
-        /// <summary>
-        /// Called when player was friendly fired
-        /// </summary>
-        /// <remarks>
-        /// Invokes only when local player as <see cref="attacker" /> fired to <see cref="victim" /> as same
-        /// <see cref="PlayerBase.TeamId" />.
-        /// </remarks>
-        /// <param name="attacker">who fired at <see cref="victim" /></param>
-        /// <param name="victim">who got shot by <see cref="attacker" /></param>
-        public virtual void OnPlayerFriendlyFire(PlayerBase attacker, PlayerBase victim)
         {
         }
 

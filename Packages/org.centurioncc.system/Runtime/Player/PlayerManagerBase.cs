@@ -309,15 +309,45 @@ namespace CenturionCC.System.Player
             }
         }
 
-        public virtual void Invoke_OnPlayerHitDetection(
-            PlayerColliderBase playerCollider, DamageData damageData, Vector3 contactPoint)
+        public virtual bool Invoke_OnDamagePreBroadcast(DamageInfo info)
         {
             logger.Log(
-                $"{LogPrefix}OnPlayerHitDetection: {Networking.GetOwner(playerCollider.gameObject).SafeGetDisplayName()}, {damageData.DamageType}, {contactPoint:F2}");
+                $"{LogPrefix}OnDamagePreBroadcast: {GetDisplayName(GetPlayerById(info.AttackerId()))} -> {GetDisplayName(GetPlayerById(info.VictimId()))}");
+            var result = false;
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
-                if (pmCallback) pmCallback.OnPlayerHitDetection(playerCollider, damageData, contactPoint);
+                if (pmCallback) result |= pmCallback.OnDamagePreBroadcast(info);
+            }
+
+            logger.Log($"{LogPrefix}OnDamagePreBroadcast-result: {result}");
+            return result;
+        }
+
+        public virtual bool Invoke_OnDamagePostBroadcast(DamageInfo info)
+        {
+            logger.Log(
+                $"{LogPrefix}OnDamagePostBroadcast: {GetDisplayName(GetPlayerById(info.AttackerId()))} -> {GetDisplayName(GetPlayerById(info.VictimId()))}");
+            var result = false;
+            foreach (var callback in EventCallbacks)
+            {
+                var pmCallback = (PlayerManagerCallbackBase)callback;
+                if (pmCallback) result |= pmCallback.OnDamagePostBroadcast(info);
+            }
+
+            logger.Log($"{LogPrefix}OnDamagePostBroadcast-result: {result}");
+            return result;
+        }
+
+        public virtual void Invoke_OnPlayerHealthChanged(PlayerBase player, float previousHealth)
+        {
+            logger.Log(
+                $"{LogPrefix}OnPlayerHealthChanged: {GetDisplayName(player)}, {previousHealth:F2} -> {player.Health:F2}");
+
+            foreach (var callback in EventCallbacks)
+            {
+                var pmCallback = (PlayerManagerCallbackBase)callback;
+                if (pmCallback) pmCallback.OnPlayerHealthChanged(player, previousHealth);
             }
         }
 
@@ -343,19 +373,6 @@ namespace CenturionCC.System.Player
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
                 if (pmCallback) pmCallback.OnPlayerKilled(attacker, victim, type);
-            }
-        }
-
-        public virtual void Invoke_OnPlayerFriendlyFire(PlayerBase attacker, PlayerBase victim)
-        {
-            logger.Log(
-                $"{LogPrefix}OnPlayerFriendlyFire: {GetDisplayName(attacker)} -> {GetDisplayName(victim)}");
-            victim.UpdateView();
-
-            foreach (var callback in EventCallbacks)
-            {
-                var pmCallback = (PlayerManagerCallbackBase)callback;
-                if (pmCallback) pmCallback.OnPlayerFriendlyFire(attacker, victim);
             }
         }
 

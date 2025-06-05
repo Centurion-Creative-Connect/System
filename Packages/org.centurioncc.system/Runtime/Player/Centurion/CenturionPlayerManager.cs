@@ -177,6 +177,7 @@ namespace CenturionCC.System.Player.Centurion
                 case FriendlyFireMode.Reverse:
                 case FriendlyFireMode.Both:
                 case FriendlyFireMode.Always:
+                case FriendlyFireMode.Warning:
                     return true;
                 default:
                     return false;
@@ -266,8 +267,38 @@ namespace CenturionCC.System.Player.Centurion
                 return false;
             }
 
+            // ignore if the detection type disallows it
+            switch (info.DetectionType())
+            {
+                case DetectionType.All:
+                    break;
+                case DetectionType.VictimSide:
+                    if (localVrcPlayer.playerId != victimCenturionPlayer.PlayerId)
+                        return false;
+                    break;
+                case DetectionType.AttackerSide:
+                    if (localVrcPlayer.playerId != attackerCenturionPlayer.PlayerId)
+                        return false;
+                    break;
+                case DetectionType.None:
+                default:
+                    return false;
+            }
+
+            // if the victim was already dead, ignore it
+            if (victimCenturionPlayer.IsDead)
+            {
+                return false;
+            }
+
             // if damage has already been resolved, ignore it
             if (IsEventResolved(info.EventId()))
+            {
+                return false;
+            }
+
+            // if callbacks have rejected the damage, ignore it
+            if (Invoke_OnDamagePreBroadcast(info))
             {
                 return false;
             }
@@ -312,6 +343,17 @@ namespace CenturionCC.System.Player.Centurion
             }
 
             _resolvedEventIds.Add(info.EventId().ToString("D"));
+            if (victimPlayer.IsDead)
+            {
+                logger.LogWarn($"{LogPrefix}Victim Player {info.VictimId()} is already dead");
+                return;
+            }
+
+            if (Invoke_OnDamagePostBroadcast(info))
+            {
+                logger.LogWarn($"{LogPrefix}Callback has rejected to apply damage");
+                return;
+            }
 
             if (IsFriendly(attackerPlayer, victimPlayer) && CanDamageFriendly())
             {
@@ -330,7 +372,7 @@ namespace CenturionCC.System.Player.Centurion
                         attackerPlayer.ApplyDamage(info);
                         break;
                     case FriendlyFireMode.Warning:
-                        Invoke_OnPlayerFriendlyFireWarning(victimPlayer, info);
+                        if (attackerPlayer.IsLocal) Invoke_OnPlayerFriendlyFireWarning(victimPlayer, info);
                         break;
                 }
 
