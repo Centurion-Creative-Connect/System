@@ -1,4 +1,5 @@
 ﻿using System;
+using CenturionCC.System.Audio;
 using CenturionCC.System.Gun;
 using CenturionCC.System.Player;
 using DerpyNewbie.Common;
@@ -7,8 +8,8 @@ using UdonSharp;
 using UnityEngine;
 using UnityEngine.Serialization;
 using VRC.SDK3.Data;
+using VRC.SDK3.UdonNetworkCalling;
 using VRC.SDKBase;
-using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.Utils
 {
@@ -25,11 +26,17 @@ namespace CenturionCC.System.Utils
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class PlayerController : GunManagerCallbackBase
     {
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
+        private AudioManager audioManager;
+
+        [SerializeField] [NewbieInject]
         private GunManager gunManager;
 
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
         private PlayerManagerBase playerManager;
+
+        [SerializeField] [NewbieInject]
+        private FootstepAudioStore footstepAudioStore;
 
         private readonly DataList _activeTags = new DataList();
         private readonly DataList _heldObjects = new DataList();
@@ -58,7 +65,7 @@ namespace CenturionCC.System.Utils
         {
             _localPlayer = Networking.LocalPlayer;
 
-            if (gunManager != null) gunManager.SubscribeCallback(this);
+            if (gunManager) gunManager.SubscribeCallback(this);
         }
 
         private void Update()
@@ -105,14 +112,14 @@ namespace CenturionCC.System.Utils
                 Debug.Log($"[PlayerController] ObjMarkerData was updated: {objMarker.ObjectType}");
 
             // If marker data was updated, its tags are already removed at TryGetObjectMarker
-            if (CurrentSurface != null && !hasMarkerDataUpdate)
+            if (CurrentSurface && !hasMarkerDataUpdate)
                 foreach (var surfTag in CurrentSurface.Tags)
                     _activeTags.Remove(surfTag);
 
             var lastSurf = CurrentSurface;
             CurrentSurface = objMarker;
 
-            if (CurrentSurface != null)
+            if (CurrentSurface)
             {
                 foreach (var surfTag in CurrentSurface.Tags)
                     _activeTags.Add(surfTag);
@@ -133,7 +140,7 @@ namespace CenturionCC.System.Utils
         private ObjectMarkerBase TryGetObjectMarker(Component o, out bool hasMarkerDataUpdate)
         {
             var terrainMarker = o.GetComponent<TerrainMarker>();
-            if (terrainMarker != null)
+            if (terrainMarker)
             {
                 hasMarkerDataUpdate = terrainMarker.UpdateObjectMarkerInfo(_hit.point);
                 if (CurrentSurface == terrainMarker && hasMarkerDataUpdate)
@@ -156,30 +163,36 @@ namespace CenturionCC.System.Utils
             // Is total multiplier not zero?
             if (TotalMultiplier == 0) return;
 
-            // Did player traveled one step distance?
+            // Did player travel one-step distance?
             if (Vector3.Distance(_footstepLastCheckedPosition, localPlayerPos) <
                 footstepDistance * TotalMultiplier) return;
 
-            // Is player airborne?
+            // Is the player airborne?
             if (!_localPlayer.IsPlayerGrounded()) return;
 
             var timeDiff = (Time.time - _footstepLastInvokedTime) * TotalMultiplier;
             _footstepLastInvokedTime = Time.time;
             _footstepLastCheckedPosition = localPlayerPos;
 
-            // Did player traveled fast enough to play footstep?
+            // Did player travel fast enough to play footstep?
             if (footstepTime < timeDiff) return;
 
             if (!_updatedSurfaceInFrame) CurrentSurfaceUpdatePass();
 
-            if (CurrentSurface == null) return;
+            if (!CurrentSurface) return;
 
             var playerBase = playerManager.GetLocalPlayer();
-            if (playerBase == null || playerManager.IsStaffTeamId(playerBase.TeamId)) return;
+            if (!playerBase || playerManager.IsInStaffTeam(playerBase)) return;
 
             var isSlow = footstepSlowThresholdTime < timeDiff;
-            var methodName = GetFootstepMethodName(CurrentSurface.ObjectType, isSlow);
-            playerBase.SendCustomNetworkEvent(NetworkEventTarget.All, methodName);
+            PlayFootstepSound(localPlayerPos, CurrentSurface.ObjectType, isSlow);
+        }
+
+        [NetworkCallable(100)]
+        public void PlayFootstepSound(Vector3 pos, ObjectType type, bool isSlow)
+        {
+            var audioData = footstepAudioStore.Get(type, isSlow);
+            audioManager.PlayAudioAtPosition(audioData, pos);
         }
 
         private void GroundSnapUpdatePass()
@@ -221,27 +234,6 @@ namespace CenturionCC.System.Utils
             _localPlayer.SetGravityStrength(100F);
             _lastGroundSnapUpdatedTime = Time.timeSinceLevelLoad + .5F;
             _isApplyingGroundSnap = true;
-        }
-
-        private static string GetFootstepMethodName(ObjectType type, bool isSlow)
-        {
-            var format = isSlow ? "PlaySlow{0}FootstepAudio" : "Play{0}FootstepAudio";
-            switch (type)
-            {
-                case ObjectType.Prototype:
-                default:
-                    return string.Format(format, "Prototype");
-                case ObjectType.Gravel:
-                    return string.Format(format, "Gravel");
-                case ObjectType.Wood:
-                    return string.Format(format, "Wood");
-                case ObjectType.Metallic:
-                    return string.Format(format, "Metallic");
-                case ObjectType.Dirt:
-                    return string.Format(format, "Dirt");
-                case ObjectType.Concrete:
-                    return string.Format(format, "Concrete");
-            }
         }
 
         #region BasePublicAPIs
