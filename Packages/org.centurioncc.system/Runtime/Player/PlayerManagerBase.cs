@@ -449,7 +449,8 @@ namespace CenturionCC.System.Player
 
         public virtual void Invoke_OnPlayerEnteredArea(PlayerBase player, PlayerAreaBase area)
         {
-            logger.Log($"{LogPrefix}OnPlayerEnteredArea: {GetDisplayName(player)}, {area.AreaName}");
+            logger.Log(
+                $"{LogPrefix}OnPlayerEnteredArea: {GetDisplayName(player)}, {area.AreaName} ({player.IsInSafeZone})");
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
@@ -459,7 +460,8 @@ namespace CenturionCC.System.Player
 
         public virtual void Invoke_OnPlayerExitedArea(PlayerBase player, PlayerAreaBase area)
         {
-            logger.Log($"{LogPrefix}OnPlayerExitedArea: {GetDisplayName(player)}, {area.AreaName}");
+            logger.Log(
+                $"{LogPrefix}OnPlayerExitedArea: {GetDisplayName(player)}, {area.AreaName} ({player.IsInSafeZone})");
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
