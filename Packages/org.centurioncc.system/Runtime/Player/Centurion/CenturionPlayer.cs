@@ -48,7 +48,10 @@ namespace CenturionCC.System.Player.Centurion
             protected set
             {
                 var lastIsDead = IsDead;
+                var lastHealth = _health;
                 _health = value;
+
+                playerManager.Invoke_OnPlayerHealthChanged(this, lastHealth);
                 if (lastIsDead == IsDead) return;
 
                 if (IsDead)
