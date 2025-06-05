@@ -11,7 +11,7 @@ namespace CenturionCC.System.Player
 {
     public abstract class PlayerManagerBase : UdonSharpBehaviour
     {
-        private const string LogPrefix = "[PlayerManager] ";
+        private const string LogPrefix = "[<color=gold>PlayerManager</color>] ";
 
         [SerializeField] [NewbieInject]
         protected PrintableBase logger;
@@ -79,6 +79,11 @@ namespace CenturionCC.System.Player
             {
                 player.UpdateView();
             }
+        }
+
+        protected static string GetDisplayName([CanBeNull] PlayerBase player, string unknownName = "???")
+        {
+            return player ? $"{player.DisplayName}.{player.PlayerId}" : unknownName;
         }
 
         #endregion
@@ -282,7 +287,7 @@ namespace CenturionCC.System.Player
 
         public virtual void Invoke_OnPlayerAdded(PlayerBase player)
         {
-            logger.Log($"{LogPrefix}OnPlayerAdded: {player.DisplayName}");
+            logger.Log($"{LogPrefix}OnPlayerAdded: {GetDisplayName(player)}");
             UpdateAllPlayerView();
 
             foreach (var callback in EventCallbacks)
@@ -294,7 +299,7 @@ namespace CenturionCC.System.Player
 
         public virtual void Invoke_OnPlayerRemoved(PlayerBase player)
         {
-            logger.Log($"{LogPrefix}OnPlayerRemoved: {player.DisplayName}");
+            logger.Log($"{LogPrefix}OnPlayerRemoved: {GetDisplayName(player)}");
             UpdateAllPlayerView();
 
             foreach (var callback in EventCallbacks)
@@ -318,7 +323,7 @@ namespace CenturionCC.System.Player
 
         public virtual void Invoke_OnPlayerRevived(PlayerBase player)
         {
-            logger.Log($"{LogPrefix}OnPlayerRevived: {player.DisplayName}");
+            logger.Log($"{LogPrefix}OnPlayerRevived: {GetDisplayName(player)}");
             UpdateAllPlayerView();
 
             foreach (var callback in EventCallbacks)
@@ -331,7 +336,7 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
             logger.Log(
-                $"{LogPrefix}OnPlayerKilled: {type.ToEnumName()}, {attacker.DisplayName} -> {victim.DisplayName}");
+                $"{LogPrefix}OnPlayerKilled: {type.ToEnumName()}, {GetDisplayName(attacker)} -> {GetDisplayName(victim)}");
             victim.UpdateView();
 
             foreach (var callback in EventCallbacks)
@@ -344,7 +349,7 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnPlayerFriendlyFire(PlayerBase attacker, PlayerBase victim)
         {
             logger.Log(
-                $"{LogPrefix}OnPlayerFriendlyFire: {attacker.DisplayName} -> {victim.DisplayName}");
+                $"{LogPrefix}OnPlayerFriendlyFire: {GetDisplayName(attacker)} -> {GetDisplayName(victim)}");
             victim.UpdateView();
 
             foreach (var callback in EventCallbacks)
@@ -357,7 +362,7 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnPlayerFriendlyFireWarning(PlayerBase victim, DamageInfo damageInfo)
         {
             logger.Log(
-                $"{LogPrefix}OnPlayerFriendlyFireWarning: {victim.DisplayName}, {damageInfo.DamageType()}");
+                $"{LogPrefix}OnPlayerFriendlyFireWarning: {GetDisplayName(victim)}, {damageInfo.DamageType()}");
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
@@ -368,7 +373,7 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnPlayerTeamChanged(PlayerBase player, int oldTeam)
         {
             logger.Log(
-                $"{LogPrefix}OnPlayerTeamChanged: {player.DisplayName}, {oldTeam} -> {player.TeamId}");
+                $"{LogPrefix}OnPlayerTeamChanged: {GetDisplayName(player)}, {oldTeam} -> {player.TeamId}");
             UpdateAllPlayerView();
 
             foreach (var callback in EventCallbacks)
@@ -380,7 +385,7 @@ namespace CenturionCC.System.Player
 
         public virtual void Invoke_OnPlayerReset(PlayerBase player)
         {
-            logger.Log($"{LogPrefix}OnPlayerReset: {player.DisplayName}");
+            logger.Log($"{LogPrefix}OnPlayerReset: {GetDisplayName(player)}");
             UpdateAllPlayerView();
 
             foreach (var callback in EventCallbacks)

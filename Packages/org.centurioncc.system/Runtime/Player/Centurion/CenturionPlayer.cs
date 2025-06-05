@@ -7,7 +7,6 @@ using UnityEngine;
 using VRC.SDK3.UdonNetworkCalling;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
-using NotImplementedException = System.NotImplementedException;
 
 namespace CenturionCC.System.Player.Centurion
 {
@@ -54,10 +53,17 @@ namespace CenturionCC.System.Player.Centurion
 
                 if (IsDead)
                 {
+                    var attacker = playerManager.GetPlayerById(LastDamageInfo.AttackerId());
+                    var type = LastDamageInfo.AttackerId() == PlayerId
+                        ? KillType.ReverseFriendlyFire
+                        : playerManager.IsFriendly(this, attacker)
+                            ? KillType.FriendlyFire
+                            : KillType.Default;
+
                     playerManager.Invoke_OnPlayerKilled(
-                        playerManager.GetPlayerById(LastDamageInfo.AttackerId()),
+                        attacker,
                         this,
-                        KillType.Default
+                        type
                     );
                 }
                 else
@@ -109,6 +115,7 @@ namespace CenturionCC.System.Player.Centurion
 
         private void Start()
         {
+            LastDamageInfo = DamageInfo.NewEmpty();
             playerManager.Invoke_OnPlayerAdded(this);
         }
 
@@ -161,6 +168,8 @@ namespace CenturionCC.System.Player.Centurion
 
         public override void ApplyDamage(DamageInfo info)
         {
+            LastDamageInfo = info;
+
             if (!IsLocal)
             {
                 return;
