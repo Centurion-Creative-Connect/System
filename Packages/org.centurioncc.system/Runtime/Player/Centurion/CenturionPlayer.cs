@@ -4,6 +4,7 @@ using DerpyNewbie.Common.Role;
 using DerpyNewbie.Logger;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Data;
 using VRC.SDK3.UdonNetworkCalling;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
@@ -24,11 +25,15 @@ namespace CenturionCC.System.Player.Centurion
         [SerializeField] [NewbieInject]
         private CenturionPlayerManager playerManager;
 
+        private readonly DataList _playerAreas = new DataList();
+
         [UdonSynced]
         private short _deaths;
 
         [UdonSynced] [FieldChangeCallback(nameof(SyncedHealth))]
         private float _health = 100;
+
+        private bool _isInSafeZone;
 
         [UdonSynced]
         private short _kills;
@@ -99,6 +104,7 @@ namespace CenturionCC.System.Player.Centurion
         public override float MaxHealth => _maxHealth;
         public override int TeamId => _teamId;
         public override bool IsDead => _health <= 0;
+        public override bool IsInSafeZone => _isInSafeZone;
         public override VRCPlayerApi VrcPlayer => Networking.GetOwner(gameObject);
         public override RoleData[] Roles => roleProvider.GetPlayerRoles(VrcPlayer);
 
@@ -234,6 +240,44 @@ namespace CenturionCC.System.Player.Centurion
 
             SyncedHealth = _maxHealth;
             RequestSerialization();
+        }
+
+        public override void OnAreaEnter(PlayerAreaBase area)
+        {
+            _playerAreas.Add(area);
+            UpdateSafeZoneStatus();
+            playerManager.Invoke_OnPlayerEnteredArea(this, area);
+        }
+
+        public override void OnAreaExit(PlayerAreaBase area)
+        {
+            _playerAreas.RemoveAll(area);
+            UpdateSafeZoneStatus();
+            playerManager.Invoke_OnPlayerExitedArea(this, area);
+        }
+
+        public override PlayerAreaBase[] GetCurrentPlayerAreas()
+        {
+            var result = new PlayerAreaBase[_playerAreas.Count];
+            for (var i = 0; i < _playerAreas.Count; i++)
+            {
+                result[i] = (PlayerAreaBase)_playerAreas[i].Reference;
+            }
+
+            return result;
+        }
+
+        private void UpdateSafeZoneStatus()
+        {
+            _isInSafeZone = false;
+
+            var playerAreas = GetCurrentPlayerAreas();
+            foreach (var playerAreaBase in playerAreas)
+            {
+                if (!playerAreaBase.IsSafeZone) continue;
+                _isInSafeZone = true;
+                return;
+            }
         }
     }
 }

@@ -447,6 +447,26 @@ namespace CenturionCC.System.Player
             }
         }
 
+        public virtual void Invoke_OnPlayerEnteredArea(PlayerBase player, PlayerAreaBase area)
+        {
+            logger.Log($"{LogPrefix}OnPlayerEnteredArea: {GetDisplayName(player)}, {area.AreaName}");
+            foreach (var callback in EventCallbacks)
+            {
+                var pmCallback = (PlayerManagerCallbackBase)callback;
+                if (pmCallback) pmCallback.OnPlayerEnteredArea(player, area);
+            }
+        }
+
+        public virtual void Invoke_OnPlayerExitedArea(PlayerBase player, PlayerAreaBase area)
+        {
+            logger.Log($"{LogPrefix}OnPlayerExitedArea: {GetDisplayName(player)}, {area.AreaName}");
+            foreach (var callback in EventCallbacks)
+            {
+                var pmCallback = (PlayerManagerCallbackBase)callback;
+                if (pmCallback) pmCallback.OnPlayerExitedArea(player, area);
+            }
+        }
+
         #endregion
     }
 }

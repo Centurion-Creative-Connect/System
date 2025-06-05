@@ -10,45 +10,6 @@ namespace CenturionCC.System.Player
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public abstract class PlayerBase : UdonSharpBehaviour
     {
-        // UdonSharp does not support merge conditional expr
-        // ReSharper disable once MergeConditionalExpression
-
-        [PublicAPI]
-        public abstract float Health { get; }
-
-        [PublicAPI]
-        public abstract float MaxHealth { get; }
-
-        [PublicAPI]
-        public abstract int TeamId { get; }
-
-        [PublicAPI]
-        public abstract int Kills { get; set; }
-
-        [PublicAPI]
-        public abstract int Deaths { get; set; }
-
-        [PublicAPI]
-        public virtual int PlayerId => VrcPlayer != null ? VrcPlayer.playerId : -1;
-
-        [PublicAPI]
-        public virtual bool IsLocal => PlayerId == Networking.LocalPlayer.playerId;
-
-        [PublicAPI]
-        public virtual bool IsDead => Health <= 0;
-
-        [PublicAPI] [CanBeNull]
-        public abstract VRCPlayerApi VrcPlayer { get; }
-
-        [PublicAPI] [CanBeNull]
-        public abstract RoleData[] Roles { get; }
-
-        [PublicAPI]
-        public virtual DamageInfo LastDamageInfo { get; protected set; }
-
-        [PublicAPI]
-        public virtual string DisplayName => VrcPlayer.SafeGetDisplayName();
-
         /// <summary>
         /// Update visuals of player.
         /// </summary>
@@ -109,5 +70,63 @@ namespace CenturionCC.System.Player
         /// </summary>
         [PublicAPI]
         public abstract void Revive();
+
+        #region Properties
+
+        [PublicAPI]
+        public abstract float Health { get; }
+
+        [PublicAPI]
+        public abstract float MaxHealth { get; }
+
+        [PublicAPI]
+        public abstract int TeamId { get; }
+
+        [PublicAPI]
+        public abstract int Kills { get; set; }
+
+        [PublicAPI]
+        public abstract int Deaths { get; set; }
+
+        // UdonSharp does not support merge conditional expr
+        // ReSharper disable once MergeConditionalExpression
+        [PublicAPI]
+        public virtual int PlayerId => VrcPlayer != null ? VrcPlayer.playerId : -1;
+
+        [PublicAPI]
+        public virtual bool IsLocal => PlayerId == Networking.LocalPlayer.playerId;
+
+        [PublicAPI]
+        public virtual bool IsDead => Health <= 0;
+
+        [PublicAPI]
+        public abstract bool IsInSafeZone { get; }
+
+        [PublicAPI] [CanBeNull]
+        public abstract VRCPlayerApi VrcPlayer { get; }
+
+        [PublicAPI] [CanBeNull]
+        public abstract RoleData[] Roles { get; }
+
+        [PublicAPI]
+        public virtual DamageInfo LastDamageInfo { get; protected set; }
+
+        [PublicAPI]
+        public virtual string DisplayName => VrcPlayer.SafeGetDisplayName();
+
+        #endregion
+
+        #region PlayerArea
+
+        [PublicAPI]
+        public abstract void OnAreaEnter(PlayerAreaBase area);
+
+        [PublicAPI]
+        public abstract void OnAreaExit(PlayerAreaBase area);
+
+        [PublicAPI]
+        public abstract PlayerAreaBase[] GetCurrentPlayerAreas();
+
+        #endregion
     }
 }
