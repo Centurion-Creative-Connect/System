@@ -137,5 +137,23 @@ namespace CenturionCC.System.Player
         public virtual void OnDebugModeChanged(bool isOn)
         {
         }
+
+        /// <summary>
+        /// Called when a player enters a specific area.
+        /// </summary>
+        /// <param name="player">The instance of <see cref="PlayerBase"/> representing the player who entered the area.</param>
+        /// <param name="area">The instance of <see cref="PlayerAreaBase"/> representing the area the player entered.</param>
+        public virtual void OnPlayerEnteredArea(PlayerBase player, PlayerAreaBase area)
+        {
+        }
+
+        /// <summary>
+        /// Called when a player exits a specific area.
+        /// </summary>
+        /// <param name="player">The instance of <see cref="PlayerBase"/> representing the player who exited the area.</param>
+        /// <param name="area">The instance of <see cref="PlayerAreaBase"/> representing the area the player exited.</param>
+        public virtual void OnPlayerExitedArea(PlayerBase player, PlayerAreaBase area)
+        {
+        }
     }
 }
