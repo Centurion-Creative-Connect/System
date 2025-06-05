@@ -28,6 +28,7 @@ namespace CenturionCC.System.Tests.Editor
         public override int TeamId => _teamId;
         public override int Kills { get; set; }
         public override int Deaths { get; set; }
+        public override bool IsInSafeZone { get; }
         public override VRCPlayerApi VrcPlayer { get; }
         public override RoleData[] Roles => _roles;
         public override bool IsDead => _isDead;
@@ -73,6 +74,21 @@ namespace CenturionCC.System.Tests.Editor
         }
 
         public override void Revive()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void OnAreaEnter(PlayerAreaBase area)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void OnAreaExit(PlayerAreaBase area)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override PlayerAreaBase[] GetCurrentPlayerAreas()
         {
             throw new NotImplementedException();
         }
