@@ -9,6 +9,9 @@ namespace CenturionCC.System.Utils
     public class ShooterSword : DamageData
     {
         [SerializeField]
+        private float damageAmount = 100F;
+
+        [SerializeField]
         private bool requireTriggerToDamage = true;
 
         [SerializeField]
@@ -28,6 +31,7 @@ namespace CenturionCC.System.Utils
         public override Quaternion DamageOriginRotation => transform.rotation;
         public override DateTime DamageOriginTime => _originTime;
         public override string DamageType => "Sword";
+        public override float DamageAmount => damageAmount;
 
         private void Start()
         {

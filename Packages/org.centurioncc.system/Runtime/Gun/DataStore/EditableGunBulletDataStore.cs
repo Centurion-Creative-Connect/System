@@ -9,16 +9,25 @@ namespace CenturionCC.System.Gun.DataStore
     {
         [UdonSynced]
         public int projectileCount;
+
         [UdonSynced]
         public float speed;
+
+        [UdonSynced]
+        public float damage;
+
         [UdonSynced]
         public float drag;
+
         [UdonSynced]
         public float hopUpStrength;
+
         [UdonSynced]
         public float trailTime;
+
         [UdonSynced]
         public float lifeTimeInSeconds;
+
         public Gradient trailGradient;
         public GunRecoilPatternDataStore recoilPattern;
 
@@ -27,12 +36,13 @@ namespace CenturionCC.System.Gun.DataStore
         public override void Get(int i,
             out Vector3 posOff, out Vector3 vel,
             out Quaternion rotOff, out Vector3 torque,
-            out float d,
+            out float dr, out float dm,
             out float trailDur, out Gradient trailColor,
             out float lifeTime)
         {
             recoilPattern.Get(i, out var spdOff, out var recOff, out posOff);
-            d = drag;
+            dr = drag;
+            dm = damage;
             rotOff = Quaternion.Euler(recOff);
             vel = Vector3.forward * (speed + spdOff);
             torque = new Vector3(hopUpStrength, 0, 0) + recOff;

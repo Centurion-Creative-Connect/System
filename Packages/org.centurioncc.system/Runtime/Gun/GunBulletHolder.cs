@@ -114,18 +114,21 @@ namespace CenturionCC.System.Gun
         public override ProjectileBase Shoot(Guid eventId,
             Vector3 pos, Quaternion rot,
             Vector3 velocity, Vector3 torque, float drag,
-            string damageType, DateTime time,
-            int playerId, float trailTime, Gradient trailGradient,
-            float lifeTimeInSeconds)
+            string damageType, float damageAmount,
+            DateTime time, int playerId,
+            float trailTime, Gradient trailGradient, float lifeTimeInSeconds)
         {
             var projectile = GetProjectile();
             if (projectile == null)
                 return null;
 
             projectile.ResetDamageSetting();
-            projectile.Shoot(eventId, pos, rot, velocity, torque, drag, damageType, time, playerId, trailTime,
-                trailGradient,
-                lifeTimeInSeconds);
+            projectile.Shoot(eventId,
+                pos, rot,
+                velocity, torque, drag,
+                damageType, damageAmount,
+                time, playerId,
+                trailTime, trailGradient, lifeTimeInSeconds);
             return projectile;
         }
     }

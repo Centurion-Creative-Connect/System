@@ -760,10 +760,9 @@ namespace CenturionCC.System.Gun
                 (
                     dataIndexOffset + i,
                     out var posOffset, out var velocity,
-                    out var rotOffset, out var torque,
-                    out var drag,
-                    out var trailTime, out var trailGradient,
-                    out var lifeTimeInSeconds
+                    out var rotOffset, out var torque, out var drag,
+                    out var damageAmount,
+                    out var trailTime, out var trailGradient, out var lifeTimeInSeconds
                 );
 
                 var tempRot = rotation * rotOffset;
@@ -772,14 +771,11 @@ namespace CenturionCC.System.Gun
                 var projectile = pool.Shoot
                 (
                     shotGuid,
-                    tempPos,
-                    tempRot,
-                    velocity,
-                    torque,
-                    drag,
-                    WeaponName, LastShotTime, playerId,
-                    trailTime, trailGradient,
-                    lifeTimeInSeconds
+                    tempPos, tempRot,
+                    velocity, torque, drag,
+                    WeaponName, damageAmount,
+                    LastShotTime, playerId,
+                    trailTime, trailGradient, lifeTimeInSeconds
                 );
 
                 if (projectile == null)

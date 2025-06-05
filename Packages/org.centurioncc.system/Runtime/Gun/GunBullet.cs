@@ -26,6 +26,7 @@ namespace CenturionCC.System.Gun
         private UpdateManager updateManager;
 
         private Collider _collider;
+        private float _damageAmount;
         private Vector3 _damageOriginPos;
         private Quaternion _damageOriginRot;
         private DateTime _damageOriginTime;
@@ -55,6 +56,7 @@ namespace CenturionCC.System.Gun
         public override Quaternion DamageOriginRotation => _damageOriginRot;
         public override DateTime DamageOriginTime => _damageOriginTime;
         public override string DamageType => _damageType;
+        public override float DamageAmount => _damageAmount;
 
         public void Start()
         {
@@ -71,11 +73,12 @@ namespace CenturionCC.System.Gun
                 gunManager.RicochetHandler.OnRicochet(this, collision);
         }
 
-        public override void Shoot(Guid eventId, Vector3 pos, Quaternion rot, Vector3 velocity, Vector3 torque,
-            float drag,
-            string damageType, DateTime time, int playerId,
-            float trailTime, Gradient trailGradient,
-            float lifeTimeInSeconds)
+        public override void Shoot(Guid eventId,
+            Vector3 pos, Quaternion rot,
+            Vector3 velocity, Vector3 torque, float drag,
+            string damageType, float damageAmount,
+            DateTime time, int playerId,
+            float trailTime, Gradient trailGradient, float lifeTimeInSeconds)
         {
             // Damage data
             _eventId = eventId;
@@ -83,6 +86,7 @@ namespace CenturionCC.System.Gun
             _damageOriginRot = rot;
             _damageOriginTime = time;
             _damageType = $"BBBullet: {damageType}";
+            _damageAmount = damageAmount;
             _damagerPlayerId = playerId;
 
             // Speed data
@@ -204,7 +208,8 @@ namespace CenturionCC.System.Gun
                 out var drag,
                 out var trailDuration,
                 out var trailColor,
-                out var lifeTimeInSeconds
+                out var lifeTimeInSeconds,
+                out var damageAmount
             );
 
             var tempRot = startingRot * rotOffset;
