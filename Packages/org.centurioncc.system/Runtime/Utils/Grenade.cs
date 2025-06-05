@@ -170,6 +170,7 @@ namespace CenturionCC.System.Utils
                     out var rotOffset,
                     out var torque,
                     out var drag,
+                    out var damageAmount,
                     out var trailTime,
                     out var trailCol,
                     out var lifeTimeInSeconds
@@ -197,6 +198,7 @@ namespace CenturionCC.System.Utils
                         torque,
                         drag,
                         damageType,
+                        damageAmount,
                         Networking.GetNetworkDateTime(),
                         Networking.GetOwner(gameObject).playerId,
                         trailTime,
