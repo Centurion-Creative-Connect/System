@@ -24,13 +24,13 @@ namespace CenturionCC.System.UI
         private void UpdateButtonState()
         {
             var player = playerManager.GetLocalPlayer();
-            var isInTargetTeam = player != null && player.TeamId == targetTeamId;
+            var isInTargetTeam = player && player.TeamId == targetTeamId;
 
-            if (changeToTargetButton != null)
-                gameObject.SetActive(!isInTargetTeam);
+            if (changeToTargetButton)
+                changeToTargetButton.SetActive(!isInTargetTeam);
 
-            if (changeToDefaultButton != null)
-                gameObject.SetActive(isInTargetTeam);
+            if (changeToDefaultButton)
+                changeToDefaultButton.SetActive(isInTargetTeam);
         }
 
         public override void Interact()
