@@ -106,6 +106,17 @@ namespace CenturionCC.System.Player
         }
 
         /// <summary>
+        /// Called when a player's stats are changed.
+        /// </summary>
+        /// <param name="player">The player whose stats have been updated.</param>
+        /// <remarks>
+        /// This is called when Kills, Deaths or Score has been changed
+        /// </remarks>
+        public virtual void OnPlayerStatsChanged(PlayerBase player)
+        {
+        }
+
+        /// <summary>
         /// Called when <see cref="PlayerBase.ResetToDefault"/> was called.
         /// </summary>
         /// <param name="player">a player which called <see cref="PlayerBase.ResetToDefault"/></param>

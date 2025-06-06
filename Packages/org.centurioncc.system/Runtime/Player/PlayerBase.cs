@@ -23,6 +23,11 @@ namespace CenturionCC.System.Player
         public abstract void ResetToDefault();
 
         /// <summary>
+        /// Resets the player's statistics to 0.
+        /// </summary>
+        public abstract void ResetStats();
+
+        /// <summary>
         /// Sets current team.
         /// </summary>
         /// <param name="teamId"></param>
@@ -83,10 +88,16 @@ namespace CenturionCC.System.Player
         public abstract int TeamId { get; }
 
         [PublicAPI]
-        public abstract int Kills { get; set; }
+        public abstract int Kills { get; protected set; }
 
         [PublicAPI]
-        public abstract int Deaths { get; set; }
+        public abstract int Deaths { get; protected set; }
+
+        [PublicAPI]
+        public abstract int Score { get; set; }
+
+        [PublicAPI]
+        public abstract int KillStreak { get; protected set; }
 
         // UdonSharp does not support merge conditional expr
         // ReSharper disable once MergeConditionalExpression

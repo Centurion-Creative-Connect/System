@@ -5,9 +5,7 @@ using DerpyNewbie.Logger;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
-using VRC.SDK3.UdonNetworkCalling;
 using VRC.SDKBase;
-using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.Player.Centurion
 {
@@ -26,8 +24,6 @@ namespace CenturionCC.System.Player.Centurion
         private CenturionPlayerManager playerManager;
 
         private readonly DataList _playerAreas = new DataList();
-
-        [UdonSynced]
         private short _deaths;
 
         [UdonSynced] [FieldChangeCallback(nameof(SyncedHealth))]
@@ -35,17 +31,27 @@ namespace CenturionCC.System.Player.Centurion
 
         private bool _isInSafeZone;
 
-        [UdonSynced]
         private short _kills;
 
-        [UdonSynced]
         private float _maxHealth = 100;
-
-        [UdonSynced]
         private short _score;
 
         [UdonSynced] [FieldChangeCallback(nameof(SyncedTeamId))]
         private byte _teamId;
+
+        private byte SyncedTeamId
+        {
+            get => _teamId;
+            set
+            {
+                var lastTeam = _teamId;
+                _teamId = value;
+                if (lastTeam == _teamId) return;
+
+                playerManager.Invoke_OnPlayerTeamChanged(this, lastTeam);
+                UpdateView();
+            }
+        }
 
         public float SyncedHealth
         {
@@ -61,12 +67,21 @@ namespace CenturionCC.System.Player.Centurion
 
                 if (IsDead)
                 {
-                    var attacker = playerManager.GetPlayerById(LastDamageInfo.AttackerId());
+                    var attacker = (CenturionPlayer)playerManager.GetPlayerById(LastDamageInfo.AttackerId());
                     var type = LastDamageInfo.AttackerId() == PlayerId
                         ? KillType.ReverseFriendlyFire
                         : playerManager.IsFriendly(this, attacker)
                             ? KillType.FriendlyFire
                             : KillType.Default;
+
+                    if (attacker)
+                    {
+                        ++attacker.Kills;
+                        ++attacker.KillStreak;
+                    }
+
+                    KillStreak = 0;
+                    ++Deaths;
 
                     playerManager.Invoke_OnPlayerKilled(
                         attacker,
@@ -81,8 +96,6 @@ namespace CenturionCC.System.Player.Centurion
             }
         }
 
-        public int Score => _score;
-
         public override string DisplayName =>
             $"<color=#{playerManager.GetTeamColor(TeamId).ToHtmlStringRGBA()}>{VrcPlayer.SafeGetDisplayName()}</color>";
 
@@ -91,14 +104,40 @@ namespace CenturionCC.System.Player.Centurion
         public override int Kills
         {
             get => _kills;
-            set => _kills = (short)value;
+            protected set
+            {
+                var changed = _kills != value;
+                _kills = (short)value;
+
+                if (changed) playerManager.Invoke_OnPlayerStatsChanged(this);
+            }
         }
 
         public override int Deaths
         {
             get => _deaths;
-            set => _deaths = (short)value;
+            protected set
+            {
+                var changed = _deaths != value;
+                _deaths = (short)value;
+
+                if (changed) playerManager.Invoke_OnPlayerStatsChanged(this);
+            }
         }
+
+        public override int Score
+        {
+            get => _score;
+            set
+            {
+                var changed = _score != value;
+                _score = (short)value;
+
+                if (changed) playerManager.Invoke_OnPlayerStatsChanged(this);
+            }
+        }
+
+        public override int KillStreak { get; protected set; }
 
         public override float Health => SyncedHealth;
         public override float MaxHealth => _maxHealth;
@@ -107,20 +146,6 @@ namespace CenturionCC.System.Player.Centurion
         public override bool IsInSafeZone => _isInSafeZone;
         public override VRCPlayerApi VrcPlayer => Networking.GetOwner(gameObject);
         public override RoleData[] Roles => roleProvider.GetPlayerRoles(VrcPlayer);
-
-        private byte SyncedTeamId
-        {
-            get => _teamId;
-            set
-            {
-                var lastTeam = _teamId;
-                _teamId = value;
-                if (lastTeam == _teamId) return;
-
-                playerManager.Invoke_OnPlayerTeamChanged(this, lastTeam);
-                UpdateView();
-            }
-        }
 
         private void Start()
         {
@@ -206,18 +231,15 @@ namespace CenturionCC.System.Player.Centurion
             }
         }
 
-        [NetworkCallable]
         public override void ResetToDefault()
         {
             if (!IsLocal)
             {
-                SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ResetToDefault));
+                playerManager.RequestResetToDefaultBroadcast(PlayerId);
                 return;
             }
 
-            _deaths = 0;
-            _kills = 0;
-            _score = 0;
+            ResetStats();
             SyncedTeamId = 0;
             _maxHealth = 100;
             SyncedHealth = _maxHealth;
@@ -226,9 +248,27 @@ namespace CenturionCC.System.Player.Centurion
             RequestSerialization();
         }
 
+        public override void ResetStats()
+        {
+            if (!IsLocal)
+            {
+                playerManager.RequestResetStatsBroadcast(PlayerId);
+                return;
+            }
+
+            Deaths = 0;
+            Kills = 0;
+            Score = 0;
+            RequestSerialization();
+        }
+
         public override void Kill()
         {
-            if (!IsLocal) return;
+            if (!IsLocal)
+            {
+                playerManager.RequestKillBroadcast(PlayerId);
+                return;
+            }
 
             SyncedHealth = 0;
             RequestSerialization();
@@ -236,7 +276,11 @@ namespace CenturionCC.System.Player.Centurion
 
         public override void Revive()
         {
-            if (!IsLocal) return;
+            if (!IsLocal)
+            {
+                playerManager.RequestReviveBroadcast(PlayerId);
+                return;
+            }
 
             SyncedHealth = _maxHealth;
             RequestSerialization();

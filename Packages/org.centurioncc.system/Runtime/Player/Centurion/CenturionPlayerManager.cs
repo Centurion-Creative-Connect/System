@@ -1,7 +1,6 @@
 ﻿using System;
 using CenturionCC.System.Utils;
 using DerpyNewbie.Logger;
-using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
@@ -11,6 +10,14 @@ using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.Player.Centurion
 {
+    public enum PlayerBaseSimpleCalls
+    {
+        Kill,
+        Revive,
+        ResetToDefault,
+        ResetStats
+    }
+
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class CenturionPlayerManager : PlayerManagerBase
     {
@@ -322,6 +329,31 @@ namespace CenturionCC.System.Player.Centurion
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_ApplyMaxHealthChange), playerId, maxHealth);
         }
 
+        public void RequestResetToDefaultBroadcast(int playerId)
+        {
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_ApplySimpleCalls),
+                playerId, PlayerBaseSimpleCalls.ResetToDefault);
+            ;
+        }
+
+        public void RequestResetStatsBroadcast(int playerId)
+        {
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_ApplySimpleCalls),
+                playerId, PlayerBaseSimpleCalls.ResetStats);
+        }
+
+        public void RequestKillBroadcast(int playerId)
+        {
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_ApplySimpleCalls),
+                playerId, PlayerBaseSimpleCalls.Kill);
+        }
+
+        public void RequestReviveBroadcast(int playerId)
+        {
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_ApplySimpleCalls),
+                playerId, PlayerBaseSimpleCalls.Revive);
+        }
+
         #endregion
 
         #region Internals
@@ -402,7 +434,7 @@ namespace CenturionCC.System.Player.Centurion
             localPlayer.SetHealth(health);
         }
 
-        [NetworkCallable]
+        [NetworkCallable(100)]
         public void Internal_ApplyMaxHealthChange(int playerId, float maxHealth)
         {
             if (Networking.LocalPlayer.playerId != playerId) return;
@@ -417,6 +449,33 @@ namespace CenturionCC.System.Player.Centurion
         {
             var damageInfo = DamageInfo.FromBytes(info);
             Internal_ProcessDamageInfo(damageInfo);
+        }
+
+        [NetworkCallable(100)]
+        public void Internal_ApplySimpleCalls(int playerId, PlayerBaseSimpleCalls simpleCallType)
+        {
+            if (Networking.LocalPlayer.playerId != playerId) return;
+            var localPlayer = GetLocalPlayer();
+
+            if (!localPlayer) return;
+            switch (simpleCallType)
+            {
+                case PlayerBaseSimpleCalls.Kill:
+                    localPlayer.Kill();
+                    break;
+                case PlayerBaseSimpleCalls.Revive:
+                    localPlayer.Revive();
+                    break;
+                case PlayerBaseSimpleCalls.ResetToDefault:
+                    localPlayer.ResetToDefault();
+                    break;
+                case PlayerBaseSimpleCalls.ResetStats:
+                    localPlayer.ResetStats();
+                    break;
+                default:
+                    logger.LogError($"{LogPrefix}Internal_ApplySimpleCalls: Unknown call type {simpleCallType}");
+                    return;
+            }
         }
 
         #endregion

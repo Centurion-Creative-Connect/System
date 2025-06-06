@@ -400,6 +400,18 @@ namespace CenturionCC.System.Player
             }
         }
 
+        public virtual void Invoke_OnPlayerStatsChanged(PlayerBase player)
+        {
+            logger.Log($"{LogPrefix}OnPlayerStatsChanged: {GetDisplayName(player)}");
+            UpdateAllPlayerView();
+
+            foreach (var callback in EventCallbacks)
+            {
+                var pmCallback = (PlayerManagerCallbackBase)callback;
+                if (pmCallback) pmCallback.OnPlayerStatsChanged(player);
+            }
+        }
+
         public virtual void Invoke_OnPlayerReset(PlayerBase player)
         {
             logger.Log($"{LogPrefix}OnPlayerReset: {GetDisplayName(player)}");
