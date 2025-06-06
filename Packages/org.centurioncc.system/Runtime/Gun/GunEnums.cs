@@ -274,4 +274,17 @@ namespace CenturionCC.System.Gun
             }
         }
     }
+
+    public static class GunManagerResetTypeHelper
+    {
+        public static string ToEnumName(this GunManagerResetType type)
+        {
+            switch (type)
+            {
+                case GunManagerResetType.All: return "All";
+                case GunManagerResetType.Unused: return "Unused";
+                default: return $"UnknownState:{type}";
+            }
+        }
+    }
 }
