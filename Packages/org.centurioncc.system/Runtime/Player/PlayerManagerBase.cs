@@ -81,11 +81,6 @@ namespace CenturionCC.System.Player
             }
         }
 
-        protected static string GetDisplayName([CanBeNull] PlayerBase player, string unknownName = "???")
-        {
-            return player ? $"{player.DisplayName}.{player.PlayerId}" : unknownName;
-        }
-
         #endregion
 
         #region GetUtilities
@@ -219,6 +214,41 @@ namespace CenturionCC.System.Player
             return result;
         }
 
+        /// <summary>
+        /// Null-safe way to get the display name of a <see cref="PlayerBase"/> instance.
+        /// </summary>
+        /// <param name="player">The <see cref="PlayerBase"/> to retrieve display name</param>
+        /// <param name="unknownName">Name used when display name couldn't be retrieved from <paramref name="player"/>.</param>
+        /// <param name="appendPlayerId">Append trailing player id?</param>
+        /// <returns>`{<see cref="PlayerBase.DisplayName"/>}` or `{<see cref="PlayerBase.DisplayName"/>}.{<see cref="PlayerBase.PlayerId"/>}` or `{<paramref name="unknownName"/>}`</returns>
+        [PublicAPI]
+        public static string GetDisplayName([CanBeNull] PlayerBase player, string unknownName, bool appendPlayerId)
+        {
+            return player
+                ? appendPlayerId ? $"{player.DisplayName}.{player.PlayerId}" : player.DisplayName
+                : unknownName;
+        }
+
+        /// <inheritdoc cref="GetDisplayName(CenturionCC.System.Player.PlayerBase,string,bool)"/>
+        /// <remarks>
+        /// Alias of <see cref="GetDisplayName(CenturionCC.System.Player.PlayerBase,string,bool)"/>. The unknownName is `???`.
+        /// </remarks>
+        [PublicAPI]
+        public static string GetDisplayName([CanBeNull] PlayerBase player, bool appendPlayerId)
+        {
+            return GetDisplayName(player, "???", appendPlayerId);
+        }
+
+        /// <inheritdoc cref="GetDisplayName(CenturionCC.System.Player.PlayerBase,string,bool)"/>
+        /// <remarks>
+        /// Alias of <see cref="GetDisplayName(CenturionCC.System.Player.PlayerBase,string,bool)"/>. The appendPlayerId is false.
+        /// </remarks>
+        [PublicAPI]
+        public static string GetDisplayName([CanBeNull] PlayerBase player, string unknownName = "???")
+        {
+            return GetDisplayName(player, unknownName, false);
+        }
+
         #endregion
 
         #region CheckUtilities
@@ -287,7 +317,7 @@ namespace CenturionCC.System.Player
 
         public virtual void Invoke_OnPlayerAdded(PlayerBase player)
         {
-            logger.Log($"{LogPrefix}OnPlayerAdded: {GetDisplayName(player)}");
+            logger.Log($"{LogPrefix}OnPlayerAdded: {GetDisplayName(player, true)}");
             UpdateAllPlayerView();
 
             foreach (var callback in EventCallbacks)
@@ -299,7 +329,7 @@ namespace CenturionCC.System.Player
 
         public virtual void Invoke_OnPlayerRemoved(PlayerBase player)
         {
-            logger.Log($"{LogPrefix}OnPlayerRemoved: {GetDisplayName(player)}");
+            logger.Log($"{LogPrefix}OnPlayerRemoved: {GetDisplayName(player, true)}");
             UpdateAllPlayerView();
 
             foreach (var callback in EventCallbacks)
@@ -312,7 +342,7 @@ namespace CenturionCC.System.Player
         public virtual bool Invoke_OnDamagePreBroadcast(DamageInfo info)
         {
             logger.Log(
-                $"{LogPrefix}OnDamagePreBroadcast: {GetDisplayName(GetPlayerById(info.AttackerId()))} -> {GetDisplayName(GetPlayerById(info.VictimId()))}");
+                $"{LogPrefix}OnDamagePreBroadcast: {GetDisplayName(GetPlayerById(info.AttackerId()), true)} -> {GetDisplayName(GetPlayerById(info.VictimId()), true)}");
             var result = false;
             foreach (var callback in EventCallbacks)
             {
@@ -327,7 +357,7 @@ namespace CenturionCC.System.Player
         public virtual bool Invoke_OnDamagePostBroadcast(DamageInfo info)
         {
             logger.Log(
-                $"{LogPrefix}OnDamagePostBroadcast: {GetDisplayName(GetPlayerById(info.AttackerId()))} -> {GetDisplayName(GetPlayerById(info.VictimId()))}");
+                $"{LogPrefix}OnDamagePostBroadcast: {GetDisplayName(GetPlayerById(info.AttackerId()), true)} -> {GetDisplayName(GetPlayerById(info.VictimId()), true)}");
             var result = false;
             foreach (var callback in EventCallbacks)
             {
@@ -342,7 +372,7 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnPlayerHealthChanged(PlayerBase player, float previousHealth)
         {
             logger.Log(
-                $"{LogPrefix}OnPlayerHealthChanged: {GetDisplayName(player)}, {previousHealth:F2} -> {player.Health:F2}");
+                $"{LogPrefix}OnPlayerHealthChanged: {GetDisplayName(player, true)}, {previousHealth:F2} -> {player.Health:F2}");
 
             foreach (var callback in EventCallbacks)
             {
@@ -353,7 +383,7 @@ namespace CenturionCC.System.Player
 
         public virtual void Invoke_OnPlayerRevived(PlayerBase player)
         {
-            logger.Log($"{LogPrefix}OnPlayerRevived: {GetDisplayName(player)}");
+            logger.Log($"{LogPrefix}OnPlayerRevived: {GetDisplayName(player, true)}");
             UpdateAllPlayerView();
 
             foreach (var callback in EventCallbacks)
@@ -366,7 +396,7 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
             logger.Log(
-                $"{LogPrefix}OnPlayerKilled: {type.ToEnumName()}, {GetDisplayName(attacker)} -> {GetDisplayName(victim)}");
+                $"{LogPrefix}OnPlayerKilled: {type.ToEnumName()}, {GetDisplayName(attacker, true)} -> {GetDisplayName(victim, true)}");
             victim.UpdateView();
 
             foreach (var callback in EventCallbacks)
@@ -379,7 +409,7 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnPlayerFriendlyFireWarning(PlayerBase victim, DamageInfo damageInfo)
         {
             logger.Log(
-                $"{LogPrefix}OnPlayerFriendlyFireWarning: {GetDisplayName(victim)}, {damageInfo.DamageType()}");
+                $"{LogPrefix}OnPlayerFriendlyFireWarning: {GetDisplayName(victim, true)}, {damageInfo.DamageType()}");
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
@@ -390,7 +420,7 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnPlayerTeamChanged(PlayerBase player, int oldTeam)
         {
             logger.Log(
-                $"{LogPrefix}OnPlayerTeamChanged: {GetDisplayName(player)}, {oldTeam} -> {player.TeamId}");
+                $"{LogPrefix}OnPlayerTeamChanged: {GetDisplayName(player, true)}, {oldTeam} -> {player.TeamId}");
             UpdateAllPlayerView();
 
             foreach (var callback in EventCallbacks)
@@ -402,7 +432,7 @@ namespace CenturionCC.System.Player
 
         public virtual void Invoke_OnPlayerStatsChanged(PlayerBase player)
         {
-            logger.Log($"{LogPrefix}OnPlayerStatsChanged: {GetDisplayName(player)}");
+            logger.Log($"{LogPrefix}OnPlayerStatsChanged: {GetDisplayName(player, true)}");
             UpdateAllPlayerView();
 
             foreach (var callback in EventCallbacks)
@@ -414,7 +444,7 @@ namespace CenturionCC.System.Player
 
         public virtual void Invoke_OnPlayerReset(PlayerBase player)
         {
-            logger.Log($"{LogPrefix}OnPlayerReset: {GetDisplayName(player)}");
+            logger.Log($"{LogPrefix}OnPlayerReset: {GetDisplayName(player, true)}");
             UpdateAllPlayerView();
 
             foreach (var callback in EventCallbacks)
@@ -462,7 +492,7 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnPlayerEnteredArea(PlayerBase player, PlayerAreaBase area)
         {
             logger.Log(
-                $"{LogPrefix}OnPlayerEnteredArea: {GetDisplayName(player)}, {area.AreaName} ({player.IsInSafeZone})");
+                $"{LogPrefix}OnPlayerEnteredArea: {GetDisplayName(player, true)}, {area.AreaName} ({player.IsInSafeZone})");
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
@@ -473,7 +503,7 @@ namespace CenturionCC.System.Player
         public virtual void Invoke_OnPlayerExitedArea(PlayerBase player, PlayerAreaBase area)
         {
             logger.Log(
-                $"{LogPrefix}OnPlayerExitedArea: {GetDisplayName(player)}, {area.AreaName} ({player.IsInSafeZone})");
+                $"{LogPrefix}OnPlayerExitedArea: {GetDisplayName(player, true)}, {area.AreaName} ({player.IsInSafeZone})");
             foreach (var callback in EventCallbacks)
             {
                 var pmCallback = (PlayerManagerCallbackBase)callback;
