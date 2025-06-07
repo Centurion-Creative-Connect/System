@@ -15,12 +15,16 @@ namespace CenturionCC.System.Utils
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private PrintableBase logger;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private NotificationProvider notification;
+
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
+
         [SerializeField]
         private float resolverWaitDuration = 0.1F;
+
         public float delay = 2F;
         private AudioSource _audioSource;
         private float _lastPlayedTime;

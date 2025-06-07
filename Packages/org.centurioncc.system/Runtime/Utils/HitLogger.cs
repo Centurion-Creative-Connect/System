@@ -6,12 +6,11 @@ using UnityEngine;
 namespace CenturionCC.System.Utils
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-    public class HitLogger : DamageDataSyncerManagerCallback
+    public class HitLogger : PlayerManagerCallbackBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerMgr;
-        [SerializeField] [HideInInspector] [NewbieInject]
-        private DamageDataSyncerManager syncerMgr;
+        private PlayerManagerBase playerMgr;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private LineManager lineManager;
 
@@ -24,26 +23,19 @@ namespace CenturionCC.System.Utils
 
         private void Start()
         {
-            playerMgr.SubscribeCallback(this);
-            syncerMgr.SubscribeCallback(this);
+            playerMgr.Subscribe(this);
         }
 
-        public override void OnSyncerReceived(DamageDataSyncer syncer)
-        {
-            if (drawOnHitDetection)
-                DrawLine2(syncer.ActivatedPosition, syncer.HitPosition, Color.yellow);
-        }
-
-        public override void OnKilled(PlayerBase attacker, PlayerBase victim, KillType type)
+        public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
             if (logOnKilled)
                 Debug.Log(
                     $"[HitLogger] OnKilled: {NewbieUtils.GetPlayerName(attacker.VrcPlayer)} " +
                     $"killed {NewbieUtils.GetPlayerName(victim.VrcPlayer)} " +
-                    $"at {victim.LastHitData.HitTime:s}");
+                    $"at {victim.LastDamageInfo.HitTime():s}");
 
             if (drawOnKilled)
-                DrawLine1(victim.LastHitData.ActivatedPosition, victim.LastHitData.HitPosition, Color.red);
+                DrawLine1(victim.LastDamageInfo.OriginatedPosition(), victim.LastDamageInfo.HitPosition(), Color.red);
         }
 
         private void DrawLine1(Vector3 v1, Vector3 v2, Color color)

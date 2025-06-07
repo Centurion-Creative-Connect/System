@@ -13,21 +13,29 @@ namespace CenturionCC.System.Utils
     public class Shield : ObjectMarkerBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
-        protected PlayerManager playerManager;
+        protected PlayerManagerBase playerManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         protected ShieldManager shieldManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         protected PlayerController playerController;
+
         [SerializeField]
         private VRCPickup pickup;
+
         [SerializeField]
         private Transform pickupReference;
+
         [SerializeField]
         private Transform leftHandedReference;
+
         [SerializeField]
         private Transform rightHandedReference;
+
         [SerializeField]
         private bool canShootWhileCarrying = true;
+
         [SerializeField]
         private bool dropShieldOnHit;
 
@@ -153,8 +161,10 @@ namespace CenturionCC.System.Utils
         [Header("Object Marker Properties")]
         [SerializeField]
         private ObjectType objectType;
+
         [SerializeField]
         private float objectWeight;
+
         [SerializeField]
         private string[] tags = { "NoCollisionAudio" };
 

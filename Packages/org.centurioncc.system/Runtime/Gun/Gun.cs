@@ -8,6 +8,7 @@ using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.UdonNetworkCalling;
 using VRC.SDKBase;
 using VRC.Udon.Common;
 using VRC.Udon.Common.Interfaces;
@@ -27,7 +28,6 @@ namespace CenturionCC.System.Gun
         protected readonly int CockingTwistAnimHash = Animator.StringToHash(GunUtility.CockingTwistParamName);
         protected readonly int HasBulletAnimHash = Animator.StringToHash(GunUtility.HasBulletParamName);
         protected readonly int HasCockedAnimHash = Animator.StringToHash(GunUtility.HasCockedParamName);
-        protected readonly int IsInSafeZoneAnimHash = Animator.StringToHash(GunUtility.IsInSafeZoneParamName);
         protected readonly int IsInWallAnimHash = Animator.StringToHash(GunUtility.IsInWallParamName);
         protected readonly int IsLocalAnimHash = Animator.StringToHash(GunUtility.IsLocalParamName);
         protected readonly int IsPickedUpGlobalAnimHash = Animator.StringToHash(GunUtility.IsPickedUpGlobalParamName);
@@ -64,9 +64,7 @@ namespace CenturionCC.System.Gun
         private float _nextMainHandlePickupableTime;
         private float _nextSubHandlePickupableTime;
 
-        [UdonSynced] private Vector3 _shotPosition;
-        [UdonSynced] private Quaternion _shotRotation;
-        [UdonSynced] private long _shotTime;
+        private long _shotTime;
 
         private bool _subHandleIsPickedUp;
 
@@ -78,8 +76,6 @@ namespace CenturionCC.System.Gun
 
         [UdonSynced] protected Vector3 pivotPosOffset = Vector3.zero;
         [UdonSynced] protected Quaternion pivotRotOffset = Quaternion.identity;
-
-        protected int safetyAreaCollisionCount;
 
         [UdonSynced] [FieldChangeCallback(nameof(ShotCount))]
         protected int shotCount = -1;
@@ -140,14 +136,6 @@ namespace CenturionCC.System.Gun
             Logger.LogVerbose($"{Prefix}OnTriggerEnter: {otherName}");
 #endif
 
-            if (otherName.StartsWith("safezone"))
-            {
-                safetyAreaCollisionCount++;
-                if (TargetAnimator != null)
-                    TargetAnimator.SetBool(IsInSafeZoneAnimHash, IsInSafeZone);
-                return;
-            }
-
             if (otherName.StartsWith("holster"))
             {
                 if (!IsLocal || IsHolstered)
@@ -173,14 +161,6 @@ namespace CenturionCC.System.Gun
         {
             var otherName = other.name.ToLower();
 
-            if (otherName.StartsWith("safezone"))
-            {
-                safetyAreaCollisionCount--;
-                if (TargetAnimator != null)
-                    TargetAnimator.SetBool(IsInSafeZoneAnimHash, IsInSafeZone);
-                return;
-            }
-
             if (otherName.StartsWith("holster") && IsLocal)
             {
                 if (TargetHolster != null)
@@ -200,31 +180,6 @@ namespace CenturionCC.System.Gun
 
             if (TargetAnimator != null)
                 TargetAnimator.SetBool(IsInWallAnimHash, IsInWall);
-        }
-
-        public override void OnDeserialization()
-        {
-            ProcessShotCountData();
-        }
-
-        private void ProcessShotCountData()
-        {
-            if (ShotCount == _lastShotCount)
-                return;
-
-#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            Logger.LogVerbose(
-                $"{Prefix}Received new shot: {ShotCount}:{_shotPosition.ToString("2F")}, {_shotRotation.eulerAngles.ToString("2F")}");
-#endif
-
-            if (ShotCount <= 0 || _lastShotCount == -1)
-            {
-                _lastShotCount = ShotCount;
-                return;
-            }
-
-            _lastShotCount = ShotCount;
-            Internal_Shoot();
         }
 
         public virtual void _Update()
@@ -319,14 +274,8 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public override void Shoot()
         {
-            _shotPosition = ShooterPosition;
-            _shotRotation = ShooterRotation;
-            _shotTime = Networking.GetNetworkDateTime().Ticks;
-            ++ShotCount;
-
-            Internal_SetRelatedObjectsOwner(Networking.LocalPlayer);
-            RequestSerialization();
-            ProcessShotCountData();
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_Shoot),
+                ShooterPosition, ShooterRotation, ShotCount++, Guid.NewGuid().ToByteArray());
         }
 
         [PublicAPI]
@@ -767,17 +716,12 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual bool IsInWall => CollisionCount != 0;
 
-        /// <summary>
-        /// Is this Gun inside of safezone?
-        /// </summary>
-        [PublicAPI]
-        public virtual bool IsInSafeZone => safetyAreaCollisionCount > 0;
-
         #endregion
 
         #region Internals
 
-        protected void Internal_Shoot()
+        [NetworkCallable(100)]
+        public void Internal_Shoot(Vector3 position, Quaternion rotation, int shotCount, byte[] shotId)
         {
             var data = ProjectileData;
             if (data == null)
@@ -799,13 +743,16 @@ namespace CenturionCC.System.Gun
                 return;
             }
 
+            _shotTime = Networking.GetNetworkDateTime().Ticks;
+
             var playerId = -1;
-            if (CurrentHolder != null && Utilities.IsValid(CurrentHolder))
+            if (NetworkCalling.InNetworkCall)
+                playerId = NetworkCalling.CallingPlayer.playerId;
+            else if (CurrentHolder != null && Utilities.IsValid(CurrentHolder))
                 playerId = CurrentHolder.playerId;
 
-            var dataIndexOffset = ShotCount * data.ProjectileCount;
-            var pos = _shotPosition;
-            var rot = _shotRotation;
+            var dataIndexOffset = shotCount * data.ProjectileCount;
+            var shotGuid = new Guid(shotId);
 
             for (int i = 0; i < data.ProjectileCount; i++)
             {
@@ -813,25 +760,22 @@ namespace CenturionCC.System.Gun
                 (
                     dataIndexOffset + i,
                     out var posOffset, out var velocity,
-                    out var rotOffset, out var torque,
-                    out var drag,
-                    out var trailTime, out var trailGradient,
-                    out var lifeTimeInSeconds
+                    out var rotOffset, out var torque, out var drag,
+                    out var damageAmount,
+                    out var trailTime, out var trailGradient, out var lifeTimeInSeconds
                 );
 
-                var tempRot = rot * rotOffset;
-                var tempPos = pos + (tempRot * posOffset);
+                var tempRot = rotation * rotOffset;
+                var tempPos = position + (tempRot * posOffset);
 
                 var projectile = pool.Shoot
                 (
-                    tempPos,
-                    tempRot,
-                    velocity,
-                    torque,
-                    drag,
-                    WeaponName, LastShotTime, playerId,
-                    trailTime, trailGradient,
-                    lifeTimeInSeconds
+                    shotGuid,
+                    tempPos, tempRot,
+                    velocity, torque, drag,
+                    WeaponName, damageAmount,
+                    LastShotTime, playerId,
+                    trailTime, trailGradient, lifeTimeInSeconds
                 );
 
                 if (projectile == null)
@@ -843,11 +787,11 @@ namespace CenturionCC.System.Gun
                 OnShoot(projectile, i != 0);
             }
 
-            if (TargetAnimator != null)
+            if (TargetAnimator)
                 TargetAnimator.SetTrigger(IsShootingAnimHash);
-            if (AudioData != null)
+            if (AudioData)
                 Internal_PlayAudio(AudioData.Shooting, AudioData.ShootingOffset);
-            if (IsLocal && HapticData != null && HapticData.Shooting)
+            if (IsLocal && HapticData && HapticData.Shooting)
                 HapticData.Shooting.PlayBothHand();
 
             HasCocked = false;
@@ -859,9 +803,9 @@ namespace CenturionCC.System.Gun
         public virtual void Internal_EmptyShoot()
         {
             OnEmptyShoot();
-            if (TargetAnimator != null)
+            if (TargetAnimator)
                 TargetAnimator.SetTrigger(IsShootingEmptyAnimHash);
-            if (AudioData != null)
+            if (AudioData)
                 Internal_PlayAudio(AudioData.EmptyShooting, AudioData.EmptyShootingOffset);
         }
 

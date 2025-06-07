@@ -53,7 +53,6 @@ namespace CenturionCC.System.UI
                 manager.logger.Log($"{Prefix}not initialized yet! initializing");
 
             visualizeGunHandle.SetIsOnWithoutNotify(manager.guns.IsDebugGunHandleVisible);
-            visualizeOnHit.SetIsOnWithoutNotify(manager.eventLogger.ShouldVisualizeOnLog);
             useModeratorMode.SetIsOnWithoutNotify(manager.moderatorTool.IsModeratorMode);
             showDebugTrail.SetIsOnWithoutNotify(manager.guns.useDebugBulletTrail);
 
@@ -61,8 +60,6 @@ namespace CenturionCC.System.UI
                 var p = manager.players;
                 showDebugNameTag.SetIsOnWithoutNotify(p.IsDebug);
                 showCollider.SetIsOnWithoutNotify(p.IsDebug);
-                useBaseCollider.SetIsOnWithoutNotify(p.UseBaseCollider);
-                useBodyCollider.SetIsOnWithoutNotify(p.UseAdditionalCollider);
             }
 
             RefreshPlayerMovementSettings();
@@ -87,29 +84,6 @@ namespace CenturionCC.System.UI
                     _lastShowCollider = showCollider.isOn;
                     p.IsDebug = _lastShowCollider;
                 }
-
-                // Base
-                if (CheckToggle(useBaseCollider, _lastBaseCollider))
-                {
-                    m.logger.Log($"{Prefix}update base status");
-                    _lastBaseCollider = useBaseCollider.isOn;
-                    p.UseBaseCollider = _lastBaseCollider;
-                }
-
-                // Body
-                if (CheckToggle(useBodyCollider, _lastBodyCollider))
-                {
-                    m.logger.Log($"{Prefix}update body status");
-                    _lastUpperArmCollider = useBodyCollider.isOn;
-                    p.UseAdditionalCollider = _lastUpperArmCollider;
-                }
-            }
-
-            if (CheckToggle(visualizeOnHit, _lastVisualizeOnHit))
-            {
-                m.logger.Log($"{Prefix}update visualize on hit status");
-                _lastVisualizeOnHit = visualizeOnHit.isOn;
-                manager.eventLogger.ShouldVisualizeOnLog = _lastVisualizeOnHit;
             }
 
             if (CheckToggle(showDebugNameTag, _lastShowDebugNameTag))

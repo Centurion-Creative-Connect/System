@@ -9,7 +9,7 @@ namespace CenturionCC.System.UI
     public class TeamSelectButton : PlayerManagerCallbackBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         [SerializeField] private int targetTeamId;
         [SerializeField] private GameObject changeToTargetButton;
@@ -17,20 +17,20 @@ namespace CenturionCC.System.UI
 
         private void Start()
         {
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
             UpdateButtonState();
         }
 
         private void UpdateButtonState()
         {
             var player = playerManager.GetLocalPlayer();
-            var isInTargetTeam = player != null && player.TeamId == targetTeamId;
+            var isInTargetTeam = player && player.TeamId == targetTeamId;
 
-            if (changeToTargetButton != null)
-                gameObject.SetActive(!isInTargetTeam);
+            if (changeToTargetButton)
+                changeToTargetButton.SetActive(!isInTargetTeam);
 
-            if (changeToDefaultButton != null)
-                gameObject.SetActive(isInTargetTeam);
+            if (changeToDefaultButton)
+                changeToDefaultButton.SetActive(isInTargetTeam);
         }
 
         public override void Interact()
@@ -41,7 +41,7 @@ namespace CenturionCC.System.UI
             localPlayer.SetTeam(localPlayer.TeamId != targetTeamId ? targetTeamId : 0);
         }
 
-        public override void OnTeamChanged(PlayerBase player, int oldTeam)
+        public override void OnPlayerTeamChanged(PlayerBase player, int oldTeam)
         {
             if (!player.IsLocal) return;
 

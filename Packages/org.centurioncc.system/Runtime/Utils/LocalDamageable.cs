@@ -16,7 +16,7 @@ namespace CenturionCC.System.Utils
         [SerializeField] private bool isDamaging = true;
 
         [SerializeField] [NewbieInject] [HideInInspector]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         private VRCPlayerApi _localPlayer;
 
@@ -29,6 +29,7 @@ namespace CenturionCC.System.Utils
             }
         }
 
+        public override Guid EventId => Guid.NewGuid();
         public override int DamagerPlayerId => _localPlayer.playerId;
         public override Vector3 DamageOriginPosition => transform.position;
         public override Quaternion DamageOriginRotation => transform.rotation;

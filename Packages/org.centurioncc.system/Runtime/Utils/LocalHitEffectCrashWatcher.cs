@@ -13,9 +13,11 @@ namespace CenturionCC.System.Utils
     public class LocalHitEffectCrashWatcher : PlayerManagerCallbackBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private HeadUILocalHitEffect instance;
+
         private int _duplicatedTimeCount;
         private DateTime _lastCapturedEndTime;
 
@@ -23,12 +25,12 @@ namespace CenturionCC.System.Utils
 
         private void Start()
         {
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
         }
 
-        public override void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer, KillType type)
+        public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
-            if (!hitPlayer.IsLocal)
+            if (!victim.IsLocal)
                 return;
 
             if (_lastCapturedPlayTime == instance.lastHitEffectPlayBeginTime ||

@@ -1,5 +1,6 @@
 ﻿using System;
 using CenturionCC.System.Player;
+using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using JetBrains.Annotations;
 using UdonSharp;
@@ -48,7 +49,7 @@ namespace CenturionCC.System.UI.HeadUI
         private UpdateManager updateManager;
 
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         private float _alpha;
         private float _alphaSmoothTime;
@@ -72,7 +73,7 @@ namespace CenturionCC.System.UI.HeadUI
 
         private void Start()
         {
-            if (rectTransform == null)
+            if (!rectTransform)
                 rectTransform = GetComponent<RectTransform>();
 
             if (hapticSource.preloadAudioData == false)
@@ -84,7 +85,7 @@ namespace CenturionCC.System.UI.HeadUI
 
             hapticSource.GetData(_hapticSamples, 0);
 
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
 
             SetAlpha(0F);
         }
@@ -213,15 +214,15 @@ namespace CenturionCC.System.UI.HeadUI
             string weaponName = "???", attackerName = "???", victimName = "???", bodyParts = "???";
             if (victim != null)
             {
-                weaponName = victim.LastHitData.WeaponType.Replace("BBBullet: ", "");
-                victimName = playerManager.GetHumanFriendlyColoredName(victim);
-                bodyParts = GetHumanFriendlyBodyPartsName(victim.LastHitData.Parts);
+                weaponName = victim.LastDamageInfo.DamageType().Replace("BBBullet: ", "");
+                victimName = victim.DisplayName;
+                bodyParts = GetHumanFriendlyBodyPartsName(victim.LastDamageInfo.HitParts());
             }
 
-            if (attacker != null && victim != null &&
+            if (attacker && victim &&
                 (victim.TeamId == 0 || victim.TeamId != attacker.TeamId || showFriendlyFireAttackerName))
             {
-                attackerName = playerManager.GetHumanFriendlyColoredName(attacker);
+                attackerName = attacker.DisplayName;
             }
 
             return format
@@ -233,13 +234,13 @@ namespace CenturionCC.System.UI.HeadUI
 
         #region PlayerManagerCallback
 
-        public override void OnKilled(PlayerBase attacker, PlayerBase victim, KillType type)
+        public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
             if (!victim.IsLocal) return;
 
-            if (descriptionText != null)
+            if (descriptionText)
             {
-                var actualVictim = playerManager.GetPlayerById(victim.LastHitData.VictimId);
+                var actualVictim = playerManager.GetPlayerById(victim.LastDamageInfo.VictimId());
 
                 switch (type)
                 {
