@@ -18,7 +18,7 @@ namespace CenturionCC.System.Match
         private GunManager gunManager;
 
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private PrintableBase logger;
@@ -98,7 +98,7 @@ namespace CenturionCC.System.Match
 
         private void Start()
         {
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
             MatchStartTime = Networking.GetNetworkDateTime();
             MatchEndTime = Networking.GetNetworkDateTime();
         }

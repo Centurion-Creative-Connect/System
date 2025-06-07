@@ -13,39 +13,40 @@ namespace CenturionCC.System.Match
     public class PlayerLogProducer : PlayerManagerCallbackBase
     {
         [SerializeField] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         [SerializeField] [NewbieInject]
         private GameMatchHandler matchHandler;
 
         private void OnEnable()
         {
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
         }
 
         private void OnDisable()
         {
-            playerManager.UnsubscribeCallback(this);
+            playerManager.Unsubscribe(this);
         }
 
-        public override void OnPlayerChanged(PlayerBase player, int oldId, int newId)
+        public override void OnPlayerAdded(PlayerBase player)
         {
             matchHandler.EnsureStatsTableExist(player);
         }
 
-        public override void OnTeamChanged(PlayerBase player, int oldTeamId)
+        public override void OnPlayerTeamChanged(PlayerBase player, int oldTeamId)
         {
             matchHandler.UpdateTeam(player);
         }
 
-        public override void OnKilled(PlayerBase attacker, PlayerBase victim, KillType type)
+        public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
-            matchHandler.AddMatchEventLog("killed", victim.LastHitData.ToDictionary());
+            matchHandler.AddMatchEventLog("killed", victim.LastDamageInfo.ToDictionary());
 
-            var distance = victim.LastHitData.Distance;
+            var distance = Vector3.Distance(victim.LastDamageInfo.HitPosition(),
+                victim.LastDamageInfo.OriginatedPosition());
 
             matchHandler.IncrementDeath(victim);
-            matchHandler.IncrementKill(attacker, victim.LastHitData.WeaponType, distance);
+            matchHandler.IncrementKill(attacker, victim.LastDamageInfo.DamageType(), distance);
         }
 
         public override void OnPlayerRevived(PlayerBase player)
