@@ -98,7 +98,6 @@ namespace CenturionCC.System.Match
 
         private void Start()
         {
-            playerManager.Subscribe(this);
             MatchStartTime = Networking.GetNetworkDateTime();
             MatchEndTime = Networking.GetNetworkDateTime();
         }
