@@ -9,6 +9,7 @@ namespace CenturionCC.System.Gun.GunCamera
     {
         [SerializeField]
         private GunCamera gunCameraInstance;
+
         [SerializeField]
         private GunCameraDataStore gunCameraDataStore;
 
@@ -31,7 +32,8 @@ namespace CenturionCC.System.Gun.GunCamera
 
         public override void OnPickup()
         {
-            gunCameraInstance.SetGunCamera(transform, gunCameraDataStore);
+            if (gunCameraInstance.CustomTargetIndex == 0)
+                gunCameraInstance.SetGunCamera(transform, gunCameraDataStore);
             _callFrameCounts = 0;
             updateManager.UnsubscribeSlowFixedUpdate(this);
         }
