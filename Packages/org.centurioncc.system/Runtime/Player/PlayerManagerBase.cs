@@ -97,6 +97,25 @@ namespace CenturionCC.System.Player
         }
 
         /// <summary>
+        /// Retrieves a player's <see cref="PlayerBase"/> instance by their display name.
+        /// </summary>
+        /// <param name="displayName">The display name of the player to search for.</param>
+        /// <returns>The <see cref="PlayerBase"/> instance of the player with the specified display name, or null if no such player exists.</returns>
+        [PublicAPI] [CanBeNull]
+        public virtual PlayerBase GetPlayerByDisplayName(string displayName)
+        {
+            var players = GetPlayers();
+            foreach (var player in players)
+            {
+                var vrcPlayer = player.VrcPlayer;
+                if (vrcPlayer != null && Utilities.IsValid(vrcPlayer) && vrcPlayer.displayName == displayName)
+                    return player;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Retrieves an array of players that belong to a specified team.
         /// </summary>
         /// <param name="teamId">The ID of the team whose players are to be retrieved.</param>
