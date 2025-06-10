@@ -140,7 +140,7 @@ namespace CenturionCC.System.Player.Centurion
 
         private void OnDamage(DamageData damageData, Vector3 contactPoint)
         {
-            if (!damageData || !player) return;
+            if (!damageData || !player || !damageData.ShouldApplyDamage) return;
 
             player.OnLocalHit(this, damageData, contactPoint);
         }

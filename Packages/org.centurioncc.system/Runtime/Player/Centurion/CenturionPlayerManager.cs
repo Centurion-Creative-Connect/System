@@ -45,6 +45,7 @@ namespace CenturionCC.System.Player.Centurion
         private bool isDebug;
 
         private readonly DataList _resolvedEventIds = new DataList();
+        private PlayerBase _cachedLocalPlayer;
 
         public override bool IsDebug
         {
@@ -108,7 +109,11 @@ namespace CenturionCC.System.Player.Centurion
 
         public override PlayerBase GetLocalPlayer()
         {
-            return GetPlayer(Networking.LocalPlayer);
+            if (_cachedLocalPlayer) return _cachedLocalPlayer;
+
+            _cachedLocalPlayer = GetPlayer(Networking.LocalPlayer);
+
+            return _cachedLocalPlayer;
         }
 
         public override PlayerBase[] GetPlayers()

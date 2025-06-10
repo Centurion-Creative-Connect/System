@@ -44,7 +44,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 12
-      Data: 14
+      Data: 17
     - Name: 
       Entry: 7
       Data: 
@@ -566,7 +566,7 @@ MonoBehaviour:
       Data: 35|UnityEngine.HeaderAttribute, UnityEngine.CoreModule
     - Name: header
       Entry: 1
-      Data: Exclusions
+      Data: Filtering
     - Name: 
       Entry: 8
       Data: 
@@ -647,13 +647,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: targetRoleNames
+      Data: onlyShowOnRoleNames
     - Name: $v
       Entry: 7
       Data: 40|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: targetRoleNames
+      Data: onlyShowOnRoleNames
     - Name: <UserType>k__BackingField
       Entry: 7
       Data: 41|System.RuntimeType, mscorlib
@@ -683,10 +683,196 @@ MonoBehaviour:
       Data: 42|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
     - Name: 
       Entry: 12
+      Data: 3
+    - Name: 
+      Entry: 7
+      Data: 43|UnityEngine.HeaderAttribute, UnityEngine.CoreModule
+    - Name: header
+      Entry: 1
+      Data: Role Name Filtering
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 44|UnityEngine.Serialization.FormerlySerializedAsAttribute, UnityEngine.CoreModule
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 45|UnityEngine.SerializeField, UnityEngine.CoreModule
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: excludeOnRoleNames
+    - Name: $v
+      Entry: 7
+      Data: 46|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
+    - Name: <Name>k__BackingField
+      Entry: 1
+      Data: excludeOnRoleNames
+    - Name: <UserType>k__BackingField
+      Entry: 9
+      Data: 41
+    - Name: <SystemType>k__BackingField
+      Entry: 9
+      Data: 41
+    - Name: <SyncMode>k__BackingField
+      Entry: 7
+      Data: System.Nullable`1[[UdonSharp.UdonSyncMode, UdonSharp.Runtime]], mscorlib
+    - Name: 
+      Entry: 6
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: <IsSerialized>k__BackingField
+      Entry: 5
+      Data: true
+    - Name: _fieldAttributes
+      Entry: 7
+      Data: 47|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
       Data: 1
     - Name: 
       Entry: 7
-      Data: 43|UnityEngine.SerializeField, UnityEngine.CoreModule
+      Data: 48|UnityEngine.SerializeField, UnityEngine.CoreModule
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: onlyShowOnDisplayNames
+    - Name: $v
+      Entry: 7
+      Data: 49|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
+    - Name: <Name>k__BackingField
+      Entry: 1
+      Data: onlyShowOnDisplayNames
+    - Name: <UserType>k__BackingField
+      Entry: 9
+      Data: 41
+    - Name: <SystemType>k__BackingField
+      Entry: 9
+      Data: 41
+    - Name: <SyncMode>k__BackingField
+      Entry: 7
+      Data: System.Nullable`1[[UdonSharp.UdonSyncMode, UdonSharp.Runtime]], mscorlib
+    - Name: 
+      Entry: 6
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: <IsSerialized>k__BackingField
+      Entry: 5
+      Data: true
+    - Name: _fieldAttributes
+      Entry: 7
+      Data: 50|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 2
+    - Name: 
+      Entry: 7
+      Data: 51|UnityEngine.HeaderAttribute, UnityEngine.CoreModule
+    - Name: header
+      Entry: 1
+      Data: Display Name Filtering
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 52|UnityEngine.SerializeField, UnityEngine.CoreModule
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: excludeOnDisplayNames
+    - Name: $v
+      Entry: 7
+      Data: 53|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
+    - Name: <Name>k__BackingField
+      Entry: 1
+      Data: excludeOnDisplayNames
+    - Name: <UserType>k__BackingField
+      Entry: 9
+      Data: 41
+    - Name: <SystemType>k__BackingField
+      Entry: 9
+      Data: 41
+    - Name: <SyncMode>k__BackingField
+      Entry: 7
+      Data: System.Nullable`1[[UdonSharp.UdonSyncMode, UdonSharp.Runtime]], mscorlib
+    - Name: 
+      Entry: 6
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: <IsSerialized>k__BackingField
+      Entry: 5
+      Data: true
+    - Name: _fieldAttributes
+      Entry: 7
+      Data: 54|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 7
+      Data: 55|UnityEngine.SerializeField, UnityEngine.CoreModule
     - Name: 
       Entry: 8
       Data: 
@@ -710,7 +896,7 @@ MonoBehaviour:
       Data: isTeamTag
     - Name: $v
       Entry: 7
-      Data: 44|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
+      Data: 56|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
       Data: isTeamTag
@@ -734,13 +920,13 @@ MonoBehaviour:
       Data: true
     - Name: _fieldAttributes
       Entry: 7
-      Data: 45|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
+      Data: 57|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
     - Name: 
       Entry: 12
       Data: 2
     - Name: 
       Entry: 7
-      Data: 46|UnityEngine.HeaderAttribute, UnityEngine.CoreModule
+      Data: 58|UnityEngine.HeaderAttribute, UnityEngine.CoreModule
     - Name: header
       Entry: 1
       Data: PlayerManager Categories
@@ -749,7 +935,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 7
-      Data: 47|UnityEngine.SerializeField, UnityEngine.CoreModule
+      Data: 59|UnityEngine.SerializeField, UnityEngine.CoreModule
     - Name: 
       Entry: 8
       Data: 
@@ -773,7 +959,7 @@ MonoBehaviour:
       Data: isStaffTag
     - Name: $v
       Entry: 7
-      Data: 48|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
+      Data: 60|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
       Data: isStaffTag
@@ -797,13 +983,13 @@ MonoBehaviour:
       Data: true
     - Name: _fieldAttributes
       Entry: 7
-      Data: 49|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
+      Data: 61|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
     - Name: 
       Entry: 12
       Data: 1
     - Name: 
       Entry: 7
-      Data: 50|UnityEngine.SerializeField, UnityEngine.CoreModule
+      Data: 62|UnityEngine.SerializeField, UnityEngine.CoreModule
     - Name: 
       Entry: 8
       Data: 
@@ -827,7 +1013,7 @@ MonoBehaviour:
       Data: isCreatorTag
     - Name: $v
       Entry: 7
-      Data: 51|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
+      Data: 63|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
       Data: isCreatorTag
@@ -851,13 +1037,13 @@ MonoBehaviour:
       Data: true
     - Name: _fieldAttributes
       Entry: 7
-      Data: 52|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
+      Data: 64|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
     - Name: 
       Entry: 12
       Data: 1
     - Name: 
       Entry: 7
-      Data: 53|UnityEngine.SerializeField, UnityEngine.CoreModule
+      Data: 65|UnityEngine.SerializeField, UnityEngine.CoreModule
     - Name: 
       Entry: 8
       Data: 

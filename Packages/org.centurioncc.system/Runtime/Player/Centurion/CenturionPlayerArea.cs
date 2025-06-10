@@ -24,7 +24,7 @@ namespace CenturionCC.System.Player.Centurion
             var players = GetPlayersInArea();
             foreach (var player in players)
             {
-                player.OnAreaExit(this);
+                if (player) player.OnAreaExit(this);
             }
 
             _inAreaPlayers.Clear();
