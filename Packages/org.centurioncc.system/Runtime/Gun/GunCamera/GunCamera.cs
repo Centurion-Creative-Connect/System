@@ -117,6 +117,8 @@ namespace CenturionCC.System.Gun.GunCamera
             get => _useAutoPresetChange;
         }
 
+        public bool UseAutoPresetChangeOnCustomTarget { set; get; }
+
         [PublicAPI]
         public float AutoPresetChangeInterval
         {
@@ -184,6 +186,7 @@ namespace CenturionCC.System.Gun.GunCamera
             }
 
             ++OffsetIndex;
+            if (UseAutoPresetChangeOnCustomTarget && OffsetIndex == 0) ++CustomTargetIndex;
 
             _isAutoPresetChangeCoroutineRunning = true;
             SendCustomEventDelayedSeconds(nameof(_AutoPresetChangeCoroutine), autoPresetChangeInterval);
@@ -191,7 +194,7 @@ namespace CenturionCC.System.Gun.GunCamera
 
         private static bool _GunOffsetExist(int index, GunCameraDataStore camData)
         {
-            if (camData == null) return false;
+            if (!camData) return false;
             var gunCamPoses = GunCameraDataStore.GetOrDefaultPositionOffsets(camData);
             var gunCamRots = GunCameraDataStore.GetOrDefaultRotationOffsets(camData);
             return index >= 0 && index < Mathf.Min(gunCamPoses.Length, gunCamRots.Length);

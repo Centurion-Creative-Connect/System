@@ -54,6 +54,9 @@ namespace CenturionCC.System.Gun.GunCamera
         [SerializeField]
         private TMP_Text changeAutoPresetChangeIntervalTextTmp;
 
+        [SerializeField]
+        private Toggle useCustomTargetOnAutoPresetChange;
+
         private int _autoPresetChangeIntervalIndex;
         private bool _isUpdatingUI;
 
@@ -82,6 +85,7 @@ namespace CenturionCC.System.Gun.GunCamera
             showGunCamera.isOn = instance.IsVisible;
             enableEditPosition.isOn = instance.IsPickupable;
             enableAutoPresetChange.isOn = instance.UseAutoPresetChange;
+            useCustomTargetOnAutoPresetChange.isOn = !instance.UseAutoPresetChangeOnCustomTarget;
 
             var changeOffsetPosMsg = $"プリセットの位置を変更する: {(instance.IsPickupable ? "CUSTOM" : $"{instance.OffsetIndex}")}";
             if (changeOffsetPosText) changeOffsetPosText.text = changeOffsetPosMsg;
@@ -117,6 +121,7 @@ namespace CenturionCC.System.Gun.GunCamera
             instance.IsPickupable = enableEditPosition.isOn;
             instance.UseAutoPresetChange = enableAutoPresetChange.isOn;
             instance.AutoPresetChangeInterval = autoPresetChangeIntervals[AutoPresetChangeIntervalIndex];
+            instance.UseAutoPresetChangeOnCustomTarget = !useCustomTargetOnAutoPresetChange.isOn;
             UpdateUI();
         }
 
