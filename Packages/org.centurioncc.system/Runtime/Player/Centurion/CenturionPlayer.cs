@@ -23,7 +23,15 @@ namespace CenturionCC.System.Player.Centurion
         [SerializeField] [NewbieInject]
         private CenturionPlayerManager playerManager;
 
+        [SerializeField] [NewbieInject(SearchScope.Children)]
+        private PlayerColliderBase[] playerColliders;
+
+        [SerializeField] [NewbieInject]
+        private CenturionPlayerTag[] playerTags;
+
         private readonly DataList _playerAreas = new DataList();
+
+
         private short _deaths;
 
         [UdonSynced] [FieldChangeCallback(nameof(SyncedHealth))]
@@ -215,18 +223,16 @@ namespace CenturionCC.System.Player.Centurion
 
         public override void UpdateView()
         {
-            logger.LogVerbose($"{LogPrefix}UpdateView");
-
-            var colliders = GetComponentsInChildren<CenturionPlayerCollider>(true);
-            foreach (var col in colliders)
+            foreach (var col in playerColliders)
             {
+                if (!col) continue;
                 col.gameObject.SetActive(!playerManager.IsInStaffTeam(this));
                 col.IsDebugVisible = playerManager.IsDebug;
             }
 
-            var playerTags = GetComponentsInChildren<CenturionPlayerTag>(true);
             foreach (var playerTag in playerTags)
             {
+                if (!playerTag) continue;
                 playerTag.Refresh();
             }
         }
