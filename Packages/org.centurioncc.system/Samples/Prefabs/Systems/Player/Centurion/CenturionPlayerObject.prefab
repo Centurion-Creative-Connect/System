@@ -337,7 +337,10 @@ MonoBehaviour:
   showOnStaffTeam: 0
   excludeStaffTeam: 0
   onlyShowOnMaster: 0
-  targetRoleNames: []
+  onlyShowOnRoleNames: []
+  excludeOnRoleNames: []
+  onlyShowOnDisplayNames: []
+  excludeOnDisplayNames: []
   isTeamTag: 0
   isStaffTag: 0
   isCreatorTag: 0
@@ -378,7 +381,7 @@ GameObject:
   - component: {fileID: 48230098442478318}
   - component: {fileID: 3011237158740861220}
   - component: {fileID: 544268151106928882}
-  m_Layer: 29
+  m_Layer: 5
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -461,7 +464,7 @@ GameObject:
   - component: {fileID: 7186479438905326300}
   - component: {fileID: 8808075218122769429}
   - component: {fileID: 6675175502711218898}
-  m_Layer: 29
+  m_Layer: 5
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -658,7 +661,7 @@ GameObject:
   - component: {fileID: 4734017048620517385}
   - component: {fileID: 6474952851800945761}
   - component: {fileID: 5279315431311349576}
-  m_Layer: 29
+  m_Layer: 5
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1067,7 +1070,10 @@ MonoBehaviour:
   showOnStaffTeam: 1
   excludeStaffTeam: 0
   onlyShowOnMaster: 0
-  targetRoleNames: []
+  onlyShowOnRoleNames: []
+  excludeOnRoleNames: []
+  onlyShowOnDisplayNames: []
+  excludeOnDisplayNames: []
   isTeamTag: 1
   isStaffTag: 0
   isCreatorTag: 0
@@ -1207,8 +1213,13 @@ MonoBehaviour:
   showOnStaffTeam: 1
   excludeStaffTeam: 0
   onlyShowOnMaster: 0
-  targetRoleNames:
-  - Staff
+  onlyShowOnRoleNames: []
+  excludeOnRoleNames:
+  - Dev
+  - Owner
+  - Creator
+  onlyShowOnDisplayNames: []
+  excludeOnDisplayNames: []
   isTeamTag: 0
   isStaffTag: 1
   isCreatorTag: 0
@@ -1249,7 +1260,7 @@ GameObject:
   - component: {fileID: 8835560972644334784}
   - component: {fileID: 1944207324210852560}
   - component: {fileID: 4208281845942573754}
-  m_Layer: 29
+  m_Layer: 5
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1332,7 +1343,7 @@ GameObject:
   - component: {fileID: 7470244821961769235}
   - component: {fileID: 3297187925194651232}
   - component: {fileID: 7268443384683402286}
-  m_Layer: 29
+  m_Layer: 5
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1628,8 +1639,12 @@ MonoBehaviour:
   showOnStaffTeam: 1
   excludeStaffTeam: 0
   onlyShowOnMaster: 0
-  targetRoleNames:
-  - Dev
+  onlyShowOnRoleNames:
+  - Developer
+  excludeOnRoleNames: []
+  onlyShowOnDisplayNames: []
+  excludeOnDisplayNames:
+  - DerpyNewbie
   isTeamTag: 0
   isStaffTag: 1
   isCreatorTag: 0
@@ -1673,11 +1688,11 @@ GameObject:
   - component: {fileID: 3228357660352986276}
   m_Layer: 29
   m_Name: RightLowerArm
-  m_TagString: Untagged
+  m_TagString: EditorOnly
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &748415732248128418
 Transform:
   m_ObjectHideFlags: 0
@@ -2001,7 +2016,10 @@ MonoBehaviour:
   showOnStaffTeam: 1
   excludeStaffTeam: 0
   onlyShowOnMaster: 1
-  targetRoleNames: []
+  onlyShowOnRoleNames: []
+  excludeOnRoleNames: []
+  onlyShowOnDisplayNames: []
+  excludeOnDisplayNames: []
   isTeamTag: 0
   isStaffTag: 1
   isCreatorTag: 0
@@ -2042,7 +2060,7 @@ GameObject:
   - component: {fileID: 7739996568493512971}
   - component: {fileID: 4554694388085353780}
   - component: {fileID: 2479626517846718057}
-  m_Layer: 29
+  m_Layer: 5
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2125,7 +2143,7 @@ GameObject:
   - component: {fileID: 3859389596883758128}
   - component: {fileID: 3438849411374481728}
   - component: {fileID: 3331035708771460879}
-  m_Layer: 29
+  m_Layer: 5
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2208,7 +2226,7 @@ GameObject:
   - component: {fileID: 3944116384241039428}
   - component: {fileID: 7032763176486543035}
   - component: {fileID: 6846127577321367934}
-  m_Layer: 29
+  m_Layer: 5
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2390,7 +2408,10 @@ MonoBehaviour:
   showOnStaffTeam: 0
   excludeStaffTeam: 1
   onlyShowOnMaster: 0
-  targetRoleNames: []
+  onlyShowOnRoleNames: []
+  excludeOnRoleNames: []
+  onlyShowOnDisplayNames: []
+  excludeOnDisplayNames: []
   isTeamTag: 1
   isStaffTag: 0
   isCreatorTag: 0
@@ -2588,7 +2609,7 @@ GameObject:
   - component: {fileID: 8255166238361733197}
   - component: {fileID: 333630607311788632}
   - component: {fileID: 8649366842133351741}
-  m_Layer: 29
+  m_Layer: 5
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2770,8 +2791,14 @@ MonoBehaviour:
   showOnStaffTeam: 1
   excludeStaffTeam: 0
   onlyShowOnMaster: 0
-  targetRoleNames:
-  - Creator
+  onlyShowOnRoleNames: []
+  excludeOnRoleNames:
+  - Dev
+  - Owner
+  - Staff
+  - SubStaff
+  onlyShowOnDisplayNames: []
+  excludeOnDisplayNames: []
   isTeamTag: 0
   isStaffTag: 0
   isCreatorTag: 1
@@ -2911,8 +2938,11 @@ MonoBehaviour:
   showOnStaffTeam: 1
   excludeStaffTeam: 0
   onlyShowOnMaster: 0
-  targetRoleNames:
+  onlyShowOnRoleNames:
   - Owner
+  excludeOnRoleNames: []
+  onlyShowOnDisplayNames: []
+  excludeOnDisplayNames: []
   isTeamTag: 0
   isStaffTag: 1
   isCreatorTag: 0
@@ -3129,6 +3159,8 @@ MonoBehaviour:
   logger: {fileID: 0}
   roleProvider: {fileID: 0}
   playerManager: {fileID: 0}
+  playerColliders: []
+  playerTags: []
 --- !u!114 &1094419389740032238
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3166,7 +3198,7 @@ GameObject:
   - component: {fileID: 5639231892801104395}
   - component: {fileID: 2934119865390874165}
   - component: {fileID: 832692283920716976}
-  m_Layer: 29
+  m_Layer: 5
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3366,11 +3398,11 @@ GameObject:
   - component: {fileID: 3968405565974680}
   m_Layer: 29
   m_Name: LeftLowerArm
-  m_TagString: Untagged
+  m_TagString: EditorOnly
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &6754628925925766376
 Transform:
   m_ObjectHideFlags: 0
@@ -3477,7 +3509,7 @@ GameObject:
   - component: {fileID: 4225910435128926759}
   - component: {fileID: 949323083224824326}
   - component: {fileID: 1269123897737442747}
-  m_Layer: 29
+  m_Layer: 5
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3560,7 +3592,7 @@ GameObject:
   - component: {fileID: 1757688008543201332}
   - component: {fileID: 5383607830879539261}
   - component: {fileID: 5562502025317598276}
-  m_Layer: 29
+  m_Layer: 5
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -1,6 +1,8 @@
 ﻿using DerpyNewbie.Common;
+using DerpyNewbie.Common.Role;
 using UdonSharp;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace CenturionCC.System.Player.Centurion
@@ -34,15 +36,27 @@ namespace CenturionCC.System.Player.Centurion
         [SerializeField]
         private bool showOnStaffTeam;
 
-        [Header("Exclusions")]
+        [Header("Filtering")]
         [SerializeField]
         private bool excludeStaffTeam = true;
 
         [SerializeField]
         private bool onlyShowOnMaster;
 
+        [Header("Role Name Filtering")]
+        [FormerlySerializedAs("targetRoleNames")]
         [SerializeField]
-        private string[] targetRoleNames;
+        private string[] onlyShowOnRoleNames;
+
+        [SerializeField]
+        private string[] excludeOnRoleNames;
+
+        [Header("Display Name Filtering")]
+        [SerializeField]
+        private string[] onlyShowOnDisplayNames;
+
+        [SerializeField]
+        private string[] excludeOnDisplayNames;
 
         [Header("PlayerManager Categories")]
         [SerializeField]
@@ -72,6 +86,7 @@ namespace CenturionCC.System.Player.Centurion
         private bool ShouldShow()
         {
             return IsEnabledByRole() &&
+                   IsEnabledByDisplayName() &&
                    IsEnabledInManager() &&
                    IsEnabledByOptions();
         }
@@ -106,30 +121,45 @@ namespace CenturionCC.System.Player.Centurion
                    (!isCreatorTag || playerManager.ShowCreatorTag);
         }
 
+        private bool IsEnabledByDisplayName()
+        {
+            return (onlyShowOnDisplayNames.Length == 0 || onlyShowOnDisplayNames.ContainsString(player.DisplayName)) &&
+                   (excludeOnDisplayNames.Length == 0 || !excludeOnDisplayNames.ContainsString(player.DisplayName));
+        }
+
+        #region RoleChecks
+
         private bool IsEnabledByRole()
         {
-            return !IsRoleRestricted() || HasTargetRole();
+            return (onlyShowOnRoleNames.Length == 0 || IsShownByRole()) &&
+                   (excludeOnRoleNames.Length == 0 || !IsExcludedByRole());
         }
 
-        private bool IsRoleRestricted()
-        {
-            return targetRoleNames.Length != 0;
-        }
-
-        private bool HasTargetRole()
+        private bool IsShownByRole()
         {
             var playerRoles = player.Roles;
-            if (playerRoles == null) return false;
-            foreach (var targetRoleName in targetRoleNames)
+            return playerRoles != null && RoleNameMatches(onlyShowOnRoleNames, playerRoles);
+        }
+
+        private bool IsExcludedByRole()
+        {
+            var playerRoles = player.Roles;
+            return playerRoles != null && RoleNameMatches(excludeOnRoleNames, playerRoles);
+        }
+
+        private static bool RoleNameMatches(string[] roleNames, RoleData[] roles)
+        {
+            foreach (var role in roles)
             {
-                foreach (var playerRole in playerRoles)
+                foreach (var roleName in roleNames)
                 {
-                    if (playerRole.RoleName != targetRoleName) continue;
-                    return true;
+                    if (role.RoleName == roleName) return true;
                 }
             }
 
             return false;
         }
+
+        #endregion
     }
 }
