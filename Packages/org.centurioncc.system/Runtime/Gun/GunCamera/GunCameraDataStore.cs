@@ -11,8 +11,12 @@ namespace CenturionCC.System.Gun.GunCamera
         [SerializeField]
         private Transform[] offsets;
 
+        [SerializeField]
+        private bool updateDynamically;
+
         [NonSerialized]
         private Vector3[] _cachedPosOffsets;
+
         [NonSerialized]
         private Quaternion[] _cachedRotOffsets;
 
@@ -24,7 +28,7 @@ namespace CenturionCC.System.Gun.GunCamera
                 if (offsets == null || offsets.Length == 0)
                     return GetDefaultPositionOffsets();
 
-                if (_cachedPosOffsets == null)
+                if (_cachedPosOffsets == null || updateDynamically)
                 {
                     var gunCamPosOffsets = new Vector3[offsets.Length];
                     for (var i = 0; i < offsets.Length; i++)
@@ -44,7 +48,7 @@ namespace CenturionCC.System.Gun.GunCamera
                 if (offsets == null || offsets.Length == 0)
                     return GetDefaultRotationOffsets();
 
-                if (_cachedRotOffsets == null)
+                if (_cachedRotOffsets == null || updateDynamically)
                 {
                     var gunCamRotOffsets = new Quaternion[offsets.Length];
                     for (var i = 0; i < offsets.Length; i++)
