@@ -44801,6 +44801,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 476004574328205127, guid: 5f5cd7ab3b5ba944caaef24a8aca360c,
+        type: 3}
+      propertyPath: m_PresetInfoIsWorld
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 476004574578664501, guid: 5f5cd7ab3b5ba944caaef24a8aca360c,
         type: 3}
       propertyPath: m_AnchorMax.y
@@ -45022,16 +45027,19 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 896848982}
+  gunManager: {fileID: 2428846941591081302}
+  magazineManager: {fileID: 0}
+  roleProvider: {fileID: 9185014342474887404}
+  logger: {fileID: 21636226}
   gunVariationId: 10
   useRandomIds: 0
   randomPoolIds: 
+  refillMagazines: 1
+  magazineCount: 4
   summonPosition: {fileID: 111093283}
   popupPosition: {fileID: 0}
   summonTime: 5
   staffOnly: 0
-  gunManager: {fileID: 2428846941591081302}
-  roleProvider: {fileID: 9185014342474887404}
-  logger: {fileID: 21636226}
 --- !u!1 &897406046 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7003710932898688315, guid: cd78bd0846a248b49849916164231865,
@@ -65857,6 +65865,16 @@ PrefabInstance:
     - target: {fileID: 3427360688087937741, guid: 283dfa6cf1764ec42b6c5ae807a0a71c,
         type: 3}
       propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4097336027635073353, guid: 283dfa6cf1764ec42b6c5ae807a0a71c,
+        type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4097336027635073353, guid: 283dfa6cf1764ec42b6c5ae807a0a71c,
+        type: 3}
+      propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4522987081372496306, guid: 283dfa6cf1764ec42b6c5ae807a0a71c,
