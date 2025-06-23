@@ -230,7 +230,7 @@ namespace CenturionCC.System.Player.Centurion
             foreach (var col in playerColliders)
             {
                 if (!col) continue;
-                col.gameObject.SetActive(!playerManager.IsInStaffTeam(this));
+                col.gameObject.SetActive(!playerManager.IsInStaffTeam(this) && !IsInSafeZone);
                 col.IsDebugVisible = playerManager.IsDebug;
             }
 
@@ -300,6 +300,7 @@ namespace CenturionCC.System.Player.Centurion
         {
             _playerAreas.Add(area);
             UpdateSafeZoneStatus();
+            UpdateView();
             playerManager.Invoke_OnPlayerEnteredArea(this, area);
         }
 
@@ -307,6 +308,7 @@ namespace CenturionCC.System.Player.Centurion
         {
             _playerAreas.RemoveAll(area);
             UpdateSafeZoneStatus();
+            UpdateView();
             playerManager.Invoke_OnPlayerExitedArea(this, area);
         }
 
