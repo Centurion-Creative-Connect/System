@@ -1,7 +1,6 @@
 ﻿using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using DerpyNewbie.Common.Role;
-using DerpyNewbie.Logger;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
@@ -12,11 +11,6 @@ namespace CenturionCC.System.Player.Centurion
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class CenturionPlayer : PlayerBase
     {
-        private const string LogPrefix = "[CPlayer] ";
-
-        [SerializeField] [NewbieInject]
-        private PrintableBase logger;
-
         [SerializeField] [NewbieInject]
         private RoleProvider roleProvider;
 
@@ -30,8 +24,6 @@ namespace CenturionCC.System.Player.Centurion
         private CenturionPlayerTag[] playerTags;
 
         private readonly DataList _playerAreas = new DataList();
-
-
         private short _deaths;
 
         [UdonSynced] [FieldChangeCallback(nameof(SyncedHealth))]
@@ -41,7 +33,9 @@ namespace CenturionCC.System.Player.Centurion
 
         private short _kills;
 
+        [UdonSynced] [FieldChangeCallback(nameof(SyncedMaxHealth))]
         private float _maxHealth = 100;
+
         private short _score;
 
         [UdonSynced] [FieldChangeCallback(nameof(SyncedTeamId))]
@@ -101,6 +95,16 @@ namespace CenturionCC.System.Player.Centurion
                 {
                     playerManager.Invoke_OnPlayerRevived(this);
                 }
+            }
+        }
+
+        public float SyncedMaxHealth
+        {
+            protected get => _maxHealth;
+            set
+            {
+                _maxHealth = value;
+                playerManager.Invoke_OnPlayerHealthChanged(this, SyncedHealth);
             }
         }
 
@@ -198,7 +202,7 @@ namespace CenturionCC.System.Player.Centurion
                 return;
             }
 
-            _maxHealth = maxHealth;
+            SyncedMaxHealth = maxHealth;
             RequestSerialization();
         }
 
@@ -247,8 +251,8 @@ namespace CenturionCC.System.Player.Centurion
 
             ResetStats();
             SyncedTeamId = 0;
-            _maxHealth = 100;
-            SyncedHealth = _maxHealth;
+            SyncedMaxHealth = 100;
+            SyncedHealth = SyncedMaxHealth;
 
             playerManager.Invoke_OnPlayerReset(this);
             RequestSerialization();
@@ -288,7 +292,7 @@ namespace CenturionCC.System.Player.Centurion
                 return;
             }
 
-            SyncedHealth = _maxHealth;
+            SyncedHealth = SyncedMaxHealth;
             RequestSerialization();
         }
 
