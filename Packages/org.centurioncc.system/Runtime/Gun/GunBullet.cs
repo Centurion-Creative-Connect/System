@@ -26,13 +26,15 @@ namespace CenturionCC.System.Gun
         private UpdateManager updateManager;
 
         private Collider _collider;
-
+        private float _damageAmount;
         private Vector3 _damageOriginPos;
         private Quaternion _damageOriginRot;
         private DateTime _damageOriginTime;
 
         private int _damagerPlayerId;
         private string _damageType;
+
+        private Guid _eventId;
         private float _hopUpStrength;
         private Vector3 _initialRotationUp;
         private Vector3 _nextTorque;
@@ -44,6 +46,8 @@ namespace CenturionCC.System.Gun
         private bool UseTrail => gunManager.useBulletTrail && _nextUseTrail;
         private bool UseDebugTrail => gunManager.useDebugBulletTrail;
 
+        public override Guid EventId => _eventId;
+
         public override bool ShouldApplyDamage =>
             gunManager.allowedRicochetCount + 1 >= _ricochetCount;
 
@@ -52,6 +56,7 @@ namespace CenturionCC.System.Gun
         public override Quaternion DamageOriginRotation => _damageOriginRot;
         public override DateTime DamageOriginTime => _damageOriginTime;
         public override string DamageType => _damageType;
+        public override float DamageAmount => _damageAmount;
 
         public void Start()
         {
@@ -70,16 +75,20 @@ namespace CenturionCC.System.Gun
             }
         }
 
-        public override void Shoot(Vector3 pos, Quaternion rot, Vector3 velocity, Vector3 torque, float drag,
-            string damageType, DateTime time, int playerId,
-            float trailTime, Gradient trailGradient,
-            float lifeTimeInSeconds)
+        public override void Shoot(Guid eventId,
+            Vector3 pos, Quaternion rot,
+            Vector3 velocity, Vector3 torque, float drag,
+            string damageType, float damageAmount,
+            DateTime time, int playerId,
+            float trailTime, Gradient trailGradient, float lifeTimeInSeconds)
         {
             // Damage data
+            _eventId = eventId;
             _damageOriginPos = pos;
             _damageOriginRot = rot;
             _damageOriginTime = time;
             _damageType = $"BBBullet: {damageType}";
+            _damageAmount = damageAmount;
             _damagerPlayerId = playerId;
 
             // Speed data
@@ -201,7 +210,8 @@ namespace CenturionCC.System.Gun
                 out var drag,
                 out var trailDuration,
                 out var trailColor,
-                out var lifeTimeInSeconds
+                out var lifeTimeInSeconds,
+                out var damageAmount
             );
 
             var tempRot = startingRot * rotOffset;

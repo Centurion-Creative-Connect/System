@@ -12,15 +12,19 @@ namespace CenturionCC.System.UI
     {
         [SerializeField] [HideInInspector] [NewbieInject]
         private NewbieConsole console;
+
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
 
         [SerializeField]
         private Toggle teamTagToggle;
+
         [SerializeField]
         private Toggle staffTagToggle;
+
         [SerializeField]
         private Dropdown friendlyFireDropdown;
+
         [SerializeField]
         private Toggle debugToggle;
 

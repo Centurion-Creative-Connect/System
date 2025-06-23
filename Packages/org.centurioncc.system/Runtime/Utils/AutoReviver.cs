@@ -10,9 +10,11 @@ namespace CenturionCC.System.Utils
     public class AutoReviver : PlayerManagerCallbackBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
+
         [SerializeField]
         private bool doAutoRevive = true;
+
         [SerializeField]
         private float autoReviveDelay = 6F;
 
@@ -24,7 +26,7 @@ namespace CenturionCC.System.Utils
             DoAutoRevive = doAutoRevive;
             AutoReviveDelay = autoReviveDelay;
 
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
         }
 
         public override void OnPlayerRespawn(VRCPlayerApi player)
@@ -32,12 +34,12 @@ namespace CenturionCC.System.Utils
             if (!player.IsValid() || !player.isLocal) return;
 
             var local = playerManager.GetLocalPlayer();
-            if (local == null || !DoAutoRevive || !local.IsDead) return;
+            if (!local || !DoAutoRevive || !local.IsDead) return;
 
             local.Revive();
         }
 
-        public override void OnKilled(PlayerBase attacker, PlayerBase victim, KillType type)
+        public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
             if (!DoAutoRevive || !victim.IsLocal) return;
 

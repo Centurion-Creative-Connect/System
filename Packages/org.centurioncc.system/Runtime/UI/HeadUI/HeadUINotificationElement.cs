@@ -10,10 +10,19 @@ namespace CenturionCC.System.UI.HeadUI
     {
         [SerializeField]
         private Text text;
+
         [SerializeField]
         private Image panel;
+
         [SerializeField]
         private Image icon;
+
+        [SerializeField]
+        private Slider slider;
+
+        [SerializeField]
+        private Image[] alphaChangeTargets;
+
 
         private float _alpha;
         private float _alphaTarget;
@@ -31,11 +40,14 @@ namespace CenturionCC.System.UI.HeadUI
         private Vector2 _posVelocity;
 
         private float _smoothTime;
+
         [NonSerialized]
         public Vector2 positionTarget;
 
         [NonSerialized]
         public RectTransform rectTransform;
+
+        public int Id { get; private set; }
 
         private void Start()
         {
@@ -68,10 +80,13 @@ namespace CenturionCC.System.UI.HeadUI
                 _smoothTime,
                 _maxSpeed
             ));
+
+            slider.value = Mathf.Clamp01(_lifeTime / _maxLifeTime + _smoothTime * 2);
         }
 
         private void OnDestroy()
         {
+            if (!_notification) return;
             _notification.RemoveNotification(this);
         }
 
@@ -83,6 +98,11 @@ namespace CenturionCC.System.UI.HeadUI
             panel.color = new Color(panelColor.r, panelColor.g, panelColor.b, alpha);
             var iconColor = icon.color;
             icon.color = new Color(iconColor.r, iconColor.g, iconColor.b, alpha);
+
+            foreach (var target in alphaChangeTargets)
+            {
+                target.color = new Color(target.color.r, target.color.g, target.color.b, alpha);
+            }
         }
 
         public void DestroyThis()
@@ -90,9 +110,11 @@ namespace CenturionCC.System.UI.HeadUI
             Destroy(gameObject);
         }
 
-        public void AddDuplicate(string message)
+        public void AddDuplicate(string message, float dur)
         {
             _lifeTime = 0F;
+            _maxLifeTime = dur;
+
             if (_originalMessage == message)
             {
                 ++_duplicateCount;
@@ -107,8 +129,9 @@ namespace CenturionCC.System.UI.HeadUI
         }
 
         public void Setup(HeadUINotification notification, Sprite iconSprite, Color panelColor,
-            float dur, float smoothT, float maxSpd, string message)
+            float dur, float smoothT, float maxSpd, string message, int id)
         {
+            Id = id;
             _notification = notification;
 
             rectTransform = GetComponent<RectTransform>();

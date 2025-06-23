@@ -198,6 +198,15 @@ namespace CenturionCC.System.Gun
 
         public void FlagDiscontinuity()
         {
+            // Hope 8 seconds is enough time to let VRCObjectSync finish its job
+            for (float i = 0; i < 8; i++)
+            {
+                SendCustomEventDelayedSeconds(nameof(Internal_FlagDiscontinuity), i);
+            }
+        }
+
+        public void Internal_FlagDiscontinuity()
+        {
             if (objectSync != null) objectSync.FlagDiscontinuity();
         }
     }

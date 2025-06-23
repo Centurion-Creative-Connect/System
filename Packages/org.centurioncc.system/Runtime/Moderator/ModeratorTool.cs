@@ -19,19 +19,24 @@ namespace CenturionCC.System.Moderator
 
         [Header("Anti-Cheat Zombie")]
         public float zombieDetectionTime = 10F;
+
         public float zombieDetectionTimeCutoff = 5F;
         public int zombieDetectionWarnCount = 2;
 
         [Header("Anti-Cheat Pitch")]
         public float pitchDetection = -10F;
+
         public int pitchDetectionWarnCount = 20;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private GunManager gunManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private NotificationProvider notification;
+
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private RoleProvider roleManager;
 
@@ -47,7 +52,7 @@ namespace CenturionCC.System.Moderator
         private void Start()
         {
             // _gunManager.SubscribeCallback(this);
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
         }
 
         private void CheckShot(ManagedGun instance)
@@ -96,44 +101,44 @@ namespace CenturionCC.System.Moderator
         //     // CheckShot(instance);
         // }
 
-        public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
+        public void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
             if (!IsModeratorMode) return;
 
-            var firedVrcPlayer = firedPlayer.VrcPlayer;
+            var attackerVrcPlayer = attacker.VrcPlayer;
 
-            if (firedVrcPlayer == null) return;
+            if (attackerVrcPlayer == null) return;
 
             var damageType = "Unknown";
 
             foreach (var gun in gunManager.ManagedGunInstances)
             {
-                if (gun != null && gun.CurrentHolder != null && gun.CurrentHolder.playerId == firedPlayer.PlayerId)
+                if (gun && gun.CurrentHolder != null && gun.CurrentHolder.playerId == attacker.PlayerId)
                     damageType = gun.WeaponName;
             }
 
             if (damageType == "Unknown")
             {
-                var leftPickup = firedVrcPlayer.GetPickupInHand(VRC_Pickup.PickupHand.Left);
-                if (leftPickup != null)
+                var leftPickup = attackerVrcPlayer.GetPickupInHand(VRC_Pickup.PickupHand.Left);
+                if (leftPickup)
                 {
                     var dmgData = leftPickup.GetComponentInChildren<DamageData>();
-                    if (dmgData != null) damageType = dmgData.DamageType;
+                    if (dmgData) damageType = dmgData.DamageType;
                 }
 
-                var rightPickup = firedVrcPlayer.GetPickupInHand(VRC_Pickup.PickupHand.Right);
-                if (rightPickup != null)
+                var rightPickup = attackerVrcPlayer.GetPickupInHand(VRC_Pickup.PickupHand.Right);
+                if (rightPickup)
                 {
                     var dmgData = rightPickup.GetComponentInChildren<DamageData>();
-                    if (dmgData != null) damageType = dmgData.DamageType;
+                    if (dmgData) damageType = dmgData.DamageType;
                 }
             }
 
             notification.ShowInfo(string.Format
             (
                 "Staff Only: Hit Info\n{0} => {1}: {2}",
-                NewbieUtils.GetPlayerName(firedVrcPlayer),
-                NewbieUtils.GetPlayerName(hitPlayer.VrcPlayer),
+                NewbieUtils.GetPlayerName(attackerVrcPlayer),
+                NewbieUtils.GetPlayerName(victim.VrcPlayer),
                 damageType
             ));
         }

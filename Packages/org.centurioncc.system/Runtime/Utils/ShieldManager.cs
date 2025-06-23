@@ -13,9 +13,11 @@ namespace CenturionCC.System.Utils
         private const string Prefix = "[ShieldManager] ";
 
         [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManager playerManager;
+        private PlayerManagerBase playerManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private GunManager gunManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private NewbieLogger logger;
 
@@ -40,7 +42,7 @@ namespace CenturionCC.System.Utils
 
         private void Start()
         {
-            playerManager.SubscribeCallback(this);
+            playerManager.Subscribe(this);
             gunManager.SubscribeCallback(this);
         }
 
@@ -53,6 +55,19 @@ namespace CenturionCC.System.Utils
         {
             CallbackUtil.RemoveBehaviour(behaviour, ref _eventCallbackCount, ref _eventCallbacks);
         }
+
+        #region PlayerManagerEvents
+
+        public void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
+        {
+            if (!victim.IsLocal || !_currentlyHeldShield)
+                return;
+
+            if (DropShieldOnHit && _currentlyHeldShield.DropShieldOnHit)
+                _currentlyHeldShield.DropByHit();
+        }
+
+        #endregion
 
         #region ShieldManagerEventInvokers
 
@@ -118,57 +133,11 @@ namespace CenturionCC.System.Utils
 
         #endregion
 
-        #region PlayerManagerEvents
-
-        public void OnPlayerChanged(PlayerBase player, int oldId, int newId)
-        {
-        }
-
-        public void OnLocalPlayerChanged(PlayerBase playerNullable, int index)
-        {
-        }
-
-        public void OnFriendlyFire(PlayerBase firedPlayer, PlayerBase hitPlayer)
-        {
-        }
-
-        public void OnHitDetection(PlayerCollider playerCollider, DamageData damageData, Vector3 contactPoint,
-            bool isShooterDetection)
-        {
-        }
-
-        public void OnKilled(PlayerBase firedPlayer, PlayerBase hitPlayer)
-        {
-            if (!hitPlayer.IsLocal || _currentlyHeldShield == null)
-                return;
-
-            if (DropShieldOnHit && _currentlyHeldShield.DropShieldOnHit)
-                _currentlyHeldShield.DropByHit();
-        }
-
-        public void OnTeamChanged(PlayerBase player, int oldTeam)
-        {
-        }
-
-        public void OnPlayerTagChanged(TagType type, bool isOn)
-        {
-        }
-
-        public void OnResetAllPlayerStats()
-        {
-        }
-
-        public void OnResetPlayerStats(PlayerBase player)
-        {
-        }
-
-        #endregion
-
         #region GunManagerEvents
 
         public bool CanShoot()
         {
-            return _currentlyHeldShield == null || _currentlyHeldShield.CanShootWhileCarrying;
+            return !_currentlyHeldShield || _currentlyHeldShield.CanShootWhileCarrying;
         }
 
 

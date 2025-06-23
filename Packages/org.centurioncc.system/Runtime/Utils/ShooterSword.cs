@@ -9,20 +9,29 @@ namespace CenturionCC.System.Utils
     public class ShooterSword : DamageData
     {
         [SerializeField]
+        private float damageAmount = 100F;
+
+        [SerializeField]
         private bool requireTriggerToDamage = true;
+
         [SerializeField]
         private bool hideMeshRendererOnPickup;
+
         [SerializeField]
         private MeshRenderer meshRenderer;
+
         private DateTime _originTime = default;
 
         private bool _shouldApplyDamage;
+
+        public override Guid EventId => Guid.NewGuid();
         public override bool ShouldApplyDamage => _shouldApplyDamage;
         public override int DamagerPlayerId => Networking.LocalPlayer.playerId;
         public override Vector3 DamageOriginPosition => transform.position;
         public override Quaternion DamageOriginRotation => transform.rotation;
         public override DateTime DamageOriginTime => _originTime;
         public override string DamageType => "Sword";
+        public override float DamageAmount => damageAmount;
 
         private void Start()
         {

@@ -1,8 +1,10 @@
-﻿using UdonSharp;
+﻿using System;
+using UdonSharp;
 using UnityEngine.UI;
 
 namespace CenturionCC.System.Audio
 {
+    [Obsolete("Legacy behaviour. No longer supported.")]
     public class AudioPlayerValuePresenter : UdonSharpBehaviour
     {
         public AudioPlayer audioPlayer;

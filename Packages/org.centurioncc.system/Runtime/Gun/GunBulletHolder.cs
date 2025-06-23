@@ -10,10 +10,13 @@ namespace CenturionCC.System.Gun
     {
         [SerializeField]
         private GameObject gunBulletSource;
+
         [SerializeField]
         private int gunBulletMax = 300;
+
         [SerializeField]
         private GameObject gunBulletPoolRoot;
+
         private ProjectileBase[] _bullets;
         private bool _hasInit;
 
@@ -108,18 +111,24 @@ namespace CenturionCC.System.Gun
             return bullet;
         }
 
-        public override ProjectileBase Shoot(Vector3 pos, Quaternion rot, Vector3 velocity, Vector3 torque, float drag,
-            string damageType, DateTime time,
-            int playerId, float trailTime, Gradient trailGradient,
-            float lifeTimeInSeconds)
+        public override ProjectileBase Shoot(Guid eventId,
+            Vector3 pos, Quaternion rot,
+            Vector3 velocity, Vector3 torque, float drag,
+            string damageType, float damageAmount,
+            DateTime time, int playerId,
+            float trailTime, Gradient trailGradient, float lifeTimeInSeconds)
         {
             var projectile = GetProjectile();
             if (projectile == null)
                 return null;
 
             projectile.ResetDamageSetting();
-            projectile.Shoot(pos, rot, velocity, torque, drag, damageType, time, playerId, trailTime, trailGradient,
-                lifeTimeInSeconds);
+            projectile.Shoot(eventId,
+                pos, rot,
+                velocity, torque, drag,
+                damageType, damageAmount,
+                time, playerId,
+                trailTime, trailGradient, lifeTimeInSeconds);
             return projectile;
         }
     }

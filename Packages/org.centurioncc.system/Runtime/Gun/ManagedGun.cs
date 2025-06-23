@@ -220,8 +220,6 @@ namespace CenturionCC.System.Gun
             State = GunState.Idle;
             HasBulletInChamber = false;
             HasCocked = false;
-            safetyAreaCollisionCount = 0;
-
 
             Collider.enabled = false;
             Collider.center = Vector3.zero;
@@ -360,12 +358,6 @@ namespace CenturionCC.System.Gun
                 if (IsInWall && VariantData.UseWallCheck)
                 {
                     ParentManager.Invoke_OnShootFailed(this, 100);
-                    return ShotResult.Cancelled;
-                }
-
-                if (IsInSafeZone && VariantData.UseSafeZoneCheck)
-                {
-                    ParentManager.Invoke_OnShootCancelled(this, 101);
                     return ShotResult.Cancelled;
                 }
             }
