@@ -26,7 +26,7 @@ namespace CenturionCC.System.Objective
         /// <summary>
         /// Set up Objective to be used by a team.
         /// </summary>
-        /// <param name="teamId">New owning team. The Objective will be disabled if set to 0.</param>
+        /// <param name="teamId">New owning team. The Objective will be disabled if set to -1.</param>
         [PublicAPI]
         public void SetupObjective(int teamId)
         {
@@ -59,7 +59,7 @@ namespace CenturionCC.System.Objective
             if (owningTeamIdChanged)
             {
                 objectives.Internal_RemoveObjective(this, _lastOwningTeamId);
-                if (OwningTeamId != 0) objectives.Internal_AddObjective(this, OwningTeamId);
+                if (HasOwningTeam) objectives.Internal_AddObjective(this, OwningTeamId);
                 _lastOwningTeamId = OwningTeamId;
             }
 
@@ -73,16 +73,15 @@ namespace CenturionCC.System.Objective
             var hasCompletedChanged = _lastHasCompleted != HasCompleted;
             _lastHasCompleted = HasCompleted;
 
-            var hasPausedChanged = _lastIsPaused != IsPaused;
-            _lastIsPaused = IsPaused;
-
-
-            if ((owningTeamIdChanged || hasCompletedChanged) && OwningTeamId != 0 && !HasCompleted)
+            if ((owningTeamIdChanged || hasCompletedChanged) && HasOwningTeam && !HasCompleted)
             {
                 OnObjectiveStart();
             }
 
-            if (OwningTeamId != 0 && !HasCompleted && hasPausedChanged)
+            var hasPausedChanged = _lastIsPaused != IsPaused;
+            _lastIsPaused = IsPaused;
+
+            if (HasOwningTeam && !HasCompleted && hasPausedChanged)
             {
                 if (IsPaused) OnObjectivePause();
                 else OnObjectiveResume();
@@ -93,7 +92,7 @@ namespace CenturionCC.System.Objective
                 OnObjectiveProgress();
             }
 
-            if (OwningTeamId != 0 && hasCompletedChanged && HasCompleted)
+            if (HasOwningTeam && HasCompleted && hasCompletedChanged)
             {
                 OnObjectiveCompleted();
             }
@@ -173,24 +172,27 @@ namespace CenturionCC.System.Objective
         /// </remarks>
         [field: UdonSynced]
         [PublicAPI]
-        public virtual int OwningTeamId { get; private set; }
+        public int OwningTeamId { get; private set; }
 
         [field: UdonSynced]
         [PublicAPI]
-        public virtual float Progress { get; private set; }
+        public float Progress { get; private set; }
 
         [field: UdonSynced]
         [PublicAPI]
-        public virtual bool IsPaused { get; private set; }
+        public bool IsPaused { get; private set; }
 
         /// <summary>
         /// Has the objective goal been completed? 
         /// </summary>
         [PublicAPI]
-        public virtual bool HasCompleted => Progress <= 1;
+        public bool HasCompleted => Progress <= 1;
 
         [PublicAPI]
-        public bool IsActiveAndRunning => OwningTeamId != 0 && !IsPaused && !HasCompleted;
+        public bool HasOwningTeam => OwningTeamId != -1;
+
+        [PublicAPI]
+        public bool IsActiveAndRunning => HasOwningTeam && !IsPaused && !HasCompleted;
 
         #endregion
     }
