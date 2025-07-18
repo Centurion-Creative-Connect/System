@@ -53,8 +53,8 @@ namespace CenturionCC.System.Objective.Player
             if (!Networking.IsMaster) return;
             if (!IsActiveAndRunning) return;
 
-            var teamPlayersCount = playerManager.GetTeamPlayers(TargetTeamId).Length;
-            var deadTeamPlayersCount = playerManager.GetDeadTeamPlayers(TargetTeamId).Length;
+            var teamPlayersCount = playerManager.GetPlayersInTeam(TargetTeamId).Length;
+            var deadTeamPlayersCount = playerManager.GetDeadPlayersInTeam(TargetTeamId).Length;
             SetProgress(deadTeamPlayersCount / (float)teamPlayersCount);
         }
     }
