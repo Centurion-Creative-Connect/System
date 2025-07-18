@@ -10,6 +10,9 @@ namespace CenturionCC.System.Gun.DataStore
         [FormerlySerializedAs("bulletSpeed")] [SerializeField] [Tooltip("In m/s")]
         private float baseSpeed = 85F;
 
+        [SerializeField]
+        private float baseDamage = 100F;
+
         [FormerlySerializedAs("bulletDrag")] [SerializeField]
         private float baseDrag = 1F;
 
@@ -33,8 +36,8 @@ namespace CenturionCC.System.Gun.DataStore
 
         public override void Get(int i,
             out Vector3 positionOffset, out Vector3 velocity,
-            out Quaternion rotationOffset, out Vector3 torque,
-            out float drag,
+            out Quaternion rotationOffset, out Vector3 torque, out float drag,
+            out float damageAmount,
             out float trailDuration, out Gradient trailColor, out float lifeTimeInSeconds)
         {
             var speedOffset = 0F;
@@ -43,6 +46,7 @@ namespace CenturionCC.System.Gun.DataStore
 
             if (recoilPattern) recoilPattern.Get(i, out speedOffset, out recoilOffset, out positionOffset);
 
+            damageAmount = baseDamage;
             drag = baseDrag;
             rotationOffset = Quaternion.Euler(recoilOffset);
             velocity = Vector3.forward * (baseSpeed + speedOffset);

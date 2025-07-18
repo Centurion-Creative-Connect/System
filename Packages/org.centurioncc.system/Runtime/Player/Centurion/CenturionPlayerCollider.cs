@@ -1,4 +1,5 @@
-﻿using CenturionCC.System.Utils;
+﻿using System;
+using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
@@ -55,6 +56,14 @@ namespace CenturionCC.System.Player.Centurion
         private void Start()
         {
             _vrcPlayer = Networking.GetOwner(gameObject);
+        }
+
+        private void OnEnable()
+        {
+            if (Utilities.IsValid(_vrcPlayer))
+            {
+                Calibrate();
+            }
         }
 
         public void OnCollisionEnter(Collision other)
@@ -131,7 +140,7 @@ namespace CenturionCC.System.Player.Centurion
 
         private void OnDamage(DamageData damageData, Vector3 contactPoint)
         {
-            if (!damageData || !player) return;
+            if (!damageData || !player || !damageData.ShouldApplyDamage) return;
 
             player.OnLocalHit(this, damageData, contactPoint);
         }

@@ -14,8 +14,7 @@ namespace CenturionCC.System.Utils
         public abstract DateTime DamageOriginTime { get; }
         public abstract string DamageType { get; }
 
-        public virtual float DamageAmount => 100;
-
+        public virtual float DamageAmount { get; protected set; } = 100;
         public virtual DetectionType DetectionType { get; protected set; } = DetectionType.All;
         public virtual bool RespectFriendlyFireSetting { get; protected set; } = true;
         public virtual bool CanDamageSelf { get; protected set; } = false;

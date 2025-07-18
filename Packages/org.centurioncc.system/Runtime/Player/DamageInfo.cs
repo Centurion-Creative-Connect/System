@@ -35,11 +35,26 @@ namespace CenturionCC.System.Player
         private const int FloatSize = sizeof(float);
         private const int LongSize = sizeof(long);
         private const int ByteSize = sizeof(byte);
+
 #if !COMPILER_UDONSHARP
         private DamageInfo(DataToken[] data) : base(data)
         {
         }
 #endif
+
+        public static DamageInfo NewEmpty()
+        {
+            return New(
+                Guid.Empty,
+                -1, -1,
+                Vector3.zero, BodyParts.Body,
+                Vector3.zero, Quaternion.identity,
+                DateTime.MinValue, DateTime.MinValue,
+                "", 0,
+                DetectionType.None,
+                true, false, false, false
+            );
+        }
 
         public static DamageInfo New(VRCPlayerApi victim, Vector3 contactPoint, BodyParts contactParts, DamageData data)
         {
@@ -268,7 +283,7 @@ namespace CenturionCC.System.Player
             var hitTimeTickBytes = BitConverter.GetBytes(instance.HitTime().Ticks);
             size += hitTimeTickBytes.Length;
 
-            var hitPartBytes = new byte[] { instance.HitParts().ToByte() };
+            var hitPartBytes = new[] { instance.HitParts().ToByte() };
             size += hitPartBytes.Length;
 
             var originPosBytes = EncodingUtil.GetBytes(instance.OriginatedPosition());
@@ -296,8 +311,8 @@ namespace CenturionCC.System.Player
             );
             size += damageOptionBytes.Length;
 
-            byte[] output = new byte[size];
-            int offset = 0;
+            var output = new byte[size];
+            var offset = 0;
 
             Buffer.BlockCopy(eventIdBytes, 0, output, offset, eventIdBytes.Length);
             offset += eventIdBytes.Length;
@@ -326,6 +341,11 @@ namespace CenturionCC.System.Player
             offset += damageAmountBytes.Length;
             Buffer.BlockCopy(damageOptionBytes, 0, output, offset, damageOptionBytes.Length);
             return output;
+        }
+
+        public static bool IsEmpty(this DamageInfo instance)
+        {
+            return Guid.Empty == instance.EventId();
         }
     }
 }

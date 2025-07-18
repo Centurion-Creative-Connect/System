@@ -289,11 +289,12 @@ namespace CenturionCC.System.UI
             _updatePlayerStatusNextFrame = true;
         }
 
-        public override void OnPlayerHitDetection(PlayerColliderBase playerCollider, DamageData damageData,
-            Vector3 contactPoint)
+        public override bool OnDamagePreBroadcast(DamageInfo info)
         {
             ++_hitDetectionCount;
             _updateStatisticsNextFrame = true;
+
+            return false;
         }
 
         public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)

@@ -26,8 +26,11 @@ namespace CenturionCC.System.Tests.Editor
         public override float Health { get; }
         public override float MaxHealth { get; }
         public override int TeamId => _teamId;
-        public override int Kills { get; set; }
-        public override int Deaths { get; set; }
+        public override int Kills { get; protected set; }
+        public override int Deaths { get; protected set; }
+        public override int Score { get; set; }
+        public override int KillStreak { get; protected set; }
+        public override bool IsInSafeZone { get; }
         public override VRCPlayerApi VrcPlayer { get; }
         public override RoleData[] Roles => _roles;
         public override bool IsDead => _isDead;
@@ -38,6 +41,11 @@ namespace CenturionCC.System.Tests.Editor
         }
 
         public override void ResetToDefault()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void ResetStats()
         {
             throw new NotImplementedException();
         }
@@ -73,6 +81,21 @@ namespace CenturionCC.System.Tests.Editor
         }
 
         public override void Revive()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void OnAreaEnter(PlayerAreaBase area)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void OnAreaExit(PlayerAreaBase area)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override PlayerAreaBase[] GetCurrentPlayerAreas()
         {
             throw new NotImplementedException();
         }

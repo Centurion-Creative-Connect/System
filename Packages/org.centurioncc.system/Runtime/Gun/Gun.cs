@@ -28,7 +28,6 @@ namespace CenturionCC.System.Gun
         protected readonly int CockingTwistAnimHash = Animator.StringToHash(GunUtility.CockingTwistParamName);
         protected readonly int HasBulletAnimHash = Animator.StringToHash(GunUtility.HasBulletParamName);
         protected readonly int HasCockedAnimHash = Animator.StringToHash(GunUtility.HasCockedParamName);
-        protected readonly int IsInSafeZoneAnimHash = Animator.StringToHash(GunUtility.IsInSafeZoneParamName);
         protected readonly int IsInWallAnimHash = Animator.StringToHash(GunUtility.IsInWallParamName);
         protected readonly int IsLocalAnimHash = Animator.StringToHash(GunUtility.IsLocalParamName);
         protected readonly int IsPickedUpGlobalAnimHash = Animator.StringToHash(GunUtility.IsPickedUpGlobalParamName);
@@ -77,8 +76,6 @@ namespace CenturionCC.System.Gun
 
         [UdonSynced] protected Vector3 pivotPosOffset = Vector3.zero;
         [UdonSynced] protected Quaternion pivotRotOffset = Quaternion.identity;
-
-        protected int safetyAreaCollisionCount;
 
         [UdonSynced] [FieldChangeCallback(nameof(ShotCount))]
         protected int shotCount = -1;
@@ -139,14 +136,6 @@ namespace CenturionCC.System.Gun
             Logger.LogVerbose($"{Prefix}OnTriggerEnter: {otherName}");
 #endif
 
-            if (otherName.StartsWith("safezone"))
-            {
-                safetyAreaCollisionCount++;
-                if (TargetAnimator != null)
-                    TargetAnimator.SetBool(IsInSafeZoneAnimHash, IsInSafeZone);
-                return;
-            }
-
             if (otherName.StartsWith("holster"))
             {
                 if (!IsLocal || IsHolstered)
@@ -171,14 +160,6 @@ namespace CenturionCC.System.Gun
         protected virtual void OnTriggerExit(Collider other)
         {
             var otherName = other.name.ToLower();
-
-            if (otherName.StartsWith("safezone"))
-            {
-                safetyAreaCollisionCount--;
-                if (TargetAnimator != null)
-                    TargetAnimator.SetBool(IsInSafeZoneAnimHash, IsInSafeZone);
-                return;
-            }
 
             if (otherName.StartsWith("holster") && IsLocal)
             {
@@ -735,12 +716,6 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual bool IsInWall => CollisionCount != 0;
 
-        /// <summary>
-        /// Is this Gun inside of safezone?
-        /// </summary>
-        [PublicAPI]
-        public virtual bool IsInSafeZone => safetyAreaCollisionCount > 0;
-
         #endregion
 
         #region Internals
@@ -785,10 +760,9 @@ namespace CenturionCC.System.Gun
                 (
                     dataIndexOffset + i,
                     out var posOffset, out var velocity,
-                    out var rotOffset, out var torque,
-                    out var drag,
-                    out var trailTime, out var trailGradient,
-                    out var lifeTimeInSeconds
+                    out var rotOffset, out var torque, out var drag,
+                    out var damageAmount,
+                    out var trailTime, out var trailGradient, out var lifeTimeInSeconds
                 );
 
                 var tempRot = rotation * rotOffset;
@@ -797,14 +771,11 @@ namespace CenturionCC.System.Gun
                 var projectile = pool.Shoot
                 (
                     shotGuid,
-                    tempPos,
-                    tempRot,
-                    velocity,
-                    torque,
-                    drag,
-                    WeaponName, LastShotTime, playerId,
-                    trailTime, trailGradient,
-                    lifeTimeInSeconds
+                    tempPos, tempRot,
+                    velocity, torque, drag,
+                    WeaponName, damageAmount,
+                    LastShotTime, playerId,
+                    trailTime, trailGradient, lifeTimeInSeconds
                 );
 
                 if (projectile == null)
