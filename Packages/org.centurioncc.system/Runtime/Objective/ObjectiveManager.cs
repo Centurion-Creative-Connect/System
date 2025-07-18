@@ -1,5 +1,7 @@
 ﻿using UdonSharp;
+using UnityEngine;
 using VRC.SDK3.Data;
+using NotImplementedException = System.NotImplementedException;
 
 namespace CenturionCC.System.Objective
 {
@@ -25,17 +27,27 @@ namespace CenturionCC.System.Objective
             Invoke_OnObjectiveProgress(objective, objective.OwningTeamId);
         }
 
-        public override ObjectiveBase[] GetObjectives(int teamId)
+        public override void Internal_OnObjectiveCompleted(ObjectiveBase objective)
         {
-            var teamObjectives = GetTeamObjectivesDataList(teamId);
-
-            var result = new ObjectiveBase[teamObjectives.Count];
-            for (var i = 0; i < result.Length; i++)
+            if (Mathf.Approximately(GetObjectiveProgress(objective.OwningTeamId), 1))
             {
-                result[i] = (ObjectiveBase)teamObjectives[i].Reference;
+                Invoke_OnObjectiveCompleted(objective.OwningTeamId);
             }
+        }
 
-            return result;
+        public override void StartObjectives()
+        {
+            Invoke_OnObjectiveStarted();
+        }
+
+        public override void PauseObjectives()
+        {
+            Invoke_OnObjectivePaused();
+        }
+
+        public override void ResumeObjectives()
+        {
+            Invoke_OnObjectiveResumed();
         }
 
         public override void ResetObjectives()
@@ -49,6 +61,19 @@ namespace CenturionCC.System.Objective
                     Internal_RemoveObjective((ObjectiveBase)objectiveToken.Reference, teamIdToken.Int);
                 }
             }
+        }
+
+        public override ObjectiveBase[] GetObjectives(int teamId)
+        {
+            var teamObjectives = GetTeamObjectivesDataList(teamId);
+
+            var result = new ObjectiveBase[teamObjectives.Count];
+            for (var i = 0; i < result.Length; i++)
+            {
+                result[i] = (ObjectiveBase)teamObjectives[i].Reference;
+            }
+
+            return result;
         }
 
         private DataList GetTeamObjectivesDataList(int teamId)
