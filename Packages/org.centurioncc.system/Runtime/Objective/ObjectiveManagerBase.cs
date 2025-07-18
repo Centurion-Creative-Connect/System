@@ -21,7 +21,6 @@ namespace CenturionCC.System.Objective
         /// <param name="teamId"></param>
         public abstract void Internal_AddObjective(ObjectiveBase objective, int teamId);
 
-
         /// <summary>
         /// Called by ObjectiveBase when OwningTeamId has changed.
         /// </summary>
@@ -36,18 +35,39 @@ namespace CenturionCC.System.Objective
         public abstract void Internal_OnObjectiveProgress(ObjectiveBase objective);
 
         /// <summary>
-        /// Retrieves current active objectives for a specified team.
+        /// Called by ObjectiveBase when Progress has been completed.
         /// </summary>
-        /// <param name="teamId"></param>
-        /// <returns>Array of ObjectiveBase assigned for a team. Empty array if nothing was found.</returns>
-        [PublicAPI]
-        public abstract ObjectiveBase[] GetObjectives(int teamId);
+        /// <param name="objective"></param>
+        public abstract void Internal_OnObjectiveCompleted(ObjectiveBase objective);
+
+        /// <summary>
+        /// Starts up the Objective.
+        /// </summary>
+        public abstract void StartObjectives();
+
+        /// <summary>
+        /// Pauses the active Objectives. 
+        /// </summary>
+        public abstract void PauseObjectives();
+
+        /// <summary>
+        /// Unpauses the active Objectives.
+        /// </summary>
+        public abstract void ResumeObjectives();
 
         /// <summary>
         /// Removes all objectives.
         /// </summary>
         [PublicAPI]
         public abstract void ResetObjectives();
+
+        /// <summary>
+        /// Retrieves current active objectives for a specified team.
+        /// </summary>
+        /// <param name="teamId"></param>
+        /// <returns>Array of ObjectiveBase assigned for a team. Empty array if nothing was found.</returns>
+        [PublicAPI]
+        public abstract ObjectiveBase[] GetObjectives(int teamId);
 
         #region Getters
 

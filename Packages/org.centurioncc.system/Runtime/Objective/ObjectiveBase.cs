@@ -95,6 +95,10 @@ namespace CenturionCC.System.Objective
             if (HasOwningTeam && HasCompleted && hasCompletedChanged)
             {
                 OnObjectiveCompleted();
+                if (HasCompleted)
+                    objectives.Internal_OnObjectiveCompleted(this);
+
+                _lastHasCompleted = HasCompleted;
             }
         }
 
@@ -108,6 +112,10 @@ namespace CenturionCC.System.Objective
             RequestSync();
         }
 
+        /// <summary>
+        /// Sets an owner of this Objective to the new team.
+        /// </summary>
+        /// <param name="teamId">New owning team. The Objective will be disabled if set to -1.</param>
         protected void SetOwningTeamId(int teamId)
         {
             OwningTeamId = teamId;
