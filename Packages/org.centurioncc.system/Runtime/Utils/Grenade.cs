@@ -38,6 +38,7 @@ namespace CenturionCC.System.Utils
         [SerializeField] [HideInInspector] [NewbieInject]
         private AudioManager audioManager;
 
+        [SerializeField] private ProjectilePool projectilePoolOverride;
         [SerializeField] private ObjectPoolProxy objectPoolProxy;
         [SerializeField] private Animator animator;
         [SerializeField] private ProjectileDataProvider projectileData;
@@ -143,6 +144,9 @@ namespace CenturionCC.System.Utils
 
             _hasSafetyPin = true;
             _hasSafetyLever = true;
+
+            if (projectilePoolOverride != null)
+                projectilePool = projectilePoolOverride;
         }
 
         private void Update()
