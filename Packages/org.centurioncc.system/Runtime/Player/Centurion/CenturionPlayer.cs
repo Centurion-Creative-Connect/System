@@ -1,7 +1,6 @@
 ﻿using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using DerpyNewbie.Common.Role;
-using DerpyNewbie.Logger;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
@@ -12,16 +11,17 @@ namespace CenturionCC.System.Player.Centurion
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class CenturionPlayer : PlayerBase
     {
-        private const string LogPrefix = "[CPlayer] ";
-
-        [SerializeField] [NewbieInject]
-        private PrintableBase logger;
-
         [SerializeField] [NewbieInject]
         private RoleProvider roleProvider;
 
         [SerializeField] [NewbieInject]
         private CenturionPlayerManager playerManager;
+
+        [SerializeField] [NewbieInject(SearchScope.Children)]
+        private PlayerColliderBase[] playerColliders;
+
+        [SerializeField] [NewbieInject]
+        private CenturionPlayerTag[] playerTags;
 
         private readonly DataList _playerAreas = new DataList();
         private short _deaths;
@@ -33,7 +33,9 @@ namespace CenturionCC.System.Player.Centurion
 
         private short _kills;
 
+        [UdonSynced] [FieldChangeCallback(nameof(SyncedMaxHealth))]
         private float _maxHealth = 100;
+
         private short _score;
 
         [UdonSynced] [FieldChangeCallback(nameof(SyncedTeamId))]
@@ -93,6 +95,16 @@ namespace CenturionCC.System.Player.Centurion
                 {
                     playerManager.Invoke_OnPlayerRevived(this);
                 }
+            }
+        }
+
+        public float SyncedMaxHealth
+        {
+            protected get => _maxHealth;
+            set
+            {
+                _maxHealth = value;
+                playerManager.Invoke_OnPlayerHealthChanged(this, SyncedHealth);
             }
         }
 
@@ -190,7 +202,7 @@ namespace CenturionCC.System.Player.Centurion
                 return;
             }
 
-            _maxHealth = maxHealth;
+            SyncedMaxHealth = maxHealth;
             RequestSerialization();
         }
 
@@ -215,18 +227,16 @@ namespace CenturionCC.System.Player.Centurion
 
         public override void UpdateView()
         {
-            logger.LogVerbose($"{LogPrefix}UpdateView");
-
-            var colliders = GetComponentsInChildren<CenturionPlayerCollider>(true);
-            foreach (var col in colliders)
+            foreach (var col in playerColliders)
             {
-                col.gameObject.SetActive(!playerManager.IsInStaffTeam(this));
+                if (!col) continue;
+                col.gameObject.SetActive(!playerManager.IsInStaffTeam(this) && !IsInSafeZone);
                 col.IsDebugVisible = playerManager.IsDebug;
             }
 
-            var playerTags = GetComponentsInChildren<CenturionPlayerTag>(true);
             foreach (var playerTag in playerTags)
             {
+                if (!playerTag) continue;
                 playerTag.Refresh();
             }
         }
@@ -241,8 +251,8 @@ namespace CenturionCC.System.Player.Centurion
 
             ResetStats();
             SyncedTeamId = 0;
-            _maxHealth = 100;
-            SyncedHealth = _maxHealth;
+            SyncedMaxHealth = 100;
+            SyncedHealth = SyncedMaxHealth;
 
             playerManager.Invoke_OnPlayerReset(this);
             RequestSerialization();
@@ -282,7 +292,7 @@ namespace CenturionCC.System.Player.Centurion
                 return;
             }
 
-            SyncedHealth = _maxHealth;
+            SyncedHealth = SyncedMaxHealth;
             RequestSerialization();
         }
 
@@ -290,6 +300,7 @@ namespace CenturionCC.System.Player.Centurion
         {
             _playerAreas.Add(area);
             UpdateSafeZoneStatus();
+            UpdateView();
             playerManager.Invoke_OnPlayerEnteredArea(this, area);
         }
 
@@ -297,6 +308,7 @@ namespace CenturionCC.System.Player.Centurion
         {
             _playerAreas.RemoveAll(area);
             UpdateSafeZoneStatus();
+            UpdateView();
             playerManager.Invoke_OnPlayerExitedArea(this, area);
         }
 

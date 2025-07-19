@@ -1,4 +1,5 @@
 ﻿using CenturionCC.System.Gun;
+using DerpyNewbie.Common;
 using DerpyNewbie.Common.Invoker;
 using UdonSharp;
 using UnityEngine;
@@ -12,8 +13,13 @@ namespace CenturionCC.System.Utils
     public class HolsterableObject : PickupEventSenderCallback
     {
         [SerializeField] private Transform target;
-        [SerializeField] private VRC_Pickup pickup;
-        [SerializeField] private VRCObjectSync objectSync;
+
+        [SerializeField] [NewbieInject(SearchScope.Parents)]
+        private VRC_Pickup pickup;
+
+        [SerializeField] [NewbieInject(SearchScope.Parents)]
+        private VRCObjectSync objectSync;
+
         [SerializeField] private int objectSize;
 
         private GunHolster _currentHolster;

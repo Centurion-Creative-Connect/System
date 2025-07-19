@@ -33,5 +33,14 @@ namespace CenturionCC.System.Player.Centurion
                                   followingOffset;
             _transform.LookAt(localHead.position + localHead.rotation * localHeadOffset);
         }
+
+        public override void OnPlayerLeft(VRCPlayerApi player)
+        {
+            if (player == _localPlayer || player == _targetPlayer)
+            {
+                // don't call Update after the associated player leaves
+                gameObject.SetActive(false);
+            }
+        }
     }
 }

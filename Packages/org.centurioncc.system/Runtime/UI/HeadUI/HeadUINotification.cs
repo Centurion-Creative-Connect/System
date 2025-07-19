@@ -9,39 +9,41 @@ namespace CenturionCC.System.UI.HeadUI
     {
         [SerializeField]
         private Sprite[] sprites;
+
         [SerializeField]
         private Color[] panelColors;
 
         [SerializeField]
         private GameObject notificationElement;
+
         [SerializeField]
         private float smoothTime = 0.1F;
+
         [SerializeField]
         private float maxSpeed = float.PositiveInfinity;
+
         private HeadUINotificationElement[] _elements = new HeadUINotificationElement[0];
-
-        private HeadUINotificationElement _lastElement;
-        private int _lastId;
-
-        private NotificationLevel _lastLevel;
 
         private void Start()
         {
             notificationElement.SetActive(false);
         }
 
-        public void AddHeightLate()
+        public void RecalculateTargets()
         {
-            var height = _lastElement.rectTransform.rect.height;
+            var height = 0F;
             foreach (var e in _elements)
-                if (e != null)
-                    e.positionTarget += new Vector2(0, height);
-            _elements = _elements.AddAsList(_lastElement);
+            {
+                if (!e) continue;
+                e.positionTarget = new Vector2(0, height);
+                height += e.rectTransform.rect.height;
+            }
         }
 
         public void RemoveNotification(HeadUINotificationElement element)
         {
             _elements = _elements.RemoveItem(element);
+            RecalculateTargets();
         }
 
         public override void Show(NotificationLevel level, string message, float duration = 5F, int id = 0)
@@ -53,9 +55,11 @@ namespace CenturionCC.System.UI.HeadUI
 
             Debug.Log($"[Notification] {id}:{message}");
 
-            if (_lastLevel == level && id == _lastId && _lastElement != null)
+            foreach (var elem in _elements)
             {
-                _lastElement.AddDuplicate(message);
+                if (!elem || elem.Id != id) continue;
+                elem.AddDuplicate(message, duration);
+                RecalculateTargets();
                 return;
             }
 
@@ -63,14 +67,9 @@ namespace CenturionCC.System.UI.HeadUI
             obj.SetActive(true);
             var element = obj.GetComponent<HeadUINotificationElement>();
             GetNotificationConfig(level, out var sprite, out var color);
-            element.Setup(this, sprite, color, duration, smoothTime, maxSpeed, message);
-
-            _lastId = id;
-            _lastLevel = level;
-            _lastElement = element;
-
-            // Delay 2 frames to let unity calculate height
-            SendCustomEventDelayedFrames(nameof(AddHeightLate), 2);
+            element.Setup(this, sprite, color, duration, smoothTime, maxSpeed, message, id);
+            _elements = _elements.AddAsSet(element);
+            SendCustomEventDelayedFrames(nameof(RecalculateTargets), 2);
         }
 
         private void GetNotificationConfig(NotificationLevel level, out Sprite sprite, out Color color)
