@@ -42,19 +42,30 @@ VariantData の `Shooter Offset` に設定されている GameObject の位置�
 
 VariantData の `Main Handle Offset`、`Sub Handle Offset` に設定されている GameObject の位置が銃のピックアップ判定が出る位置です。
 
-- `Main Handle Offset` 
-  - 銃のトリガーがある持ち手の位置
-- `Sub Handle Offset` 
-  - 銃のハンドガードなどの両手持ち用の持ち手の位置
-  - `Is Double Handed` のチェックを外すことでピックアップ判定を無効化できます
+- `Main Handle Offset`
+    - 銃のトリガーがある持ち手の位置
+- `Sub Handle Offset`
+    - 銃のハンドガードなどの両手持ち用の持ち手の位置
+    - `Is Double Handed` のチェックを外すことでピックアップ判定を無効化できます
 
 これらの位置をあなたの銃に合わせて調整し、使いやすい位置に設定してください。
 
 ### 音を変更する
 
-VariantData の `Gun Audio`
+VariantData の `Audio Data` に設定されている [Gun Audio Data Store](/components/gun/datastore/gunaudiodatastore)
+が再生されます。
+
+[Gun Audio Data Store](/components/gun/datastore/gunaudiodatastore)
+には複数の [Audio Data Store](/components/audio/audiodatastore)
+が含まれており、この [Audio Data Store](/components/audio/audiodatastore) の情報を元にサウンドエフェクトが再生されます。
+
+まず手始めに、`Shooting Audio` と `Empty Shooting Audio` をサンプルの音とは別の音へ変更してみましょう。
+
+各項目がどのタイミングで再生されるかは、[Audio Data Store](/components/audio/audiodatastore) の説明をご参照ください。
 
 ### 弾道を変更する
+
+
 
 ## スタンドアローンで動作する銃を追加する
 
