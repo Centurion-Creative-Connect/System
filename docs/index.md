@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Centurion System とは
 
-✨ Centurion System は **イベントワールドに特化したサバゲーシステムです**!
+✨ Centurion System (Centurion Airsoft Game System) は **イベントワールドに特化したサバゲーシステムです**!
 
 ⏱ 基礎的なシステムを作るのには時間が掛かりますが、Centurion System を使うことで **コンテンツの作成に集中ができます**
 

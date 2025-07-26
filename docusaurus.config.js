@@ -56,7 +56,7 @@ const config = {
       // Replace with your project's social card
       image: 'img/social-card.png',
       navbar: {
-        title: 'Centurion Airsoft System',
+        title: 'Centurion System',
         logo: {
           alt: 'CenturionCC Logo',
           src: 'img/logo.svg',
