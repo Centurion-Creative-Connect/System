@@ -42,8 +42,7 @@ namespace CenturionCC.System.Gun
 
             if (!_activeMagazine.IsHeld) return;
 
-            _activeMagazine = null;
-            CreateFollowingMagazine();
+            DetachActiveMagazine();
         }
 
         private void OnTriggerExit(Collider other)
@@ -128,6 +127,18 @@ namespace CenturionCC.System.Gun
 
             magazineManager.StoreMagazine(_activeMagazine);
             Destroy(_activeMagazine.gameObject);
+        }
+
+        public void DetachActiveMagazine()
+        {
+            _activeMagazine.Detach();
+            _activeMagazine = null;
+            CreateFollowingMagazine();
+        }
+
+        public Magazine GetActiveMagazine()
+        {
+            return _activeMagazine;
         }
     }
 }

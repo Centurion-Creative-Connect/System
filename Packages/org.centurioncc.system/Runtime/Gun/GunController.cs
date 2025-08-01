@@ -13,6 +13,9 @@ namespace CenturionCC.System.Gun
         [SerializeField] [NewbieInject]
         private GunManager gunManager;
 
+        [SerializeField] [NewbieInject]
+        private MagazinePouch magazinePouch;
+
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.B))
@@ -23,6 +26,16 @@ namespace CenturionCC.System.Gun
             if (Input.GetKeyDown(KeyCode.E))
             {
                 LoadingActionDown();
+            }
+
+            if (Input.GetKeyUp(KeyCode.E))
+            {
+                LoadingActionUp();
+            }
+
+            if (Input.GetKeyDown(KeyCode.Q))
+            {
+                SimpleReload();
             }
 
             var scrollDelta = Input.GetAxisRaw("Mouse ScrollWheel") * 80F;
@@ -77,12 +90,31 @@ namespace CenturionCC.System.Gun
         }
 
         [PublicAPI]
+        public void SimpleReload()
+        {
+            var localGuns = gunManager.LocalHeldGuns;
+            foreach (var gun in localGuns)
+            {
+                if (!gun || !gun.MagazineReceiver) continue;
+
+                gun.MagazineReceiver.ReleaseMagazine();
+                var magazine = magazinePouch.GetActiveMagazine();
+                if (!magazine) continue;
+                magazinePouch.DetachActiveMagazine();
+                gun.MagazineReceiver.InsertMagazine(magazine);
+                if (gun.State != GunState.Idle && gun.MagazineRoundsRemaining != 0 || !gun.HasMagazine)
+                    gun.State = GunState.Idle;
+                // TODO: somehow dropping after insertion
+            }
+        }
+
+        [PublicAPI]
         public void AddPitchOffset(float delta)
         {
             var localGuns = gunManager.LocalHeldGuns;
             foreach (var gun in localGuns)
             {
-                if (gun == null) return;
+                if (!gun) return;
                 gun.CurrentMainHandlePitchOffset += delta;
                 gun.RequestSerialization();
             }

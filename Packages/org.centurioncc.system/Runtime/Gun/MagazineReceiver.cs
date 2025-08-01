@@ -62,13 +62,14 @@ namespace CenturionCC.System.Gun
             return Magazine != null && Magazine.ConsumeBullet();
         }
 
-        public virtual void InsertMagazine(Magazine magazine)
+        public virtual bool InsertMagazine(Magazine magazine)
         {
-            if (!CanAttach(magazine)) return;
+            if (!CanAttach(magazine)) return false;
 
             Magazine = magazine.AttachToReceiver(this);
 
             if (ParentGun != null) ParentGun.OnMagazineChanged();
+            return true;
         }
 
         public virtual void ReleaseMagazine()
