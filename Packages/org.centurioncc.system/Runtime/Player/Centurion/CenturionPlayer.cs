@@ -208,6 +208,11 @@ namespace CenturionCC.System.Player.Centurion
 
         public override void OnLocalHit(PlayerColliderBase playerCollider, DamageData data, Vector3 contactPoint)
         {
+            if (!IsLocal && data.DamagerPlayerId != Networking.LocalPlayer.playerId)
+            {
+                return;
+            }
+
             var damageInfo = DamageInfo.New(VrcPlayer, contactPoint, playerCollider.BodyParts, data);
             playerManager.RequestDamageBroadcast(damageInfo);
         }
