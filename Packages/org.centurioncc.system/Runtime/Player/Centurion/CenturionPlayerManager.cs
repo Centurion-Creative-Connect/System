@@ -21,6 +21,7 @@ namespace CenturionCC.System.Player.Centurion
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class CenturionPlayerManager : PlayerManagerBase
     {
+        private const int MaxResolvedIdPoolSize = 8;
         private const string LogPrefix = "[CPlayerManager] ";
 
         [SerializeField]
@@ -46,6 +47,7 @@ namespace CenturionCC.System.Player.Centurion
 
         private readonly DataList _resolvedEventIds = new DataList();
         private PlayerBase _cachedLocalPlayer;
+        private int _lastUpdatedEventIdIndex;
 
         public override bool IsDebug
         {
@@ -196,7 +198,19 @@ namespace CenturionCC.System.Player.Centurion
             }
         }
 
-        public bool IsEventResolved(Guid eventId)
+        public void AddResolvedEventId(Guid eventId)
+        {
+            if (_resolvedEventIds.Count < MaxResolvedIdPoolSize)
+            {
+                _resolvedEventIds.Add(eventId.ToString("D"));
+                return;
+            }
+
+            _resolvedEventIds[_lastUpdatedEventIdIndex] = eventId.ToString("D");
+            _lastUpdatedEventIdIndex = (_lastUpdatedEventIdIndex + 1) % MaxResolvedIdPoolSize;
+        }
+
+        public bool IsResolvedEventId(Guid eventId)
         {
             return _resolvedEventIds.Contains(eventId.ToString("D"));
         }
@@ -304,7 +318,7 @@ namespace CenturionCC.System.Player.Centurion
             }
 
             // if damage has already been resolved, ignore it
-            if (IsEventResolved(info.EventId()))
+            if (IsResolvedEventId(info.EventId()))
             {
                 return false;
             }
@@ -338,7 +352,6 @@ namespace CenturionCC.System.Player.Centurion
         {
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_ApplySimpleCalls),
                 playerId, PlayerBaseSimpleCalls.ResetToDefault);
-            ;
         }
 
         public void RequestResetStatsBroadcast(int playerId)
@@ -379,7 +392,6 @@ namespace CenturionCC.System.Player.Centurion
                 return;
             }
 
-            _resolvedEventIds.Add(info.EventId().ToString("D"));
             if (victimPlayer.IsDead)
             {
                 logger.LogWarn($"{LogPrefix}Victim Player {info.VictimId()} is already dead");
@@ -390,6 +402,11 @@ namespace CenturionCC.System.Player.Centurion
             {
                 logger.LogWarn($"{LogPrefix}Callback has rejected to apply damage");
                 return;
+            }
+
+            if (attackerPlayer.IsLocal || victimPlayer.IsLocal)
+            {
+                AddResolvedEventId(info.EventId());
             }
 
             if (IsFriendly(attackerPlayer, victimPlayer) && CanDamageFriendly())
