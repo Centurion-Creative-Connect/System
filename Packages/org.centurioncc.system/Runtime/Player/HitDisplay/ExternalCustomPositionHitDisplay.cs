@@ -2,7 +2,7 @@
 using UnityEngine;
 using VRC.SDKBase;
 
-namespace CenturionCC.System.Player.External.HitDisplay
+namespace CenturionCC.System.Player.HitDisplay
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class ExternalCustomPositionHitDisplay : ExternalHitDisplayBase

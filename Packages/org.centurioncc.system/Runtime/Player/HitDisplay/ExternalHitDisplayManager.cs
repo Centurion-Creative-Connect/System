@@ -4,7 +4,7 @@ using UdonSharp;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-namespace CenturionCC.System.Player.External.HitDisplay
+namespace CenturionCC.System.Player.HitDisplay
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class ExternalHitDisplayManager : PlayerManagerCallbackBase

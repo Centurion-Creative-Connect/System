@@ -1,6 +1,6 @@
 ﻿using UdonSharp;
 
-namespace CenturionCC.System.Player.External.HitDisplay
+namespace CenturionCC.System.Player.HitDisplay
 {
     public abstract class ExternalHitDisplayBase : UdonSharpBehaviour
     {
