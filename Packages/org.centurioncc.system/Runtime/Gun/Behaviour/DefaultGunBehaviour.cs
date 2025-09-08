@@ -9,9 +9,6 @@ namespace CenturionCC.System.Gun.Behaviour
 
         public override void OnGunPickup(GunBase instance)
         {
-            if (!instance.HasBulletInChamber)
-                instance.LoadBullet();
-            instance.HasCocked = true;
         }
 
         public override void OnGunDrop(GunBase instance)
@@ -22,23 +19,20 @@ namespace CenturionCC.System.Gun.Behaviour
         {
             if (instance.Trigger == TriggerState.Firing)
             {
-                var shotResult = instance.TryToShoot();
-                var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
-                if (hasSucceeded)
-                {
-                    if (!instance.HasBulletInChamber)
-                        instance.LoadBullet();
+                if (!instance.HasCocked)
                     instance.HasCocked = true;
-                }
+
+                var shotResult = instance.TryToShoot();
+                var hasShot = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously ||
+                              shotResult == ShotResult.Failed;
+                if (hasShot && !instance.HasBulletInChamber)
+                    instance.LoadBullet();
             }
         }
 
         public override void Setup(GunBase instance)
         {
             instance.State = GunState.Idle;
-            if (!instance.HasBulletInChamber)
-                instance.LoadBullet();
-            instance.HasCocked = true;
         }
 
         public override void Dispose(GunBase instance)

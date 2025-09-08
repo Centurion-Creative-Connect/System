@@ -18,11 +18,13 @@ namespace CenturionCC.System.Gun
         public const string IsVRParamName = "IsVR";
         public const string HasBulletParamName = "HasBullet";
         public const string HasCockedParamName = "HasCocked";
+        public const string HasMagazineParamName = "HasMagazine";
         public const string IsShootingParamName = "IsShooting";
         public const string IsShootingEmptyParamName = "IsShootingEmpty";
         public const string SelectorTypeParamName = "SelectorType";
         public const string StateParamName = "State";
         public const string TriggerStateParamName = "Trigger";
+        public const string CurrentBulletsCountParamName = "CurrentBulletsCount";
 
         public static FireMode CycleFireMode(FireMode fireMode, FireMode[] allowedFireModes)
         {

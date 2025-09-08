@@ -77,7 +77,7 @@ namespace CenturionCC.System.Audio
             float dopplerLevel = 1F, float spread = 0F, float minDistance = 0.5F, float maxDistance = 25F,
             int priority = 0)
         {
-            if (clip == null)
+            if (clip == null || _localPlayer == null)
             {
 #if CENTURIONSYSTEM_VERBOSE_LOGGING || CENTURIONSYSTEM_AUDIO_LOGGING
                 Debug.LogError(ClipOrPositionNullError);

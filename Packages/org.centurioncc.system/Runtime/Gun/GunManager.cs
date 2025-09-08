@@ -41,7 +41,7 @@ namespace CenturionCC.System.Gun
 
         [SerializeField] [HideInInspector] [NewbieInject]
         // ReSharper disable once InconsistentNaming
-        public RicochetHandler RicochetHandler;
+        public RicochetHandler[] RicochetHandler;
 
         public int allowedRicochetCount = 0;
 

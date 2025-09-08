@@ -49,12 +49,13 @@ namespace CenturionCC.System.Gun.MassGun
             Internal_CheckForHandleDistance();
 
             if (TargetAnimator)
+            {
                 TargetAnimator.SetFloat(TriggerProgressAnimHash, GetMainTriggerPull());
+                TargetAnimator.SetInteger(CurrentBulletsCountAnimHash, MagazineRoundsRemaining);
+            }
+
             if (Behaviour)
                 Behaviour.OnGunUpdate(this);
-
-            if (!IsVR)
-                Internal_HandleDesktopInputs();
 
             if (IsInWall)
             {

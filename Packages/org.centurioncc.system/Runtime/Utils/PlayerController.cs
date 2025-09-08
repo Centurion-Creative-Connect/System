@@ -473,7 +473,7 @@ namespace CenturionCC.System.Utils
 
         [Header("Gun Integrations")] [SerializeField]
         [FormerlySerializedAs("baseApplyGunPropertyToPlayerController")]
-        private bool useGunIntegration = true;
+        public bool useGunIntegration = true;
 
         [Header("Gun Integration: Gun Sprint")] [SerializeField] [UdonSynced]
         [FormerlySerializedAs("checkGunDirectionToAllowRunning")]
@@ -590,20 +590,22 @@ namespace CenturionCC.System.Utils
         public float TotalMultiplier => (1 - (PlayerWeight / maximumCarryingWeightInKilogram)) *
                                         EnvironmentEffectMultiplier * CustomEffectMultiplier * CombatTagMultiplier;
 
-        [PublicAPI] public float CombatTagMultiplier => _combatTagged ? ActualCombatTagSpeedMultiplier : 1F;
-        [PublicAPI] public bool CanRun => _canRun && !_combatTagged;
+        [PublicAPI] public float CombatTagMultiplier =>
+            useGunIntegration && _combatTagged ? ActualCombatTagSpeedMultiplier : 1F;
+
+        [PublicAPI] public bool CanRun => _canRun && (useGunIntegration || !_combatTagged);
 
         [PublicAPI]
         public float ActualWalkSpeed =>
-            (ActualUseGunSprint ? ActualGunSprintWalkSpeed : BaseWalkSpeed) * TotalMultiplier;
+            (useGunIntegration && ActualUseGunSprint ? ActualGunSprintWalkSpeed : BaseWalkSpeed) * TotalMultiplier;
 
         [PublicAPI]
         public float ActualRunSpeed => CanRun
-            ? (ActualUseGunSprint ? ActualGunSprintRunSpeed : BaseRunSpeed) * TotalMultiplier
+            ? (useGunIntegration && ActualUseGunSprint ? ActualGunSprintRunSpeed : BaseRunSpeed) * TotalMultiplier
             : ActualWalkSpeed;
 
         [PublicAPI]
-        public float ActualStrafeSpeed => ActualUseGunSprint
+        public float ActualStrafeSpeed => useGunIntegration && ActualUseGunSprint
             ? Mathf.Min(ActualWalkSpeed, BaseStrafeSpeed * TotalMultiplier)
             : BaseStrafeSpeed * TotalMultiplier;
 
@@ -689,7 +691,7 @@ namespace CenturionCC.System.Utils
 
         private void UpdateCombatTagAndCanRunState()
         {
-            if (gunManager.LocalHeldGuns.Length == 0)
+            if (!useGunIntegration || gunManager.LocalHeldGuns.Length == 0)
             {
                 _canRun = true;
                 _combatTagged = false;

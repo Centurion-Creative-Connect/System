@@ -9,7 +9,8 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public abstract string WeaponName { get; }
 
         [PublicAPI] public abstract Transform Target { get; }
-        [PublicAPI] public virtual Animator TargetAnimator { get; }
+        [PublicAPI] [CanBeNull] public virtual Animator TargetAnimator { get; }
+        [PublicAPI] [CanBeNull] public virtual MagazineReceiver MagazineReceiver { get; }
         [PublicAPI] public abstract GunHandle MainHandle { get; }
         [PublicAPI] public abstract GunHandle SubHandle { get; }
         [PublicAPI] public abstract GunHandle CustomHandle { get; }
@@ -19,7 +20,7 @@ namespace CenturionCC.System.Gun
         /// <summary>
         /// Current holder of this Gun.
         /// </summary>
-        [PublicAPI]
+        [PublicAPI] [CanBeNull]
         public abstract VRCPlayerApi CurrentHolder { get; }
 
         /// <summary>
@@ -36,6 +37,45 @@ namespace CenturionCC.System.Gun
 
         [PublicAPI] public virtual TriggerState Trigger { get; set; }
         [PublicAPI] public virtual GunState State { get; set; }
+
+        /// <summary>
+        /// Has magazine?
+        /// </summary>
+        [PublicAPI]
+        public virtual bool HasMagazine =>
+            MagazineReceiver == null || MagazineReceiver.HasMagazine;
+
+        /// <summary>
+        /// Bullets remaining in the magazine (not in reserve)
+        /// </summary>
+        [PublicAPI]
+        public virtual int MagazineRoundsRemaining =>
+            MagazineReceiver != null ? MagazineReceiver.MagazineRoundsRemaining : 1;
+
+        /// <summary>
+        /// Size of the magazine.
+        /// </summary>
+        [PublicAPI]
+        public virtual int MagazineRoundsCapacity =>
+            MagazineReceiver != null ? MagazineReceiver.MagazineRoundsCapacity : 1;
+
+        /// <summary>
+        /// Which magazine does the gun have?
+        /// </summary>
+        [PublicAPI]
+        public abstract int CurrentMagazineType { get; protected set; }
+
+        /// <summary>
+        /// Which magazine the gun can take?
+        /// </summary>
+        [PublicAPI]
+        public abstract int[] AllowedMagazineTypes { get; }
+
+        /// <summary>
+        /// Can the gun shoot without magazine inserted?
+        /// </summary>
+        [PublicAPI]
+        public abstract bool CanShootWithoutMagazine { get; }
 
         /// <summary>
         /// Has the gun bullet in chamber?
@@ -112,7 +152,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual bool HasNextBullet()
         {
-            return true;
+            return MagazineReceiver == null || MagazineReceiver.HasNextBullet();
         }
 
         /// <summary>
@@ -124,8 +164,13 @@ namespace CenturionCC.System.Gun
         {
             if (HasBulletInChamber)
                 EjectBullet();
-            HasBulletInChamber = true;
+
+            if (!HasNextBullet())
+                return HasBulletInChamber;
+
+            HasBulletInChamber = MagazineReceiver == null || MagazineReceiver.ConsumeBullet();
             RequestSerialization();
+
             return HasBulletInChamber;
         }
 
@@ -137,6 +182,25 @@ namespace CenturionCC.System.Gun
         {
             HasBulletInChamber = false;
             RequestSerialization();
+        }
+
+        /// <summary>
+        /// Invokes when `MagazineReceiver` had its state changed such as inserting, or releasing a magazine.
+        /// </summary>
+        [PublicAPI]
+        public virtual void OnMagazineChanged()
+        {
+            if (MagazineReceiver == null) return;
+            CurrentMagazineType = MagazineReceiver.MagazineType;
+
+            if (!IsLocal) return;
+
+            Networking.LocalPlayer.PlayHapticEventInHand(SubHandle.CurrentHand, .2F, .2F, .1F);
+            RequestSerialization();
+        }
+
+        public virtual void OnMagazineCollision()
+        {
         }
     }
 }
