@@ -1,4 +1,6 @@
-﻿using JetBrains.Annotations;
+﻿using DerpyNewbie.Common;
+using JetBrains.Annotations;
+using TMPro;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +11,7 @@ namespace CenturionCC.System.Gun.GunCamera
     public class QuickGunCameraControllerUI : UdonSharpBehaviour
     {
         [Header("Base")]
-        [SerializeField]
+        [SerializeField] [NewbieInject]
         private GunCamera instance;
 
         [SerializeField]
@@ -29,6 +31,12 @@ namespace CenturionCC.System.Gun.GunCamera
         private Text changeOffsetPosText;
 
         [SerializeField]
+        private TMP_Text changeOffsetPosTextTmp;
+
+        [SerializeField]
+        private TMP_Dropdown changeTargetDropdown;
+
+        [SerializeField]
         private Toggle showGunCamera;
 
         [SerializeField]
@@ -43,7 +51,14 @@ namespace CenturionCC.System.Gun.GunCamera
         [SerializeField]
         private Text changeAutoPresetChangeIntervalText;
 
-        private int _autoPresetChangeIntervalIndex = 0;
+        [SerializeField]
+        private TMP_Text changeAutoPresetChangeIntervalTextTmp;
+
+        [SerializeField]
+        private Toggle useCustomTargetOnAutoPresetChange;
+
+        private int _autoPresetChangeIntervalIndex;
+        private bool _isUpdatingUI;
 
         private int AutoPresetChangeIntervalIndex
         {
@@ -59,40 +74,54 @@ namespace CenturionCC.System.Gun.GunCamera
         [PublicAPI]
         public void UpdateUI()
         {
-            if (instance == null)
+            if (!instance)
             {
-                _SetInteractable(false, false, false);
                 return;
             }
+
+            _isUpdatingUI = true;
 
             enableGunCamera.isOn = instance.IsOn;
             showGunCamera.isOn = instance.IsVisible;
             enableEditPosition.isOn = instance.IsPickupable;
             enableAutoPresetChange.isOn = instance.UseAutoPresetChange;
+            useCustomTargetOnAutoPresetChange.isOn = instance.UseAutoPresetChangeOnCustomTarget;
 
-            _SetInteractable(instance.IsOn, instance.IsPickupable, instance.UseAutoPresetChange);
-
-            changeOffsetPosText.text =
-                $"プリセットの位置を変更する: {(instance.IsPickupable ? "CUSTOM" : $"{instance.OffsetIndex}")}";
+            var changeOffsetPosMsg = $"プリセットの位置を変更する: {(instance.IsPickupable ? "CUSTOM" : $"{instance.OffsetIndex}")}";
+            if (changeOffsetPosText) changeOffsetPosText.text = changeOffsetPosMsg;
+            if (changeOffsetPosTextTmp) changeOffsetPosTextTmp.text = changeOffsetPosMsg;
 
             var isPreset = Mathf.Approximately(
                 autoPresetChangeIntervals[AutoPresetChangeIntervalIndex],
                 instance.AutoPresetChangeInterval
             );
 
-            changeAutoPresetChangeIntervalText.text = isPreset
+            var changeAutoPresetChangeIntervalMsg = isPreset
                 ? $"プリセット変更時間: {autoPresetChangeIntervalsNames[AutoPresetChangeIntervalIndex]}"
                 : $"プリセット変更時間: CUSTOM({instance.AutoPresetChangeInterval:F1} secs)";
+            if (changeAutoPresetChangeIntervalText)
+                changeAutoPresetChangeIntervalText.text = changeAutoPresetChangeIntervalMsg;
+            if (changeAutoPresetChangeIntervalTextTmp)
+                changeAutoPresetChangeIntervalTextTmp.text = changeAutoPresetChangeIntervalMsg;
+
+            changeTargetDropdown.value = instance.CustomTargetIndex;
+            changeTargetDropdown.RefreshShownValue();
+
+            _isUpdatingUI = false;
         }
 
         [PublicAPI]
         public void ApplyChanges()
         {
+            if (_isUpdatingUI) return;
+
+            instance.CustomTargetIndex = changeTargetDropdown.value;
             instance.IsOn = enableGunCamera.isOn;
             instance.IsVisible = showGunCamera.isOn;
             instance.IsPickupable = enableEditPosition.isOn;
             instance.UseAutoPresetChange = enableAutoPresetChange.isOn;
             instance.AutoPresetChangeInterval = autoPresetChangeIntervals[AutoPresetChangeIntervalIndex];
+            instance.UseAutoPresetChangeOnCustomTarget = useCustomTargetOnAutoPresetChange.isOn;
             UpdateUI();
         }
 
@@ -109,15 +138,6 @@ namespace CenturionCC.System.Gun.GunCamera
             ++AutoPresetChangeIntervalIndex;
             instance.AutoPresetChangeInterval = autoPresetChangeIntervals[AutoPresetChangeIntervalIndex];
             UpdateUI();
-        }
-
-        private void _SetInteractable(bool isInteractable, bool isPickupable, bool useAutoPresetChange)
-        {
-            changeOffsetPos.interactable = isInteractable && !isPickupable;
-            showGunCamera.interactable = isInteractable;
-            enableEditPosition.interactable = isInteractable;
-            enableAutoPresetChange.interactable = isInteractable;
-            changeAutoPresetChangeInterval.interactable = isInteractable && useAutoPresetChange;
         }
     }
 }
