@@ -38,12 +38,12 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public virtual GunState State { get; set; }
 
         /// <summary>
-        /// Has the gun bullet in chamber?
+        /// Has the gun bullet in a chamber?
         /// </summary>
         /// <remarks>
         /// This property should be set to <c>false</c> after bullet was shot by <see cref="Shoot"/>, <see cref="TryToShoot"/>.
-        /// Load the bullet from chamber using <see cref="LoadBullet"/>.
-        /// Eject the bullet from chamber using <see cref="EjectBullet"/>.
+        /// Load the bullet from a chamber using <see cref="LoadBullet"/>.
+        /// Eject the bullet from a chamber using <see cref="EjectBullet"/>.
         /// </remarks>
         [PublicAPI]
         public virtual bool HasBulletInChamber { get; protected set; }
@@ -53,7 +53,7 @@ namespace CenturionCC.System.Gun
         /// </summary>
         /// <remarks>
         /// This property is set to `false` after <see cref="Shoot"/>, <see cref="TryToShoot"/>, and <see cref="EmptyShoot"/>.
-        /// Manipulate within <see cref="Gun.Behaviour.GunBehaviourBase"/> 
+        /// Manipulate within <see cref="CenturionCC.System.Gun.Behaviour.GunBehaviourBase"/> 
         /// </remarks>
         [PublicAPI]
         public virtual bool HasCocked { get; set; }
@@ -73,7 +73,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public abstract float CombatTagTime { get; }
 
         /// <summary>
-        /// Shoots bullet without any checks.
+        /// Shoots a bullet without any checks.
         /// </summary>
         [PublicAPI]
         public abstract void Shoot();
@@ -86,7 +86,7 @@ namespace CenturionCC.System.Gun
         public abstract ShotResult TryToShoot();
 
         /// <summary>
-        /// Plays *click* sound for failed shot.
+        /// Plays *click* sound for a failed shot.
         /// </summary>
         [PublicAPI]
         public abstract void EmptyShoot();
@@ -98,7 +98,7 @@ namespace CenturionCC.System.Gun
         public abstract void UpdatePosition();
 
         /// <summary>
-        /// Moves it's Gun's position and rotation to specified location.
+        /// Moves it's Gun's position and rotation to a specified location.
         /// </summary>
         /// <param name="position">New world position for this Gun.</param>
         /// <param name="rotation">New world rotation for this Gun.</param>
@@ -106,9 +106,9 @@ namespace CenturionCC.System.Gun
         public abstract void MoveTo(Vector3 position, Quaternion rotation);
 
         /// <summary>
-        /// Has next bullet to load into chamber? 
+        /// Does the gun have a next bullet to load into the chamber? 
         /// </summary>
-        /// <returns>`true` if magazine or gun itself can provide next bullet to shoot, `false` otherwise.</returns>
+        /// <returns>`true` if the magazine or gun itself can provide the next bullet to shoot, `false` otherwise.</returns>
         [PublicAPI]
         public virtual bool HasNextBullet()
         {
@@ -130,7 +130,7 @@ namespace CenturionCC.System.Gun
         }
 
         /// <summary>
-        /// Tries to eject bullet from chamber.
+        /// Tries to eject a bullet from the chamber.
         /// </summary>
         [PublicAPI]
         public virtual void EjectBullet()
