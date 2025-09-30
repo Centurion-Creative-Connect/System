@@ -151,6 +151,8 @@ namespace CenturionCC.System.Utils
 
         private void FootstepUpdatePass()
         {
+            if (_localPlayer.GetPlayerTag("SF_InVehicle") == "T") return;
+
             var localPlayerPos = _localPlayer.GetPosition();
 
             // Is total multiplier not zero?

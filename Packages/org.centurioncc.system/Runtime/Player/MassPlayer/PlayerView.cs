@@ -28,6 +28,7 @@ namespace CenturionCC.System.Player.MassPlayer
         private Transform _leftLowerLegTransform;
         private Transform _leftUpperArmTransform;
         private Transform _leftUpperLegTransform;
+        private VRCPlayerApi _localPlayer;
         private PlayerBase _playerModel;
 
         private Transform _rightLowerLegTransform;
@@ -61,6 +62,7 @@ namespace CenturionCC.System.Player.MassPlayer
         public override void Init()
         {
             _transform = transform;
+            _localPlayer = Networking.LocalPlayer;
 
             _headTransform = headCollider.transform;
             _bodyTransform = bodyCollider.transform;
@@ -99,7 +101,11 @@ namespace CenturionCC.System.Player.MassPlayer
 
         public override void UpdateCollider()
         {
-            if (_vrcPlayerInvalid || !_followingPlayer.IsValid())
+            // if the local player was a pilot, then every player must not have colliders because passengers can make collisions on entry.
+            // if the following player was a passenger, then that player must not have colliders because it could make the physics go wild. 
+            if (_vrcPlayerInvalid || !_followingPlayer.IsValid() ||
+                _localPlayer.GetPlayerTag("SF_IsPilot") == "T" ||
+                _followingPlayer.GetPlayerTag("SF_InVehicle") == "T")
             {
                 MoveViewToOrigin();
                 MoveCollidersToOrigin();
