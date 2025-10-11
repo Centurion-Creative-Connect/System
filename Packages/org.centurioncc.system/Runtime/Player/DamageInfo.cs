@@ -37,12 +37,6 @@ namespace CenturionCC.System.Player
         private const int LongSize = sizeof(long);
         private const int ByteSize = sizeof(byte);
 
-#if !COMPILER_UDONSHARP
-        private DamageInfo(DataToken[] data) : base(data)
-        {
-        }
-#endif
-
         public static DamageInfo NewEmpty()
         {
             return New(
@@ -106,11 +100,7 @@ namespace CenturionCC.System.Player
             data[(int)DamageInfoFields.CanDamageFriendly] = new DataToken(canDamageFriendly);
             data[(int)DamageInfoFields.CanDamageEnemy] = new DataToken(canDamageEnemy);
 
-#if COMPILER_UDONSHARP
             return (DamageInfo)new DataList(data);
-#else
-            return new DamageInfo(data);
-#endif
         }
 
         public static DamageInfo FromBytes(byte[] damageInfoBytes)
