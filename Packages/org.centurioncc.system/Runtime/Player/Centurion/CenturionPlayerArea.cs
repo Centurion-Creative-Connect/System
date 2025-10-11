@@ -33,7 +33,7 @@ namespace CenturionCC.System.Player.Centurion
         public override PlayerBase[] GetPlayersInArea()
         {
             var players = new PlayerBase[_inAreaPlayers.Count];
-            for (int i = 0; i < players.Length; i++)
+            for (var i = 0; i < players.Length; i++)
             {
                 players[i] = (PlayerBase)_inAreaPlayers[i].Reference;
             }

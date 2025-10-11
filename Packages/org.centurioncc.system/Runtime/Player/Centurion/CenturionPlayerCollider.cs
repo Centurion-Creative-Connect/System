@@ -64,6 +64,13 @@ namespace CenturionCC.System.Player.Centurion
             {
                 Calibrate();
             }
+
+            UpdateVisibility();
+        }
+
+        private void OnDisable()
+        {
+            UpdateVisibility();
         }
 
         public void OnCollisionEnter(Collision other)

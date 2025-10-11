@@ -31,6 +31,7 @@ namespace CenturionCC.System.Player
 
     public class DamageInfo : DataList
     {
+        private const int GuidSize = 16;
         private const int IntSize = sizeof(int);
         private const int FloatSize = sizeof(float);
         private const int LongSize = sizeof(long);
@@ -116,11 +117,11 @@ namespace CenturionCC.System.Player
         {
             var offset = 0;
 
-            var eventIdBytes = new byte[16];
-            Buffer.BlockCopy(damageInfoBytes, offset, eventIdBytes, 0, 16);
+            var eventIdBytes = new byte[GuidSize];
+            Buffer.BlockCopy(damageInfoBytes, offset, eventIdBytes, 0, GuidSize);
 
             var eventId = new Guid(eventIdBytes);
-            offset += 16;
+            offset += GuidSize;
 
             var victimId = BitConverter.ToInt32(damageInfoBytes, offset);
             offset += IntSize;
