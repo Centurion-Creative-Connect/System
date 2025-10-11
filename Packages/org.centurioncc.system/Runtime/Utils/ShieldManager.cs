@@ -8,7 +8,7 @@ using UnityEngine;
 namespace CenturionCC.System.Utils
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-    public class ShieldManager : UdonSharpBehaviour
+    public class ShieldManager : PlayerManagerCallbackBase
     {
         private const string Prefix = "[ShieldManager] ";
 
@@ -58,7 +58,7 @@ namespace CenturionCC.System.Utils
 
         #region PlayerManagerEvents
 
-        public void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
+        public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
             if (!victim.IsLocal || !_currentlyHeldShield)
                 return;
