@@ -10,7 +10,7 @@ namespace CenturionCC.System.Player.Centurion
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class CenturionPlayerCollider : PlayerColliderBase
     {
-        [SerializeField]
+        [SerializeField] [NewbieInject(SearchScope.Parents)]
         private PlayerBase player;
 
         [SerializeField] [NewbieInject(SearchScope.Children)]

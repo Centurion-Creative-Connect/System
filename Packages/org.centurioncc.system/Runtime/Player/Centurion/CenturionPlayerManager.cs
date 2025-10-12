@@ -45,8 +45,13 @@ namespace CenturionCC.System.Player.Centurion
         [SerializeField]
         private bool isDebug;
 
+        [SerializeField]
+        private float cullingDistance = 25;
+
+        private readonly DataList _cachedCenturionPlayers = new DataList();
         private readonly DataList _resolvedEventIds = new DataList();
         private PlayerBase _cachedLocalPlayer;
+        private int _lastUpdatedCenturionPlayerIndex;
         private int _lastUpdatedEventIdIndex;
 
         public override bool IsDebug
@@ -107,6 +112,55 @@ namespace CenturionCC.System.Player.Centurion
                 friendlyFireMode = value;
                 Invoke_OnFriendlyFireModeChanged(value);
             }
+        }
+
+        public float CullingDistance
+        {
+            get => cullingDistance;
+            set => cullingDistance = value;
+        }
+
+        public override void OnPlayerRestored(VRCPlayerApi player)
+        {
+            var centurionPlayer = (CenturionPlayer)GetPlayer(player);
+            if (!centurionPlayer)
+            {
+                logger.LogError($"{LogPrefix}Could not add restored player: it isn't a CenturionPlayer");
+                return;
+            }
+
+            _cachedCenturionPlayers.Add(centurionPlayer);
+        }
+
+        public override void OnPlayerLeft(VRCPlayerApi player)
+        {
+            var centurionPlayer = (CenturionPlayer)GetPlayer(player);
+            if (!centurionPlayer)
+            {
+                logger.LogError($"{LogPrefix}Could not remove a player: it isn't a CenturionPlayer");
+                return;
+            }
+
+            _cachedCenturionPlayers.Remove(GetPlayer(player));
+        }
+
+        public override void PostLateUpdate()
+        {
+            if (_cachedCenturionPlayers.Count == 0) return;
+
+            _lastUpdatedCenturionPlayerIndex = (_lastUpdatedCenturionPlayerIndex + 1) % _cachedCenturionPlayers.Count;
+
+            var centurionPlayer = (CenturionPlayer)_cachedCenturionPlayers[_lastUpdatedCenturionPlayerIndex].Reference;
+            var vrcPlayer = centurionPlayer.VrcPlayer;
+            if (!Utilities.IsValid(vrcPlayer))
+            {
+                logger.LogError($"{LogPrefix}Could not update player: vrcPlayer is not valid");
+                return;
+            }
+
+            var distance = Vector3.Distance(vrcPlayer.GetPosition(), Networking.LocalPlayer.GetPosition());
+            centurionPlayer.IsCulled = distance > CullingDistance || centurionPlayer.IsInSafeZone;
+            centurionPlayer.UpdateView();
         }
 
         public override PlayerBase GetLocalPlayer()

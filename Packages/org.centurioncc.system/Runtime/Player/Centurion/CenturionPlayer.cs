@@ -18,12 +18,16 @@ namespace CenturionCC.System.Player.Centurion
         private CenturionPlayerManager playerManager;
 
         [SerializeField] [NewbieInject(SearchScope.Children)]
-        private PlayerColliderBase[] playerColliders;
+        private CenturionPlayerCollider[] playerColliders;
+
+        [SerializeField] [NewbieInject(SearchScope.Children)]
+        private CenturionPlayerColliderSimple simpleCollider;
 
         [SerializeField] [NewbieInject]
         private CenturionPlayerTag[] playerTags;
 
         private readonly DataList _playerAreas = new DataList();
+
         private short _deaths;
 
         [UdonSynced] [FieldChangeCallback(nameof(SyncedHealth))]
@@ -55,10 +59,10 @@ namespace CenturionCC.System.Player.Centurion
             }
         }
 
-        public float SyncedHealth
+        private float SyncedHealth
         {
             get => _health;
-            protected set
+            set
             {
                 var lastIsDead = IsDead;
                 var lastHealth = _health;
@@ -98,9 +102,9 @@ namespace CenturionCC.System.Player.Centurion
             }
         }
 
-        public float SyncedMaxHealth
+        private float SyncedMaxHealth
         {
-            protected get => _maxHealth;
+            get => _maxHealth;
             set
             {
                 _maxHealth = value;
@@ -158,6 +162,7 @@ namespace CenturionCC.System.Player.Centurion
         public override bool IsInSafeZone => _isInSafeZone;
         public override VRCPlayerApi VrcPlayer => Networking.GetOwner(gameObject);
         public override RoleData[] Roles => roleProvider.GetPlayerRoles(VrcPlayer);
+        public bool IsCulled { get; set; }
 
         private void Start()
         {
@@ -235,9 +240,14 @@ namespace CenturionCC.System.Player.Centurion
             foreach (var col in playerColliders)
             {
                 if (!col) continue;
-                col.gameObject.SetActive(!playerManager.IsInStaffTeam(this) && !IsInSafeZone);
+                col.gameObject.SetActive(!IsCulled);
+                col.PostLateUpdate();
                 col.IsDebugVisible = playerManager.IsDebug;
             }
+
+            simpleCollider.gameObject.SetActive(IsCulled);
+            simpleCollider.PostLateUpdate();
+            simpleCollider.IsDebugVisible = playerManager.IsDebug;
 
             foreach (var playerTag in playerTags)
             {
