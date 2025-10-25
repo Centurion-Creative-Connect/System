@@ -25,7 +25,7 @@ namespace CenturionCC.System
         [Obsolete] public LocalHitEffect hitEffect;
 
         public PlayerManagerBase players;
-        public GunManager guns;
+        public GunManagerBase guns;
         public WallManager wall;
         public AudioManager audioManager;
         public RoleProvider roleProvider;
@@ -125,7 +125,7 @@ namespace CenturionCC.System
         }
 
         [PublicAPI]
-        public static GunManager GetGunManager()
+        public static GunManagerBase GetGunManager()
         {
             return GetGameManager().guns;
         }

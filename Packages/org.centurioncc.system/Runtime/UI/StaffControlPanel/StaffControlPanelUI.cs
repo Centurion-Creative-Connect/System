@@ -9,7 +9,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDK3.Data;
 using VRC.SDKBase;
-using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.UI.StaffControlPanel
 {
@@ -20,7 +19,7 @@ namespace CenturionCC.System.UI.StaffControlPanel
         private PlayerManagerBase playerManager;
 
         [SerializeField] [NewbieInject]
-        private GunManager gunManager;
+        private GunManagerBase gunManager;
 
         [SerializeField] [NewbieInject]
         private PrintableBase logger;
@@ -103,7 +102,7 @@ namespace CenturionCC.System.UI.StaffControlPanel
             creatorTagToggle.isOn = playerManager.ShowCreatorTag;
 
             playerColliderToggle.isOn = playerManager.IsDebug;
-            gunTrailToggle.isOn = gunManager.useDebugBulletTrail;
+            gunTrailToggle.isOn = gunManager.UseDebugBulletTrail;
             gunPickupToggle.isOn = gunManager.IsDebugGunHandleVisible;
 
             friendlyFireDropdown.value = (int)playerManager.FriendlyFireMode;
@@ -150,7 +149,6 @@ namespace CenturionCC.System.UI.StaffControlPanel
         }
 
         #region uGUICallbacks
-
         [PublicAPI("Called by uGUI Toggle")]
         public void OnTeamTagToggle()
         {
@@ -183,7 +181,7 @@ namespace CenturionCC.System.UI.StaffControlPanel
         public void OnGunTrailToggle()
         {
             if (_inUpdateUiCall) return;
-            gunManager.useDebugBulletTrail = gunTrailToggle.isOn;
+            gunManager.UseDebugBulletTrail = gunTrailToggle.isOn;
         }
 
         [PublicAPI("Called by uGUI Toggle")]
@@ -197,7 +195,7 @@ namespace CenturionCC.System.UI.StaffControlPanel
         public void OnGunResetButton()
         {
             gunResetButton.interactable = false;
-            gunManager.SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(gunManager.MasterOnly_ResetUnusedGuns));
+            gunManager._RequestResetAll(GunManagerResetType.Unused);
         }
 
         [PublicAPI("Called by uGUI Button")]
@@ -256,7 +254,6 @@ namespace CenturionCC.System.UI.StaffControlPanel
             if (_inUpdateUiCall) return;
             playerManager.SetFriendlyFireMode((FriendlyFireMode)friendlyFireDropdown.value);
         }
-
         #endregion
     }
 }

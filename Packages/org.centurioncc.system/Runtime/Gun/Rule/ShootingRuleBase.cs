@@ -3,7 +3,7 @@ using UdonSharp;
 
 namespace CenturionCC.System.Gun.Rule
 {
-    public abstract class ShootingRule : UdonSharpBehaviour
+    public abstract class ShootingRuleBase : UdonSharpBehaviour
     {
         /// <summary>
         /// Unique Rule Id to retrieve cancelled message.

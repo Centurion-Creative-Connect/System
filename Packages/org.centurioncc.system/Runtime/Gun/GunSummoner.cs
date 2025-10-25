@@ -7,7 +7,6 @@ using DerpyNewbie.Logger;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
-using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.Gun
 {
@@ -30,7 +29,7 @@ namespace CenturionCC.System.Gun
         private bool staffOnly;
 
         [SerializeField] [HideInInspector] [NewbieInject]
-        private GunManager gunManager;
+        private GunManagerBase gunManager;
         [SerializeField] [HideInInspector] [NewbieInject]
         private RoleProvider roleProvider;
         [SerializeField] [HideInInspector] [NewbieInject]
@@ -65,9 +64,14 @@ namespace CenturionCC.System.Gun
 
         public void Spawn()
         {
-            SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(MasterOnly_TryToSpawn));
+            var varId = gunVariationId;
+            if (useRandomIds && randomPoolIds.Length != 0)
+                varId = randomPoolIds[UnityEngine.Random.Range(0, randomPoolIds.Length)];
+
+            gunManager._RequestSpawn(varId, summonPosition.position, summonPosition.rotation);
+
             logger.Log(
-                $"[GunSummoner-{gunVariationId}{(useRandomIds ? "*" : "")}] Requested to spawn a gun as {gunVariationId}");
+                $"[GunSummoner-{gunVariationId}{(useRandomIds ? "*" : "")}] Requested to spawn a gun as {varId}");
             if (_summoningPopUp)
             {
                 var par = _summoningPopUp.transform.parent;
@@ -76,25 +80,6 @@ namespace CenturionCC.System.Gun
 
                 _summoningPopUp.ShowAndHideLater(summonTime);
             }
-        }
-
-        public void MasterOnly_TryToSpawn()
-        {
-            if (!Networking.IsMaster)
-            {
-                logger.LogError(
-                    $"[GunSummoner-{gunVariationId}{(useRandomIds ? "*" : "")}] You must be a master to execute {nameof(MasterOnly_TryToSpawn)}!");
-                return;
-            }
-
-            var varId = gunVariationId;
-            if (useRandomIds && randomPoolIds.Length != 0)
-                varId = randomPoolIds[UnityEngine.Random.Range(0, randomPoolIds.Length)];
-            var remote = gunManager.MasterOnly_Spawn(varId, summonPosition.position, summonPosition.rotation);
-            logger.Log(
-                remote
-                    ? $"[GunSummoner-{gunVariationId}{(useRandomIds ? $"*({varId})" : "")}] Spawned {remote.name}"
-                    : $"[GunSummoner-{gunVariationId}{(useRandomIds ? $"*({varId})" : "")}] Failed to spawn a gun");
         }
 
         public override void Interact()

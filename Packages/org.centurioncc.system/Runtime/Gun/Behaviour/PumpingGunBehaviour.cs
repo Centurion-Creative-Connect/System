@@ -1,6 +1,5 @@
 ﻿using CenturionCC.System.Gun.DataStore;
 using UnityEngine;
-using VRC.SDKBase;
 
 namespace CenturionCC.System.Gun.Behaviour
 {
@@ -54,7 +53,6 @@ namespace CenturionCC.System.Gun.Behaviour
         }
 
         #region BehaviourBase
-
         public override bool RequireCustomHandle => false;
 
 
@@ -63,7 +61,7 @@ namespace CenturionCC.System.Gun.Behaviour
             if (instance.State != GunState.Idle || instance.HasBulletInChamber == false)
             {
                 instance.Trigger = TriggerState.Fired;
-                instance.EmptyShoot();
+                instance._EmptyShoot();
             }
         }
 
@@ -74,7 +72,7 @@ namespace CenturionCC.System.Gun.Behaviour
             // Shoot a gun whenever it's able to shoot
             if (CanShoot(instance))
             {
-                var shotResult = instance.TryToShoot();
+                var shotResult = instance._TryToShoot();
 
                 switch (shotResult)
                 {
@@ -83,13 +81,14 @@ namespace CenturionCC.System.Gun.Behaviour
                         return;
                     // IF succeeded continuously (most likely not happen), loads bullet then return to try shooting again.
                     case ShotResult.SucceededContinuously:
-                        instance.LoadBullet();
+                        instance._LoadBullet();
                         return;
                     // IF succeeded, sets state to Idle then change cocking reference Z(which will be used to determine cocking progress) will be updated.
                     case ShotResult.Succeeded:
                         instance.State = GunState.Idle;
                         var localSubHandlePos =
-                            instance.Target.worldToLocalMatrix.MultiplyPoint3x4(instance.SubHandle.transform.position);
+                            instance.transform.worldToLocalMatrix.MultiplyPoint3x4(
+                                instance.SubHandle.transform.position);
                         _cockingRefZ = Mathf.Max(_mainHandleRefZ + cockingLength + minimumZOffset, localSubHandlePos.z);
                         break;
                     case ShotResult.Cancelled:
@@ -102,7 +101,7 @@ namespace CenturionCC.System.Gun.Behaviour
             // Calculate cocking progress
             if (instance.IsVR)
             {
-                var worldToLocalMatrix = instance.Target.worldToLocalMatrix;
+                var worldToLocalMatrix = instance.transform.worldToLocalMatrix;
                 var subHandleLocalPos = worldToLocalMatrix.MultiplyPoint3x4(instance.SubHandle.transform.position);
                 progressNormalized = GetProgressNormalized(subHandleLocalPos.z);
             }
@@ -110,7 +109,7 @@ namespace CenturionCC.System.Gun.Behaviour
             {
                 // Initiate desktop cocking on key press
                 var cockingInput = Input.GetKeyDown(desktopCockingKey) || doDesktopCockingAutomatically;
-                var shouldCock = instance.State == GunState.Idle && !instance.HasCocked && instance.HasNextBullet();
+                var shouldCock = instance.State == GunState.Idle && !instance.HasCocked && instance._HasNextBullet();
                 if (!_isOnDesktopCocking && CanSlide(instance) && shouldCock && cockingInput)
                 {
                     _isOnDesktopCocking = true;
@@ -156,8 +155,12 @@ namespace CenturionCC.System.Gun.Behaviour
         public override void Setup(GunBase instance)
         {
             // Reset cocking reference position
-            _mainHandleRefZ = instance.MainHandlePositionOffset.z;
-            _subHandleRefZ = instance.SubHandlePositionOffset.z;
+            if (instance.VariantData)
+            {
+                _mainHandleRefZ = instance.VariantData.MainHandlePositionOffset.z;
+                _subHandleRefZ = instance.VariantData.SubHandlePositionOffset.z;
+            }
+
             _cockingRefZ = _subHandleRefZ;
         }
 
@@ -169,10 +172,13 @@ namespace CenturionCC.System.Gun.Behaviour
         public override void OnGunPickup(GunBase instance)
         {
             // Reset cocking reference position
-            _subHandleRefZ = instance.SubHandlePositionOffset.z;
+            if (instance.VariantData)
+            {
+                _subHandleRefZ = instance.VariantData.SubHandlePositionOffset.z;
+            }
+
             _cockingRefZ = _subHandleRefZ;
         }
-
         #endregion
     }
 }

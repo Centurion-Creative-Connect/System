@@ -9,7 +9,7 @@ namespace CenturionCC.System.UI.StaffControlPanel
     public class StaffControlPanelGunCallbackReceiver : GunManagerCallbackBase
     {
         [SerializeField] [NewbieInject]
-        private GunManager gunManager;
+        private GunManagerBase gunManager;
 
         [SerializeField] [NewbieInject(SearchScope.Parents)]
         private StaffControlPanelUI ui;
@@ -24,7 +24,7 @@ namespace CenturionCC.System.UI.StaffControlPanel
             ui.ActivateGunResetButton();
         }
 
-        public override void OnShoot(ManagedGun instance, ProjectileBase projectile)
+        public override void OnShoot(GunBase instance, ProjectileBase projectile)
         {
             ui.IncrementShots();
         }

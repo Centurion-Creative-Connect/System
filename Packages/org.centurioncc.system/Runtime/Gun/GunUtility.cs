@@ -44,9 +44,10 @@ namespace CenturionCC.System.Gun
             return false;
         }
 
-        public static GunState UpdateStateBoltAction(GunBase target, GunCockingHapticDataStore hapticData,
-            VRC_Pickup.PickupHand hand,
-            float progressNormalized, float minMargin, float maxMargin, float twistNormalized, float twistMaxMargin)
+        public static GunState UpdateStateBoltAction(
+            GunBase target, GunCockingHapticDataStore hapticData, VRC_Pickup.PickupHand hand,
+            float progressNormalized, float minMargin, float maxMargin, float twistNormalized, float twistMaxMargin
+        )
         {
             var curr = target.State;
             var next = curr;
@@ -79,18 +80,18 @@ namespace CenturionCC.System.Gun
                 if (curr != GunState.InCockingPush)
                 {
                     next = GunState.InCockingPush;
-                    target.LoadBullet();
+                    target._LoadBullet();
                     target.HasCocked = true;
                     if (hapticData && hapticData.Pull)
                         hapticData.Pull.PlayInHand(hand);
                 }
             }
 
-            var anim = target.TargetAnimator;
+            var anim = target.AnimationHelper;
             if (anim)
             {
-                anim.SetFloat(CockingProgressParamName, progressNormalized);
-                anim.SetFloat(CockingTwistParamName, twistNormalized);
+                anim._SetCockingProgress(progressNormalized);
+                anim._SetTwistingProgress(twistNormalized);
             }
 
             if (curr != next)
@@ -103,9 +104,10 @@ namespace CenturionCC.System.Gun
             return next;
         }
 
-        public static GunState UpdateStateStraightPull(GunBase target, GunCockingHapticDataStore hapticData,
-            VRC_Pickup.PickupHand hand,
-            float progressNormalized, float minMargin, float maxMargin)
+        public static GunState UpdateStateStraightPull(
+            GunBase target, GunCockingHapticDataStore hapticData, VRC_Pickup.PickupHand hand,
+            float progressNormalized, float minMargin, float maxMargin
+        )
         {
             var curr = target.State;
             var next = curr;
@@ -128,16 +130,16 @@ namespace CenturionCC.System.Gun
             else if (progressNormalized > maxMargin && curr != GunState.InCockingPush)
             {
                 next = GunState.InCockingPush;
-                target.LoadBullet();
+                target._LoadBullet();
                 target.HasCocked = true;
                 if (hapticData && hapticData.Pull)
                     hapticData.Pull.PlayInHand(hand);
             }
 
-            var anim = target.TargetAnimator;
+            var anim = target.AnimationHelper;
             if (anim)
             {
-                anim.SetFloat(CockingProgressParamName, progressNormalized);
+                anim._SetCockingProgress(progressNormalized);
             }
 
             if (curr != next)

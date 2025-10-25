@@ -19,11 +19,15 @@ namespace CenturionCC.System.Gun.DataStore
 
         [SerializeField] private int holsterSize = 100;
 
+        [SerializeField] private float ergonomics = 3;
+
         [SerializeField] private FireMode[] availableFiringModes = { FireMode.SemiAuto };
 
         [SerializeField] private float maxRoundsPerSecond;
 
-        [SerializeField] private GameObject model;
+        [SerializeField] private Animator animator;
+
+        [SerializeField] private string[] syncedAnimatorParameterNames;
 
         [SerializeField] private ProjectileDataProvider projectileData;
 
@@ -33,12 +37,14 @@ namespace CenturionCC.System.Gun.DataStore
 
         [SerializeField] private GunCameraDataStore cameraData;
 
-        [SerializeField] private GunBehaviourBase behaviour;
+        [SerializeField] private GunBehaviourBase[] behaviours;
+
+        [SerializeField] [NewbieInject]
+        private ProjectilePoolBase defaultProjectilePool;
 
         [SerializeField]
-        [Tooltip(
-            "Override default ProjectilePool for this variant. leave this empty to use GunManager's ProjectilePool")]
-        private ProjectilePool projectilePoolOverride;
+        [Tooltip("Override default ProjectilePool for this variant. leave this empty to use default ProjectilePool")]
+        private ProjectilePoolBase projectilePoolOverride;
 
         [SerializeField] private bool isDoubleHanded;
 
@@ -50,8 +56,6 @@ namespace CenturionCC.System.Gun.DataStore
 
         [SerializeField] private bool useSafeZoneCheck = true;
 
-        [SerializeField] private Transform modelOffset;
-
         [SerializeField] private Transform shooterOffset;
 
         [SerializeField] private Transform mainHandleOffset;
@@ -60,21 +64,20 @@ namespace CenturionCC.System.Gun.DataStore
 
         [SerializeField] private Transform subHandleOffset;
 
-        [SerializeField] private BoxCollider colliderSetting;
-
-        [Header("Messages")] [SerializeField] private TranslatableMessage desktopTooltip;
+        [Header("Messages")]
+        [SerializeField] private TranslatableMessage desktopTooltip;
 
         [SerializeField] private TranslatableMessage vrTooltip;
 
-        [Header("ObjectMarker Properties")] [SerializeField]
-        private ObjectType objectType = ObjectType.Metallic;
+        [Header("ObjectMarker Properties")]
+        [SerializeField] private ObjectType objectType = ObjectType.Metallic;
 
-        [SerializeField] private float objectWeight = 0F;
+        [SerializeField] private float objectWeight;
 
         [SerializeField] private string[] tags = { "NoFootstep" };
 
-        [Header("Player Controller Properties")] [SerializeField]
-        private MovementOption movementOption = MovementOption.Inherit;
+        [Header("Player Controller Properties")]
+        [SerializeField] private MovementOption movementOption = MovementOption.Inherit;
 
         [SerializeField] private float walkSpeed = 1F;
 
@@ -92,9 +95,12 @@ namespace CenturionCC.System.Gun.DataStore
         public string WeaponName => weaponName;
         public int HolsterSize => holsterSize;
         public FireMode[] AvailableFiringModes => availableFiringModes;
-        public float MaxRoundsPerSecond => maxRoundsPerSecond;
+        public float RoundsPerSecond => maxRoundsPerSecond;
+        public float SecondsPerRound => 1F / maxRoundsPerSecond;
+        public float Ergonomics => ergonomics;
+        public string[] SyncedAnimatorParameterNames => syncedAnimatorParameterNames;
 
-        [CanBeNull] public GameObject Model => model;
+        [CanBeNull] public Animator Animator => animator;
 
         [CanBeNull] public ProjectileDataProvider ProjectileData => projectileData;
 
@@ -104,21 +110,13 @@ namespace CenturionCC.System.Gun.DataStore
 
         [CanBeNull] public GunHapticDataStore HapticData => hapticData;
 
-        [CanBeNull] public GunBehaviourBase Behaviour => behaviour;
+        public GunBehaviourBase[] Behaviours => behaviours;
 
-        [CanBeNull] public ProjectilePool ProjectilePoolOverride => projectilePoolOverride;
+        public ProjectilePoolBase ProjectilePool => projectilePoolOverride ? projectilePoolOverride : defaultProjectilePool;
 
         public bool IsDoubleHanded => isDoubleHanded;
-        public bool UseRePickupDelayForMainHandle => useRePickupDelayForMainHandle;
-        public bool UseRePickupDelayForSubHandle => useRePickupDelayForSubHandle;
         public bool UseWallCheck => useWallCheck;
         public bool UseSafeZoneCheck => useSafeZoneCheck;
-
-        public Vector3 ModelPositionOffset =>
-            modelOffset ? modelOffset.localPosition : Vector3.zero;
-
-        public Quaternion ModelRotationOffset =>
-            modelOffset ? modelOffset.localRotation : Quaternion.identity;
 
         public Vector3 FiringPositionOffset =>
             shooterOffset ? shooterOffset.localPosition : Vector3.zero;
@@ -138,11 +136,6 @@ namespace CenturionCC.System.Gun.DataStore
         public Quaternion SubHandleRotationOffset =>
             subHandleOffset ? subHandleOffset.localRotation : Quaternion.identity;
 
-        public float MainHandlePitchOffset => mainHandlePitchOffset;
-        public bool HasColliderSetting => colliderSetting != null;
-        public Vector3 ColliderCenter => HasColliderSetting ? colliderSetting.center : Vector3.zero;
-        public Vector3 ColliderSize => HasColliderSetting ? colliderSetting.size : Vector3.zero;
-
         public string TooltipMessage =>
             Networking.LocalPlayer.IsUserInVR() ? _MessageOrEmpty(vrTooltip) : _MessageOrEmpty(desktopTooltip);
 
@@ -153,6 +146,7 @@ namespace CenturionCC.System.Gun.DataStore
         public MovementOption Movement => movementOption;
         public float WalkSpeed => walkSpeed;
         public float SprintSpeed => sprintSpeed;
+        public float SprintThresholdMultiplier => sprintThresholdMultiplier;
         public CombatTagOption CombatTag => combatTagOption;
         public float CombatTagSpeedMultiplier => combatTagSpeedMultiplier;
         public float CombatTagTime => combatTagTime;

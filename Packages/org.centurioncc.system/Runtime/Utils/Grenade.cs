@@ -30,7 +30,7 @@ namespace CenturionCC.System.Utils
         private GrenadeManager grenadeManager;
 
         [SerializeField] [HideInInspector] [NewbieInject]
-        private ProjectilePool projectilePool;
+        private ProjectilePoolBase projectilePool;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private UpdateManager updateManager;
@@ -38,7 +38,7 @@ namespace CenturionCC.System.Utils
         [SerializeField] [HideInInspector] [NewbieInject]
         private AudioManager audioManager;
 
-        [SerializeField] private ProjectilePool projectilePoolOverride;
+        [SerializeField] private ProjectilePoolBase projectilePoolOverride;
         [SerializeField] private ObjectPoolProxy objectPoolProxy;
         [SerializeField] private Animator animator;
         [SerializeField] private ProjectileDataProvider projectileData;

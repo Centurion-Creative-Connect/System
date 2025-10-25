@@ -2,11 +2,10 @@
 using System.Diagnostics;
 using UdonSharp;
 using UnityEngine;
-
-namespace CenturionCC.System.Gun
+namespace CenturionCC.System.Gun.Centurion
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class GunBulletHolder : ProjectilePool
+    public class GunBulletHolder : ProjectilePoolBase
     {
         [SerializeField]
         private GameObject gunBulletSource;
@@ -112,11 +111,11 @@ namespace CenturionCC.System.Gun
         }
 
         public override ProjectileBase Shoot(Guid eventId,
-            Vector3 pos, Quaternion rot,
-            Vector3 velocity, Vector3 torque, float drag,
-            string damageType, float damageAmount,
-            DateTime time, int playerId,
-            float trailTime, Gradient trailGradient, float lifeTimeInSeconds)
+                                             Vector3 pos, Quaternion rot,
+                                             Vector3 velocity, Vector3 torque, float drag,
+                                             string damageType, float damageAmount,
+                                             DateTime time, int playerId,
+                                             float trailTime, Gradient trailGradient, float lifeTimeInSeconds)
         {
             var projectile = GetProjectile();
             if (projectile == null)

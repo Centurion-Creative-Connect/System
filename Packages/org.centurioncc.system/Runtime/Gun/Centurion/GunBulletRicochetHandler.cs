@@ -3,10 +3,9 @@ using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using UnityEngine;
 using VRC.SDKBase;
-
-namespace CenturionCC.System.Gun
+namespace CenturionCC.System.Gun.Centurion
 {
-    public class GunBulletRicochetHandler : RicochetHandler
+    public class GunBulletRicochetHandler : RicochetHandlerBase
     {
         private const float RicochetVolumeSpeedCoefficient = 3F;
         private const float MinCollisionMagnitude = 0.05F;

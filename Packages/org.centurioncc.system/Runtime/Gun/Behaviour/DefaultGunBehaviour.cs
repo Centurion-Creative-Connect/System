@@ -10,7 +10,7 @@ namespace CenturionCC.System.Gun.Behaviour
         public override void OnGunPickup(GunBase instance)
         {
             if (!instance.HasBulletInChamber)
-                instance.LoadBullet();
+                instance._LoadBullet();
             instance.HasCocked = true;
         }
 
@@ -22,12 +22,12 @@ namespace CenturionCC.System.Gun.Behaviour
         {
             if (instance.Trigger == TriggerState.Firing)
             {
-                var shotResult = instance.TryToShoot();
+                var shotResult = instance._TryToShoot();
                 var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
                 if (hasSucceeded)
                 {
                     if (!instance.HasBulletInChamber)
-                        instance.LoadBullet();
+                        instance._LoadBullet();
                     instance.HasCocked = true;
                 }
             }
@@ -37,7 +37,7 @@ namespace CenturionCC.System.Gun.Behaviour
         {
             instance.State = GunState.Idle;
             if (!instance.HasBulletInChamber)
-                instance.LoadBullet();
+                instance._LoadBullet();
             instance.HasCocked = true;
         }
 

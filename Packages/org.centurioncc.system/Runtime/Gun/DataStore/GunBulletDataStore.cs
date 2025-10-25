@@ -1,6 +1,8 @@
-﻿using UdonSharp;
+﻿using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Paddings;
+using UdonSharp;
 using UnityEngine;
 using UnityEngine.Serialization;
+using NotImplementedException = System.NotImplementedException;
 
 namespace CenturionCC.System.Gun.DataStore
 {
@@ -35,10 +37,10 @@ namespace CenturionCC.System.Gun.DataStore
         public override int ProjectileCount => projectileCount;
 
         public override void Get(int i,
-            out Vector3 positionOffset, out Vector3 velocity,
-            out Quaternion rotationOffset, out Vector3 torque, out float drag,
-            out float damageAmount,
-            out float trailDuration, out Gradient trailColor, out float lifeTimeInSeconds)
+                                 out Vector3 positionOffset, out Vector3 velocity,
+                                 out Quaternion rotationOffset, out Vector3 torque, out float drag,
+                                 out float damageAmount,
+                                 out float trailDuration, out Gradient trailColor, out float lifeTimeInSeconds)
         {
             var speedOffset = 0F;
             var recoilOffset = Vector3.zero;
@@ -54,6 +56,18 @@ namespace CenturionCC.System.Gun.DataStore
             trailDuration = trailTime;
             trailColor = trailGradient;
             lifeTimeInSeconds = lifeTime;
+        }
+
+        public override void GetRecoil(out Vector3 position, out Quaternion rotation)
+        {
+            if (!recoilPattern)
+            {
+                position = Vector3.zero;
+                rotation = Quaternion.identity;
+                return;
+            }
+
+            recoilPattern.GetRecoil(out position, out rotation);
         }
     }
 }

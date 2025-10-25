@@ -11,7 +11,7 @@ namespace CenturionCC.System.UI.EventLog
         private const string Prefix = "G";
 
         [SerializeField] [NewbieInject]
-        private GunManager gunManager;
+        private GunManagerBase gunManager;
 
         [SerializeField] [NewbieInject]
         private SystemEventLogger systemEventLogger;

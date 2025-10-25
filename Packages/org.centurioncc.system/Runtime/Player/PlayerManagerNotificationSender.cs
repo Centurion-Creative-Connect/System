@@ -63,6 +63,8 @@ namespace CenturionCC.System.Player
                 notification.ShowInfo(teamChangeNotificationMessages[player.TeamId].Message);
             else if (playerManager.IsStaffTeamId(player.TeamId))
                 notification.ShowInfo(changeToStaffTeamMessage.Message);
+            else if (player.TeamId >= 200)
+                return;
             else
                 notification.ShowInfo(string.Format(unknownTeamChangeNotificationMessage.Message, player.TeamId));
         }

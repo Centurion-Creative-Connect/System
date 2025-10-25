@@ -11,7 +11,7 @@ namespace CenturionCC.System.Gun.GunCamera
     public class GunCamera : GunManagerCallbackBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
-        private GunManager gunManager;
+        private GunManagerBase gunManager;
 
         [SerializeField] private Transform targetTransform;
         [SerializeField] private Camera targetGunCamera;
@@ -136,7 +136,7 @@ namespace CenturionCC.System.Gun.GunCamera
             IsOn = false;
         }
 
-        public override void OnPickedUpLocally(ManagedGun instance)
+        public override void OnPickedUpLocally(GunBase instance)
         {
             if (CustomTargetIndex == 0)
                 SetGunCamera(instance.transform, instance.CameraData);

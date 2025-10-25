@@ -62,6 +62,10 @@ namespace CenturionCC.System.Utils
                 return false;
             Array.ConstrainedCopy(arr, index + 1, arr, index, arr.Length - 1 - index);
             --count;
+
+            for (var i = count; i < arr.Length; i++)
+                arr[i] = null;
+
             return true;
         }
     }

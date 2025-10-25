@@ -18,39 +18,39 @@ namespace CenturionCC.System.Gun
             OnGunsReset();
         }
 
-        public virtual void OnOccupyChanged(ManagedGun instance)
+        public virtual void OnOccupyChanged(GunBase instance)
         {
         }
 
-        public virtual void OnVariantChanged(ManagedGun instance)
+        public virtual void OnVariantChanged(GunBase instance)
         {
         }
 
-        public virtual void OnPickedUpLocally(ManagedGun instance)
+        public virtual void OnPickedUpLocally(GunBase instance)
         {
         }
 
-        public virtual void OnDropLocally(ManagedGun instance)
+        public virtual void OnDropLocally(GunBase instance)
         {
         }
 
-        public virtual void OnShoot(ManagedGun instance, ProjectileBase projectile)
+        public virtual void OnShoot(GunBase instance, ProjectileBase projectile)
         {
         }
 
-        public virtual void OnEmptyShoot(ManagedGun instance)
+        public virtual void OnEmptyShoot(GunBase instance)
         {
         }
 
-        public virtual void OnShootFailed(ManagedGun instance, int reasonId)
+        public virtual void OnShootFailed(GunBase instance, int reasonId)
         {
         }
 
-        public virtual void OnShootCancelled(ManagedGun instance, int reasonId)
+        public virtual void OnShootCancelled(GunBase instance, int reasonId)
         {
         }
 
-        public virtual void OnFireModeChanged(ManagedGun instance)
+        public virtual void OnFireModeChanged(GunBase instance)
         {
         }
     }
