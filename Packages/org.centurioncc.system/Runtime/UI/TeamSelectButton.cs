@@ -8,7 +8,7 @@ namespace CenturionCC.System.UI
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class TeamSelectButton : PlayerManagerCallbackBase
     {
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField][HideInInspector][NewbieInject]
         private PlayerManager playerManager;
 
         [SerializeField] private int targetTeamId;
@@ -24,13 +24,13 @@ namespace CenturionCC.System.UI
         private void UpdateButtonState()
         {
             var player = playerManager.GetLocalPlayer();
-            var isInTargetTeam = player != null && player.TeamId == targetTeamId;
+            bool isInTargetTeam = player != null && player.TeamId == targetTeamId || player == null && targetTeamId == 0;
 
             if (changeToTargetButton != null)
-                gameObject.SetActive(!isInTargetTeam);
+                changeToTargetButton.SetActive(!isInTargetTeam);
 
             if (changeToDefaultButton != null)
-                gameObject.SetActive(isInTargetTeam);
+                changeToDefaultButton.SetActive(isInTargetTeam);
         }
 
         public override void Interact()
