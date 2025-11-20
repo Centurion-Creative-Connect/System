@@ -8,7 +8,7 @@ namespace CenturionCC.System.UI
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class TeamSelectButton : PlayerManagerCallbackBase
     {
-        [SerializeField][HideInInspector][NewbieInject]
+        [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManager playerManager;
 
         [SerializeField] private int targetTeamId;
