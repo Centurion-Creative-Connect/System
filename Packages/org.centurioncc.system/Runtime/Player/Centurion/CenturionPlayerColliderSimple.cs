@@ -70,6 +70,11 @@ namespace CenturionCC.System.Player.Centurion
 
         public override void PostLateUpdate()
         {
+            if (!Utilities.IsValid(_vrcPlayer))
+            {
+                return;
+            }
+
             groundPivot.SetPositionAndRotation(_vrcPlayer.GetPosition(), _vrcPlayer.GetRotation());
 
             var head = _vrcPlayer.GetBonePosition(HumanBodyBones.Head);
