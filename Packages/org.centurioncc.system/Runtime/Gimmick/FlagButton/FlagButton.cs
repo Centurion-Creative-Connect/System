@@ -1,13 +1,13 @@
 ﻿using CenturionCC.System.Player;
 using CenturionCC.System.UI;
+using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using DerpyNewbie.Common.Invoker;
 using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
-
-namespace CenturionCC.System.Utils
+namespace CenturionCC.System.Gimmick.FlagButton
 {
     [RequireComponent(typeof(AudioSource), typeof(SendVariableSyncEvent))]
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
