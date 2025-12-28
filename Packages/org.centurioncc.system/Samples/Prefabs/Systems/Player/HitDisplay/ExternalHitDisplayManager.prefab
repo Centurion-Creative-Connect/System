@@ -25,13 +25,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 37134976955318164}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 37134978148223045}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &37134976955318163
 MonoBehaviour:
@@ -56,8 +57,12 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 37134976955318162}
   playerManager: {fileID: 0}
-  sourceRemoteHitDisplay: {fileID: 37134978148223044}
+  sourceExternalHitDisplay: {fileID: 37134978148223044}
   parent: {fileID: 0}
+  playHitDisplay: 0
+  ignoreForLocalHit: 1
+  playWhenLocalIsNotInGame: 1
+  bypassPlayHitDisplayWhenStaffTeam: 1
 --- !u!114 &37134976955318162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89,6 +94,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 37134976955318165}
     m_Modifications:
     - target: {fileID: 5845109867626597576, guid: 13c117680697c5843b51c0339933ada2,
@@ -168,13 +174,80 @@ PrefabInstance:
       objectReference: {fileID: 5845109867626597583, guid: 13c117680697c5843b51c0339933ada2,
         type: 3}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5845109867626597576, guid: 13c117680697c5843b51c0339933ada2,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1683820063016699186}
   m_SourcePrefab: {fileID: 100100000, guid: 13c117680697c5843b51c0339933ada2, type: 3}
+--- !u!114 &37134978148223042 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5845109867626597582, guid: 13c117680697c5843b51c0339933ada2,
+    type: 3}
+  m_PrefabInstance: {fileID: 5881118803429409932}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 37134978148223044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45115577ef41a5b4ca741ed302693907, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &37134978148223044 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5845109867626597576, guid: 13c117680697c5843b51c0339933ada2,
     type: 3}
   m_PrefabInstance: {fileID: 5881118803429409932}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1683820063016699186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 37134978148223044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd3907e131fa9a14ca0bbdc6b8bab989, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  _udonSharpBackingUdonBehaviour: {fileID: 37134978148223042}
+  stoppingHeight: 0.7
+  curve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.5
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  duration: 5
 --- !u!4 &37134978148223045 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5845109867626597577, guid: 13c117680697c5843b51c0339933ada2,

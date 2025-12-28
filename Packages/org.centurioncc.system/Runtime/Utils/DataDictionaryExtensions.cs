@@ -1,4 +1,5 @@
 ﻿using System;
+using CenturionCC.System.Gun;
 using CenturionCC.System.Player;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -9,6 +10,23 @@ namespace CenturionCC.System.Utils
 {
     public static class DataDictionaryExtensions
     {
+        [PublicAPI]
+        public static DataDictionary ToDictionary(this ProjectileBase projectile)
+        {
+            var dict = new DataDictionary();
+            dict.Add("attacker", ToPlayerDictionary(projectile.DamagerPlayerId));
+            dict.Add("damageType", projectile.DamageType);
+            dict.Add("detectionType", projectile.DetectionType.ToEnumName());
+
+            var originDict = new DataDictionary();
+            originDict.Add("position", projectile.DamageOriginPosition.ToDictionary());
+            originDict.Add("rotation", projectile.DamageOriginRotation.ToDictionary());
+            originDict.Add("time", projectile.DamageOriginTime.ToString("O"));
+
+            dict.Add("origin", originDict);
+            return dict;
+        }
+        
         [PublicAPI]
         public static DataDictionary ToDictionary(this Vector3 vec3)
         {

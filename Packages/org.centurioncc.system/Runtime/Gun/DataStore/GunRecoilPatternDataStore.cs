@@ -38,6 +38,15 @@ namespace CenturionCC.System.Gun.DataStore
             0.3F
         };
 
+        [SerializeField]
+        private float proceduralRecoilHorizontal;
+        [SerializeField]
+        private float proceduralRecoilVertical;
+        [SerializeField]
+        private float proceduralRecoilKickBack;
+        [SerializeField]
+        private float proceduralRecoilErgonomics = 3;
+
         public Vector3[] RecoilOffsetPatterns => recoilOffsetPatterns;
         public Vector3[] PositionOffsetPatterns => positionOffsetPatterns;
         public float[] SpeedOffsetPatterns => speedOffsetPatterns;
@@ -76,6 +85,14 @@ namespace CenturionCC.System.Gun.DataStore
             speedOffset = speedOffsetPatterns[count % speedOffsetPatterns.Length];
             recoilOffset = recoilOffsetPatterns[count % recoilOffsetPatterns.Length];
             positionOffset = positionOffsetPatterns[count % positionOffsetPatterns.Length];
+        }
+
+        public virtual void GetRecoil(out Vector3 position, out Quaternion rotation)
+        {
+            rotation = Quaternion.AngleAxis(-proceduralRecoilVertical, Vector3.right) *
+                       Quaternion.AngleAxis((Random.value * 2 - 1) * proceduralRecoilHorizontal, Vector3.up) *
+                       Quaternion.AngleAxis((Random.value * 2 - 1) * proceduralRecoilHorizontal, Vector3.forward);
+            position = Vector3.back * proceduralRecoilKickBack;
         }
     }
 }

@@ -13,7 +13,7 @@ namespace CenturionCC.System.Utils
     public class ResetStatusDisplay : GunManagerCallbackBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
-        private GunManager gunManager;
+        private GunManagerBase gunManager;
 
         [SerializeField]
         private double resetDonePeriodInMinutes = 3D;

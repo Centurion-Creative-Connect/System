@@ -1,6 +1,7 @@
 ﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
+using NotImplementedException = System.NotImplementedException;
 
 namespace CenturionCC.System.Gun.DataStore
 {
@@ -34,11 +35,11 @@ namespace CenturionCC.System.Gun.DataStore
         public override int ProjectileCount => projectileCount;
 
         public override void Get(int i,
-            out Vector3 posOff, out Vector3 vel,
-            out Quaternion rotOff, out Vector3 torque,
-            out float dr, out float dm,
-            out float trailDur, out Gradient trailColor,
-            out float lifeTime)
+                                 out Vector3 posOff, out Vector3 vel,
+                                 out Quaternion rotOff, out Vector3 torque,
+                                 out float dr, out float dm,
+                                 out float trailDur, out Gradient trailColor,
+                                 out float lifeTime)
         {
             recoilPattern.Get(i, out var spdOff, out var recOff, out posOff);
             dr = drag;
@@ -49,6 +50,17 @@ namespace CenturionCC.System.Gun.DataStore
             trailDur = trailTime;
             trailColor = trailGradient;
             lifeTime = lifeTimeInSeconds;
+        }
+        public override void GetRecoil(out Vector3 position, out Quaternion rotation)
+        {
+            if (!recoilPattern)
+            {
+                position = Vector3.zero;
+                rotation = Quaternion.identity;
+                return;
+            }
+
+            recoilPattern.GetRecoil(out position, out rotation);
         }
 
         public void Sync()

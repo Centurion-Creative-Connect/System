@@ -1,20 +1,25 @@
-﻿using System;
-using CenturionCC.System.Gun.DataStore;
+﻿using CenturionCC.System.Gun.DataStore;
 using DerpyNewbie.Common;
+using System;
 using UdonSharp;
 using UnityEngine;
-
-namespace CenturionCC.System.Gun
+namespace CenturionCC.System.Gun.Centurion
 {
     [RequireComponent(typeof(Rigidbody), typeof(Collider))]
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class GunBullet : ProjectileBase
+    public class CenturionBBBullet : ProjectileBase
     {
         private const float HopUpCoefficient = .005F;
         private const float DampingCoefficient = 2.5F;
 
-        [SerializeField]
-        private GunManager gunManager;
+        [SerializeField] [NewbieInject]
+        private GunManagerBase gunManager;
+
+        [SerializeField] [NewbieInject]
+        private RicochetHandlerBase[] ricochetHandlers;
+
+        [SerializeField] [NewbieInject]
+        private UpdateManager updateManager;
 
         [SerializeField]
         private TrailRenderer trailRenderer;
@@ -22,8 +27,6 @@ namespace CenturionCC.System.Gun
         [SerializeField]
         private TrailRenderer debugTrailRenderer;
 
-        [SerializeField] [HideInInspector] [NewbieInject]
-        private UpdateManager updateManager;
 
         private Collider _collider;
         private float _damageAmount;
@@ -43,13 +46,13 @@ namespace CenturionCC.System.Gun
         private Vector3 _nextVelocity;
         private int _ricochetCount;
         private Rigidbody _rigidbody;
-        private bool UseTrail => gunManager.useBulletTrail && _nextUseTrail;
-        private bool UseDebugTrail => gunManager.useDebugBulletTrail;
+        private bool UseTrail => gunManager.UseBulletTrail && _nextUseTrail;
+        private bool UseDebugTrail => gunManager.UseDebugBulletTrail;
 
         public override Guid EventId => _eventId;
 
         public override bool ShouldApplyDamage =>
-            gunManager.allowedRicochetCount + 1 >= _ricochetCount;
+            gunManager.AllowedRicochetCount + 1 >= _ricochetCount;
 
         public override int DamagerPlayerId => _damagerPlayerId;
         public override Vector3 DamageOriginPosition => _damageOriginPos;
@@ -69,16 +72,18 @@ namespace CenturionCC.System.Gun
         {
             ++_ricochetCount;
             _rigidbody.velocity /= DampingCoefficient;
-            if (gunManager.RicochetHandler != null)
-                gunManager.RicochetHandler.OnRicochet(this, collision);
+            foreach (var ricochetHandler in ricochetHandlers)
+            {
+                ricochetHandler.OnRicochet(this, collision);
+            }
         }
 
         public override void Shoot(Guid eventId,
-            Vector3 pos, Quaternion rot,
-            Vector3 velocity, Vector3 torque, float drag,
-            string damageType, float damageAmount,
-            DateTime time, int playerId,
-            float trailTime, Gradient trailGradient, float lifeTimeInSeconds)
+                                   Vector3 pos, Quaternion rot,
+                                   Vector3 velocity, Vector3 torque, float drag,
+                                   string damageType, float damageAmount,
+                                   DateTime time, int playerId,
+                                   float trailTime, Gradient trailGradient, float lifeTimeInSeconds)
         {
             // Damage data
             _eventId = eventId;
@@ -198,7 +203,7 @@ namespace CenturionCC.System.Gun
         /// <param name="pointsOfLine">Max points of line</param>
         /// <returns>Pretty inaccurate approximation</returns>
         public static Vector3[] PredictTrajectory(Vector3 startingPos, Quaternion startingRot,
-            ProjectileDataProvider provider, int offset, int pointsOfLine)
+                                                  ProjectileDataProvider provider, int offset, int pointsOfLine)
         {
             provider.Get
             (
@@ -228,7 +233,7 @@ namespace CenturionCC.System.Gun
         /// <param name="pointsOfLine">Max points of line</param>
         /// <returns>Pretty inaccurate approximation</returns>
         public static Vector3[] PredictTrajectory(Vector3 pos, Quaternion rot, Vector3 velocity, Vector3 torque,
-            float drag, int pointsOfLine)
+                                                  float drag, int pointsOfLine)
         {
             const float dt = 0.02F;
             velocity = rot * velocity;

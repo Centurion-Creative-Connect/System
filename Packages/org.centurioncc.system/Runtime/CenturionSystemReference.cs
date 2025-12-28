@@ -60,7 +60,7 @@ namespace CenturionCC.System
         }
 
         [PublicAPI]
-        public static GunManager GetGunManager()
+        public static GunManagerBase GetGunManager()
         {
             return GetGameManager().guns;
         }

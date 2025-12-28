@@ -1,5 +1,4 @@
-﻿using System;
-using CenturionCC.System.Player;
+﻿using CenturionCC.System.Player;
 using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
@@ -7,10 +6,10 @@ using UnityEngine;
 namespace CenturionCC.System.Gun.Rule
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)] [RequireComponent(typeof(TranslatableMessage))]
-    public class NoShootingInSafeZoneRule : ShootingRule
+    public class NoShootingInSafeZoneRule : ShootingRuleBase
     {
         [SerializeField] [NewbieInject]
-        private GunManager gunManager;
+        private GunManagerBase gunManager;
 
         [SerializeField] [NewbieInject]
         private PlayerManagerBase playerManager;

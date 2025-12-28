@@ -9,29 +9,39 @@ namespace CenturionCC.System.Gun
     public class GunManagerNotificationSender : GunManagerCallbackBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
-        private GunManager gunManager;
+        private GunManagerBase gunManager;
+
         [SerializeField] [HideInInspector] [NewbieInject]
         private NotificationProvider notification;
+
         [Header("Messages")]
         [SerializeField]
         private TranslatableMessage onGunsResetMessage;
+
         [SerializeField]
         private TranslatableMessage onCantShootInSafeZone;
+
         [SerializeField]
         private TranslatableMessage onCantShootInWall;
+
         [SerializeField]
         private TranslatableMessage onCantShootWhenSelectorSafety;
+
         [SerializeField]
         private TranslatableMessage onCantShootBecauseCallback;
+
         [SerializeField]
         private TranslatableMessage onCantShootUnknown;
+
         [SerializeField]
         private TranslatableMessage onFireModeChangeFormatMessage;
+
         [SerializeField]
         private TranslatableMessage[] fireModeNames;
 
         [Header("Defaults")]
         public bool notifyGunsReset = true;
+
         public bool notifyCancelled = true;
         public bool notifyFireModeChange = true;
 
@@ -48,17 +58,17 @@ namespace CenturionCC.System.Gun
             SendNotification(onGunsResetMessage, false);
         }
 
-        public override void OnShootFailed(ManagedGun instance, int reasonId)
+        public override void OnShootFailed(GunBase instance, int reasonId)
         {
             SendCancelledOrFailedNotification(reasonId);
         }
 
-        public override void OnShootCancelled(ManagedGun instance, int reasonId)
+        public override void OnShootCancelled(GunBase instance, int reasonId)
         {
             SendCancelledOrFailedNotification(reasonId);
         }
 
-        public override void OnFireModeChanged(ManagedGun instance)
+        public override void OnFireModeChanged(GunBase instance)
         {
             if (instance == null || !instance.IsLocal || !notifyFireModeChange)
                 return;

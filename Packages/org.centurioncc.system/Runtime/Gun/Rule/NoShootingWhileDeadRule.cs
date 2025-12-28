@@ -6,10 +6,10 @@ using UnityEngine;
 namespace CenturionCC.System.Gun.Rule
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class NoShootingWhileDeadRule : ShootingRule
+    public class NoShootingWhileDeadRule : ShootingRuleBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
-        private GunManager gunManager;
+        private GunManagerBase gunManager;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManagerBase playerManager;

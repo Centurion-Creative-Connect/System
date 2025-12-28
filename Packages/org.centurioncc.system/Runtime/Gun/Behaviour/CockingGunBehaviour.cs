@@ -1,13 +1,14 @@
 ﻿using CenturionCC.System.Gun.DataStore;
 using UdonSharp;
 using UnityEngine;
-using VRC.SDKBase;
 
 namespace CenturionCC.System.Gun.Behaviour
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class CockingGunBehaviour : GunBehaviourBase
     {
+        [SerializeField] private GunHandle customHandle;
+
         [SerializeField] private bool returnToCockingPositionOnDrop;
 
         [Header("Cocking")] [SerializeField] private bool canCockAfterCock;
@@ -66,9 +67,9 @@ namespace CenturionCC.System.Gun.Behaviour
 
         private void GetNormalizedProgressAndTwist(GunBase instance, out float progress, out float twist)
         {
-            var refPos = instance.CustomHandle.transform.localPosition;
+            var refPos = customHandle.transform.localPosition;
             if (useHandleRotation) // Limit Z movement
-                refPos += (Vector3)(Vector2)(instance.CustomHandle.transform.localRotation * Vector3.up);
+                refPos += (Vector3)(Vector2)(customHandle.transform.localRotation * Vector3.up);
             var currentState = instance.State;
             progress = GetProgressNormalized(refPos);
             twist = GetTwistNormalized(refPos);
@@ -144,20 +145,18 @@ namespace CenturionCC.System.Gun.Behaviour
                 }
             }
 
-            var handleTransform = instance.CustomHandle.transform;
+            var handleTransform = customHandle.transform;
             handleTransform.localPosition = targetPos;
             handleTransform.localRotation = targetRot;
         }
 
         #region StateCheckMethods
-
         private bool CanShoot(GunBase target)
         {
             return target.Trigger == TriggerState.Firing &&
                    target.State == GunState.Idle &&
                    (target.HasBulletInChamber || isDoubleAction);
         }
-
         #endregion
 
 #if !COMPILER_UDONSHARP && UNITY_EDITOR
@@ -203,14 +202,13 @@ namespace CenturionCC.System.Gun.Behaviour
 
 
         #region GunBehaviourBase
-
         public override bool RequireCustomHandle => true;
 
         public override void OnTriggerDown(GunBase instance)
         {
             if (!CanShoot(instance))
             {
-                instance.EmptyShoot();
+                instance._EmptyShoot();
                 instance.Trigger = TriggerState.Armed;
             }
         }
@@ -234,12 +232,12 @@ namespace CenturionCC.System.Gun.Behaviour
             // Shoot a gun whenever it's able to shoot. load new bullet if it's blow back variant
             if (CanShoot(instance))
             {
-                var shotResult = instance.TryToShoot();
+                var shotResult = instance._TryToShoot();
                 var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
                 if (hasSucceeded && isBlowBack)
                 {
                     instance.HasCocked = true;
-                    instance.LoadBullet();
+                    instance._LoadBullet();
                 }
             }
 
@@ -255,7 +253,7 @@ namespace CenturionCC.System.Gun.Behaviour
                 var cockingInput = Input.GetKeyDown(desktopCockingKey) || doDesktopCockingAutomatically;
                 var shouldCock = instance.State == GunState.Idle &&
                                  ((!instance.HasCocked && !isBlowBack) || !instance.HasBulletInChamber) &&
-                                 instance.HasNextBullet();
+                                 instance._HasNextBullet();
                 if (!_isOnDesktopCocking && shouldCock && cockingInput)
                 {
                     Debug.Log("[CockingGunBehaviour] Begin Desktop Reloading");
@@ -308,7 +306,7 @@ namespace CenturionCC.System.Gun.Behaviour
                 GunUtility.UpdateStateBoltAction(
                     instance,
                     cockingHapticData,
-                    instance.CustomHandle.CurrentHand,
+                    customHandle.CurrentHand,
                     progressNormalized,
                     cockingAutoLoadMargin,
                     1 - cockingAutoLoadMargin,
@@ -319,7 +317,7 @@ namespace CenturionCC.System.Gun.Behaviour
                 GunUtility.UpdateStateStraightPull(
                     instance,
                     cockingHapticData,
-                    instance.CustomHandle.CurrentHand,
+                    customHandle.CurrentHand,
                     progressNormalized,
                     cockingAutoLoadMargin,
                     1 - cockingAutoLoadMargin
@@ -336,6 +334,9 @@ namespace CenturionCC.System.Gun.Behaviour
                     $"[CockingGunBehaviour] resetting state because it was invalid: {state.GetStateString()}");
                 instance.State = GunState.Idle;
             }
+
+            customHandle.callback = instance;
+            customHandle.transform.SetPositionAndRotation(cockingPosition.position, Quaternion.identity);
         }
 
         public override void OnHandleDrop(GunBase instance, GunHandle handle)
@@ -348,7 +349,7 @@ namespace CenturionCC.System.Gun.Behaviour
             }
 
             Vector3 expectedPos;
-            var handlePos = instance.CustomHandle.transform.localPosition;
+            var handlePos = customHandle.transform.localPosition;
             var cockingPos = cockingPosition.localPosition;
 
 
@@ -390,7 +391,6 @@ namespace CenturionCC.System.Gun.Behaviour
             Debug.Log(
                 $"[CockingGunBehaviour] OnHandleDrop: {instance.name} moved handle to {expectedPos.ToString("F2")}");
         }
-
         #endregion
     }
 }

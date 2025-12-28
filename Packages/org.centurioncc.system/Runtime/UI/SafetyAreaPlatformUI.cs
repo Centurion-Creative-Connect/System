@@ -1,5 +1,6 @@
 ﻿using System;
 using CenturionCC.System.Gun;
+using CenturionCC.System.Gun.Centurion;
 using CenturionCC.System.Player;
 using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
@@ -60,7 +61,7 @@ namespace CenturionCC.System.UI
         private RoleProvider roleProvider;
 
         [SerializeField] [NewbieInject]
-        private GunManager gunManager;
+        private GunManagerBase gunManager;
 
         [SerializeField] [NewbieInject]
         private PlayerManagerBase playerManager;
@@ -180,7 +181,7 @@ namespace CenturionCC.System.UI
 
         public void UpdateGunStatusText()
         {
-            gunStatusText.text = string.Format(gunStatusMessage, gunManager.OccupiedRemoteGunCount);
+            gunStatusText.text = string.Format(gunStatusMessage, "unknown");
         }
 
         public void UpdateResetStatusText()
@@ -267,18 +268,15 @@ namespace CenturionCC.System.UI
         }
 
         #region StatsCounter
-
         private int _ffCount;
         private int _hitDetectionCount;
         private int _localHitCount;
         private int _remoteHitCount;
         private int _globalShotCount;
         private int _localShotCount;
-
         #endregion
 
         #region PlayerManagerCallback
-
         public override void OnPlayerAdded(PlayerBase player)
         {
             _updatePlayerStatusNextFrame = true;
@@ -320,11 +318,9 @@ namespace CenturionCC.System.UI
         {
             UpdateToggleState();
         }
-
         #endregion
 
         #region GunManagerCallback
-
         public bool CanShoot()
         {
             return true;
@@ -337,19 +333,13 @@ namespace CenturionCC.System.UI
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(EnableResetButton));
         }
 
-        public void OnOccupyChanged(ManagedGun instance)
-        {
-            UpdateGunStatusText();
-        }
-
-        public void OnShoot(ManagedGun instance, GunBullet bullet)
+        public void OnShoot(GunBase instance, ProjectileBase bullet)
         {
             ++_globalShotCount;
             if (instance != null && instance.IsLocal)
                 ++_localShotCount;
             _updateStatisticsNextFrame = true;
         }
-
         #endregion
     }
 }

@@ -6,10 +6,10 @@ using VRC.SDKBase;
 namespace CenturionCC.System.Gun.Rule
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class NoShootingInAirRule : ShootingRule
+    public class NoShootingInAirRule : ShootingRuleBase
     {
         [SerializeField] [HideInInspector] [NewbieInject]
-        private GunManager gunManager;
+        private GunManagerBase gunManager;
         [SerializeField]
         private TranslatableMessage cancelledMessage;
 

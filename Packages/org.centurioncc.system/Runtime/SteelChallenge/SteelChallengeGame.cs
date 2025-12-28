@@ -63,7 +63,7 @@ namespace CenturionCC.System.SteelChallenge
         [SerializeField] [HideInInspector] [NewbieInject]
         private AudioManager audioManager;
         [SerializeField] [HideInInspector] [NewbieInject]
-        private GunManager gunManager;
+        private GunManagerBase gunManager;
 
         private readonly int _animatorGameState = Animator.StringToHash("GameState");
         private readonly int _animatorIsVR = Animator.StringToHash("IsVR");
@@ -364,7 +364,6 @@ namespace CenturionCC.System.SteelChallenge
         }
 
         #region PlayAudio
-
         public void PlayAudioAtTarget(SteelTarget target)
         {
             _PlayAudio(hitSound, target.transform.position);
@@ -422,7 +421,6 @@ namespace CenturionCC.System.SteelChallenge
         {
             audioManager.PlayAudioAtPosition(a, p);
         }
-
         #endregion
     }
 

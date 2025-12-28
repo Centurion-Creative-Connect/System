@@ -16,7 +16,7 @@ namespace CenturionCC.System.Utils
         private PlayerManagerBase playerManager;
 
         [SerializeField] [HideInInspector] [NewbieInject]
-        private GunManager gunManager;
+        private GunManagerBase gunManager;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private NewbieLogger logger;
@@ -57,7 +57,6 @@ namespace CenturionCC.System.Utils
         }
 
         #region PlayerManagerEvents
-
         public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
             if (!victim.IsLocal || !_currentlyHeldShield)
@@ -66,11 +65,9 @@ namespace CenturionCC.System.Utils
             if (DropShieldOnHit && _currentlyHeldShield.DropShieldOnHit)
                 _currentlyHeldShield.DropByHit();
         }
-
         #endregion
 
         #region ShieldManagerEventInvokers
-
         public bool Invoke_OnShieldPickup(Shield shield)
         {
             logger.Log($"{Prefix}Invoke_OnShieldPickup: {shield.name}");
@@ -130,11 +127,9 @@ namespace CenturionCC.System.Utils
                 ((ShieldManagerCallbackBase)callback).OnDropShieldSettingChanged(value);
             }
         }
-
         #endregion
 
         #region GunManagerEvents
-
         public bool CanShoot()
         {
             return !_currentlyHeldShield || _currentlyHeldShield.CanShootWhileCarrying;
@@ -145,42 +140,37 @@ namespace CenturionCC.System.Utils
         {
         }
 
-        public void OnOccupyChanged(ManagedGun instance)
+        public void OnVariantChanged(GunBase instance)
         {
         }
 
-        public void OnVariantChanged(ManagedGun instance)
+        public void OnPickedUpLocally(GunBase instance)
         {
         }
 
-        public void OnPickedUpLocally(ManagedGun instance)
+        public void OnDropLocally(GunBase instance)
         {
         }
 
-        public void OnDropLocally(ManagedGun instance)
+        public void OnShoot(GunBase instance, ProjectileBase projectile)
         {
         }
 
-        public void OnShoot(ManagedGun instance, ProjectileBase projectile)
+        public void OnEmptyShoot(GunBase instance)
         {
         }
 
-        public void OnEmptyShoot(ManagedGun instance)
+        public void OnShootFailed(GunBase instance, int reasonId)
         {
         }
 
-        public void OnShootFailed(ManagedGun instance, int reasonId)
+        public void OnShootCancelled(GunBase instance, int reasonId)
         {
         }
 
-        public void OnShootCancelled(ManagedGun instance, int reasonId)
+        public void OnFireModeChanged(GunBase instance)
         {
         }
-
-        public void OnFireModeChanged(ManagedGun instance)
-        {
-        }
-
         #endregion
     }
 

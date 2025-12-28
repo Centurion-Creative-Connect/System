@@ -1,6 +1,7 @@
 ﻿using System;
 using CenturionCC.System.Audio;
 using CenturionCC.System.Gun;
+using CenturionCC.System.Gun.DataStore;
 using CenturionCC.System.Player;
 using DerpyNewbie.Common;
 using JetBrains.Annotations;
@@ -30,7 +31,7 @@ namespace CenturionCC.System.Utils
         private AudioManager audioManager;
 
         [SerializeField] [NewbieInject]
-        private GunManager gunManager;
+        private GunManagerBase gunManager;
 
         [SerializeField] [NewbieInject]
         private PlayerManagerBase playerManager;
@@ -237,7 +238,6 @@ namespace CenturionCC.System.Utils
         }
 
         #region BasePublicAPIs
-
         /// <summary>
         /// Syncs and applies locals base properties globally. 
         /// </summary>
@@ -272,11 +272,9 @@ namespace CenturionCC.System.Utils
 
             Invoke_OnPostApplyMovementProperties();
         }
-
         #endregion
 
         #region ObjectBaseHandlingAPIs
-
         /// <summary>
         /// Adds object's weight to player's current weight.
         /// </summary>
@@ -357,21 +355,17 @@ namespace CenturionCC.System.Utils
             Invoke_OnActiveTagsUpdated();
             Invoke_OnHeldObjectsUpdated();
         }
-
         #endregion
 
         #region BaseSerializedFields
-
         [Tooltip("Delay in seconds until try to update current surface object marker.")] [SerializeField]
         private float surfaceUpdateFrequency = 0.25F;
 
         [Tooltip("Layers to check objects with ObjectMarker attached.")] [SerializeField]
         private LayerMask surfaceCheckingLayer = 1 << 11;
-
         #endregion
 
         #region PublicAPIProperties
-
         /// <summary>
         /// Current surface <see cref="ObjectMarkerBase"/> used to determine footsteps and environment multipliers
         /// </summary>
@@ -399,22 +393,18 @@ namespace CenturionCC.System.Utils
         /// <seealso cref="ObjectMarkerBase.Tags"/>
         [PublicAPI]
         public DataList ActiveTags => _activeTags.DeepClone();
-
         #endregion
 
         #region GroundSnapping
-
         [Header("Ground Snapping")] [SerializeField]
         public bool snapPlayerToGroundOnSlopes = true;
 
         [SerializeField] private LayerMask playerGroundLayer = (1 | 1 << 9 | 1 << 11);
         [SerializeField] public float groundSnapMaxDistance = 0.4F;
         [SerializeField] public float groundSnapForwardDistance = 0.2F;
-
         #endregion
 
         #region PlayerMovementSerializeFields
-
         [Header("Base Player Movement")] [SerializeField] [UdonSynced] [FieldChangeCallback(nameof(BaseWalkSpeed))]
         private float baseWalkSpeed = 2F;
 
@@ -441,11 +431,9 @@ namespace CenturionCC.System.Utils
                  "Allows duplicate occuring for `PlayerController#AddHeldObject` method.\n" +
                  "Leave it unchecked if you are not experiencing issues.")]
         private bool allowDuplicateHeldObjects;
-
         #endregion
 
         #region FootstepSerializeFields
-
         [Header("Footstep")] [SerializeField] [UdonSynced]
         private bool playFootstepSound = true;
 
@@ -466,11 +454,9 @@ namespace CenturionCC.System.Utils
         [UdonSynced]
         [Tooltip("Plays slow footstep sound if player invoked footstep sound after this time, in seconds.")]
         public float footstepSlowThresholdTime = 0.45F;
-
         #endregion
 
         #region GunIntegrationSerializeFields
-
         [Header("Gun Integrations")] [SerializeField]
         [FormerlySerializedAs("baseApplyGunPropertyToPlayerController")]
         private bool useGunIntegration = true;
@@ -499,11 +485,9 @@ namespace CenturionCC.System.Utils
 
         [SerializeField] [UdonSynced] private float baseCombatTagSpeedMultiplier = 0.5F;
         [SerializeField] [UdonSynced] private float baseCombatTagTime = 0.25F;
-
         #endregion
 
         #region PlayerMovementProperties
-
         [PublicAPI]
         public float BaseWalkSpeed
         {
@@ -609,11 +593,9 @@ namespace CenturionCC.System.Utils
 
         [PublicAPI] public float ActualJumpImpulse => BaseJumpImpulse * TotalMultiplier;
         [PublicAPI] public float ActualGravityStrength => BaseGravityStrength * TotalMultiplier;
-
         #endregion
 
         #region EventInvokers
-
         private readonly DataList _eventCallbacks = new DataList();
         private bool _isInvokingEvents;
 
@@ -679,17 +661,16 @@ namespace CenturionCC.System.Utils
             foreach (var token in arr) ((PlayerControllerCallback)token.Reference).OnPostApplyMovementProperties();
             _isInvokingEvents = false;
         }
-
         #endregion
 
         #region GunIntegration
-
         private float _cachedGunSprintThresholdMultiplier = float.NaN;
         private float _lastShotTime;
 
         private void UpdateCombatTagAndCanRunState()
         {
-            if (gunManager.LocalHeldGuns.Length == 0)
+            var locallyHeldGuns = gunManager.GetLocallyHeldGunInstances();
+            if (locallyHeldGuns.Length == 0)
             {
                 _canRun = true;
                 _combatTagged = false;
@@ -701,11 +682,12 @@ namespace CenturionCC.System.Utils
 
             _canRun = true;
             _combatTagged = false;
-            foreach (var gun in gunManager.LocalHeldGuns)
+            foreach (var gun in locallyHeldGuns)
             {
                 if (!gun.MainHandle.IsPickedUp) continue;
 
-                var gunForward = gun.ShooterRotation * Vector3.forward;
+                gun._GetFiringPositionAndRotation(out var firingPos, out var firingRot);
+                var gunForward = firingRot * Vector3.forward;
                 var dot = Vector3.Dot(headForward, gunForward);
 
                 if (dot > ActualGunSprintDirectionThreshold)
@@ -721,6 +703,80 @@ namespace CenturionCC.System.Utils
             }
         }
 
+        private MovementOption CalculateMovementOption(GunVariantDataStore variantData, out float estWalkSpeed, out float estRunSpeed, out float estSprintThresholdMultiplier)
+        {
+            var movementOption = variantData.Movement;
+            switch (movementOption)
+            {
+                default:
+                case MovementOption.Inherit:
+                {
+                    estWalkSpeed = baseGunSprintWalkSpeed;
+                    estRunSpeed = baseGunSprintRunSpeed;
+                    estSprintThresholdMultiplier = 1;
+                    break;
+                }
+                case MovementOption.Direct:
+                {
+                    estWalkSpeed = variantData.WalkSpeed;
+                    estRunSpeed = variantData.SprintSpeed;
+                    estSprintThresholdMultiplier = variantData.SprintThresholdMultiplier;
+                    break;
+                }
+                case MovementOption.Multiply:
+                {
+                    estWalkSpeed = BaseWalkSpeed * variantData.WalkSpeed;
+                    estRunSpeed = BaseRunSpeed * variantData.SprintSpeed;
+                    estSprintThresholdMultiplier = variantData.SprintThresholdMultiplier;
+                    break;
+                }
+                case MovementOption.Disable:
+                {
+                    estWalkSpeed = BaseWalkSpeed;
+                    estRunSpeed = BaseRunSpeed;
+                    estSprintThresholdMultiplier = 1F;
+                    break;
+                }
+            }
+
+            return movementOption;
+        }
+
+        private CombatTagOption CalculateCombatTagOption(GunVariantDataStore variantData, out float estCombatTagSpeedMultiplier, out float estCombatTagTime)
+        {
+            var combatTagOption = variantData.CombatTag;
+            switch (combatTagOption)
+            {
+                default:
+                case CombatTagOption.Inherit:
+                {
+                    estCombatTagSpeedMultiplier = baseCombatTagSpeedMultiplier;
+                    estCombatTagTime = baseCombatTagTime;
+                    break;
+                }
+                case CombatTagOption.Direct:
+                {
+                    estCombatTagSpeedMultiplier = variantData.CombatTagSpeedMultiplier;
+                    estCombatTagTime = variantData.CombatTagTime;
+                    break;
+                }
+                case CombatTagOption.Multiply:
+                {
+                    estCombatTagSpeedMultiplier = baseCombatTagSpeedMultiplier * variantData.CombatTagSpeedMultiplier;
+                    estCombatTagTime = baseCombatTagTime * variantData.CombatTagTime;
+                    break;
+                }
+                case CombatTagOption.Disable:
+                {
+                    estCombatTagSpeedMultiplier = 1;
+                    estCombatTagTime = 0;
+                    break;
+                }
+            }
+
+            return combatTagOption;
+        }
+
         private void UpdateLowestGunProperty()
         {
             ActualUseGunSprint = false;
@@ -731,52 +787,23 @@ namespace CenturionCC.System.Utils
             ActualCombatTagSpeedMultiplier = float.NaN;
             ActualCombatTagTime = float.NaN;
 
-            if (gunManager.LocalHeldGuns.Length == 0 || !useGunIntegration) return;
+            var locallyHeldGuns = gunManager.GetLocallyHeldGunInstances();
+            if (locallyHeldGuns.Length == 0 || !useGunIntegration) return;
 
-            foreach (var gun in gunManager.LocalHeldGuns)
+            foreach (var gun in locallyHeldGuns)
             {
-                float estWalkSpeed, estSprintSpeed, estSprintThresholdMultiplier;
-                var movementOption = gun.MovementOption;
-                switch (movementOption)
-                {
-                    default:
-                    case MovementOption.Inherit:
-                    {
-                        estWalkSpeed = baseGunSprintWalkSpeed;
-                        estSprintSpeed = baseGunSprintRunSpeed;
-                        estSprintThresholdMultiplier = 1;
-                        break;
-                    }
-                    case MovementOption.Direct:
-                    {
-                        estWalkSpeed = gun.WalkSpeed;
-                        estSprintSpeed = gun.SprintSpeed;
-                        estSprintThresholdMultiplier = gun.SprintThresholdMultiplier;
-                        break;
-                    }
-                    case MovementOption.Multiply:
-                    {
-                        estWalkSpeed = BaseWalkSpeed * gun.WalkSpeed;
-                        estSprintSpeed = BaseRunSpeed * gun.SprintSpeed;
-                        estSprintThresholdMultiplier = gun.SprintThresholdMultiplier;
-                        break;
-                    }
-                    case MovementOption.Disable:
-                    {
-                        estWalkSpeed = BaseWalkSpeed;
-                        estSprintSpeed = BaseRunSpeed;
-                        estSprintThresholdMultiplier = 1F;
-                        break;
-                    }
-                }
+                var variantData = gun.VariantData;
+                if (!variantData)
+                    continue;
 
+                var movementOption = CalculateMovementOption(variantData, out var estWalkSpeed, out var estSprintSpeed, out var estSprintThresholdMult);
                 if (movementOption != MovementOption.Disable)
                 {
                     if (float.IsNaN(ActualGunSprintRunSpeed) ||
                         estSprintSpeed < ActualGunSprintRunSpeed)
                     {
                         ActualGunSprintRunSpeed = estSprintSpeed;
-                        _cachedGunSprintThresholdMultiplier = estSprintThresholdMultiplier;
+                        _cachedGunSprintThresholdMultiplier = estSprintThresholdMult;
                     }
 
                     if (float.IsNaN(ActualGunSprintWalkSpeed) ||
@@ -788,43 +815,13 @@ namespace CenturionCC.System.Utils
                     ActualUseGunSprint = movementOption != MovementOption.Inherit || baseUseGunSprint;
                 }
 
-                var combatTagOption = gun.CombatTagOption;
-                float estCombatTagSpeedMultiplier, estCombatTagTime;
-                switch (combatTagOption)
-                {
-                    default:
-                    case CombatTagOption.Inherit:
-                    {
-                        estCombatTagSpeedMultiplier = baseCombatTagSpeedMultiplier;
-                        estCombatTagTime = baseCombatTagTime;
-                        break;
-                    }
-                    case CombatTagOption.Direct:
-                    {
-                        estCombatTagSpeedMultiplier = gun.CombatTagSpeedMultiplier;
-                        estCombatTagTime = gun.CombatTagTime;
-                        break;
-                    }
-                    case CombatTagOption.Multiply:
-                    {
-                        estCombatTagSpeedMultiplier = baseCombatTagSpeedMultiplier * gun.CombatTagSpeedMultiplier;
-                        estCombatTagTime = baseCombatTagTime * gun.CombatTagTime;
-                        break;
-                    }
-                    case CombatTagOption.Disable:
-                    {
-                        estCombatTagSpeedMultiplier = 1;
-                        estCombatTagTime = 0;
-                        break;
-                    }
-                }
-
+                var combatTagOption = CalculateCombatTagOption(variantData, out var estCombatTagSpeedMult, out var estCombatTagTime);
                 if (combatTagOption != CombatTagOption.Disable)
                 {
                     if (float.IsNaN(ActualCombatTagSpeedMultiplier) ||
-                        ActualCombatTagSpeedMultiplier > estCombatTagSpeedMultiplier)
+                        ActualCombatTagSpeedMultiplier > estCombatTagSpeedMult)
                     {
-                        ActualCombatTagSpeedMultiplier = estCombatTagSpeedMultiplier;
+                        ActualCombatTagSpeedMultiplier = estCombatTagSpeedMult;
                     }
 
                     if (float.IsNaN(ActualCombatTagTime) || ActualCombatTagTime < estCombatTagTime)
@@ -837,24 +834,24 @@ namespace CenturionCC.System.Utils
             }
 
             Debug.Log(
-                $"[PlayerController] l:{gunManager.LocalHeldGuns.Length}, gs:{ActualUseGunSprint}, ct:{ActualUseCombatTag}");
+                $"[PlayerController] l:{locallyHeldGuns.Length}, gs:{ActualUseGunSprint}, ct:{ActualUseCombatTag}");
         }
 
-        public override void OnPickedUpLocally(ManagedGun instance)
+        public override void OnPickedUpLocally(GunBase instance)
         {
             if (!useGunIntegration) return;
             UpdateLowestGunProperty();
             UpdateLocalVrcPlayer();
         }
 
-        public override void OnDropLocally(ManagedGun instance)
+        public override void OnDropLocally(GunBase instance)
         {
             if (!useGunIntegration) return;
             UpdateLowestGunProperty();
             UpdateLocalVrcPlayer();
         }
 
-        public override void OnShoot(ManagedGun instance, ProjectileBase projectile)
+        public override void OnShoot(GunBase instance, ProjectileBase projectile)
         {
             if (!useGunIntegration || !instance.IsLocal) return;
             _lastShotTime = Time.timeSinceLevelLoad;
@@ -868,11 +865,9 @@ namespace CenturionCC.System.Utils
             if (lastCanRun != _canRun || lastCombatTagged != _combatTagged)
                 UpdateLocalVrcPlayer();
         }
-
         #endregion
 
         #region GunIntegrationProperties
-
         [PublicAPI]
         public bool BaseUseCombatTag
         {
@@ -943,11 +938,9 @@ namespace CenturionCC.System.Utils
         [PublicAPI]
         public float ActualGunSprintDirectionThreshold =>
             baseGunDirectionDirectionThreshold * _cachedGunSprintThresholdMultiplier;
-
         #endregion
 
         #region Compatibility
-
         [Obsolete] // ReSharper disable once InconsistentNaming
         public bool checkGunDirectionToAllowRunning
         {
@@ -968,7 +961,6 @@ namespace CenturionCC.System.Utils
             get => baseCombatTagTime;
             set => baseCombatTagTime = value;
         }
-
         #endregion
     }
 

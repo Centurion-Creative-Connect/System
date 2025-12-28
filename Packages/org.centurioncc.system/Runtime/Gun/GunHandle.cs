@@ -1,7 +1,6 @@
 ﻿using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
-using UnityEngine.Serialization;
 using VRC.SDK3.Components;
 using VRC.SDKBase;
 
@@ -20,22 +19,24 @@ namespace CenturionCC.System.Gun
 
         [SerializeField] [NewbieInject(SearchScope.Self)]
         private VRCObjectSync objectSync;
+        [SerializeField] [NewbieInject(SearchScope.Children)]
+        private MeshRenderer mesh;
 
         private Collider _collider;
         private Material _defaultMaterial;
 
         private Vector3 _initialScale;
+
         private bool _isAttached;
-        private MeshRenderer _mesh;
         private VRC_Pickup _pickup;
 
         public bool IsVisible
         {
-            get => _mesh && _mesh.enabled;
+            get => mesh && mesh.enabled;
             set
             {
-                if (_mesh)
-                    _mesh.enabled = value;
+                if (mesh)
+                    mesh.enabled = value;
             }
         }
 
@@ -70,13 +71,13 @@ namespace CenturionCC.System.Gun
         {
             _pickup = (VRC_Pickup)GetComponent(typeof(VRC_Pickup));
             _collider = GetComponent<Collider>();
-            _mesh = GetComponent<MeshRenderer>();
+            mesh = GetComponentInChildren<MeshRenderer>();
 
-            if (_mesh != null)
+            if (mesh != null)
             {
-                _defaultMaterial = _mesh.material;
+                _defaultMaterial = mesh.material;
                 if (IsPickupable && pickupableMaterial)
-                    _mesh.material = pickupableMaterial;
+                    mesh.material = pickupableMaterial;
             }
 
             if (target == null)
@@ -108,8 +109,8 @@ namespace CenturionCC.System.Gun
             if (_collider != null)
                 _collider.enabled = isPickupable;
 
-            if (_mesh && pickupableMaterial)
-                _mesh.material = IsPickupable ? pickupableMaterial : _defaultMaterial;
+            if (mesh && pickupableMaterial)
+                mesh.material = IsPickupable ? pickupableMaterial : _defaultMaterial;
         }
 
         public void SetPickupable(bool isPickupable, float delay)

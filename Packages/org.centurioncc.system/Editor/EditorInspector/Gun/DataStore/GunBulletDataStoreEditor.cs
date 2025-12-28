@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using CenturionCC.System.Editor.Utils;
-using CenturionCC.System.Gun;
+using CenturionCC.System.Gun.Centurion;
 using CenturionCC.System.Gun.DataStore;
 using UdonSharpEditor;
 using UnityEditor;
@@ -116,13 +116,13 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
         }
 
         public static void DrawHandles(Transform parent, Vector3 offsetPos, Quaternion offsetRot,
-            GunBulletDataStore data, int offset = 0)
+                                       GunBulletDataStore data, int offset = 0)
         {
             var l2w = parent.localToWorldMatrix;
             var pos = l2w.MultiplyPoint3x4(offsetPos);
             var rot = offsetRot * l2w.rotation;
 
-            var line = GunBullet.PredictTrajectory(pos, rot, data, offset, _simPoints);
+            var line = CenturionBBBullet.PredictTrajectory(pos, rot, data, offset, _simPoints);
             var highestPoint = Vector3.negativeInfinity;
             var zeroedInPoint = Vector3.negativeInfinity;
             for (int i = 1; i < line.Length; i++)
@@ -148,7 +148,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
         }
 
         public static void DrawRange(Transform parent, Vector3 offsetPos, Quaternion offsetRot, int length = 75,
-            int part = 5)
+                                     int part = 5)
         {
             var parentRot = parent.rotation;
             var rot = new Quaternion(0, parentRot.y, 0, parentRot.w).normalized * offsetRot;
@@ -171,7 +171,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
 
         public static void GetPredictedStats(GunBulletDataStore data, int offset, out float distance, out float highest)
         {
-            var line = GunBullet.PredictTrajectory(Vector3.zero, Quaternion.identity, data, offset, _simPoints);
+            var line = CenturionBBBullet.PredictTrajectory(Vector3.zero, Quaternion.identity, data, offset, _simPoints);
             highest = float.NegativeInfinity;
             distance = float.NegativeInfinity;
             for (int i = 1; i < line.Length; i++)

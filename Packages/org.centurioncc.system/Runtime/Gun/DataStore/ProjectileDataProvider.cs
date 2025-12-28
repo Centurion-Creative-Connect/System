@@ -7,10 +7,14 @@ namespace CenturionCC.System.Gun.DataStore
     {
         public abstract int ProjectileCount { get; }
 
-        public abstract void Get(int i,
+        public abstract void Get(
+            int i,
             out Vector3 positionOffset, out Vector3 velocity,
             out Quaternion rotationOffset, out Vector3 torque, out float drag,
             out float damageAmount,
-            out float trailDuration, out Gradient trailColor, out float lifeTimeInSeconds);
+            out float trailDuration, out Gradient trailColor, out float lifeTimeInSeconds
+        );
+
+        public abstract void GetRecoil(out Vector3 position, out Quaternion rotation);
     }
 }
