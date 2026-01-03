@@ -8,19 +8,19 @@ namespace CenturionCC.System.Editor.Utils
 {
     public static class ShooterObjectStore
     {
-        private static GameManager _cachedGameManager;
+        private static CenturionSystem _cachedGameManager;
         private static PlayerManagerBase _cachedPlayerManager;
 
-        public static GameManager GameManager
+        public static CenturionSystem GameManager
         {
             get
             {
                 if (!_cachedGameManager)
                 {
-                    _cachedGameManager = FindUdonSharpComponent<GameManager>();
+                    _cachedGameManager = FindUdonSharpComponent<CenturionSystem>();
                     if (!_cachedGameManager)
                         throw new NullReferenceException(
-                            "GameManager not found in active scene. consider creating one");
+                            "CenturionSystem not found in active scene. consider creating one");
                 }
 
                 return _cachedGameManager;

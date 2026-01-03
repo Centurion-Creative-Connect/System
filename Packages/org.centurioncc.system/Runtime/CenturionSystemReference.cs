@@ -21,15 +21,15 @@ namespace CenturionCC.System
          * Maybe get or create new UdonSharpBehaviour called `CenturionSystemReferenceInternal`
          * Then make it always same path on build for easier resolving?
          */
-        private const string GameManagerPath = "Logics/System/GameManager";
+        private const string CenturionSystemPath = "Logics/System/GameManager";
 
         private const string ConsolePath = "Logics/System/LogTablet/NewbieConsole";
         private const string PlayerControllerPath = "Logics/System/PlayerController";
 
         [PublicAPI]
-        public static GameManager GetGameManager()
+        public static CenturionSystem GetCenturionSystem()
         {
-            return GameObject.Find(GameManagerPath).GetComponent<GameManager>();
+            return GameObject.Find(CenturionSystemPath).GetComponent<CenturionSystem>();
         }
 
         public static NewbieConsole GetConsole()
@@ -45,41 +45,41 @@ namespace CenturionCC.System
 
         public static PrintableBase GetLogger()
         {
-            return GetGameManager().logger;
+            return GetCenturionSystem().logger;
         }
 
         public static UpdateManager GetUpdateManager()
         {
-            return GetGameManager().updateManager;
+            return GetCenturionSystem().updateManager;
         }
 
         [PublicAPI]
         public static PlayerManagerBase GetPlayerManager()
         {
-            return GetGameManager().players;
+            return GetCenturionSystem().players;
         }
 
         [PublicAPI]
         public static GunManagerBase GetGunManager()
         {
-            return GetGameManager().guns;
+            return GetCenturionSystem().guns;
         }
 
         [PublicAPI]
         public static AudioManager GetAudioManager()
         {
-            return GetGameManager().audioManager;
+            return GetCenturionSystem().audioManager;
         }
 
         public static NotificationProvider GetNotificationProvider()
         {
-            return GetGameManager().notification;
+            return GetCenturionSystem().notification;
         }
 
         [PublicAPI] [Obsolete("Use GetNotificationProvider() instead")]
         public static NotificationUI GetNotificationUI()
         {
-            return (NotificationUI)GetGameManager().notification;
+            return (NotificationUI)GetCenturionSystem().notification;
         }
     }
 }
