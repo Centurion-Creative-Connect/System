@@ -11,7 +11,7 @@ namespace CenturionCC.System.UI
     public class GameManagerUI : UdonSharpBehaviour
     {
         private const string Prefix = "<color=orange>GameManagerUI</color>::";
-        public GameManager manager;
+        public CenturionSystem manager;
 
         public Toggle visualizeGunHandle;
         public Toggle visualizeOnHit;
