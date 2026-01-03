@@ -44,8 +44,6 @@ namespace CenturionCC.System.Gun.DataStore
         private float proceduralRecoilVertical;
         [SerializeField]
         private float proceduralRecoilKickBack;
-        [SerializeField]
-        private float proceduralRecoilErgonomics = 3;
 
         public Vector3[] RecoilOffsetPatterns => recoilOffsetPatterns;
         public Vector3[] PositionOffsetPatterns => positionOffsetPatterns;
