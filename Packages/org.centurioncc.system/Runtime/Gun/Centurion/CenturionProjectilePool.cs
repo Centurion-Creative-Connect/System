@@ -5,7 +5,7 @@ using UnityEngine;
 namespace CenturionCC.System.Gun.Centurion
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class GunBulletHolder : ProjectilePoolBase
+    public class CenturionProjectilePool : ProjectilePoolBase
     {
         [SerializeField]
         private GameObject gunBulletSource;
@@ -50,7 +50,7 @@ namespace CenturionCC.System.Gun.Centurion
                 var bullet = obj.GetComponent<ProjectileBase>();
                 if (bullet == null)
                 {
-                    UnityEngine.Debug.LogError($"[GunBulletHolder] GunBullet at {obj.name} is null!");
+                    UnityEngine.Debug.LogError($"[CenturionProjectilePool] GunBullet at {obj.name} is null!");
                     continue;
                 }
 
@@ -62,7 +62,7 @@ namespace CenturionCC.System.Gun.Centurion
 
             if (_lastGeneratedBulletCount >= _bullets.Length)
             {
-                UnityEngine.Debug.Log("[GunBulletHolder] Successfully generated all bullets!");
+                UnityEngine.Debug.Log("[CenturionProjectilePool] Successfully generated all bullets!");
                 _hasInit = true;
                 return;
             }
@@ -82,7 +82,7 @@ namespace CenturionCC.System.Gun.Centurion
                 var bullet = _bullets[_lastBulletIndex];
                 if (bullet == null)
                 {
-                    UnityEngine.Debug.LogError($"[GunBulletHolder] bullet pool contains null at {_lastBulletIndex}");
+                    UnityEngine.Debug.LogError($"[CenturionProjectilePool] bullet pool contains null at {_lastBulletIndex}");
                     --retryCount;
                     continue;
                 }
@@ -104,7 +104,7 @@ namespace CenturionCC.System.Gun.Centurion
             if (bullet.IsCurrentlyActive)
             {
                 UnityEngine.Debug.LogWarning(
-                    $"[GunBulletHolder] detected bullet pool reuse at {bullet.name}, index of {_lastBulletIndex}");
+                    $"[CenturionProjectilePool] detected bullet pool reuse at {bullet.name}, index of {_lastBulletIndex}");
             }
 
             return bullet;

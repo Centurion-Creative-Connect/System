@@ -5,7 +5,7 @@ using UnityEngine;
 using VRC.SDKBase;
 namespace CenturionCC.System.Gun.Centurion
 {
-    public class GunBulletRicochetHandler : RicochetHandlerBase
+    public class CenturionRicochetHandler : RicochetHandlerBase
     {
         private const float RicochetVolumeSpeedCoefficient = 3F;
         private const float MinCollisionMagnitude = 0.05F;
