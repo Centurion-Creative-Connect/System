@@ -1,5 +1,4 @@
 ﻿using CenturionCC.System.Gun.Behaviour;
-using CenturionCC.System.Gun.GunCamera;
 using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using JetBrains.Annotations;
