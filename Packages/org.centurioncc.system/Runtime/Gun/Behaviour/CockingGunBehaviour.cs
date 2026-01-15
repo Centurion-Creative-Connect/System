@@ -1,5 +1,6 @@
 ﻿using CenturionCC.System.Gun.DataStore;
 using UdonSharp;
+using UnityEditor;
 using UnityEngine;
 
 namespace CenturionCC.System.Gun.Behaviour
@@ -11,11 +12,17 @@ namespace CenturionCC.System.Gun.Behaviour
 
         [SerializeField] private bool returnToCockingPositionOnDrop;
 
+        [SerializeField] private bool snapToClosestPositionOnDrop;
+
         [Header("Cocking")] [SerializeField] private bool canCockAfterCock;
 
         [SerializeField] private bool isBlowBack;
 
         [SerializeField] private bool isDoubleAction;
+
+        [SerializeField] private bool requireManualPushingAfterFire;
+
+        [SerializeField] private bool dropCustomHandleOnFire;
 
         [SerializeField] private Transform cockingPosition;
 
@@ -67,20 +74,20 @@ namespace CenturionCC.System.Gun.Behaviour
 
         private void GetNormalizedProgressAndTwist(GunBase instance, out float progress, out float twist)
         {
-            var refPos = customHandle.transform.localPosition;
-            if (useHandleRotation) // Limit Z movement
-                refPos += (Vector3)(Vector2)(customHandle.transform.localRotation * Vector3.up);
             var currentState = instance.State;
-            progress = GetProgressNormalized(refPos);
-            twist = GetTwistNormalized(refPos);
+            progress = GetProgressNormalized();
+            twist = GetTwistNormalized();
 
             if (!requireTwist) twist = 1;
 
-            if (twist < 1 - twistMargin &&
-                (currentState == GunState.InCockingTwisting || currentState == GunState.Idle))
+            if (twist < 1 - twistMargin && (currentState == GunState.InCockingTwisting || currentState == GunState.Idle))
+            {
                 progress = Mathf.Clamp(progress, 0, cockingMargin);
+            }
             else if (progress > cockingMargin)
+            {
                 twist = Mathf.Clamp(twist, 1 - twistMargin, 1);
+            }
 
             if (!canCockAfterCock && instance.State == GunState.Idle && instance.HasBulletInChamber)
             {
@@ -89,26 +96,26 @@ namespace CenturionCC.System.Gun.Behaviour
             }
         }
 
-        private float GetProgressNormalized(Vector3 gunHandleLocalPosition)
+        private float GetProgressNormalized()
         {
-            return GetProgress(gunHandleLocalPosition) / cockingLength;
+            return GetProgress() / cockingLength;
         }
 
-        private float GetProgress(Vector3 gunHandleLocalPosition)
+        private float GetProgress()
         {
-            return Mathf.Clamp(cockingPosition.localPosition.z - gunHandleLocalPosition.z, 0, cockingLength);
+            return Mathf.Clamp(-cockingPosition.worldToLocalMatrix.MultiplyPoint3x4(customHandle.transform.position).z, 0, cockingLength);
         }
 
-        private float GetTwistNormalized(Vector3 gunHandleLocalPosition)
+        private float GetTwistNormalized()
         {
-            return GetTwist(gunHandleLocalPosition) / twistMaxAngle;
+            return GetTwist() / twistMaxAngle;
         }
 
-        private float GetTwist(Vector3 gunHandleLocalPosition)
+        private float GetTwist()
         {
-            var oriented = Quaternion.AngleAxis(twistAngleOffset, Vector3.forward) *
-                           (gunHandleLocalPosition - cockingPosition.localPosition);
-
+            var customHandlePos = customHandle.transform.localPosition;
+            if (useHandleRotation) customHandlePos += (Vector3)(Vector2)(customHandle.transform.localRotation * Vector3.up);
+            var oriented = Quaternion.AngleAxis(twistAngleOffset, Vector3.forward) * (customHandlePos - cockingPosition.localPosition);
             var signedAngle = Vector2.SignedAngle(Vector3.up, oriented.normalized);
             return Mathf.Clamp(signedAngle, twistMinAngle, twistMaxAngle);
         }
@@ -139,7 +146,7 @@ namespace CenturionCC.System.Gun.Behaviour
                 case GunState.InCockingPush:
                 {
                     var t = requireTwist && activeTwistPosition != null ? activeTwistPosition : cockingPosition;
-                    targetPos = cockingPosition.localPosition + new Vector3(0, 0, -cockingLength);
+                    targetPos = cockingPosition.localPosition + cockingPosition.localRotation * new Vector3(0, 0, -cockingLength);
                     targetRot = t.localRotation;
                     break;
                 }
@@ -173,7 +180,7 @@ namespace CenturionCC.System.Gun.Behaviour
             // NOTE: cocking pos might be null
             var cockingPos = cockingPosition.position;
             GizmosUtil.SetColor(Color.cyan, 0.8F);
-            GizmosUtil.DrawArrow(cockingPos, cockingPos + (cockingLength * transform.forward) * -1, 0.01F);
+            GizmosUtil.DrawArrow(cockingPos, cockingPos + -cockingLength * cockingPosition.forward, 0.01F);
         }
 
         private void DrawTwistGizmos()
@@ -183,7 +190,7 @@ namespace CenturionCC.System.Gun.Behaviour
             GizmosUtil.DrawWireSphere(activeTwistPosition.position, 0.01F);
 
             var cockingPos = cockingPosition.position;
-            var toOffset = cockingLength * transform.forward * -1;
+            var toOffset = cockingLength * cockingPosition.forward * -1;
             var twistOffset = activeTwistPosition.position - cockingPos;
             var twistOffsetCockingPos = cockingPos + twistOffset;
             GizmosUtil.SetColor(Color.blue, 0.8F);
@@ -210,6 +217,19 @@ namespace CenturionCC.System.Gun.Behaviour
             {
                 instance._EmptyShoot();
                 instance.Trigger = TriggerState.Armed;
+
+                if (requireManualPushingAfterFire)
+                {
+                    instance.HasCocked = true;
+                    instance._LoadBullet();
+                    instance.State = GunState.InCockingPush;
+                }
+
+                if (dropCustomHandleOnFire)
+                {
+                    customHandle.ForceDrop();
+                    UpdateCustomHandlePosition(instance);
+                }
             }
         }
 
@@ -234,10 +254,24 @@ namespace CenturionCC.System.Gun.Behaviour
             {
                 var shotResult = instance._TryToShoot();
                 var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
-                if (hasSucceeded && isBlowBack)
+                if (hasSucceeded)
                 {
-                    instance.HasCocked = true;
-                    instance._LoadBullet();
+                    if (isBlowBack || requireManualPushingAfterFire)
+                    {
+                        instance.HasCocked = true;
+                        instance._LoadBullet();
+                    }
+
+                    if (requireManualPushingAfterFire)
+                    {
+                        instance.State = GunState.InCockingPush;
+                    }
+
+                    if (dropCustomHandleOnFire)
+                    {
+                        customHandle.ForceDrop();
+                        UpdateCustomHandlePosition(instance);
+                    }
                 }
             }
 
@@ -352,7 +386,6 @@ namespace CenturionCC.System.Gun.Behaviour
             var handlePos = customHandle.transform.localPosition;
             var cockingPos = cockingPosition.localPosition;
 
-
             if (returnToCockingPositionOnDrop)
             {
                 expectedPos = cockingPosition.localPosition;
@@ -376,7 +409,7 @@ namespace CenturionCC.System.Gun.Behaviour
             }
             else
             {
-                if (cockingAutoLoadMargin > GetProgressNormalized(handlePos))
+                if (cockingAutoLoadMargin > GetProgressNormalized())
                 {
                     expectedPos = cockingPosition.localPosition;
                 }
@@ -387,9 +420,13 @@ namespace CenturionCC.System.Gun.Behaviour
                 }
             }
 
+            if (snapToClosestPositionOnDrop)
+            {
+                // TODO: check for closest handles
+            }
+
             handle.MoveToLocalPosition(expectedPos, Quaternion.identity);
-            Debug.Log(
-                $"[CockingGunBehaviour] OnHandleDrop: {instance.name} moved handle to {expectedPos.ToString("F2")}");
+            Debug.Log($"[CockingGunBehaviour] OnHandleDrop: {instance.name} moved handle to {expectedPos.ToString("F2")}");
         }
         #endregion
     }
