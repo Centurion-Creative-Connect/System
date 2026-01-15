@@ -2,7 +2,6 @@
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
-
 namespace CenturionCC.System.Audio
 {
     [SelectionBase] [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
@@ -12,6 +11,9 @@ namespace CenturionCC.System.Audio
 
         private const string AudioDataStoreNullError =
             Prefix + "AudioDataStore is null. dropping!";
+
+        private const string LocalPlayerNullError =
+            Prefix + "LocalPlayer is null. dropping!";
 
         private const string ClipOrPositionNullError =
             Prefix + "Clip or Position is null. dropping!";
@@ -32,14 +34,26 @@ namespace CenturionCC.System.Audio
         }
 
         [PublicAPI]
-        public void PlayAudioAtTransform([CanBeNull] AudioClip clip, [CanBeNull] Transform t, Vector3 offset,
-            float volume, float pitch = 1F, float dopplerLevel = 1F, float spread = 0F,
-            float minDistance = 0.5F, float maxDistance = 25F, int priority = 0)
+        public void PlayAudioAtTransform(
+            [CanBeNull] AudioClip clip, [CanBeNull] Transform t, Vector3 offset,
+            float volume, float pitch = 1F,
+            float dopplerLevel = 1F, float spread = 0F,
+            float minDistance = 0.5F, float maxDistance = 25F,
+            int priority = 0
+        )
         {
             if (clip == null || t == null)
             {
 #if CENTURIONSYSTEM_VERBOSE_LOGGING || CENTURIONSYSTEM_AUDIO_LOGGING
                 Debug.LogError(ClipOrPositionNullError);
+#endif
+                return;
+            }
+
+            if (_localPlayer == null)
+            {
+#if CENTURIONSYSTEM_VERBOSE_LOGGING || CENTURIONSYSTEM_AUDIO_LOGGING
+                Debug.LogError(LocalPlayerNullError);
 #endif
                 return;
             }
@@ -59,28 +73,54 @@ namespace CenturionCC.System.Audio
             sourceTransform.SetParent(t);
             sourceTransform.localPosition = offset;
 
-            AudioHelper.PlayAudioSource(source, clip, volume, pitch, dopplerLevel, spread,
-                minDistance, maxDistance, priority);
+            AudioHelper.PlayAudioSource(
+                source, clip,
+                volume, pitch,
+                dopplerLevel, spread,
+                minDistance, maxDistance,
+                priority
+            );
         }
 
         [PublicAPI]
-        public void PlayAudioAtTransform([CanBeNull] AudioClip clip, [CanBeNull] Transform t,
-            float volume, float pitch = 1F, float dopplerLevel = 1F, float spread = 0F,
-            float minDistance = 0.5F, float maxDistance = 25F, int priority = 0)
+        public void PlayAudioAtTransform(
+            [CanBeNull] AudioClip clip, [CanBeNull] Transform t,
+            float volume, float pitch = 1F,
+            float dopplerLevel = 1F, float spread = 0F,
+            float minDistance = 0.5F, float maxDistance = 25F,
+            int priority = 0
+        )
         {
-            PlayAudioAtTransform(clip, t, Vector3.zero, volume, pitch, dopplerLevel, spread,
-                minDistance, maxDistance, priority);
+            PlayAudioAtTransform(
+                clip, t, Vector3.zero,
+                volume, pitch,
+                dopplerLevel, spread,
+                minDistance, maxDistance,
+                priority
+            );
         }
 
         [PublicAPI]
-        public void PlayAudioAtPosition([CanBeNull] AudioClip clip, Vector3 position, float volume, float pitch = 1,
-            float dopplerLevel = 1F, float spread = 0F, float minDistance = 0.5F, float maxDistance = 25F,
-            int priority = 0)
+        public void PlayAudioAtPosition(
+            [CanBeNull] AudioClip clip, Vector3 position,
+            float volume, float pitch = 1,
+            float dopplerLevel = 1F, float spread = 0F,
+            float minDistance = 0.5F, float maxDistance = 25F,
+            int priority = 0
+        )
         {
             if (clip == null)
             {
 #if CENTURIONSYSTEM_VERBOSE_LOGGING || CENTURIONSYSTEM_AUDIO_LOGGING
                 Debug.LogError(ClipOrPositionNullError);
+#endif
+                return;
+            }
+
+            if (_localPlayer == null)
+            {
+#if CENTURIONSYSTEM_VERBOSE_LOGGING || CENTURIONSYSTEM_AUDIO_LOGGING
+                Debug.LogError(LocalPlayerNullError);
 #endif
                 return;
             }
@@ -100,8 +140,13 @@ namespace CenturionCC.System.Audio
             sourceTransform.SetParent(transform);
             sourceTransform.position = position;
 
-            AudioHelper.PlayAudioSource(source, clip, volume, pitch, dopplerLevel, spread,
-                minDistance, maxDistance, priority);
+            AudioHelper.PlayAudioSource(
+                source, clip,
+                volume, pitch,
+                dopplerLevel, spread,
+                minDistance, maxDistance,
+                priority
+            );
         }
 
         [PublicAPI]
@@ -115,9 +160,13 @@ namespace CenturionCC.System.Audio
                 return;
             }
 
-            PlayAudioAtTransform(dataStore.Clip, t, dataStore.Volume, dataStore.Pitch,
-                dataStore.DopplerLevel, dataStore.Spread, dataStore.MinDistance, dataStore.MaxDistance,
-                dataStore.Priority);
+            PlayAudioAtTransform(
+                dataStore.Clip, t,
+                dataStore.Volume, dataStore.Pitch,
+                dataStore.DopplerLevel, dataStore.Spread,
+                dataStore.MinDistance, dataStore.MaxDistance,
+                dataStore.Priority
+            );
         }
 
         [PublicAPI]
@@ -131,9 +180,13 @@ namespace CenturionCC.System.Audio
                 return;
             }
 
-            PlayAudioAtTransform(dataStore.Clip, t, offset, dataStore.Volume, dataStore.Pitch,
-                dataStore.DopplerLevel, dataStore.Spread, dataStore.MinDistance, dataStore.MaxDistance,
-                dataStore.Priority);
+            PlayAudioAtTransform(
+                dataStore.Clip, t, offset,
+                dataStore.Volume, dataStore.Pitch,
+                dataStore.DopplerLevel, dataStore.Spread,
+                dataStore.MinDistance, dataStore.MaxDistance,
+                dataStore.Priority
+            );
         }
 
         [PublicAPI]
@@ -147,9 +200,13 @@ namespace CenturionCC.System.Audio
                 return;
             }
 
-            PlayAudioAtPosition(dataStore.Clip, position, dataStore.Volume, dataStore.Pitch,
-                dataStore.DopplerLevel, dataStore.Spread, dataStore.MinDistance, dataStore.MaxDistance,
-                dataStore.Priority);
+            PlayAudioAtPosition(
+                dataStore.Clip, position,
+                dataStore.Volume, dataStore.Pitch,
+                dataStore.DopplerLevel, dataStore.Spread,
+                dataStore.MinDistance, dataStore.MaxDistance,
+                dataStore.Priority
+            );
         }
 
         private AudioSource GetAudioSource()
@@ -187,8 +244,13 @@ namespace CenturionCC.System.Audio
     {
         private const float DelayMultiplier = 3F;
 
-        public static void PlayAudioSource(AudioSource source, AudioClip clip, float vol, float pit,
-            float doppler, float spread, float minDist, float maxDist, int priority = 0)
+        public static void PlayAudioSource(
+            AudioSource source, AudioClip clip,
+            float vol, float pit,
+            float doppler, float spread,
+            float minDist, float maxDist,
+            int priority = 0
+        )
         {
             source.clip = clip;
             source.pitch = pit;
