@@ -61,14 +61,14 @@ namespace CenturionCC.System.Editor.ControlPanel
             _tabDrawers[_currentTab].Draw();
         }
 
-
-        [MenuItem("Centurion-Utils/Centurion System Control Panel")]
+        [MenuItem("Centurion System/Control Panel")]
         public static void OpenWindow()
         {
             var window = GetWindow<CenturionSystemControlPanelWindow>();
-            window.name = "Centurion System Control Panel";
+            window.titleContent = new GUIContent("Centurion System Control Panel");
             window.Show();
         }
+
         private enum ControlPanelTab
         {
             Info,

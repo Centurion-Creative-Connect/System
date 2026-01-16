@@ -31,8 +31,13 @@ namespace CenturionCC.System.Editor.EditorWindow
         private static readonly int HashedIsShootingEmpty = Animator.StringToHash("IsShootingEmpty");
         private static readonly int HashedSelectorType = Animator.StringToHash("SelectorType");
 
+        private void OnDisable()
+        {
+            StopAnimator();
+        }
 
-        [MenuItem("Centurion-Utils/Cocking Gun Animator Tester")]
+
+        [MenuItem("Centurion System/Utils/Cocking Gun Animator Tester")]
         public static void InitMenu() => Init();
 
         public static void Init(GameObject model = null, Animator animator = null)
@@ -43,11 +48,6 @@ namespace CenturionCC.System.Editor.EditorWindow
             _model = model;
             _animator = animator;
             window.Show();
-        }
-
-        private void OnDisable()
-        {
-            StopAnimator();
         }
 
         protected override bool DrawInfo()

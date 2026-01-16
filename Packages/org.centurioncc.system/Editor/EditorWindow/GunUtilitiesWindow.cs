@@ -34,7 +34,7 @@ namespace CenturionCC.System.Editor.EditorWindow
             _showPreview = EditorGUILayout.Toggle("Show Preview", _showPreview);
         }
 
-        [MenuItem("Centurion-Utils/Gun Utilities")]
+        [MenuItem("Centurion System/Utils/Gun Utilities")]
         public static void InitMenu()
         {
             GunUtilitiesWindow window = GetWindow<GunUtilitiesWindow>();

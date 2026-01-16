@@ -5,10 +5,10 @@ namespace CenturionCC.System.Editor.EditorWindow
 {
     public class FindAssetByGuid : ShooterEditorWindow
     {
-        private string _path;
         private string _guid;
+        private string _path;
 
-        [MenuItem("Centurion-Utils/FindAssetByGuid")]
+        [MenuItem("Centurion System/Utils/FindAssetByGuid")]
         public static void Open()
         {
             ShowWindow<FindAssetByGuid>();

@@ -6,15 +6,10 @@ namespace CenturionCC.System.Editor
     public abstract class ShooterEditorWindow : UnityEditor.EditorWindow
     {
 
-        public static T ShowWindow<T>() where T : UnityEditor.EditorWindow
-        {
-            T window = GetWindow<T>();
-            window.Show();
-            return window;
-        }
-        
         public void OnGUI()
         {
+            EditorGUILayout.HelpBox("This window is no longer maintained.", MessageType.Warning);
+
             GUIUtil.HorizontalBar();
 
             GUIUtil.DrawOrLabel(DrawInfo());
@@ -33,6 +28,13 @@ namespace CenturionCC.System.Editor
             }
 
             GUIUtil.HorizontalBar();
+        }
+
+        public static T ShowWindow<T>() where T : UnityEditor.EditorWindow
+        {
+            T window = GetWindow<T>();
+            window.Show();
+            return window;
         }
 
         /// <summary>
