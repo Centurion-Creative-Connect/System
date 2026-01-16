@@ -231,7 +231,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6369071274693546537}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 4, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -274,6 +274,10 @@ MonoBehaviour:
   holsterSize: 100
   ergonomics: 3
   availableFiringModes: 01000000
+  secondsPerRoundArray:
+  - Infinity
+  perBurstIntervalArray:
+  - 0
   maxRoundsPerSecond: Infinity
   animator: {fileID: 3602574383059005944}
   syncedAnimatorParameterNames: []
@@ -281,13 +285,12 @@ MonoBehaviour:
   audioData: {fileID: 5242211775054347077}
   hapticData: {fileID: 2489516122582801269}
   cameraData: {fileID: 0}
+  behaviour: {fileID: 0}
   behaviours:
   - {fileID: 4478797288147500665}
   defaultProjectilePool: {fileID: 0}
   projectilePoolOverride: {fileID: 0}
   isDoubleHanded: 1
-  useRePickupDelayForMainHandle: 0
-  useRePickupDelayForSubHandle: 0
   useWallCheck: 1
   useSafeZoneCheck: 1
   shooterOffset: {fileID: 8707824714482802400}
@@ -307,6 +310,7 @@ MonoBehaviour:
   combatTagOption: 0
   combatTagSpeedMultiplier: 1
   combatTagTime: 1
+  dataVersion: 1
 --- !u!114 &4033344189638179575
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -274,7 +274,7 @@ MonoBehaviour:
   SynchronizePosition: 0
   AllowCollisionOwnershipTransfer: 0
   Reliable: 0
-  _syncMethod: 2
+  _syncMethod: 1
   serializedProgramAsset: {fileID: 11400000, guid: d6cde1579e4fe8b4492af2948eea5b35,
     type: 2}
   programSource: {fileID: 11400000, guid: b9c11f7ac26b34b41b59e7c705728f5e, type: 2}
@@ -310,7 +310,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7532329447635897561}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -351,6 +351,10 @@ MonoBehaviour:
   holsterSize: 100
   ergonomics: 3
   availableFiringModes: 01000000
+  secondsPerRoundArray:
+  - 0.23529412
+  perBurstIntervalArray:
+  - 0
   maxRoundsPerSecond: 4.25
   animator: {fileID: 0}
   syncedAnimatorParameterNames: []
@@ -358,13 +362,12 @@ MonoBehaviour:
   audioData: {fileID: 1114399898616726338}
   hapticData: {fileID: 5737196016041947924}
   cameraData: {fileID: 0}
+  behaviour: {fileID: 0}
   behaviours:
   - {fileID: 5177640218250272639}
   defaultProjectilePool: {fileID: 0}
   projectilePoolOverride: {fileID: 0}
   isDoubleHanded: 1
-  useRePickupDelayForMainHandle: 0
-  useRePickupDelayForSubHandle: 1
   useWallCheck: 1
   useSafeZoneCheck: 1
   shooterOffset: {fileID: 552984291877547727}
@@ -384,6 +387,7 @@ MonoBehaviour:
   combatTagOption: 0
   combatTagSpeedMultiplier: 1
   combatTagTime: 1
+  dataVersion: 1
 --- !u!114 &4531911800573360113
 MonoBehaviour:
   m_ObjectHideFlags: 0

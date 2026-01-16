@@ -33,8 +33,8 @@ namespace CenturionCC.System.Audio
 
         [PublicAPI]
         public void PlayAudioAtTransform([CanBeNull] AudioClip clip, [CanBeNull] Transform t, Vector3 offset,
-            float volume, float pitch = 1F, float dopplerLevel = 1F, float spread = 0F,
-            float minDistance = 0.5F, float maxDistance = 25F, int priority = 0)
+                                         float volume, float pitch = 1F, float dopplerLevel = 1F, float spread = 0F,
+                                         float minDistance = 0.5F, float maxDistance = 25F, int priority = 0)
         {
             if (clip == null || t == null)
             {
@@ -65,8 +65,8 @@ namespace CenturionCC.System.Audio
 
         [PublicAPI]
         public void PlayAudioAtTransform([CanBeNull] AudioClip clip, [CanBeNull] Transform t,
-            float volume, float pitch = 1F, float dopplerLevel = 1F, float spread = 0F,
-            float minDistance = 0.5F, float maxDistance = 25F, int priority = 0)
+                                         float volume, float pitch = 1F, float dopplerLevel = 1F, float spread = 0F,
+                                         float minDistance = 0.5F, float maxDistance = 25F, int priority = 0)
         {
             PlayAudioAtTransform(clip, t, Vector3.zero, volume, pitch, dopplerLevel, spread,
                 minDistance, maxDistance, priority);
@@ -74,8 +74,8 @@ namespace CenturionCC.System.Audio
 
         [PublicAPI]
         public void PlayAudioAtPosition([CanBeNull] AudioClip clip, Vector3 position, float volume, float pitch = 1,
-            float dopplerLevel = 1F, float spread = 0F, float minDistance = 0.5F, float maxDistance = 25F,
-            int priority = 0)
+                                        float dopplerLevel = 1F, float spread = 0F, float minDistance = 0.5F, float maxDistance = 25F,
+                                        int priority = 0)
         {
             if (clip == null)
             {
@@ -188,7 +188,7 @@ namespace CenturionCC.System.Audio
         private const float DelayMultiplier = 3F;
 
         public static void PlayAudioSource(AudioSource source, AudioClip clip, float vol, float pit,
-            float doppler, float spread, float minDist, float maxDist, int priority = 0)
+                                           float doppler, float spread, float minDist, float maxDist, int priority = 0)
         {
             source.clip = clip;
             source.pitch = pit;

@@ -59,8 +59,8 @@ namespace CenturionCC.System.Gun
         #endregion
 
         #region PrivateFields
-        [UdonSynced] [FieldChangeCallback(nameof(SyncedFireMode))]
-        private int _fireMode;
+        [UdonSynced] [FieldChangeCallback(nameof(SyncedFireModeIndex))]
+        private int _fireModeIndex;
 
         [UdonSynced] [FieldChangeCallback(nameof(SyncedState))]
         private int _state;
@@ -69,6 +69,7 @@ namespace CenturionCC.System.Gun
         private bool _isLocal;
         private bool _hasBulletInChamber;
         private bool _hasCocked;
+        private int _burstCount;
         private int _collisionCount;
         #endregion
 
@@ -120,22 +121,47 @@ namespace CenturionCC.System.Gun
         /// <summary>
         /// Currently active <see cref="FireMode"/> of this Gun.
         /// </summary>
-        [PublicAPI] public FireMode FireMode
+        [PublicAPI] public FireMode FireMode => VariantData != null && VariantData.FireModeArray.Length > SyncedFireModeIndex ? VariantData.FireModeArray[SyncedFireModeIndex] : FireMode.Safety;
+
+        [PublicAPI] public float SecondsPerRound => VariantData != null && VariantData.SecondsPerRoundArray.Length > SyncedFireModeIndex ? VariantData.SecondsPerRoundArray[SyncedFireModeIndex] : 0;
+
+        [PublicAPI] public float PerBurstInterval => VariantData != null && VariantData.PerBurstIntervalArray.Length > SyncedFireModeIndex ? VariantData.PerBurstIntervalArray[SyncedFireModeIndex] : 0;
+
+        [PublicAPI] public int CurrentFireModeIndex
         {
-            get => (FireMode)SyncedFireMode;
-            set => SyncedFireMode = (int)value;
+            get => SyncedFireModeIndex;
+            set
+            {
+                if (VariantData == null)
+                {
+                    logger.LogError($"{Prefix}set_CurrentFireModeIndex: Setting index to 0 because VariantData is null.");
+                    SyncedFireModeIndex = 0;
+                    return;
+                }
+
+                if (value >= VariantData.FireModeArray.Length || value < 0)
+                {
+                    logger.Log($"{Prefix}set_CurrentFireModeIndex: Setting index to 0 because {value} is out of bounds");
+                    SyncedFireModeIndex = 0;
+                }
+                else
+                {
+                    SyncedFireModeIndex = value;
+                }
+
+                RequestSerialization();
+            }
         }
 
-        private int SyncedFireMode
+        private int SyncedFireModeIndex
         {
-            get => _fireMode;
+            get => _fireModeIndex;
             set
             {
                 var prev = FireMode;
-
-                _fireMode = value;
+                _fireModeIndex = value;
                 Trigger = FireMode == FireMode.Safety ? TriggerState.Idle : TriggerState.Armed;
-                animationHelper._SetSelectorType(value);
+                animationHelper._SetSelectorType((int)FireMode);
 
                 if (gunManager && IsLocal && prev != FireMode)
                     gunManager.Invoke_OnFireModeChanged(this);
@@ -214,6 +240,8 @@ namespace CenturionCC.System.Gun
 
         public virtual DateTime LastShotTime { get; protected set; }
 
+        public virtual DateTime LastBurstEndedTime { get; protected set; }
+
         [PublicAPI] [field: UdonSynced]
         public int ShotCount { get; protected set; }
 
@@ -277,10 +305,6 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public GunBehaviourBase[] Behaviours =>
             VariantData ? VariantData.Behaviours : new GunBehaviourBase[0];
 
-        [PublicAPI] public FireMode[] AvailableFireModes => VariantData
-            ? VariantData.AvailableFiringModes
-            : new[] { FireMode.Safety };
-
         [PublicAPI] public Vector3 FiringOffsetPosition =>
             VariantData ? VariantData.FiringPositionOffset : Vector3.zero;
 
@@ -288,7 +312,6 @@ namespace CenturionCC.System.Gun
             VariantData ? VariantData.FiringRotationOffset : Quaternion.identity;
 
         [PublicAPI] public int HolsterSize => VariantData ? VariantData.HolsterSize : 0;
-        [PublicAPI] public float SecondsPerRound => VariantData ? VariantData.SecondsPerRound : 0;
         [PublicAPI] public bool CanBeTwoHanded => VariantData && VariantData.IsDoubleHanded;
         #endregion
 
@@ -399,6 +422,7 @@ namespace CenturionCC.System.Gun
                         return ShotResult.SucceededContinuously;
 
                     Trigger = TriggerState.Fired;
+                    LastBurstEndedTime = Networking.GetNetworkDateTime();
                     return ShotResult.Succeeded;
                 }
                 case ShotResult.Failed:
@@ -671,7 +695,7 @@ namespace CenturionCC.System.Gun
                 }
             }
 
-            FireMode = AvailableFireModes.Length != 0 ? AvailableFireModes[0] : FireMode.Safety;
+            SyncedFireModeIndex = 0;
             Trigger = FireMode == FireMode.Safety ? TriggerState.Idle : TriggerState.Armed;
             State = GunState.Idle;
             HasBulletInChamber = false;
@@ -807,8 +831,18 @@ namespace CenturionCC.System.Gun
             {
                 case HandleType.MainHandle:
                 {
-                    if (Trigger == TriggerState.Fired || FireMode.ShouldStopOnTriggerUp())
+                    if (Trigger == TriggerState.Fired)
                     {
+                        Trigger = TriggerState.Armed;
+                    }
+
+                    if (FireMode.ShouldStopOnTriggerUp())
+                    {
+                        if (BurstCount != 0)
+                        {
+                            LastBurstEndedTime = Networking.GetNetworkDateTime();
+                        }
+
                         Trigger = TriggerState.Armed;
                     }
 
@@ -888,7 +922,7 @@ namespace CenturionCC.System.Gun
 
         protected ShotResult CanShoot()
         {
-            if (VariantData == null)
+            if (!VariantData)
             {
                 if (gunManager)
                     gunManager.Invoke_OnShootCancelled(this, 1);
@@ -921,7 +955,9 @@ namespace CenturionCC.System.Gun
                 return ShotResult.Failed;
             }
 
-            if (Networking.GetNetworkDateTime().Subtract(LastShotTime).TotalSeconds < SecondsPerRound)
+            var now = Networking.GetNetworkDateTime();
+            if (now.Subtract(LastShotTime).TotalSeconds < SecondsPerRound ||
+                now.Subtract(LastBurstEndedTime).TotalSeconds < PerBurstInterval)
             {
                 return ShotResult.Paused;
             }
