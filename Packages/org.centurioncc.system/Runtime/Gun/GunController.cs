@@ -75,7 +75,7 @@ namespace CenturionCC.System.Gun
         {
             foreach (var gun in gunManager.GetLocallyHeldGunInstances())
             {
-                gun.FireMode = GunUtility.CycleFireMode(gun.FireMode, gun.AvailableFireModes);
+                gun.CurrentFireModeIndex++;
             }
         }
 

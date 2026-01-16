@@ -29,7 +29,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1009093643442082040}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 5, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -72,6 +72,10 @@ MonoBehaviour:
   holsterSize: 50
   ergonomics: 3
   availableFiringModes: 01000000
+  secondsPerRoundArray:
+  - 0.1904762
+  perBurstIntervalArray:
+  - 0
   maxRoundsPerSecond: 5.25
   animator: {fileID: 4806172570309712973}
   syncedAnimatorParameterNames: []
@@ -79,13 +83,12 @@ MonoBehaviour:
   audioData: {fileID: 757508559448194388}
   hapticData: {fileID: 2292735075827632510}
   cameraData: {fileID: 0}
+  behaviour: {fileID: 0}
   behaviours:
   - {fileID: 1360691757042312187}
   defaultProjectilePool: {fileID: 0}
   projectilePoolOverride: {fileID: 0}
   isDoubleHanded: 0
-  useRePickupDelayForMainHandle: 0
-  useRePickupDelayForSubHandle: 0
   useWallCheck: 1
   useSafeZoneCheck: 1
   shooterOffset: {fileID: 8925030073004849081}
@@ -105,6 +108,7 @@ MonoBehaviour:
   combatTagOption: 0
   combatTagSpeedMultiplier: 1
   combatTagTime: 1
+  dataVersion: 1
 --- !u!114 &2344213431909919037
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -155,6 +159,7 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 9202842314008928360}
   customHandle: {fileID: 3376143620259854355}
   returnToCockingPositionOnDrop: 1
+  snapToClosestPositionOnDrop: 0
   canCockAfterCock: 1
   isBlowBack: 0
   isDoubleAction: 0
@@ -1168,6 +1173,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2421742177213906187, guid: 3a005b2c846c2ef4492ee1e1ea1f76fc,
+        type: 3}
+      propertyPath: serializedPublicVariablesBytesString
+      value: Ai8AAAAAATIAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAFQAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AAAAAAAYBAAAAAAAAACcBBAAAAHQAeQBwAGUAAWgAAABTAHkAcwB0AGUAbQAuAEMAbwBsAGwAZQBjAHQAaQBvAG4AcwAuAEcAZQBuAGUAcgBpAGMALgBMAGkAcwB0AGAAMQBbAFsAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4ALgBJAG4AdABlAHIAZgBhAGMAZQBzAC4ASQBVAGQAbwBuAFYAYQByAGkAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AXQBdACwAIABtAHMAYwBvAHIAbABpAGIAAQEJAAAAVgBhAHIAaQBhAGIAbABlAHMALwEAAAABaAAAAFMAeQBzAHQAZQBtAC4AQwBvAGwAbABlAGMAdABpAG8AbgBzAC4ARwBlAG4AZQByAGkAYwAuAEwAaQBzAHQAYAAxAFsAWwBWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAEkAbgB0AGUAcgBmAGEAYwBlAHMALgBJAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlACwAIABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgBdAF0ALAAgAG0AcwBjAG8AcgBsAGkAYgABAAAABgIAAAAAAAAAAi8CAAAAAUsAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAGAAMQBbAFsAUwB5AHMAdABlAG0ALgBCAG8AbwBsAGUAYQBuACwAIABtAHMAYwBvAHIAbABpAGIAXQBdACwAIABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgACAAAABgIAAAAAAAAAJwEEAAAAdAB5AHAAZQABFwAAAFMAeQBzAHQAZQBtAC4AUwB0AHIAaQBuAGcALAAgAG0AcwBjAG8AcgBsAGkAYgAnAQoAAABTAHkAbQBiAG8AbABOAGEAbQBlAAErAAAAXwBfAF8AVQBkAG8AbgBTAGgAYQByAHAAQgBlAGgAYQB2AGkAbwB1AHIASABhAHMARABvAG4AZQBTAGMAZQBuAGUAVQBwAGcAcgBhAGQAZQBfAF8AXwAnAQQAAAB0AHkAcABlAAEYAAAAUwB5AHMAdABlAG0ALgBCAG8AbwBsAGUAYQBuACwAIABtAHMAYwBvAHIAbABpAGIAKwEFAAAAVgBhAGwAdQBlAAEHBQIvAwAAAAFJAAAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4ALgBVAGQAbwBuAFYAYQByAGkAYQBiAGwAZQBgADEAWwBbAFMAeQBzAHQAZQBtAC4ASQBuAHQAMwAyACwAIABtAHMAYwBvAHIAbABpAGIAXQBdACwAIABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgADAAAABgIAAAAAAAAAJwEEAAAAdAB5AHAAZQABFwAAAFMAeQBzAHQAZQBtAC4AUwB0AHIAaQBuAGcALAAgAG0AcwBjAG8AcgBsAGkAYgAnAQoAAABTAHkAbQBiAG8AbABOAGEAbQBlAAEfAAAAXwBfAF8AVQBkAG8AbgBTAGgAYQByAHAAQgBlAGgAYQB2AGkAbwB1AHIAVgBlAHIAcwBpAG8AbgBfAF8AXwAnAQQAAAB0AHkAcABlAAEWAAAAUwB5AHMAdABlAG0ALgBJAG4AdAAzADIALAAgAG0AcwBjAG8AcgBsAGkAYgAXAQUAAABWAGEAbAB1AGUAAgAAAAcFBwUHBQ==
+      objectReference: {fileID: 0}
     - target: {fileID: 3213056731169592051, guid: 3a005b2c846c2ef4492ee1e1ea1f76fc,
         type: 3}
       propertyPath: m_Layer
@@ -1185,6 +1195,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6163786333870610985, guid: 3a005b2c846c2ef4492ee1e1ea1f76fc,
         type: 3}
+      propertyPath: mesh
+      value: 
+      objectReference: {fileID: 2543852099812206708}
+    - target: {fileID: 6163786333870610985, guid: 3a005b2c846c2ef4492ee1e1ea1f76fc,
+        type: 3}
       propertyPath: serializationData.Prefab
       value: 
       objectReference: {fileID: 6163786333870610985, guid: 3a005b2c846c2ef4492ee1e1ea1f76fc,
@@ -1194,6 +1209,12 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3a005b2c846c2ef4492ee1e1ea1f76fc, type: 3}
+--- !u!23 &2543852099812206708 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 6349450671136819790, guid: 3a005b2c846c2ef4492ee1e1ea1f76fc,
+    type: 3}
+  m_PrefabInstance: {fileID: 8885694146108056122}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &3376143620259854355 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6163786333870610985, guid: 3a005b2c846c2ef4492ee1e1ea1f76fc,

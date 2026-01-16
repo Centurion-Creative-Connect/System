@@ -1,4 +1,5 @@
 ﻿using CenturionCC.System.Gun.Behaviour;
+using UdonSharpEditor;
 using UnityEditor;
 using UnityEngine;
 namespace CenturionCC.System.Editor.EditorInspector.Gun.Behaviour
@@ -25,6 +26,14 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.Behaviour
                 t.position = pos;
                 t.rotation = rot;
             }
+        }
+
+        public override void OnInspectorGUI()
+        {
+            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
+                return;
+
+            DrawDefaultInspector();
         }
     }
 }

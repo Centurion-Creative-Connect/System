@@ -149,7 +149,7 @@ namespace CenturionCC.System.Gun.Centurion
             _variantData = null;
 
             MainHandle.UnHolster();
-            FireMode = 0;
+            CurrentFireModeIndex = 0;
             ShotCount = 0;
 
             Trigger = TriggerState.Idle;

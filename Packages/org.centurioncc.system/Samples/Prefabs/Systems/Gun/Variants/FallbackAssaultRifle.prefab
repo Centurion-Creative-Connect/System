@@ -71,6 +71,10 @@ MonoBehaviour:
   holsterSize: 100
   ergonomics: 3
   availableFiringModes: 01000000
+  secondsPerRoundArray:
+  - 0
+  triggerTapIntervalArray:
+  - 0
   maxRoundsPerSecond: 4.25
   animator: {fileID: 0}
   syncedAnimatorParameterNames: []
@@ -78,12 +82,11 @@ MonoBehaviour:
   audioData: {fileID: 6801754224032755347}
   hapticData: {fileID: 6801754224054683001}
   cameraData: {fileID: 0}
+  behaviour: {fileID: 0}
   behaviours: []
   defaultProjectilePool: {fileID: 0}
   projectilePoolOverride: {fileID: 0}
   isDoubleHanded: 1
-  useRePickupDelayForMainHandle: 0
-  useRePickupDelayForSubHandle: 1
   useWallCheck: 1
   useSafeZoneCheck: 1
   shooterOffset: {fileID: 6801754223315945876}
@@ -103,6 +106,7 @@ MonoBehaviour:
   combatTagOption: 0
   combatTagSpeedMultiplier: 1
   combatTagTime: 1
+  dataVersion: 1
 --- !u!114 &6801754222330373505
 MonoBehaviour:
   m_ObjectHideFlags: 0

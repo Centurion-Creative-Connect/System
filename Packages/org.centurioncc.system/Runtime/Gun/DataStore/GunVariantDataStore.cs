@@ -2,6 +2,7 @@
 using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using JetBrains.Annotations;
+using System;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -12,6 +13,8 @@ namespace CenturionCC.System.Gun.DataStore
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class GunVariantDataStore : UdonSharpBehaviour
     {
+        public const int DataVersion = 1;
+
         [SerializeField] private byte uniqueId;
 
         [SerializeField] private string weaponName;
@@ -22,6 +25,11 @@ namespace CenturionCC.System.Gun.DataStore
 
         [SerializeField] private FireMode[] availableFiringModes = { FireMode.SemiAuto };
 
+        [SerializeField] private float[] secondsPerRoundArray;
+
+        [SerializeField] private float[] perBurstIntervalArray;
+
+        [Obsolete("This field is no longer used. Set RPM per FireMode with secondsPerRoundArray instead")]
         [SerializeField] private float maxRoundsPerSecond;
 
         [SerializeField] private Animator animator;
@@ -36,6 +44,9 @@ namespace CenturionCC.System.Gun.DataStore
 
         [SerializeField] private GunCameraDataStore cameraData;
 
+        [Obsolete("Use Behaviours instead. This field is no longer used and only exists for backwards compatibility.")]
+        [SerializeField] private GunBehaviourBase behaviour;
+
         [SerializeField] private GunBehaviourBase[] behaviours;
 
         [SerializeField] [NewbieInject]
@@ -46,10 +57,6 @@ namespace CenturionCC.System.Gun.DataStore
         private ProjectilePoolBase projectilePoolOverride;
 
         [SerializeField] private bool isDoubleHanded;
-
-        [SerializeField] private bool useRePickupDelayForMainHandle;
-
-        [SerializeField] private bool useRePickupDelayForSubHandle;
 
         [SerializeField] private bool useWallCheck = true;
 
@@ -63,19 +70,16 @@ namespace CenturionCC.System.Gun.DataStore
 
         [SerializeField] private Transform subHandleOffset;
 
-        [Header("Messages")]
         [SerializeField] private TranslatableMessage desktopTooltip;
 
         [SerializeField] private TranslatableMessage vrTooltip;
 
-        [Header("ObjectMarker Properties")]
         [SerializeField] private ObjectType objectType = ObjectType.Metallic;
 
         [SerializeField] private float objectWeight;
 
         [SerializeField] private string[] tags = { "NoFootstep" };
 
-        [Header("Player Controller Properties")]
         [SerializeField] private MovementOption movementOption = MovementOption.Inherit;
 
         [SerializeField] private float walkSpeed = 1F;
@@ -90,12 +94,15 @@ namespace CenturionCC.System.Gun.DataStore
 
         [SerializeField] private float combatTagTime = 1F;
 
+        [SerializeField] private int dataVersion = DataVersion;
+
         public byte UniqueId => uniqueId;
         public string WeaponName => weaponName;
         public int HolsterSize => holsterSize;
-        public FireMode[] AvailableFiringModes => availableFiringModes;
-        public float RoundsPerSecond => maxRoundsPerSecond;
-        public float SecondsPerRound => 1F / maxRoundsPerSecond;
+        public FireMode[] FireModeArray => availableFiringModes;
+        public float[] SecondsPerRoundArray => secondsPerRoundArray;
+        public float[] PerBurstIntervalArray => perBurstIntervalArray;
+
         public float Ergonomics => ergonomics;
         public string[] SyncedAnimatorParameterNames => syncedAnimatorParameterNames;
 
