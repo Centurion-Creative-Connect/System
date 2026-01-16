@@ -32,7 +32,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
             "Will not slow down when shooting unless they have other guns activating CombatTag.",
         };
 
-        private static Dictionary<string, GUIContent> GUIContents = new Dictionary<string, GUIContent>
+        private static readonly Dictionary<string, GUIContent> GUIContents = new Dictionary<string, GUIContent>
         {
             { "FireMode", new GUIContent("Fire Mode", "Firing mode when holding down the trigger.") },
             { "FireModeTooltip", new GUIContent("", "Firing mode when holding down the trigger.") },
@@ -70,13 +70,18 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
                 if (dataVersion < GunVariantDataStore.DataVersion)
                 {
                     EditorGUILayout.HelpBox(
-                        "This VariantData has outdated properties.",
+                        "This VariantData has outdated properties that could be upgraded. Please perform migration in Centurion System Control Panel or Migrate in place.",
                         MessageType.Warning
                     );
 
                     if (GUILayout.Button("Open Control Panel"))
                     {
                         CenturionSystemControlPanelWindow.OpenWindow();
+                    }
+
+                    if (GUILayout.Button("Migrate"))
+                    {
+                        CenturionSystemMigrator.UpgradeGunVariantDataStore(target as GunVariantDataStore);
                     }
                 }
                 else
@@ -172,6 +177,10 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
 
             if (GUIUtil.Foldout("Advanced Options", ref _foldoutAdvancedOptions))
             {
+                if (GUILayout.Button("Run Migration without version check"))
+                {
+                    CenturionSystemMigrator.UpgradeGunVariantDataStore(target as GunVariantDataStore);
+                }
             }
 
             so.ApplyModifiedProperties();
