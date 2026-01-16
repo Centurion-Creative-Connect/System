@@ -17,11 +17,12 @@ namespace CenturionCC.System.Editor.ControlPanel
         private static GUIStyle _activeStyle;
         private static GUIStyle _inactiveStyle;
         private static ControlPanelTab _currentTab = ControlPanelTab.Info;
-        private static Dictionary<ControlPanelTab, IControlPanelDrawer> _tabDrawers = new Dictionary<ControlPanelTab, IControlPanelDrawer>
+        private static readonly Dictionary<ControlPanelTab, IControlPanelDrawer> TabDrawers = new Dictionary<ControlPanelTab, IControlPanelDrawer>
         {
             [ControlPanelTab.Info] = new InfoPanelDrawer(),
             [ControlPanelTab.Player] = new PlayerPanelDrawer(),
             [ControlPanelTab.Gun] = new GunPanelDrawer(),
+            [ControlPanelTab.Migration] = new MigrationPanelDrawer(),
         };
 
         public void OnGUI()
@@ -58,7 +59,7 @@ namespace CenturionCC.System.Editor.ControlPanel
 
             EditorGUILayout.Separator();
 
-            _tabDrawers[_currentTab].Draw();
+            TabDrawers[_currentTab].Draw();
         }
 
         [MenuItem("Centurion System/Control Panel")]
@@ -74,6 +75,7 @@ namespace CenturionCC.System.Editor.ControlPanel
             Info,
             Player,
             Gun,
+            Migration,
         }
     }
 }
