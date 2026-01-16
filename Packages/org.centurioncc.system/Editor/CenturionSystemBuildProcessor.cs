@@ -93,7 +93,7 @@ namespace CenturionCC.System.Editor
             }
         }
 
-        private static void BakeVersionAndLicense()
+        public static void BakeVersionAndLicense()
         {
             var centurionSystem = GetCenturionSystem();
             if (centurionSystem == null)

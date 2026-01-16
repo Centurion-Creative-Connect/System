@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CenturionCC.System.Gun;
+using System;
 using System.Collections.Generic;
 using CenturionCC.System.Player;
 using UdonSharp;
@@ -6,24 +7,24 @@ using UnityEngine.SceneManagement;
 
 namespace CenturionCC.System.Editor.Utils
 {
-    public static class ShooterObjectStore
+    public static class CenturionSystemReferenceCache
     {
-        private static CenturionSystem _cachedGameManager;
+        private static CenturionSystem _cachedCenturionSystem;
         private static PlayerManagerBase _cachedPlayerManager;
+        private static GunManagerBase _cachedGunManager;
 
-        public static CenturionSystem GameManager
+        public static CenturionSystem CenturionSystem
         {
             get
             {
-                if (!_cachedGameManager)
+                if (!_cachedCenturionSystem)
                 {
-                    _cachedGameManager = FindUdonSharpComponent<CenturionSystem>();
-                    if (!_cachedGameManager)
-                        throw new NullReferenceException(
-                            "CenturionSystem not found in active scene. consider creating one");
+                    _cachedCenturionSystem = FindUdonSharpComponent<CenturionSystem>();
+                    if (!_cachedCenturionSystem)
+                        return null;
                 }
 
-                return _cachedGameManager;
+                return _cachedCenturionSystem;
             }
         }
 
@@ -35,11 +36,25 @@ namespace CenturionCC.System.Editor.Utils
                 {
                     _cachedPlayerManager = FindUdonSharpComponent<PlayerManagerBase>();
                     if (!_cachedPlayerManager)
-                        throw new NullReferenceException(
-                            "PlayerManager not found in active scene. consider creating one");
+                        return null;
                 }
 
                 return _cachedPlayerManager;
+            }
+        }
+
+        public static GunManagerBase GunManager
+        {
+            get
+            {
+                if (!_cachedGunManager)
+                {
+                    _cachedGunManager = FindUdonSharpComponent<GunManagerBase>();
+                    if (!_cachedGunManager)
+                        return null;
+                }
+
+                return _cachedGunManager;
             }
         }
 
@@ -48,7 +63,7 @@ namespace CenturionCC.System.Editor.Utils
             var scene = SceneManager.GetActiveScene();
             var roots = scene.GetRootGameObjects();
             var components = new List<T>();
-            foreach (var root in roots) components.AddRange(root.GetComponents<T>());
+            foreach (var root in roots) components.AddRange(root.GetComponentsInChildren<T>());
 
             return components.ToArray();
         }

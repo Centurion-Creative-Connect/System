@@ -106,25 +106,20 @@ namespace CenturionCC.System.Editor.Utils
         }
 
         #region Labels
-
         public static void HorizontalBar() =>
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
 
         public static void Label(string text, bool depthColor = true) => Impl_Label(text, depthColor);
 
         public static void Header(string text, bool depthColor = true) => Impl_Label(ToBold(text), depthColor);
-
         #endregion
 
         #region Foldouts
-
-        public static bool Foldout(string text, ref bool result) => Impl_Foldout(text, ref result);
-        public static bool HeaderFoldout(string text, ref bool result) => Impl_Foldout(ToBold(text), ref result);
-
+        public static bool Foldout(string text, ref bool result, bool depthColor = false) => Impl_Foldout(text, ref result, depthColor);
+        public static bool HeaderFoldout(string text, ref bool result, bool depthColor = false) => Impl_Foldout(ToBold(text), ref result, depthColor);
         #endregion
 
         #region Buttons
-
         public static bool SmallButton(string label) =>
             GUILayout.Button(label, GUILayout.Width(HelpBoxButtonWidth), GUILayout.ExpandHeight(true));
 
@@ -133,11 +128,9 @@ namespace CenturionCC.System.Editor.Utils
 
         public static void Button(string label, out bool result, IconType iconType) =>
             Impl_Button(label, out result, iconType);
-
         #endregion
 
         #region HelpBoxWithButton
-
         public static bool HelpBoxWithButton(string text, MessageType msgType, string buttonLabel = "Auto Fix")
         {
             bool buttonResult;
@@ -158,7 +151,7 @@ namespace CenturionCC.System.Editor.Utils
         }
 
         public static bool HelpBoxWithButton<T>(string text, MessageType msgType, ref T result,
-            string buttonLabel = "Auto Fix")
+                                                string buttonLabel = "Auto Fix")
             where T : UnityEngine.Object
         {
             bool buttonResult;
@@ -176,13 +169,11 @@ namespace CenturionCC.System.Editor.Utils
 
             return buttonResult;
         }
-
         #endregion
 
         #region Fields
-
         public static void ObjectField<T>(string label, ref T value, bool allowSceneObjects = true,
-            bool labelDepthColor = false, Alignment alignment = Alignment.None, float labelWidth = 30F)
+                                          bool labelDepthColor = false, Alignment alignment = Alignment.None, float labelWidth = 30F)
             where T : UnityEngine.Object
         {
             T FieldFunc(T v)
@@ -197,7 +188,7 @@ namespace CenturionCC.System.Editor.Utils
         }
 
         public static void IntField(string label, ref int value, bool labelDepthColor = false, float labelWidth = 30F,
-            Alignment alignment = Alignment.None)
+                                    Alignment alignment = Alignment.None)
         {
             int FieldFunc(int v)
             {
@@ -211,7 +202,7 @@ namespace CenturionCC.System.Editor.Utils
         }
 
         public static void FloatField(string label, ref float value, bool labelDepthColor = false,
-            float labelWidth = 30F, Alignment alignment = Alignment.None)
+                                      float labelWidth = 30F, Alignment alignment = Alignment.None)
         {
             float FieldFunc(float v)
             {
@@ -224,7 +215,7 @@ namespace CenturionCC.System.Editor.Utils
         }
 
         public static void EnumField<T>(string label, ref T value, bool labelDepthColor = false, float labelWidth = 30F,
-            Alignment alignment = Alignment.None) where T : Enum
+                                        Alignment alignment = Alignment.None) where T : Enum
         {
             T FieldFunc(T v)
             {
@@ -245,20 +236,18 @@ namespace CenturionCC.System.Editor.Utils
 
         public static bool FoldoutPropertyField(SerializedProperty property, bool foldedOut, int depth = 1)
         {
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                EditorGUILayout.Space(5, false);
-                EditorGUILayout.PropertyField(property, true);
-                if (property.propertyType == SerializedPropertyType.ObjectReference && depth != 0)
-                {
-                    var lastRect = GUILayoutUtility.GetLastRect();
-                    // I have no idea why this weird offsets work, but it works so...
-                    var rect = new Rect(lastRect.x - 5, lastRect.y + lastRect.height - 15, 10, 10);
-                    foldedOut = EditorGUI.Foldout(rect, foldedOut, "");
-                }
-            }
+            var controlRect = EditorGUILayout.GetControlRect(true, EditorGUI.GetPropertyHeight(property));
+            var propertyFieldRect = new Rect(controlRect);
+            propertyFieldRect.x += 1;
+            propertyFieldRect.width -= 1;
 
-            EditorGUILayout.Space(3);
+            EditorGUI.PropertyField(propertyFieldRect, property, true);
+            if (property.propertyType == SerializedPropertyType.ObjectReference && depth != 0)
+            {
+                var foldoutRect = new Rect(controlRect);
+                foldoutRect.width *= 0.4f;
+                foldedOut = EditorGUI.Foldout(foldoutRect, foldedOut, "");
+            }
 
             if (property.propertyType == SerializedPropertyType.ObjectReference && foldedOut && depth != 0 &&
                 property.objectReferenceValue != null)
@@ -295,21 +284,17 @@ namespace CenturionCC.System.Editor.Utils
                     GUILayout.FlexibleSpace();
             }
         }
-
         #endregion
 
         #region IconContent
-
         public static GUIContent IconContent(string name, string text = "", string tooltip = "") =>
             Impl_IconContent(name, text, tooltip);
 
         public static GUIContent IconContent(IconType type, string text = "", string tooltip = "") =>
             Impl_IconContent(type.Name, text, tooltip);
-
         #endregion
 
         #region Impls
-
         private static GUIContent Impl_IconContent(string name, string text, string tooltip)
         {
             return new GUIContent
@@ -323,10 +308,12 @@ namespace CenturionCC.System.Editor.Utils
             result = GUILayout.Button(IconContent(iconType, text), StyleSet.ButtonStyle);
         }
 
-        private static bool Impl_Foldout(string text, ref bool result)
+        private static bool Impl_Foldout(string text, ref bool result, bool depthColor = false)
         {
-            return result = EditorGUILayout.Foldout(result, ToDepthColor(text), true,
-                new GUIStyle("foldout") { richText = true });
+            return result = EditorGUILayout.Foldout(
+                result, depthColor ? ToDepthColor(text) : text, true,
+                new GUIStyle("foldoutHeader") { richText = true }
+            );
         }
 
         private static void Impl_Label(string text, bool depthColor = true)
@@ -335,7 +322,6 @@ namespace CenturionCC.System.Editor.Utils
                 depthColor ? ToDepthColor(text) : text,
                 new GUIStyle("label") { richText = true });
         }
-
         #endregion
     }
 }
