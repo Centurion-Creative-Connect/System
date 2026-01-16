@@ -10,7 +10,7 @@ namespace CenturionCC.System.Editor.Utils
             new Dictionary<int, string>
                 { [28] = "GamePickup", [29] = "GamePlayer", [30] = "GameGun", [31] = "GameProjectile" };
 
-        [MenuItem("Centurion-Utils/Setup Layers")]
+        [MenuItem("Centurion System/Setup Layers")]
         public static void SetupLayers()
         {
             Debug.Log("Setting up layer names");

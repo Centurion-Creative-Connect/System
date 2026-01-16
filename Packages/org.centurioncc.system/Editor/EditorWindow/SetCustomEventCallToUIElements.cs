@@ -15,7 +15,7 @@ namespace CenturionCC.System.Editor.EditorWindow
         private static UdonBehaviour _behaviour;
         private static GameObject _gameObject;
 
-        [MenuItem("Centurion-Utils/Set SendCustomEvent call to UI Elements")]
+        [MenuItem("Centurion System/Utils/Set SendCustomEvent call to UI Elements")]
         public static void InitMenu() => Init();
 
         public static void Init(UdonBehaviour behaviour = null)
@@ -34,13 +34,13 @@ namespace CenturionCC.System.Editor.EditorWindow
 
         protected override bool DrawProperty()
         {
-            _uiType = (UIType) EditorGUILayout.EnumPopup("UI Type", _uiType);
+            _uiType = (UIType)EditorGUILayout.EnumPopup("UI Type", _uiType);
             _methodName = EditorGUILayout.TextField("Method Name", _methodName);
             _behaviour =
-                (UdonBehaviour) EditorGUILayout.ObjectField("Udon Behaviour", _behaviour,
+                (UdonBehaviour)EditorGUILayout.ObjectField("Udon Behaviour", _behaviour,
                     typeof(UdonBehaviour), true);
             _gameObject =
-                (GameObject) EditorGUILayout.ObjectField("Root Object", _gameObject, typeof(GameObject), true);
+                (GameObject)EditorGUILayout.ObjectField("Root Object", _gameObject, typeof(GameObject), true);
 
             if (GUILayout.Button("Clear Events"))
             {

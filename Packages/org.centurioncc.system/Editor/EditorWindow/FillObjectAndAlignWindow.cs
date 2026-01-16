@@ -6,13 +6,20 @@ namespace CenturionCC.System.Editor.EditorWindow
 {
     public class FillObjectAndAlignWindow : ShooterEditorWindow
     {
+
+        public enum Axis
+        {
+            X,
+            Y,
+            Z
+        }
         private static GameObject _sourceObject;
         private static Transform _parentObject;
         private static int _amount;
         private static float _offset;
         private static Axis _axis;
 
-        [MenuItem("Centurion-Utils/Fill and Align")]
+        [MenuItem("Centurion System/Utils/Fill and Align")]
         public static void Init()
         {
             ShowWindow<FillObjectAndAlignWindow>();
@@ -42,13 +49,6 @@ namespace CenturionCC.System.Editor.EditorWindow
         protected override bool CanApply()
         {
             return _sourceObject != null && _parentObject != null && _amount > 0;
-        }
-
-        public enum Axis
-        {
-            X,
-            Y,
-            Z
         }
     }
 }

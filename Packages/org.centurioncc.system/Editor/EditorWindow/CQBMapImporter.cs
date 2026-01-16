@@ -10,7 +10,7 @@ namespace CenturionCC.System.Editor.EditorWindow
     {
         private GameObject _mapRootObj;
 
-        [MenuItem("Centurion-Utils/CQB Map Importer")]
+        [MenuItem("Centurion System/Utils/CQB Map Importer")]
         public static void Init()
         {
             ShowWindow<CqbMapImporter>();
