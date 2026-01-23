@@ -8,7 +8,7 @@ namespace CenturionCC.System.Command.Util
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class HitLoggerCommand : NewbieConsoleCommandHandler
     {
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
         private HitLogger hitLogger;
 
         public override string Label => "HitLogger";

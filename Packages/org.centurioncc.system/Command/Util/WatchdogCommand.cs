@@ -8,7 +8,7 @@ namespace CenturionCC.System.Command.Util
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class WatchdogCommand : ActionCommandHandler
     {
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
         private WatchdogProc watchdogProc;
 
         public override string Label => "Watchdog";

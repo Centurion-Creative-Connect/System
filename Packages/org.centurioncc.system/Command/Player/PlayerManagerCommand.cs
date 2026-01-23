@@ -21,7 +21,7 @@ namespace CenturionCC.System.Command.Player
         [SerializeField]
         private Collider[] teamRegions;
 
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
         private PlayerManagerBase playerManager;
 
         private NewbieConsole _console;

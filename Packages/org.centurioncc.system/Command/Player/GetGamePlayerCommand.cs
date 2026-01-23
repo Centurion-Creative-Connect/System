@@ -9,7 +9,7 @@ namespace CenturionCC.System.Command.Player
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class GetGamePlayerCommand : NewbieConsoleCommandHandler
     {
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
         private PlayerManagerBase playerManager;
 
         public override string Label => "GetGamePlayer";

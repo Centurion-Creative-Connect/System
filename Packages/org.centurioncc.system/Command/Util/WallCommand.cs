@@ -8,7 +8,7 @@ namespace CenturionCC.System.Command.Util
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class WallCommand : BoolCommandHandler
     {
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
         private WallManager wall;
 
         public override string Label => "WallManager";

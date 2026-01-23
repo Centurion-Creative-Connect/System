@@ -9,7 +9,7 @@ namespace CenturionCC.System.Command.Util
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class ForceVoiceResetCommand : ActionCommandHandler
     {
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
         private NotificationProvider notification;
 
         public override string Label => "ForceVoiceReset";

@@ -8,7 +8,7 @@ namespace CenturionCC.System.Command.Player
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PlayerExternalCommand : NewbieConsoleCommandHandler
     {
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
         private ExternalHitDisplayManager hitDisplayManager;
 
         public override string Label => "PlayerExternal";

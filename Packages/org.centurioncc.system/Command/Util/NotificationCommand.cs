@@ -8,7 +8,7 @@ namespace CenturionCC.System.Command.Util
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class NotificationCommand : ActionCommandHandler
     {
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
         private NotificationProvider notification;
 
         public override string Label => "Notification";

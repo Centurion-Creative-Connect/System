@@ -8,7 +8,7 @@ namespace CenturionCC.System.Command.Gun
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class GunNotifierCommand : BoolCommandHandler
     {
-        [SerializeField] [NewbieInject] [HideInInspector]
+        [SerializeField] [HideInInspector]
         private GunManagerNotificationSender notificationSender;
 
         public override string Label => "GunNotification";

@@ -10,7 +10,7 @@ namespace CenturionCC.System.Command.Util
     public class TeleportCommand : ActionCommandHandler
     {
         private const string PlayerNotFoundMessage = "<color=red>Player {0} does not exist.</color>";
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
         private NotificationProvider notification;
         [SerializeField]
         private TranslatableMessage onTeleportSuccessfulMessage;

@@ -9,7 +9,7 @@ namespace CenturionCC.System.Command.Gun
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class GunManagerCommand : NewbieConsoleCommandHandler
     {
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
         private GunManagerBase gunManager;
 
         public override string Label => "GunManager";

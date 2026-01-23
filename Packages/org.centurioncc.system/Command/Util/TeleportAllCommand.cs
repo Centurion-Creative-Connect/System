@@ -10,7 +10,7 @@ namespace CenturionCC.System.Command.Util
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class TeleportAllCommand : ActionCommandHandler
     {
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
         private NotificationProvider notification;
         [SerializeField]
         private TranslatableMessage willBeTeleportedMessage;

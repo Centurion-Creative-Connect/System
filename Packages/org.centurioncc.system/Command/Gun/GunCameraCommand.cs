@@ -9,7 +9,7 @@ namespace CenturionCC.System.Command.Gun
     public class GunCameraCommand : NewbieConsoleCommandHandler
     {
         private const string ResultString = "{0}: {1}";
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
         private GunCamera instance;
 
         public override string Label => "GunCamera";

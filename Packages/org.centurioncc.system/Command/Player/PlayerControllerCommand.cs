@@ -8,7 +8,7 @@ namespace CenturionCC.System.Command.Player
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PlayerControllerCommand : ActionCommandHandler
     {
-        [SerializeField] [HideInInspector] [NewbieInject]
+        [SerializeField] [NewbieInject]
         private PlayerController pc;
 
         public override string Label => "PlayerController";
