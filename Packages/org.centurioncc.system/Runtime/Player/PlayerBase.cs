@@ -49,6 +49,15 @@ namespace CenturionCC.System.Player
         public abstract void SetMaxHealth(float maxHealth);
 
         /// <summary>
+        /// Change colliders active state.
+        /// </summary>
+        /// <remarks>
+        /// Only affects the local view of collider. Not synced!
+        /// </remarks>
+        /// <param name="isActive">Should the colliders be active?</param>
+        public abstract void SetCollidersActive(bool isActive);
+
+        /// <summary>
         /// Called by PlayerColliderBase when it has collided with DamageData.
         /// </summary>
         /// <param name="playerCollider"></param>
@@ -77,7 +86,6 @@ namespace CenturionCC.System.Player
         public abstract void Revive();
 
         #region Properties
-
         [PublicAPI]
         public abstract float Health { get; }
 
@@ -124,11 +132,9 @@ namespace CenturionCC.System.Player
 
         [PublicAPI]
         public virtual string DisplayName => VrcPlayer.SafeGetDisplayName();
-
         #endregion
 
         #region PlayerArea
-
         [PublicAPI]
         public abstract void OnAreaEnter(PlayerAreaBase area);
 
@@ -137,7 +143,6 @@ namespace CenturionCC.System.Player
 
         [PublicAPI]
         public abstract PlayerAreaBase[] GetCurrentPlayerAreas();
-
         #endregion
     }
 }
