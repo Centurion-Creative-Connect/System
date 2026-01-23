@@ -53,9 +53,6 @@ namespace CenturionCC.System.Gun.Behaviour
         }
 
         #region BehaviourBase
-        public override bool RequireCustomHandle => false;
-
-
         public override void OnTriggerDown(GunBase instance)
         {
             if (instance.State != GunState.Idle || instance.HasBulletInChamber == false)

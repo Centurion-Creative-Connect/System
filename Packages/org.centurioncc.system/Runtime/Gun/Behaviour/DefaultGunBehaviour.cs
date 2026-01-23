@@ -5,8 +5,6 @@ namespace CenturionCC.System.Gun.Behaviour
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class DefaultGunBehaviour : GunBehaviourBase
     {
-        public override bool RequireCustomHandle => false;
-
         public override void OnGunPickup(GunBase instance)
         {
             if (!instance.HasBulletInChamber)
