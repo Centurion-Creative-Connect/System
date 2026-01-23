@@ -5,8 +5,6 @@ namespace CenturionCC.System.Gun.Behaviour
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class GunBehaviourBase : UdonSharpBehaviour
     {
-        public virtual bool RequireCustomHandle => false;
-
         /// <summary>
         /// Gets called when <see cref="Gun.mainHandle" />'s pickup used down.
         /// </summary>

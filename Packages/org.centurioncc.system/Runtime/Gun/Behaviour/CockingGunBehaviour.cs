@@ -209,8 +209,6 @@ namespace CenturionCC.System.Gun.Behaviour
 
 
         #region GunBehaviourBase
-        public override bool RequireCustomHandle => true;
-
         public override void OnTriggerDown(GunBase instance)
         {
             if (!CanShoot(instance))
@@ -237,12 +235,14 @@ namespace CenturionCC.System.Gun.Behaviour
         {
             Debug.Log("[CockingGunBehaviour] OnGunPickup");
             UpdateCustomHandlePosition(instance);
+            customHandle.SetPickupable(true);
         }
 
         public override void OnGunDrop(GunBase instance)
         {
             Debug.Log("[CockingGunBehaviour] OnGunDrop");
             UpdateCustomHandlePosition(instance);
+            customHandle.SetPickupable(false);
         }
 
         public override void OnGunUpdate(GunBase instance)
