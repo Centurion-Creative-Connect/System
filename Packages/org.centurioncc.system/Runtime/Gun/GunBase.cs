@@ -148,8 +148,6 @@ namespace CenturionCC.System.Gun
                 {
                     SyncedFireModeIndex = value;
                 }
-
-                RequestSerialization();
             }
         }
 
@@ -671,17 +669,19 @@ namespace CenturionCC.System.Gun
 
             // init GunHandle & PositioningHelper
             {
+                var isUserInVR = Networking.LocalPlayer.IsUserInVR();
                 MainHandle.callback = this;
                 MainHandle.handleType = HandleType.MainHandle;
+                MainHandle.Detach();
+                MainHandle.AdjustScaleForDesktop(isUserInVR);
                 if (SubHandle)
                 {
                     SubHandle.callback = this;
                     SubHandle.handleType = HandleType.SubHandle;
-                    SubHandle.SetPickupable(CanBeTwoHanded);
+                    SubHandle.SetPickupable(CanBeTwoHanded && isUserInVR);
                     SubHandle.Detach();
                 }
 
-                MainHandle.Detach();
 
                 if (VariantData)
                 {
