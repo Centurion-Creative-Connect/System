@@ -163,6 +163,7 @@ namespace CenturionCC.System.Player.Centurion
         public override VRCPlayerApi VrcPlayer => Networking.GetOwner(gameObject);
         public override RoleData[] Roles => roleProvider.GetPlayerRoles(VrcPlayer);
         public bool IsCulled { get; set; }
+        public bool IsCollidersActive { get; private set; } = true;
 
         private void Start()
         {
@@ -211,6 +212,12 @@ namespace CenturionCC.System.Player.Centurion
             RequestSerialization();
         }
 
+        public override void SetCollidersActive(bool isActive)
+        {
+            IsCollidersActive = isActive;
+            UpdateView();
+        }
+
         public override void OnLocalHit(PlayerColliderBase playerCollider, DamageData data, Vector3 contactPoint)
         {
             if (!IsLocal && data.DamagerPlayerId != Networking.LocalPlayer.playerId)
@@ -240,12 +247,12 @@ namespace CenturionCC.System.Player.Centurion
             foreach (var col in playerColliders)
             {
                 if (!col) continue;
-                col.gameObject.SetActive(!IsCulled);
+                col.gameObject.SetActive(!IsCulled && IsCollidersActive);
                 col.PostLateUpdate();
                 col.IsDebugVisible = playerManager.IsDebug;
             }
 
-            simpleCollider.gameObject.SetActive(IsCulled);
+            simpleCollider.gameObject.SetActive(IsCulled && IsCollidersActive);
             simpleCollider.PostLateUpdate();
             simpleCollider.IsDebugVisible = playerManager.IsDebug;
 
@@ -268,6 +275,7 @@ namespace CenturionCC.System.Player.Centurion
             SyncedTeamId = 0;
             SyncedMaxHealth = 100;
             SyncedHealth = SyncedMaxHealth;
+            IsCollidersActive = true;
 
             playerManager.Invoke_OnPlayerReset(this);
             RequestSerialization();

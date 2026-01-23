@@ -65,6 +65,11 @@ namespace CenturionCC.System.Tests.Editor
             throw new NotImplementedException();
         }
 
+        public override void SetCollidersActive(bool isActive)
+        {
+            throw new NotImplementedException();
+        }
+
         public override void OnLocalHit(PlayerColliderBase playerCollider, DamageData data, Vector3 contactPoint)
         {
             throw new NotImplementedException();
