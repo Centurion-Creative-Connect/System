@@ -778,6 +778,12 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 6850616877629945038}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &102850558 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2802753248573890178, guid: a156b30e8bcbb5941a7a63529f887c50,
+    type: 3}
+  m_PrefabInstance: {fileID: 2150761212873548649}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &111093282
 GameObject:
   m_ObjectHideFlags: 0
@@ -5739,7 +5745,7 @@ PrefabInstance:
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: NetworkIDs.Array.size
-      value: 1111
+      value: 1112
       objectReference: {fileID: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
@@ -11355,6 +11361,11 @@ PrefabInstance:
         type: 3}
       propertyPath: NetworkIDs.Array.data[1110].ID
       value: 1142
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[1111].ID
+      value: 1143
       objectReference: {fileID: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
@@ -18478,6 +18489,11 @@ PrefabInstance:
       objectReference: {fileID: 1868116231}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
+      propertyPath: NetworkIDs.Array.data[1111].gameObject
+      value: 
+      objectReference: {fileID: 102850558}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
       propertyPath: NetworkIDs.Array.data[0].SerializedTypeNames.Array.size
       value: 1
       objectReference: {fileID: 0}
@@ -24035,6 +24051,11 @@ PrefabInstance:
         type: 3}
       propertyPath: NetworkIDs.Array.data[1110].SerializedTypeNames.Array.size
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[1111].SerializedTypeNames.Array.size
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
@@ -42876,6 +42897,11 @@ PrefabInstance:
       propertyPath: NetworkIDs.Array.data[1110].SerializedTypeNames.Array.data[2]
       value: VRC.Udon.UdonBehaviour
       objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[1111].SerializedTypeNames.Array.data[0]
+      value: VRC.Udon.UdonBehaviour
+      objectReference: {fileID: 0}
     - target: {fileID: 8464459589408506562, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: serializedProgramAsset
@@ -43371,8 +43397,8 @@ MonoBehaviour:
   moderatorTool: {fileID: 0}
   movement: {fileID: 0}
   version: 0.7.0-alpha.1
-  commitHash: 9d59be7164530544116400666177381a17e52e74
-  branch: master
+  commitHash: 99146421db2b850e38edd34ce29551bf2aaf1eee
+  branch: add-shield-reset-button-sample
   license: "[Centurion System](https://github.com/Centurion-Creative-Connect/System)
     \xA9 2022 by [Centurion Creative Connect](https://github.com/Centurion-Creative-Connect)
     is licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)"
@@ -53299,6 +53325,12 @@ PrefabInstance:
       propertyPath: _syncMethod
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 1121408039319487700, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
+        type: 3}
+      propertyPath: serializationData.Prefab
+      value: 
+      objectReference: {fileID: 1121408039319487700, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
+        type: 3}
     - target: {fileID: 1121516052970701616, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
         type: 3}
       propertyPath: _syncMethod
@@ -55096,6 +55128,24 @@ PrefabInstance:
       propertyPath: serializationData.Prefab
       value: 
       objectReference: {fileID: 6489389802268023532, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
+        type: 3}
+    - target: {fileID: 6508584238778222733, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
+        type: 3}
+      propertyPath: serializationData.Prefab
+      value: 
+      objectReference: {fileID: 6508584238778222733, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
+        type: 3}
+    - target: {fileID: 6508584240179547563, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
+        type: 3}
+      propertyPath: serializationData.Prefab
+      value: 
+      objectReference: {fileID: 6508584240179547563, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
+        type: 3}
+    - target: {fileID: 6508584240422007938, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
+        type: 3}
+      propertyPath: serializationData.Prefab
+      value: 
+      objectReference: {fileID: 6508584240422007938, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
         type: 3}
     - target: {fileID: 6566008439929785356, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
         type: 3}
@@ -68736,6 +68786,11 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1401916440177480779, guid: 8cfc44ae7f54d4b449f2ecfefe8afc60,
         type: 3}
+    - target: {fileID: 1728168171463588936, guid: 8cfc44ae7f54d4b449f2ecfefe8afc60,
+        type: 3}
+      propertyPath: _syncMethod
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 2024327466357448209, guid: 8cfc44ae7f54d4b449f2ecfefe8afc60,
         type: 3}
       propertyPath: serializationData.Prefab
@@ -68828,6 +68883,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: StandaloneGunSample
       objectReference: {fileID: 0}
+    - target: {fileID: 4402939516355448972, guid: 8cfc44ae7f54d4b449f2ecfefe8afc60,
+        type: 3}
+      propertyPath: _syncMethod
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 4479234452496724127, guid: 8cfc44ae7f54d4b449f2ecfefe8afc60,
         type: 3}
       propertyPath: defaultProjectilePool
@@ -68892,6 +68952,11 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 7450084628169708410, guid: 8cfc44ae7f54d4b449f2ecfefe8afc60,
         type: 3}
+    - target: {fileID: 7934202699104147502, guid: 8cfc44ae7f54d4b449f2ecfefe8afc60,
+        type: 3}
+      propertyPath: _syncMethod
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 8977271020178571112, guid: 8cfc44ae7f54d4b449f2ecfefe8afc60,
         type: 3}
       propertyPath: serializationData.Prefab

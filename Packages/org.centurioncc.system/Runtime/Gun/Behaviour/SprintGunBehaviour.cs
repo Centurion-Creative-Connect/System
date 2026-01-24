@@ -1,13 +1,11 @@
-﻿using System;
-using CenturionCC.System.UI;
+﻿using CenturionCC.System.UI;
 using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
+using System;
 using UnityEngine;
-
 namespace CenturionCC.System.Gun.Behaviour
 {
-    [Obsolete("Use CockingGunBehaviour with SprintGunBehaviour instead.")]
-    public class SprintableCockingGunBehaviour : CockingGunBehaviour
+    public class SprintGunBehaviour : GunBehaviourBase
     {
         [Header("Sprint Settings")]
         [SerializeField]
@@ -40,13 +38,11 @@ namespace CenturionCC.System.Gun.Behaviour
 
         public override void OnAction(GunBase instance)
         {
-            base.OnAction(instance);
             TryStartSprint();
         }
 
         public override void OnGunUpdate(GunBase instance)
         {
-            base.OnGunUpdate(instance);
             if (Input.GetKeyDown(desktopSprintKey))
             {
                 TryStartSprint();
@@ -55,7 +51,6 @@ namespace CenturionCC.System.Gun.Behaviour
 
         public override void OnGunDrop(GunBase instance)
         {
-            base.OnGunDrop(instance);
             EndSprint();
         }
 
