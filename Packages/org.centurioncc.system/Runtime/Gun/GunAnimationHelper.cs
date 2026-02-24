@@ -4,12 +4,14 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.UdonNetworkCalling;
 using VRC.Udon.Common.Interfaces;
+using NotImplementedException = System.NotImplementedException;
 
 namespace CenturionCC.System.Gun
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
     public class GunAnimationHelper : UdonSharpBehaviour
     {
+        private readonly int _bulletsInMagazineAnimHash = Animator.StringToHash(GunUtility.BulletsInMagazineParamName);
         private readonly int _cockingProgressAnimHash = Animator.StringToHash(GunUtility.CockingProgressParamName);
         private readonly int _cockingTwistAnimHash = Animator.StringToHash(GunUtility.CockingTwistParamName);
         private readonly int _hasBulletAnimHash = Animator.StringToHash(GunUtility.HasBulletParamName);
@@ -21,6 +23,7 @@ namespace CenturionCC.System.Gun
         private readonly int _isShootingAnimHash = Animator.StringToHash(GunUtility.IsShootingParamName);
         private readonly int _isShootingEmptyAnimHash = Animator.StringToHash(GunUtility.IsShootingEmptyParamName);
         private readonly int _isVRAnimHash = Animator.StringToHash(GunUtility.IsVRParamName);
+        private readonly int _reloadProgressAnimHash = Animator.StringToHash(GunUtility.ReloadProgressParamName);
         private readonly int _selectorTypeAnimHash = Animator.StringToHash(GunUtility.SelectorTypeParamName);
         private readonly int _stateAnimHash = Animator.StringToHash(GunUtility.StateParamName);
         private readonly int _triggerProgressAnimHash = Animator.StringToHash(GunUtility.TriggerProgressParamName);
@@ -100,10 +103,21 @@ namespace CenturionCC.System.Gun
             if (TargetAnimator) TargetAnimator.SetBool(_isPickedUpLocalAnimHash, isPickedUpLocally);
         }
 
+        public void _SetBulletsInMagazine(int bulletsInMagazine)
+        {
+            if (TargetAnimator) TargetAnimator.SetInteger(_bulletsInMagazineAnimHash, bulletsInMagazine);
+        }
+
         [NetworkCallable]
         public void SetPickedUpGlobally(bool isPickedUpGlobally)
         {
             if (TargetAnimator) TargetAnimator.SetBool(_isPickedUpGlobalAnimHash, isPickedUpGlobally);
+        }
+
+        [NetworkCallable]
+        public void SetReloadProgress(float progress)
+        {
+            if (TargetAnimator) TargetAnimator.SetFloat(_reloadProgressAnimHash, progress);
         }
 
         [NetworkCallable]

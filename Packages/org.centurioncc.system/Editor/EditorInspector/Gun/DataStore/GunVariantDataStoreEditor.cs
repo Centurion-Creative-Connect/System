@@ -32,6 +32,12 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
             "Will not slow down when shooting unless they have other guns activating CombatTag.",
         };
 
+        private static readonly string[] ReloadTypeMessages =
+        {
+            "Good-ol' no-reload. Guns can be shot infinitely.",
+            "Simplified reload. Guns can be reloaded by a action configured in GunController for VR, or an F key for desktop.",
+        };
+
         private static readonly Dictionary<string, GUIContent> GUIContents = new Dictionary<string, GUIContent>
         {
             { "FireMode", new GUIContent("Fire Mode", "Firing mode when holding down the trigger.") },
@@ -44,12 +50,14 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
             { "PerBurstIntervalTooltip", new GUIContent("", "Minimum seconds required between bursts.") },
         };
 
-        private static bool _foldoutReferences = true;
-        private static bool _foldoutOffsets = true;
-        private static bool _foldoutMessages = true;
-        private static bool _foldoutObjectMarker = true;
-        private static bool _foldoutPlayerController = true;
-        private static bool _foldoutFireMode = true;
+        private static bool _foldoutAnimation;
+        private static bool _foldoutReferences;
+        private static bool _foldoutOffsets;
+        private static bool _foldoutMessages;
+        private static bool _foldoutReload;
+        private static bool _foldoutObjectMarker;
+        private static bool _foldoutPlayerController;
+        private static bool _foldoutFireMode;
         private static bool _foldoutObsolete;
         private static bool _foldoutAdvancedOptions;
 
@@ -97,12 +105,16 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
             EditorGUILayout.PropertyField(so.FindProperty("weaponName"));
             EditorGUILayout.PropertyField(so.FindProperty("holsterSize"));
             EditorGUILayout.PropertyField(so.FindProperty("ergonomics"));
-            EditorGUILayout.PropertyField(so.FindProperty("animator"));
-            EditorGUILayout.PropertyField(so.FindProperty("syncedAnimatorParameterNames"));
             EditorGUILayout.PropertyField(so.FindProperty("behaviours"));
-            EditorGUILayout.PropertyField(so.FindProperty("useWallCheck"));
-            EditorGUILayout.PropertyField(so.FindProperty("useSafeZoneCheck"));
-            EditorGUILayout.PropertyField(so.FindProperty("projectilePoolOverride"));
+
+            if (GUIUtil.Foldout("Animation Settings", ref _foldoutAnimation))
+            {
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    EditorGUILayout.PropertyField(so.FindProperty("animator"));
+                    EditorGUILayout.PropertyField(so.FindProperty("syncedAnimatorParameterNames"));
+                }
+            }
 
             if (GUIUtil.Foldout("Fire Mode Settings", ref _foldoutFireMode))
             {
@@ -135,6 +147,14 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
                 }
             }
 
+            if (GUIUtil.Foldout("Reload Settings", ref _foldoutReload))
+            {
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    DrawReloadInspector(so);
+                }
+            }
+
             if (GUIUtil.Foldout("Message Settings", ref _foldoutMessages))
             {
                 using (new EditorGUI.IndentLevelScope())
@@ -162,24 +182,31 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
                 }
             }
 
-            using (new EditorGUI.DisabledScope(true))
-            {
-                EditorGUILayout.PropertyField(so.FindProperty("dataVersion"));
-                if (GUIUtil.Foldout("Obsolete Fields", ref _foldoutObsolete))
-                {
-                    using (new EditorGUI.IndentLevelScope())
-                    {
-                        EditorGUILayout.PropertyField(so.FindProperty("behaviour"));
-                        EditorGUILayout.PropertyField(so.FindProperty("maxRoundsPerSecond"));
-                    }
-                }
-            }
-
             if (GUIUtil.Foldout("Advanced Options", ref _foldoutAdvancedOptions))
             {
-                if (GUILayout.Button("Run Migration without version check"))
+                using (new EditorGUI.IndentLevelScope())
                 {
-                    CenturionSystemMigrator.UpgradeGunVariantDataStore(target as GunVariantDataStore);
+                    EditorGUILayout.PropertyField(so.FindProperty("useWallCheck"));
+                    EditorGUILayout.PropertyField(so.FindProperty("useSafeZoneCheck"));
+                    EditorGUILayout.PropertyField(so.FindProperty("projectilePoolOverride"));
+
+                    using (new EditorGUI.DisabledScope(true))
+                    {
+                        EditorGUILayout.PropertyField(so.FindProperty("dataVersion"));
+                        if (GUIUtil.Foldout("Obsolete Fields", ref _foldoutObsolete))
+                        {
+                            using (new EditorGUI.IndentLevelScope())
+                            {
+                                EditorGUILayout.PropertyField(so.FindProperty("behaviour"));
+                                EditorGUILayout.PropertyField(so.FindProperty("maxRoundsPerSecond"));
+                            }
+                        }
+                    }
+
+                    if (GUILayout.Button("Run Migration without version check"))
+                    {
+                        CenturionSystemMigrator.UpgradeGunVariantDataStore(target as GunVariantDataStore);
+                    }
                 }
             }
 
@@ -385,8 +412,32 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
             reorderableList.DoLayoutList();
         }
 
-        private static void DrawEnumDisabledProperties(SerializedProperty property, int count, bool drawDisabled,
-                                                       Func<int, bool> disableFunc, Action<int> beforeDisabledGroup)
+        private static void DrawReloadInspector(SerializedObject so)
+        {
+            var reloadTypeProperty = so.FindProperty("reloadType");
+            EditorGUILayout.PropertyField(reloadTypeProperty);
+            var reloadType = (ReloadType)reloadTypeProperty.enumValueIndex;
+            EditorGUILayout.HelpBox(ReloadTypeMessages[(int)reloadType], MessageType.Info);
+            switch (reloadType)
+            {
+                case ReloadType.None:
+                {
+                    EditorGUILayout.HelpBox("Disabled properties are hidden.", MessageType.None);
+                    break;
+                }
+                case ReloadType.Simplified:
+                {
+                    EditorGUILayout.PropertyField(so.FindProperty("reloadTimeInSeconds"));
+                    EditorGUILayout.PropertyField(so.FindProperty("defaultMagazineSize"));
+                    break;
+                }
+            }
+        }
+
+        private static void DrawEnumDisabledProperties(
+            SerializedProperty property, int count, bool drawDisabled,
+            Func<int, bool> disableFunc, Action<int> beforeDisabledGroup
+        )
         {
             GUIUtil.FoldoutPropertyField(property);
 
@@ -407,6 +458,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
                 }
             }
         }
+
         private struct FireModeSetting
         {
             public FireMode FireMode;

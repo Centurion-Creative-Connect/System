@@ -10,6 +10,7 @@ using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
+using VRC.Udon;
 namespace CenturionCC.System
 {
     [DefaultExecutionOrder(-1000)]

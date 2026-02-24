@@ -65,10 +65,17 @@ namespace CenturionCC.System.Gun
         [UdonSynced] [FieldChangeCallback(nameof(SyncedState))]
         private int _state;
 
+        [UdonSynced] [FieldChangeCallback(nameof(HasBulletInChamber))]
+        private bool _hasBulletInChamber;
+
+        [UdonSynced] [FieldChangeCallback(nameof(HasCocked))]
+        private bool _hasCocked;
+
+        [UdonSynced] [FieldChangeCallback(nameof(BulletsInMagazine))]
+        private int _bulletsInMagazine;
+
         private TriggerState _trigger;
         private bool _isLocal;
-        private bool _hasBulletInChamber;
-        private bool _hasCocked;
         private int _burstCount;
         private int _collisionCount;
         #endregion
@@ -226,7 +233,7 @@ namespace CenturionCC.System.Gun
         /// Manipulate within <see cref="CenturionCC.System.Gun.Behaviour.GunBehaviourBase"/> 
         /// </remarks>
         [PublicAPI]
-        public virtual bool HasCocked
+        public bool HasCocked
         {
             get => _hasCocked;
             set
@@ -236,9 +243,20 @@ namespace CenturionCC.System.Gun
             }
         }
 
-        public virtual DateTime LastShotTime { get; protected set; }
+        [PublicAPI]
+        public int BulletsInMagazine
+        {
+            get => _bulletsInMagazine;
+            set
+            {
+                _bulletsInMagazine = value;
+                animationHelper._SetBulletsInMagazine(value);
+            }
+        }
 
-        public virtual DateTime LastBurstEndedTime { get; protected set; }
+        public DateTime LastShotTime { get; protected set; }
+
+        public DateTime LastBurstEndedTime { get; protected set; }
 
         [PublicAPI] [field: UdonSynced]
         public int ShotCount { get; protected set; }
@@ -311,6 +329,9 @@ namespace CenturionCC.System.Gun
 
         [PublicAPI] public int HolsterSize => VariantData ? VariantData.HolsterSize : 0;
         [PublicAPI] public bool CanBeTwoHanded => VariantData && VariantData.IsDoubleHanded;
+        [PublicAPI] public ReloadType ReloadType => VariantData ? VariantData.ReloadType : ReloadType.None;
+        [PublicAPI] public float ReloadTimeInSeconds => VariantData ? VariantData.ReloadTimeInSeconds : 0;
+        [PublicAPI] public int DefaultMagazineSize => VariantData ? VariantData.DefaultMagazineSize : 0;
         #endregion
 
         #region UnityEvents
@@ -402,41 +423,84 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public ShotResult _TryToShoot()
         {
-            var canShoot = CanShoot();
-            switch (canShoot)
+            if (!VariantData)
             {
-                case ShotResult.Paused:
-                {
-                    return ShotResult.Paused;
-                }
-                case ShotResult.Succeeded:
-                case ShotResult.SucceededContinuously:
-                {
-                    _Shoot();
-                    ++BurstCount;
-                    HasBulletInChamber = false;
+                Trigger = TriggerState.Fired;
 
-                    if (!FireMode.HasFiredEnough(BurstCount))
-                        return ShotResult.SucceededContinuously;
+                if (gunManager) gunManager.Invoke_OnShootCancelled(this, 1);
+                return ShotResult.Cancelled;
+            }
 
-                    Trigger = TriggerState.Fired;
-                    LastBurstEndedTime = Networking.GetNetworkDateTime();
-                    return ShotResult.Succeeded;
-                }
-                case ShotResult.Failed:
+            if (FireMode == FireMode.Safety)
+            {
+                Trigger = TriggerState.Fired;
+
+                if (gunManager) gunManager.Invoke_OnShootCancelled(this, 12);
+                return ShotResult.Cancelled;
+            }
+
+            if (!HasBulletInChamber)
+            {
+                Trigger = TriggerState.Fired;
+
+                if (HasCocked)
                 {
                     _EmptyShoot();
-
-                    Trigger = TriggerState.Fired;
+                    gunManager.Invoke_OnShootFailed(this, 14);
                     return ShotResult.Failed;
                 }
-                case ShotResult.Cancelled:
-                default:
-                {
-                    Trigger = TriggerState.Fired;
-                    return ShotResult.Cancelled;
-                }
+
+                gunManager.Invoke_OnShootCancelled(this, 14);
+                return ShotResult.Cancelled;
             }
+
+            if (IsInWall && VariantData.UseWallCheck && (!gunManager || gunManager.UseCollisionCheck))
+            {
+                Trigger = TriggerState.Fired;
+
+                if (gunManager) gunManager.Invoke_OnShootCancelled(this, 100);
+                return ShotResult.Cancelled;
+            }
+
+            if (gunManager && !gunManager.CanShoot(this, out var reasonId))
+            {
+                Trigger = TriggerState.Fired;
+
+                gunManager.Invoke_OnShootCancelled(this, reasonId);
+                return ShotResult.Cancelled;
+            }
+
+            if (State != GunState.Idle)
+            {
+                Trigger = TriggerState.Fired;
+
+                if (HasCocked)
+                {
+                    _EmptyShoot();
+                }
+
+                gunManager.Invoke_OnShootFailed(this, 13);
+                return ShotResult.Failed;
+            }
+
+            var now = Networking.GetNetworkDateTime();
+            if (now.Subtract(LastShotTime).TotalSeconds < SecondsPerRound ||
+                now.Subtract(LastBurstEndedTime).TotalSeconds < PerBurstInterval)
+            {
+                return ShotResult.Paused;
+            }
+
+            _Shoot();
+            ++BurstCount;
+
+            if (!FireMode.HasFiredEnough(BurstCount))
+            {
+                return ShotResult.SucceededContinuously;
+            }
+
+            Trigger = TriggerState.Fired;
+            LastBurstEndedTime = Networking.GetNetworkDateTime();
+            return ShotResult.Succeeded;
         }
 
         /// <summary>
@@ -453,7 +517,8 @@ namespace CenturionCC.System.Gun
         /// </summary>
         /// <param name="position">New world position for this Gun.</param>
         /// <param name="rotation">New world rotation for this Gun.</param>
-        [PublicAPI] [NetworkCallable]
+        [PublicAPI]
+        [NetworkCallable]
         public void MoveTo(Vector3 position, Quaternion rotation)
         {
             _SetOwner(Networking.LocalPlayer);
@@ -471,7 +536,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual bool _HasNextBullet()
         {
-            return true;
+            return ReloadType == ReloadType.None || BulletsInMagazine > 0;
         }
 
         /// <summary>
@@ -481,10 +546,20 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual bool _LoadBullet()
         {
-            if (HasBulletInChamber)
-                _EjectBullet();
-            HasBulletInChamber = true;
-            RequestSerialization();
+            if (_HasNextBullet())
+            {
+                if (ReloadType == ReloadType.None)
+                {
+                    HasBulletInChamber = true;
+                }
+                else
+                {
+                    --BulletsInMagazine;
+                    HasBulletInChamber = BulletsInMagazine >= 0;
+                    if (!HasBulletInChamber) BulletsInMagazine = 0;
+                }
+            }
+
             return HasBulletInChamber;
         }
 
@@ -495,7 +570,6 @@ namespace CenturionCC.System.Gun
         public virtual void _EjectBullet()
         {
             HasBulletInChamber = false;
-            RequestSerialization();
         }
 
         public virtual void _SetHandlesVisible(bool isVisible)
@@ -602,6 +676,7 @@ namespace CenturionCC.System.Gun
                 HapticData.Shooting.PlayBothHand();
 
             HasCocked = false;
+            _EjectBullet();
         }
 
         [NetworkCallable(100)]
@@ -626,6 +701,9 @@ namespace CenturionCC.System.Gun
             animationHelper._SetEmptyShooting();
             if (AudioData)
                 _PlayAudio(AudioData.EmptyShooting, AudioData.EmptyShootingOffset);
+
+            HasCocked = false;
+
             if (gunManager)
                 gunManager.Invoke_OnEmptyShoot(this);
         }
@@ -700,6 +778,7 @@ namespace CenturionCC.System.Gun
             State = GunState.Idle;
             HasBulletInChamber = false;
             HasCocked = false;
+            BulletsInMagazine = 0;
             CollisionCount = 0;
 
             foreach (var behaviour in Behaviours)
@@ -920,51 +999,6 @@ namespace CenturionCC.System.Gun
             RequestSerialization();
         }
 
-        protected ShotResult CanShoot()
-        {
-            if (!VariantData)
-            {
-                if (gunManager)
-                    gunManager.Invoke_OnShootCancelled(this, 1);
-                return ShotResult.Cancelled;
-            }
-
-            if (FireMode == FireMode.Safety)
-            {
-                if (gunManager)
-                    gunManager.Invoke_OnShootFailed(this, 12);
-                return ShotResult.Failed;
-            }
-
-            if (IsInWall && VariantData.UseWallCheck && (!gunManager || gunManager.UseCollisionCheck))
-            {
-                if (gunManager)
-                    gunManager.Invoke_OnShootFailed(this, 100);
-                return ShotResult.Failed;
-            }
-
-            if (gunManager && !gunManager.CanShoot(this, out var reasonId))
-            {
-                gunManager.Invoke_OnShootCancelled(this, reasonId);
-                return ShotResult.Cancelled;
-            }
-
-            if (State != GunState.Idle)
-            {
-                Trigger = TriggerState.Fired;
-                return ShotResult.Failed;
-            }
-
-            var now = Networking.GetNetworkDateTime();
-            if (now.Subtract(LastShotTime).TotalSeconds < SecondsPerRound ||
-                now.Subtract(LastBurstEndedTime).TotalSeconds < PerBurstInterval)
-            {
-                return ShotResult.Paused;
-            }
-
-            return ShotResult.Succeeded;
-        }
-
         private void ProcessStateChange(GunState previousState, GunState nextState)
         {
             if (nextState == GunState.InCockingTwisting && previousState != GunState.InCockingTwisting)
@@ -1010,6 +1044,14 @@ namespace CenturionCC.System.Gun
                     animationHelper._SetCockingProgress(0);
                     animationHelper._SetTwistingProgress(0);
                 }
+            }
+            else if (nextState == GunState.Reloading && previousState != GunState.Reloading)
+            {
+                if (AudioData) _PlayAudio(AudioData.MagazineReleased, AudioData.MagazineReleasedOffset);
+            }
+            else if (nextState != GunState.Reloading && previousState == GunState.Reloading)
+            {
+                if (AudioData) _PlayAudio(AudioData.MagazineLoaded, AudioData.MagazineLoadedOffset);
             }
         }
 

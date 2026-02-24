@@ -16,6 +16,12 @@ namespace CenturionCC.System.Gun
 
         [Header("Messages")]
         [SerializeField]
+        private TranslatableMessage onCantShootBecauseStateNotIdle;
+
+        [SerializeField]
+        private TranslatableMessage onCantShootBecauseNoBulletInChamber;
+
+        [SerializeField]
         private TranslatableMessage onGunsResetMessage;
 
         [SerializeField]
@@ -83,9 +89,12 @@ namespace CenturionCC.System.Gun
 
         private void SendCancelledOrFailedNotification(int reasonId)
         {
+            // 1   = No VariantData is assigned
             // 10  = ShootNext flag is false
-            // 11  = RemoteInstance is null
-            // 12  = RemoteInstance.FireMode is 0 == safety
+            // 11  = Gun is null
+            // 12  = Gun.FireMode is 0 == safety
+            // 13  = Gun.State != Idle
+            // 14  = Gun.HasBulletInChamber == false
             // 100 = in wall
             // 101 = in safe zone
             // 200 = callback returned false
@@ -96,6 +105,12 @@ namespace CenturionCC.System.Gun
             {
                 case 12:
                     SendNotification(onCantShootWhenSelectorSafety, true);
+                    break;
+                case 13:
+                    SendNotification(onCantShootBecauseStateNotIdle, true);
+                    break;
+                case 14:
+                    SendNotification(onCantShootBecauseNoBulletInChamber, true);
                     break;
                 case 100:
                     SendNotification(onCantShootInWall, true);
