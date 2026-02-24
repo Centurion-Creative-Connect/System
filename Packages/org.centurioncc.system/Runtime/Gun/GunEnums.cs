@@ -11,7 +11,7 @@ namespace CenturionCC.System.Gun
         TwoRoundsBurst = 3,
         ThreeRoundsBurst = 4,
         FourRoundsBurst = 5,
-        FiveRoundsBurst = 6
+        FiveRoundsBurst = 6,
     }
 
     public enum HandleType
@@ -19,7 +19,7 @@ namespace CenturionCC.System.Gun
         None = 0,
         MainHandle = 1,
         SubHandle = 2,
-        CustomHandle = 3
+        CustomHandle = 3,
     }
 
     public enum GunState
@@ -28,7 +28,6 @@ namespace CenturionCC.System.Gun
         /// When GunState conversion (byte to GunState) failed.
         /// </summary>
         /// <seealso cref="Gun.State"/>
-        /// <seealso cref="Gun.RawState"/>
         Unknown = 0xFF,
 
         /// <summary>
@@ -49,7 +48,12 @@ namespace CenturionCC.System.Gun
         /// <summary>
         /// When it's twisting state. For most of guns in this state should not be able to shoot.
         /// </summary>
-        InCockingTwisting = 3
+        InCockingTwisting = 3,
+
+        /// <summary>
+        /// When it's reloading state. Should not be able to shoot.'
+        /// </summary>
+        Reloading = 4,
     }
 
     public enum TriggerState
@@ -72,7 +76,7 @@ namespace CenturionCC.System.Gun
         /// <summary>
         /// Trigger when it's pulled, and should not be firing until released again.
         /// </summary>
-        Fired = 3
+        Fired = 3,
     }
 
     public enum ShotResult
@@ -106,12 +110,18 @@ namespace CenturionCC.System.Gun
         Failed,
     }
 
+    public enum ReloadType
+    {
+        None,
+        Simplified,
+    }
+
     public enum MovementOption
     {
         Inherit,
         Direct,
         Multiply,
-        Disable
+        Disable,
     }
 
     public enum CombatTagOption
@@ -119,21 +129,21 @@ namespace CenturionCC.System.Gun
         Inherit,
         Direct,
         Multiply,
-        Disable
+        Disable,
     }
 
     public enum GunManagerResetType
     {
         All,
-        Unused
+        Unused,
     }
 
     public static class GunStateHelper
     {
-        public const byte MaxValue = (byte)GunState.InCockingTwisting;
+        public const byte MaxValue = (byte)GunState.Reloading;
         public const byte MinValue = (byte)GunState.Idle;
 
-        public static string GetStateString(byte value)
+        private static string GetStateString(byte value)
         {
             return
                 value == (int)GunState.Unknown ? "Undefined" :
@@ -141,6 +151,7 @@ namespace CenturionCC.System.Gun
                 value == (int)GunState.InCockingPull ? "InCockingPull" :
                 value == (int)GunState.InCockingPush ? "InCockingPush" :
                 value == (int)GunState.InCockingTwisting ? "InCockingTwisting" :
+                value == (int)GunState.Reloading ? "Reloading" :
                 $"Unknown ({value})";
         }
 

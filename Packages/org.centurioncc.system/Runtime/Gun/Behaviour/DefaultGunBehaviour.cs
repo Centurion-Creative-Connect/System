@@ -20,12 +20,25 @@ namespace CenturionCC.System.Gun.Behaviour
         {
             if (instance.Trigger == TriggerState.Firing)
             {
+                if (!instance.HasBulletInChamber)
+                {
+                    instance._LoadBullet();
+                }
+
+                if (!instance.HasCocked)
+                {
+                    instance.HasCocked = true;
+                }
+
                 var shotResult = instance._TryToShoot();
                 var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
                 if (hasSucceeded)
                 {
                     if (!instance.HasBulletInChamber)
+                    {
                         instance._LoadBullet();
+                    }
+
                     instance.HasCocked = true;
                 }
             }
@@ -35,7 +48,10 @@ namespace CenturionCC.System.Gun.Behaviour
         {
             instance.State = GunState.Idle;
             if (!instance.HasBulletInChamber)
+            {
                 instance._LoadBullet();
+            }
+
             instance.HasCocked = true;
         }
 

@@ -74,6 +74,12 @@ namespace CenturionCC.System.Gun.DataStore
 
         [SerializeField] private TranslatableMessage vrTooltip;
 
+        [SerializeField] private ReloadType reloadType = ReloadType.None;
+
+        [SerializeField] private float reloadTimeInSeconds = 3f;
+
+        [SerializeField] private int defaultMagazineSize = 30;
+
         [SerializeField] private ObjectType objectType = ObjectType.Metallic;
 
         [SerializeField] private float objectWeight;
@@ -144,6 +150,10 @@ namespace CenturionCC.System.Gun.DataStore
 
         public string TooltipMessage =>
             Networking.LocalPlayer.IsUserInVR() ? _MessageOrEmpty(vrTooltip) : _MessageOrEmpty(desktopTooltip);
+
+        public ReloadType ReloadType => reloadType;
+        public float ReloadTimeInSeconds => reloadTimeInSeconds;
+        public int DefaultMagazineSize => defaultMagazineSize;
 
         public ObjectType ObjectType => objectType;
         public float ObjectWeight => objectWeight;
