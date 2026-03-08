@@ -125,7 +125,7 @@ namespace CenturionCC.System.Gun
             _pivotLookAtOffsetPos = target.worldToLocalMatrix.MultiplyPoint3x4(_pivotLookAtTransform.position);
         }
 
-        private void Sync()
+        private void _RequestSync()
         {
             if (!Networking.IsOwner(gameObject))
                 Networking.SetOwner(Networking.LocalPlayer, gameObject);
@@ -153,7 +153,7 @@ namespace CenturionCC.System.Gun
             }
 
             RecalculatePivot();
-            Sync();
+            _RequestSync();
         }
 
         public void SetRecoilErgonomics(float recoilErgonomics)
@@ -183,7 +183,7 @@ namespace CenturionCC.System.Gun
         {
             _primaryXAngleOffset = angle;
             RecalculatePivot();
-            Sync();
+            _RequestSync();
         }
     }
 }

@@ -15,7 +15,7 @@ using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.Gun
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)] [RequireComponent(typeof(GunAnimationHelper), typeof(GunPositioningHelper))]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)] [RequireComponent(typeof(GunAnimationHelper), typeof(GunPositioningHelper), typeof(GunReloadHelper))]
     public abstract class GunBase : GunHandleCallbackBase
     {
         #region Constants
@@ -48,6 +48,9 @@ namespace CenturionCC.System.Gun
         [SerializeField] [NewbieInject(SearchScope.Self)]
         protected GunPositioningHelper positioningHelper;
 
+        [SerializeField] [NewbieInject(SearchScope.Self)]
+        protected GunReloadHelper reloadHelper;
+
         [SerializeField]
         private Transform target;
 
@@ -59,25 +62,19 @@ namespace CenturionCC.System.Gun
         #endregion
 
         #region PrivateFields
-        [UdonSynced] [FieldChangeCallback(nameof(SyncedFireModeIndex))]
-        private int _fireModeIndex;
-
         [UdonSynced] [FieldChangeCallback(nameof(SyncedState))]
         private int _state;
-
-        [UdonSynced] [FieldChangeCallback(nameof(HasBulletInChamber))]
-        private bool _hasBulletInChamber;
-
-        [UdonSynced] [FieldChangeCallback(nameof(HasCocked))]
-        private bool _hasCocked;
 
         [UdonSynced] [FieldChangeCallback(nameof(BulletsInMagazine))]
         private int _bulletsInMagazine;
 
         private TriggerState _trigger;
+        private bool _hasBulletInChamber;
+        private bool _hasCocked;
         private bool _isLocal;
         private int _burstCount;
         private int _collisionCount;
+        private int _fireModeIndex;
         #endregion
 
         #region Properties
@@ -89,6 +86,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI] [CanBeNull] public GunHandle SubHandle => subHandle;
         [PublicAPI] public GunAnimationHelper AnimationHelper => animationHelper;
         [PublicAPI] public GunPositioningHelper PositioningHelper => positioningHelper;
+        [PublicAPI] public GunReloadHelper ReloadHelper => reloadHelper;
         [PublicAPI] [field: UdonSynced] public bool IsHolstered { get; protected set; }
 
         /// <summary>
@@ -128,37 +126,37 @@ namespace CenturionCC.System.Gun
         /// <summary>
         /// Currently active <see cref="FireMode"/> of this Gun.
         /// </summary>
-        [PublicAPI] public FireMode FireMode => VariantData != null && VariantData.FireModeArray.Length > SyncedFireModeIndex ? VariantData.FireModeArray[SyncedFireModeIndex] : FireMode.Safety;
+        [PublicAPI] public FireMode FireMode => VariantData != null && VariantData.FireModeArray.Length > FireModeIndex ? VariantData.FireModeArray[FireModeIndex] : FireMode.Safety;
 
-        [PublicAPI] public float SecondsPerRound => VariantData != null && VariantData.SecondsPerRoundArray.Length > SyncedFireModeIndex ? VariantData.SecondsPerRoundArray[SyncedFireModeIndex] : 0;
+        [PublicAPI] public float SecondsPerRound => VariantData != null && VariantData.SecondsPerRoundArray.Length > FireModeIndex ? VariantData.SecondsPerRoundArray[FireModeIndex] : 0;
 
-        [PublicAPI] public float PerBurstInterval => VariantData != null && VariantData.PerBurstIntervalArray.Length > SyncedFireModeIndex ? VariantData.PerBurstIntervalArray[SyncedFireModeIndex] : 0;
+        [PublicAPI] public float PerBurstInterval => VariantData != null && VariantData.PerBurstIntervalArray.Length > FireModeIndex ? VariantData.PerBurstIntervalArray[FireModeIndex] : 0;
 
         [PublicAPI] public int CurrentFireModeIndex
         {
-            get => SyncedFireModeIndex;
+            get => FireModeIndex;
             set
             {
                 if (VariantData == null)
                 {
                     logger.LogError($"{Prefix}set_CurrentFireModeIndex: Setting index to 0 because VariantData is null.");
-                    SyncedFireModeIndex = 0;
+                    FireModeIndex = 0;
                     return;
                 }
 
                 if (value >= VariantData.FireModeArray.Length || value < 0)
                 {
                     logger.Log($"{Prefix}set_CurrentFireModeIndex: Setting index to 0 because {value} is out of bounds");
-                    SyncedFireModeIndex = 0;
+                    FireModeIndex = 0;
                 }
                 else
                 {
-                    SyncedFireModeIndex = value;
+                    FireModeIndex = value;
                 }
             }
         }
 
-        private int SyncedFireModeIndex
+        private int FireModeIndex
         {
             get => _fireModeIndex;
             set
@@ -586,6 +584,13 @@ namespace CenturionCC.System.Gun
                 gunHandle.IsVisible = isVisible;
             }
         }
+
+        [PublicAPI]
+        public void _RequestSync()
+        {
+            _SetOwner(Networking.LocalPlayer);
+            RequestSerialization();
+        }
         #endregion
 
         #region Internals
@@ -773,7 +778,7 @@ namespace CenturionCC.System.Gun
                 }
             }
 
-            SyncedFireModeIndex = 0;
+            FireModeIndex = 0;
             Trigger = FireMode == FireMode.Safety ? TriggerState.Idle : TriggerState.Armed;
             State = GunState.Idle;
             HasBulletInChamber = false;
@@ -838,10 +843,9 @@ namespace CenturionCC.System.Gun
                 behaviour.OnHandlePickup(this, instance);
             }
 
-            _SetOwner(Networking.LocalPlayer);
 
             _UpdatePositioningHelper();
-            RequestSerialization();
+            _RequestSync();
         }
 
         public override void OnHandleUseDown(GunHandle instance, HandleType handleType)
@@ -994,9 +998,8 @@ namespace CenturionCC.System.Gun
                 }
             }
 
-            _SetOwner(Networking.LocalPlayer);
             _UpdatePositioningHelper();
-            RequestSerialization();
+            _RequestSync();
         }
 
         private void ProcessStateChange(GunState previousState, GunState nextState)
