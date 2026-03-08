@@ -114,8 +114,7 @@ namespace CenturionCC.System.Gun
             if (TargetAnimator) TargetAnimator.SetBool(_isPickedUpGlobalAnimHash, isPickedUpGlobally);
         }
 
-        [NetworkCallable]
-        public void SetReloadProgress(float progress)
+        public void _SetReloadProgress(float progress)
         {
             if (TargetAnimator) TargetAnimator.SetFloat(_reloadProgressAnimHash, progress);
         }

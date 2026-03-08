@@ -14,10 +14,10 @@ namespace CenturionCC.System.Gun.Centurion
         [PublicAPI] [CanBeNull]
         public GameObject model;
 
-        private bool _hasInit;
-
         [UdonSynced] [FieldChangeCallback(nameof(IsOccupied))]
         private bool _isOccupied;
+
+        private bool _isUpdatingVariantData;
 
         private GunVariantDataStore _variantData;
 
@@ -39,10 +39,17 @@ namespace CenturionCC.System.Gun.Centurion
             private set
             {
                 _variantDataUniqueId = value;
+
+                // recurse guard
+                if (_isUpdatingVariantData) return;
+                _isUpdatingVariantData = true;
+
                 if (_variantDataUniqueId == 0xFF)
                     Internal_ResetVariantData();
                 else
                     RefreshData();
+
+                _isUpdatingVariantData = false;
             }
         }
 
@@ -108,8 +115,7 @@ namespace CenturionCC.System.Gun.Centurion
                 Destroy(model);
             }
 
-            // Set unique id - do not update the property `VariantDataUniqueId` because it'll call this function back!
-            _variantDataUniqueId = data.UniqueId;
+            VariantDataUniqueId = data.UniqueId;
 
             model = Instantiate(data.gameObject, transform, false);
             if (model == null)
@@ -199,7 +205,7 @@ namespace CenturionCC.System.Gun.Centurion
 
             if (data == null) return;
 
-            Internal_SetVariantData(data);
+            VariantDataUniqueId = data.UniqueId;
 
             Networking.SetOwner(Networking.LocalPlayer, gameObject);
             RequestSerialization();

@@ -40,9 +40,6 @@ namespace CenturionCC.System.Gun
         private int _isActionPerformed;
 
         private int _lastIsActionPressed;
-        private GunBase[] _simplifiedReloadingGun = new GunBase[0];
-
-        private float _simplifiedReloadStartedTime;
         private int _wasPerformedThisFrame;
 
         public VRActionType ReloadAction
@@ -68,7 +65,6 @@ namespace CenturionCC.System.Gun
             HandleVRInputs();
             HandleDesktopInputs();
             HandleLocalHeldGuns();
-            HandleSimplifiedReload();
         }
 
         public override void InputJump(bool value, UdonInputEventArgs args)
@@ -91,6 +87,8 @@ namespace CenturionCC.System.Gun
         {
             foreach (var gun in gunManager.GetLocallyHeldGunInstances())
             {
+                // UdonSharp cannot discard a variable with _
+                // ReSharper disable once UnusedVariable
                 gun._GetFiringPositionAndRotation(out var firingPos, out var firingRot);
                 var gunForward = firingRot * Vector3.forward;
                 _isActionPerformed = BitFlagUtil.SetFlag(_isActionPerformed, (int)VRActionType.GunDirectionUp, Vector3.Dot(Vector3.up, gunForward) > 0.5f);
@@ -169,47 +167,10 @@ namespace CenturionCC.System.Gun
             }
         }
 
-        private void HandleSimplifiedReload()
-        {
-            for (var i = 0; i < _simplifiedReloadingGun.Length; i++)
-            {
-                var gun = _simplifiedReloadingGun[i];
-                var progress = Mathf.Clamp01((Time.timeSinceLevelLoad - _simplifiedReloadStartedTime) / gun.ReloadTimeInSeconds);
-                var animHelper = gun.AnimationHelper;
-
-                animHelper.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(animHelper.SetReloadProgress), progress);
-
-                if (!Mathf.Approximately(progress, 1))
-                {
-                    continue;
-                }
-
-                // if reload has been completed
-                _simplifiedReloadingGun = _simplifiedReloadingGun.RemoveItem(gun);
-                --i;
-
-                gun.State = GunState.Idle;
-                gun.BulletsInMagazine = gun.DefaultMagazineSize;
-
-                if (!Networking.IsOwner(gameObject))
-                {
-                    Networking.SetOwner(Networking.LocalPlayer, gun.gameObject);
-                }
-
-                gun.RequestSerialization();
-
-                Debug.Log($"[GunController] Simplified Reload Ended for {gun.name}");
-            }
-        }
-
         [PublicAPI]
         public void SimplifiedReload()
         {
-            if (_simplifiedReloadingGun.Length != 0)
-            {
-                Debug.Log("[GunController] Simplified Reload will not start because there is no compatible guns");
-                return;
-            }
+            Debug.Log("[GunController] SimplifiedReload");
 
             foreach (var gun in gunManager.GetLocallyHeldGunInstances())
             {
@@ -218,24 +179,15 @@ namespace CenturionCC.System.Gun
                     continue;
                 }
 
-                _simplifiedReloadingGun = _simplifiedReloadingGun.AddAsSet(gun);
-                gun.State = GunState.Reloading;
-
-                if (!Networking.IsOwner(gun.gameObject))
-                {
-                    Networking.SetOwner(Networking.LocalPlayer, gun.gameObject);
-                }
-
-                gun.RequestSerialization();
-
-                _simplifiedReloadStartedTime = Time.timeSinceLevelLoad;
-                Debug.Log($"[GunController] Simplified Reload Started for {gun.name}");
+                gun.ReloadHelper.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(gun.ReloadHelper.DoSimplifiedReload));
             }
         }
 
         [PublicAPI]
         public void CycleFireMode()
         {
+            Debug.Log("[GunController] CycleFireMode");
+
             foreach (var gun in gunManager.GetLocallyHeldGunInstances())
             {
                 gun.CurrentFireModeIndex++;
