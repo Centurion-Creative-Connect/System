@@ -60,6 +60,7 @@ namespace CenturionCC.System.Gun
         public abstract void _RequestReset(int index);
         public abstract void _RequestResetAll(GunManagerResetType resetType);
         public abstract void _RequestRefresh();
+        public abstract void _RequestSync();
 
         public virtual GunBase[] GetLocallyHeldGunInstances()
         {

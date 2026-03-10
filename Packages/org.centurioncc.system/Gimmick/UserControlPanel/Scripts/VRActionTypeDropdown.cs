@@ -75,7 +75,7 @@ namespace CenturionCC.System.Gimmick.UserControlPanel
             edited |= ResolveBindConflict(ref current, (((int)VRActionType.InputLookUp) | ((int)VRActionType.InputLookDown)), flag);
             if (!edited)
             {
-                current = BitFlagUtil.ToggleFlag(current, flag);
+                current = BitFlag.Toggle(current, flag);
             }
 
             SetValue(current);
@@ -127,9 +127,9 @@ namespace CenturionCC.System.Gimmick.UserControlPanel
                 return false;
             }
 
-            var maskExcludingInput = BitFlagUtil.SetFlag(mask, input, false);
-            flags = BitFlagUtil.SetFlag(flags, maskExcludingInput, false);
-            flags = BitFlagUtil.ToggleFlag(flags, input);
+            var maskExcludingInput = BitFlag.Set(mask, input, false);
+            flags = BitFlag.Set(flags, maskExcludingInput, false);
+            flags = BitFlag.Toggle(flags, input);
             return true;
         }
     }

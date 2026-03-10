@@ -1,10 +1,12 @@
 ﻿using DerpyNewbie.Common;
+using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.UdonNetworkCalling;
+using VRC.Udon.Common.Interfaces;
 namespace CenturionCC.System.Gun
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class GunReloadHelper : UdonSharpBehaviour
     {
         [SerializeField] [NewbieInject(SearchScope.Self)]
@@ -15,29 +17,46 @@ namespace CenturionCC.System.Gun
 
         private float _reloadStartedTime;
 
-        [NetworkCallable]
-        public void DoSimplifiedReload()
+        public bool IsReloading => Time.timeSinceLevelLoad < _reloadStartedTime + _reloadDuration;
+
+        [PublicAPI]
+        public void _DoSimplifiedReload(bool force = false)
         {
-            DoSimplifiedReload_Complex(gun.ReloadTimeInSeconds, gun.DefaultMagazineSize, false);
+            _DoSimplifiedReload_Complex(gun.ReloadTimeInSeconds, gun.DefaultMagazineSize, force);
         }
 
-        [NetworkCallable]
-        public void DoSimplifiedReload_Complex(float reloadDuration, int nextBulletsRemaining, bool force)
+        [PublicAPI]
+        public void _DoSimplifiedReload_Complex(float reloadDuration, int nextBulletsRemaining, bool force)
         {
-            if (!force && nextBulletsRemaining == gun.BulletsInMagazine)
+            if (IsReloading)
             {
-                Debug.Log($"[GunReloadHelper-{name}] DoSimplifiedReload: aborted because magazine is already full");
+                Debug.Log($"[GunReloadHelper-{name}] _DoSimplifiedReload_Complex: aborted because already reloading");
                 return;
             }
 
+            if (!force && nextBulletsRemaining == gun.BulletsInMagazine)
+            {
+                Debug.Log($"[GunReloadHelper-{name}] Internal_HandleSimplifiedReload: aborted because magazine is already full");
+                return;
+            }
+
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_HandleSimplifiedReload), reloadDuration, nextBulletsRemaining, force);
+        }
+
+        [NetworkCallable]
+        public void Internal_HandleSimplifiedReload(float reloadDuration, int nextBulletsRemaining, bool force)
+        {
             var now = Time.timeSinceLevelLoad;
             _reloadStartedTime = now;
             _reloadDuration = reloadDuration;
             _nextBulletsRemaining = nextBulletsRemaining;
 
+            // FIXME: should be in _Internal_SimplifiedReloadTick() but didnt work for some reason (repeatedly reverted back to Idle)
+            gun.State = GunState.Reloading;
+
             if (_isReloadTicking)
             {
-                Debug.Log($"[GunReloadHelper-{name}] DoSimplifiedReload: will not schedule tick because it is already ticking");
+                Debug.Log($"[GunReloadHelper-{name}] Internal_HandleSimplifiedReload: will not schedule tick because it is already ticking");
                 return;
             }
 
@@ -51,7 +70,6 @@ namespace CenturionCC.System.Gun
             var now = Time.timeSinceLevelLoad;
             var progress = (now - _reloadStartedTime) / _reloadDuration;
 
-            gun.State = GunState.Reloading;
             gun.AnimationHelper._SetReloadProgress(Mathf.Clamp01(progress));
 
             if (progress < 1)
@@ -65,7 +83,9 @@ namespace CenturionCC.System.Gun
             gun.BulletsInMagazine = _nextBulletsRemaining;
             _isReloadTicking = false;
 
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             Debug.Log($"[GunReloadHelper-{name}] _Internal_SimplifiedReloadTick: reload completed");
+#endif
         }
     }
 }

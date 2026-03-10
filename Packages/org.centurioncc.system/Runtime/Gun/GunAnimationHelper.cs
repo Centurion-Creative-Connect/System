@@ -4,11 +4,10 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.UdonNetworkCalling;
 using VRC.Udon.Common.Interfaces;
-using NotImplementedException = System.NotImplementedException;
 
 namespace CenturionCC.System.Gun
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class GunAnimationHelper : UdonSharpBehaviour
     {
         private readonly int _bulletsInMagazineAnimHash = Animator.StringToHash(GunUtility.BulletsInMagazineParamName);

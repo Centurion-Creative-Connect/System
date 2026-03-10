@@ -95,11 +95,11 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public VRCPlayerApi CurrentHolder => MainHandle && Utilities.IsValid(MainHandle.CurrentPlayer)
             ? MainHandle.CurrentPlayer
-            : SubHandle && Utilities.IsValid(SubHandle.CurrentPlayer)
+            : SubHandle != null && Utilities.IsValid(SubHandle.CurrentPlayer)
                 ? SubHandle.CurrentPlayer
                 : null;
 
-        public bool IsPickedUp => MainHandle.IsPickedUp || (SubHandle && SubHandle.IsPickedUp);
+        public bool IsPickedUp => MainHandle.IsPickedUp || (SubHandle != null && SubHandle.IsPickedUp);
 
         [PublicAPI] public GunHolster ActiveHolster { get; protected set; }
 
@@ -244,7 +244,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public int BulletsInMagazine
         {
-            get => _bulletsInMagazine;
+            get => ReloadType == ReloadType.None ? 1 : _bulletsInMagazine;
             set
             {
                 _bulletsInMagazine = value;
@@ -296,16 +296,21 @@ namespace CenturionCC.System.Gun
         #endregion
 
         #region OverridenProperties
+        // checked
+        // ReSharper disable PossibleNullReferenceException
         public override ObjectType ObjectType => VariantData ? VariantData.ObjectType : ObjectType.Prototype;
 
         public override float ObjectWeight => VariantData ? VariantData.ObjectWeight : 0;
 
         public override string[] Tags => VariantData ? VariantData.Tags : new string[0];
+        // ReSharper restore PossibleNullReferenceException
 
         public override float WalkingSpeedMultiplier => 1;
         #endregion
 
         #region Aliases
+        // checked
+        // ReSharper disable PossibleNullReferenceException
         [PublicAPI] public string WeaponName => VariantData && !string.IsNullOrEmpty(VariantData.WeaponName)
             ? VariantData.WeaponName
             : name;
@@ -330,6 +335,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI] public ReloadType ReloadType => VariantData ? VariantData.ReloadType : ReloadType.None;
         [PublicAPI] public float ReloadTimeInSeconds => VariantData ? VariantData.ReloadTimeInSeconds : 0;
         [PublicAPI] public int DefaultMagazineSize => VariantData ? VariantData.DefaultMagazineSize : 0;
+        // ReSharper restore PossibleNullReferenceException
         #endregion
 
         #region UnityEvents
@@ -452,6 +458,7 @@ namespace CenturionCC.System.Gun
                 return ShotResult.Cancelled;
             }
 
+            // ReSharper disable once PossibleNullReferenceException
             if (IsInWall && VariantData.UseWallCheck && (!gunManager || gunManager.UseCollisionCheck))
             {
                 Trigger = TriggerState.Fired;
@@ -521,7 +528,7 @@ namespace CenturionCC.System.Gun
         {
             _SetOwner(Networking.LocalPlayer);
             MainHandle.ForceDrop();
-            if (SubHandle)
+            if (SubHandle != null)
                 SubHandle.ForceDrop();
 
             positioningHelper.MoveTo(position, rotation);
@@ -567,14 +574,19 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual void _EjectBullet()
         {
+            // FIXME: do proper bullet consuming
+            if (!HasBulletInChamber)
+            {
+                --BulletsInMagazine;
+            }
+
             HasBulletInChamber = false;
         }
 
         public virtual void _SetHandlesVisible(bool isVisible)
         {
-            if (MainHandle)
-                MainHandle.IsVisible = isVisible;
-            if (SubHandle)
+            MainHandle.IsVisible = isVisible;
+            if (SubHandle != null)
                 SubHandle.IsVisible = isVisible;
 
             // not gonna cache this - this is only used for debugging purposes!
@@ -588,6 +600,9 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public void _RequestSync()
         {
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
+            Debug.Log($"[GunBase-{name}] _RequestSync");
+#endif
             _SetOwner(Networking.LocalPlayer);
             RequestSerialization();
         }
@@ -722,15 +737,15 @@ namespace CenturionCC.System.Gun
         {
             if (!Networking.IsOwner(gameObject))
                 Networking.SetOwner(player, gameObject);
-            if (MainHandle && !Networking.IsOwner(MainHandle.gameObject))
+            if (!Networking.IsOwner(MainHandle.gameObject))
                 Networking.SetOwner(player, MainHandle.gameObject);
-            if (SubHandle && !Networking.IsOwner(SubHandle.gameObject))
+            if (SubHandle != null && !Networking.IsOwner(SubHandle.gameObject))
                 Networking.SetOwner(player, SubHandle.gameObject);
         }
 
         protected void _UpdatePositioningHelper()
         {
-            if (!SubHandle)
+            if (SubHandle == null)
             {
                 positioningHelper.SetControlAndPivot(ControlType.OneHanded, PivotType.Primary);
                 return;
@@ -746,8 +761,8 @@ namespace CenturionCC.System.Gun
         {
             // init AnimationHelper
             {
-                animationHelper.TargetAnimator = VariantData ? VariantData.Animator : null;
-                animationHelper.SyncedParameterNames = VariantData ? VariantData.SyncedAnimatorParameterNames : new string[0];
+                animationHelper.TargetAnimator = VariantData != null ? VariantData.Animator : null;
+                animationHelper.SyncedParameterNames = VariantData != null ? VariantData.SyncedAnimatorParameterNames : new string[0];
             }
 
             // init GunHandle & PositioningHelper
@@ -757,7 +772,8 @@ namespace CenturionCC.System.Gun
                 MainHandle.handleType = HandleType.MainHandle;
                 MainHandle.Detach();
                 MainHandle.AdjustScaleForDesktop(isUserInVR);
-                if (SubHandle)
+
+                if (SubHandle != null)
                 {
                     SubHandle.callback = this;
                     SubHandle.handleType = HandleType.SubHandle;
@@ -766,7 +782,7 @@ namespace CenturionCC.System.Gun
                 }
 
 
-                if (VariantData)
+                if (VariantData != null)
                 {
                     MainHandle.UseText = VariantData.TooltipMessage;
                     positioningHelper.SetOffsets(
@@ -797,9 +813,9 @@ namespace CenturionCC.System.Gun
         public override void OnHandlePickup(GunHandle instance, HandleType handleType)
         {
             var behaviours = Behaviours;
-            if (behaviours == null)
+            if (behaviours == null || behaviours.Length == 0)
             {
-                logger.LogError($"{Prefix}OnHandlePickup: Behaviour is null!");
+                logger.LogError($"{Prefix}OnHandlePickup: Behaviour is null or empty!");
                 instance.ForceDrop();
                 return;
             }
@@ -816,8 +832,7 @@ namespace CenturionCC.System.Gun
             animationHelper._SetTriggerProgress(0);
 
             // When only one handle is picked up at this time
-            if ((MainHandle != null && MainHandle.IsPickedUpLocally) ^
-                (SubHandle != null && SubHandle.IsPickedUpLocally))
+            if (MainHandle.IsPickedUpLocally ^ (SubHandle != null && SubHandle.IsPickedUpLocally))
             {
                 if (playerController != null)
                 {
@@ -942,7 +957,7 @@ namespace CenturionCC.System.Gun
         public override void OnHandleDrop(GunHandle instance, HandleType handleType)
         {
             var behaviours = Behaviours;
-            if (behaviours == null)
+            if (behaviours == null || behaviours.Length == 0)
             {
                 logger.LogError($"{Prefix}OnHandleDrop: Behaviour is null!");
                 return;
@@ -959,7 +974,7 @@ namespace CenturionCC.System.Gun
             }
 
             // When dropped entirely for local player
-            var mainDroppedLocally = MainHandle == null || !MainHandle.IsPickedUpLocally;
+            var mainDroppedLocally = !MainHandle.IsPickedUpLocally;
             var subDroppedLocally = SubHandle == null || !SubHandle.IsPickedUpLocally;
             var droppedLocally = mainDroppedLocally && subDroppedLocally;
             if (droppedLocally)
@@ -970,10 +985,7 @@ namespace CenturionCC.System.Gun
                 animationHelper._SetTriggerProgress(0);
 
                 // When dropped entirely
-                var mainDropped = MainHandle == null || !MainHandle.IsPickedUp;
-                var subDropped = SubHandle == null || !SubHandle.IsPickedUp;
-                var dropped = mainDropped && subDropped;
-                if (dropped)
+                if (!MainHandle.IsPickedUp && (SubHandle == null || !SubHandle.IsPickedUp))
                 {
                     animationHelper.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(animationHelper.SetPickedUpGlobally), false);
                 }
@@ -984,7 +996,9 @@ namespace CenturionCC.System.Gun
                 }
 
                 if (gunManager)
+                {
                     gunManager.OnGunDroppedLocally(this);
+                }
 
                 foreach (var behaviour in behaviours)
                 {
@@ -1004,10 +1018,52 @@ namespace CenturionCC.System.Gun
 
         private void ProcessStateChange(GunState previousState, GunState nextState)
         {
-            if (nextState == GunState.InCockingTwisting && previousState != GunState.InCockingTwisting)
+            if (previousState == nextState)
             {
-                if (AudioData)
+                return;
+            }
+
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
+            Debug.Log($"[GunBase-{name}] State changed from {previousState.GetStateString()} to {nextState.GetStateString()}.");
+#endif
+
+            switch (nextState)
+            {
+                case GunState.Idle:
                 {
+                    if (!IsLocal)
+                    {
+                        animationHelper._SetCockingProgress(0);
+                        animationHelper._SetTwistingProgress(0);
+                    }
+
+                    if (!AudioData)
+                    {
+                        break;
+                    }
+
+                    if (previousState == GunState.Reloading)
+                    {
+                        _PlayAudio(AudioData.MagazineInserted, AudioData.MagazineInsertedOffset);
+                    }
+                    else
+                    {
+                        _PlayAudio(AudioData.CockingRelease, AudioData.CockingReleaseOffset);
+                    }
+                    break;
+                }
+                case GunState.InCockingTwisting:
+                {
+                    if (!IsLocal)
+                    {
+                        animationHelper._SetTwistingProgress(1);
+                    }
+
+                    if (!AudioData)
+                    {
+                        break;
+                    }
+
                     if (!AudioData.UseSecondTwistAudio)
                     {
                         _PlayAudio(AudioData.CockingTwist, AudioData.CockingTwistOffset);
@@ -1023,38 +1079,36 @@ namespace CenturionCC.System.Gun
                             _PlayAudio(AudioData.CockingTwist, AudioData.CockingTwistOffset);
                         }
                     }
+
+                    break;
                 }
-
-                if (!IsLocal)
-                    animationHelper._SetTwistingProgress(1);
-            }
-            else if (nextState == GunState.InCockingPush && previousState == GunState.InCockingPull)
-            {
-                if (AudioData) _PlayAudio(AudioData.CockingPull, AudioData.CockingPullOffset);
-
-                if (!IsLocal)
+                case GunState.InCockingPush:
                 {
-                    animationHelper._SetCockingProgress(1);
-                    animationHelper._SetTwistingProgress(1);
-                }
-            }
-            else if (nextState == GunState.Idle && previousState != GunState.Idle)
-            {
-                if (AudioData) _PlayAudio(AudioData.CockingRelease, AudioData.CockingReleaseOffset);
 
-                if (!IsLocal)
-                {
-                    animationHelper._SetCockingProgress(0);
-                    animationHelper._SetTwistingProgress(0);
+                    if (!IsLocal)
+                    {
+                        animationHelper._SetCockingProgress(1);
+                        animationHelper._SetTwistingProgress(1);
+                    }
+
+                    if (!AudioData)
+                    {
+                        break;
+                    }
+
+                    _PlayAudio(AudioData.CockingPull, AudioData.CockingPullOffset);
+                    break;
                 }
-            }
-            else if (nextState == GunState.Reloading && previousState != GunState.Reloading)
-            {
-                if (AudioData) _PlayAudio(AudioData.MagazineReleased, AudioData.MagazineReleasedOffset);
-            }
-            else if (nextState != GunState.Reloading && previousState == GunState.Reloading)
-            {
-                if (AudioData) _PlayAudio(AudioData.MagazineLoaded, AudioData.MagazineLoadedOffset);
+                case GunState.Reloading:
+                {
+                    if (!AudioData)
+                    {
+                        break;
+                    }
+
+                    _PlayAudio(AudioData.MagazineReleased, AudioData.MagazineReleasedOffset);
+                    break;
+                }
             }
         }
 

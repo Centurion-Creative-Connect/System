@@ -408,7 +408,7 @@ MonoBehaviour:
   ergonomics: 3
   availableFiringModes: 01000000
   secondsPerRoundArray:
-  - Infinity
+  - 0.001
   perBurstIntervalArray:
   - 0
   maxRoundsPerSecond: Infinity
@@ -433,6 +433,9 @@ MonoBehaviour:
   subHandleOffset: {fileID: 7165319875346876008}
   desktopTooltip: {fileID: 0}
   vrTooltip: {fileID: 0}
+  reloadType: 0
+  reloadTimeInSeconds: 3
+  defaultMagazineSize: 30
   objectType: 3
   objectWeight: 0
   tags:
@@ -617,7 +620,7 @@ MonoBehaviour:
   SynchronizePosition: 0
   AllowCollisionOwnershipTransfer: 0
   Reliable: 0
-  _syncMethod: 2
+  _syncMethod: 1
   serializedProgramAsset: {fileID: 11400000, guid: 981f7c77bb9c9094eadf59f5420b6280,
     type: 2}
   programSource: {fileID: 11400000, guid: 3cb204f7b8e8bea4ba967bb1de05ead9, type: 2}
@@ -1599,6 +1602,12 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5333427345438382723}
     m_Modifications:
+    - target: {fileID: 3087810688484911979, guid: 29d8e196718d5934ba50c6cec564d5fd,
+        type: 3}
+      propertyPath: serializationData.Prefab
+      value: 
+      objectReference: {fileID: 3087810688484911979, guid: 29d8e196718d5934ba50c6cec564d5fd,
+        type: 3}
     - target: {fileID: 5503889769207367291, guid: 29d8e196718d5934ba50c6cec564d5fd,
         type: 3}
       propertyPath: serializationData.Prefab
@@ -1701,6 +1710,12 @@ PrefabInstance:
       propertyPath: serializationData.Prefab
       value: 
       objectReference: {fileID: 5503889770949212625, guid: 29d8e196718d5934ba50c6cec564d5fd,
+        type: 3}
+    - target: {fileID: 7538760022051715930, guid: 29d8e196718d5934ba50c6cec564d5fd,
+        type: 3}
+      propertyPath: serializationData.Prefab
+      value: 
+      objectReference: {fileID: 7538760022051715930, guid: 29d8e196718d5934ba50c6cec564d5fd,
         type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -7,6 +7,7 @@ using UnityEngine;
 using VRC.SDK3.UdonNetworkCalling;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
+using NotImplementedException = System.NotImplementedException;
 
 namespace CenturionCC.System.Gun.Centurion
 {
@@ -161,6 +162,16 @@ namespace CenturionCC.System.Gun.Centurion
                     managedGun.RefreshData();
         }
 
+        [NetworkCallable]
+        public void Internal_RequestSync()
+        {
+            foreach (var managedGun in GunInstances)
+            {
+                if (managedGun != null)
+                    managedGun._RequestSync();
+            }
+        }
+
         [CanBeNull]
         private CenturionGun FindAvailableGun()
         {
@@ -230,6 +241,11 @@ namespace CenturionCC.System.Gun.Centurion
         public override void _RequestRefresh()
         {
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_Refresh));
+        }
+
+        public override void _RequestSync()
+        {
+            SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(Internal_RequestSync));
         }
         #endregion
     }
