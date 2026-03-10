@@ -3,6 +3,7 @@ using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.UdonNetworkCalling;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
 namespace CenturionCC.System.Gun.Centurion
@@ -146,8 +147,7 @@ namespace CenturionCC.System.Gun.Centurion
             foreach (var behaviour in Behaviours)
                 behaviour.Dispose(this);
 
-            // Set unique id - do not update the property `VariantDataUniqueId` because it'll call this function back!
-            _variantDataUniqueId = 0xFF;
+            VariantDataUniqueId = 0xFF;
             animationHelper.TargetAnimator = null;
             if (model)
                 Destroy(model);
@@ -187,11 +187,11 @@ namespace CenturionCC.System.Gun.Centurion
             var lastOccupied = IsOccupied;
             IsOccupied = true;
 
-            _SetOwner(Networking.LocalPlayer);
-            RequestSerialization();
-
             if (lastOccupied != IsOccupied)
+            {
                 logger.Log($"{Prefix}{name} has been <color=green>occupied</color>");
+            }
+
             return true;
         }
 
@@ -203,12 +203,18 @@ namespace CenturionCC.System.Gun.Centurion
                 return;
             }
 
-            if (data == null) return;
+            if (data == null)
+            {
+                logger.LogError($"{Prefix}MasterOnly_SetVariantData: data is null!");
+                VariantDataUniqueId = 0xFF;
+            }
+            else
+            {
+                VariantDataUniqueId = data.UniqueId;
+            }
 
-            VariantDataUniqueId = data.UniqueId;
-
-            Networking.SetOwner(Networking.LocalPlayer, gameObject);
-            RequestSerialization();
+            _RequestSync();
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_PreApplyVariantData), VariantDataUniqueId);
         }
 
         public bool MasterOnly_Dispose()
@@ -225,13 +231,19 @@ namespace CenturionCC.System.Gun.Centurion
 
             Internal_ResetVariantData();
 
-            _SetOwner(Networking.LocalPlayer);
-            RequestSerialization();
+            _RequestSync();
 
             MoveTo(Vector3.down * 5, Quaternion.identity);
 
             logger.Log($"{Prefix}{name} has been <color=red>disposed</color>");
             return true;
+        }
+
+        [NetworkCallable]
+        public void Internal_PreApplyVariantData(byte uniqueId)
+        {
+            logger.Log($"{Prefix}Internal_PreApplyVariantData: {uniqueId}");
+            VariantDataUniqueId = uniqueId;
         }
     }
 }

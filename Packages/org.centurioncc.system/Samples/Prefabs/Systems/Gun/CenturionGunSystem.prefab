@@ -55,9 +55,10 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1973605760677500479}
-  gunManager: {fileID: 0}
-  reloadActionType: 9
-  fireModeActionType: 2
+  gunManager: {fileID: 4585734720644368861}
+  reloadActionType: 17
+  fireModeActionType: 8
+  allowVRInteractionOnDesktop: 0
 --- !u!114 &1973605760677500479
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -644,6 +645,11 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 6059016455022861236, guid: ebf6f8faa4af62c4ca96b3b25deb19e1,
         type: 3}
+      propertyPath: gunManager
+      value: 
+      objectReference: {fileID: 4585734720644368861}
+    - target: {fileID: 6059016455022861236, guid: ebf6f8faa4af62c4ca96b3b25deb19e1,
+        type: 3}
       propertyPath: serializationData.Prefab
       value: 
       objectReference: {fileID: 6059016455022861236, guid: ebf6f8faa4af62c4ca96b3b25deb19e1,
@@ -691,6 +697,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5403468148218872245}
     m_Modifications:
+    - target: {fileID: 6801754222330373504, guid: 0965f0d2afe4caa4e8999dfb945f2aac,
+        type: 3}
+      propertyPath: defaultProjectilePool
+      value: 
+      objectReference: {fileID: 5403468148443532090}
     - target: {fileID: 6801754222330373504, guid: 0965f0d2afe4caa4e8999dfb945f2aac,
         type: 3}
       propertyPath: serializationData.Prefab
@@ -956,6 +967,16 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8200335617599914986, guid: 22ae1840d37748643a75ae1b1b3f9a2c,
         type: 3}
+    - target: {fileID: 8200335617599914986, guid: 22ae1840d37748643a75ae1b1b3f9a2c,
+        type: 3}
+      propertyPath: ricochetHandlers.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8200335617599914986, guid: 22ae1840d37748643a75ae1b1b3f9a2c,
+        type: 3}
+      propertyPath: ricochetHandlers.Array.data[0]
+      value: 
+      objectReference: {fileID: 5403468147820952076}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -967,3 +988,15 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 5760665222158296171}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5403468148443532090 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 363955775551074129, guid: 22ae1840d37748643a75ae1b1b3f9a2c,
+    type: 3}
+  m_PrefabInstance: {fileID: 5760665222158296171}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 491c03c4f6885054792f3db8cd971c24, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

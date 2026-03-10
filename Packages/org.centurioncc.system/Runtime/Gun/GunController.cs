@@ -6,7 +6,6 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon.Common;
-using VRC.Udon.Common.Interfaces;
 namespace CenturionCC.System.Gun
 {
     [Flags]
@@ -69,18 +68,18 @@ namespace CenturionCC.System.Gun
 
         public override void InputJump(bool value, UdonInputEventArgs args)
         {
-            _isActionPerformed = BitFlagUtil.SetFlag(_isActionPerformed, (int)VRActionType.InputJump, value);
+            _isActionPerformed = BitFlag.Set(_isActionPerformed, (int)VRActionType.InputJump, value);
         }
 
         public override void InputUse(bool value, UdonInputEventArgs args)
         {
-            _isActionPerformed = BitFlagUtil.SetFlag(_isActionPerformed, (int)VRActionType.InputUse, value);
+            _isActionPerformed = BitFlag.Set(_isActionPerformed, (int)VRActionType.InputUse, value);
         }
 
         public override void InputLookVertical(float value, UdonInputEventArgs args)
         {
-            _isActionPerformed = BitFlagUtil.SetFlag(_isActionPerformed, (int)VRActionType.InputLookDown, value < -0.5f);
-            _isActionPerformed = BitFlagUtil.SetFlag(_isActionPerformed, (int)VRActionType.InputLookUp, value > 0.5f);
+            _isActionPerformed = BitFlag.Set(_isActionPerformed, (int)VRActionType.InputLookDown, value < -0.5f);
+            _isActionPerformed = BitFlag.Set(_isActionPerformed, (int)VRActionType.InputLookUp, value > 0.5f);
         }
 
         private void InputGunDirection()
@@ -91,8 +90,8 @@ namespace CenturionCC.System.Gun
                 // ReSharper disable once UnusedVariable
                 gun._GetFiringPositionAndRotation(out var firingPos, out var firingRot);
                 var gunForward = firingRot * Vector3.forward;
-                _isActionPerformed = BitFlagUtil.SetFlag(_isActionPerformed, (int)VRActionType.GunDirectionUp, Vector3.Dot(Vector3.up, gunForward) > 0.5f);
-                _isActionPerformed = BitFlagUtil.SetFlag(_isActionPerformed, (int)VRActionType.GunDirectionDown, Vector3.Dot(Vector3.down, gunForward) > 0.5f);
+                _isActionPerformed = BitFlag.Set(_isActionPerformed, (int)VRActionType.GunDirectionUp, Vector3.Dot(Vector3.up, gunForward) > 0.5f);
+                _isActionPerformed = BitFlag.Set(_isActionPerformed, (int)VRActionType.GunDirectionDown, Vector3.Dot(Vector3.down, gunForward) > 0.5f);
                 break;
             }
         }
@@ -179,7 +178,7 @@ namespace CenturionCC.System.Gun
                     continue;
                 }
 
-                gun.ReloadHelper.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(gun.ReloadHelper.DoSimplifiedReload));
+                gun.ReloadHelper._DoSimplifiedReload();
             }
         }
 

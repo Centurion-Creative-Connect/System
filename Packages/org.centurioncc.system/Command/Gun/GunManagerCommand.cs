@@ -285,6 +285,14 @@ namespace CenturionCC.System.Command.Gun
                     console.Println(result);
 
                     return result;
+                case "sync":
+                {
+                    console.Println("Requesting sync to master");
+
+                    gunManager._RequestSync();
+
+                    return ConsoleLiteral.GetNone();
+                }
                 default:
                     return console.PrintUsage(this);
                 // ReSharper restore StringLiteralTypo

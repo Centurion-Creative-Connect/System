@@ -44,9 +44,9 @@ namespace CenturionCC.System.Gun.DataStore
         [SerializeField]
         private Vector3 magazineReleasedOffset;
         [SerializeField]
-        private AudioDataStore magazineLoadedAudio;
+        private AudioDataStore magazineInsertedAudio;
         [SerializeField]
-        private Vector3 magazineLoadedOffset;
+        private Vector3 magazineInsertedOffset;
 
 
         [Header("Options")]
@@ -68,8 +68,8 @@ namespace CenturionCC.System.Gun.DataStore
         public Vector3 CockingReleaseOffset => cockingReleaseOffset;
         public AudioDataStore MagazineReleased => magazineReleasedAudio;
         public Vector3 MagazineReleasedOffset => magazineReleasedOffset;
-        public AudioDataStore MagazineLoaded => magazineLoadedAudio;
-        public Vector3 MagazineLoadedOffset => magazineLoadedOffset;
+        public AudioDataStore MagazineInserted => magazineInsertedAudio;
+        public Vector3 MagazineInsertedOffset => magazineInsertedOffset;
 
         // NOTE: for compatibility
         public bool UseSecondTwistAudio => useSecondTwistAudio;
