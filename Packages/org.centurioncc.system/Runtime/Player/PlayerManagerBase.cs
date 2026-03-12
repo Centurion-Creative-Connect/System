@@ -71,7 +71,6 @@ namespace CenturionCC.System.Player
         public abstract Color GetTeamColor(int teamId);
 
         #region InternalUtilities
-
         protected void UpdateAllPlayerView()
         {
             var players = GetPlayers();
@@ -80,11 +79,9 @@ namespace CenturionCC.System.Player
                 player.UpdateView();
             }
         }
-
         #endregion
 
         #region GetUtilities
-
         /// <summary>
         /// Retrieves a player instance by their VRC player ID.
         /// </summary>
@@ -267,11 +264,9 @@ namespace CenturionCC.System.Player
         {
             return GetDisplayName(player, unknownName, false);
         }
-
         #endregion
 
         #region CheckUtilities
-
         [PublicAPI]
         public virtual bool IsStaffTeamId(int teamId)
         {
@@ -293,6 +288,8 @@ namespace CenturionCC.System.Player
         [PublicAPI]
         public virtual bool IsFriendly(PlayerBase lhs, PlayerBase rhs)
         {
+            if (!lhs || !rhs) return false;
+
             return (lhs.TeamId == rhs.TeamId && !IsInFreeForAllTeam(lhs)) ||
                    (IsInStaffTeam(lhs) || IsInStaffTeam(rhs));
         }
@@ -314,11 +311,9 @@ namespace CenturionCC.System.Player
         {
             return IsSpecialTeamId(player.TeamId);
         }
-
         #endregion
 
         #region PlayerManagerEvents
-
         protected int CallbackCount;
         protected UdonSharpBehaviour[] EventCallbacks = new UdonSharpBehaviour[5];
 
@@ -529,7 +524,6 @@ namespace CenturionCC.System.Player
                 if (pmCallback) pmCallback.OnPlayerExitedArea(player, area);
             }
         }
-
         #endregion
     }
 }

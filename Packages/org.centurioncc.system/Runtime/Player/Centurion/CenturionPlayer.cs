@@ -168,12 +168,17 @@ namespace CenturionCC.System.Player.Centurion
         private void Start()
         {
             LastDamageInfo = DamageInfo.NewEmpty();
-            playerManager.Invoke_OnPlayerAdded(this);
         }
 
         private void OnDestroy()
         {
             playerManager.Invoke_OnPlayerRemoved(this);
+        }
+
+        public override void OnPlayerRestored(VRCPlayerApi player)
+        {
+            if (!player.IsOwner(gameObject)) return;
+            playerManager.Invoke_OnPlayerAdded(this);
         }
 
         public override void SetTeam(int teamId)

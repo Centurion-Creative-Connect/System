@@ -120,30 +120,6 @@ namespace CenturionCC.System.Player.Centurion
             set => cullingDistance = value;
         }
 
-        public override void OnPlayerRestored(VRCPlayerApi player)
-        {
-            var centurionPlayer = (CenturionPlayer)GetPlayer(player);
-            if (!centurionPlayer)
-            {
-                logger.LogError($"{LogPrefix}Could not add restored player: it isn't a CenturionPlayer");
-                return;
-            }
-
-            _cachedCenturionPlayers.Add(centurionPlayer);
-        }
-
-        public override void OnPlayerLeft(VRCPlayerApi player)
-        {
-            var centurionPlayer = (CenturionPlayer)GetPlayer(player);
-            if (!centurionPlayer)
-            {
-                logger.LogError($"{LogPrefix}Could not remove a player: it isn't a CenturionPlayer");
-                return;
-            }
-
-            _cachedCenturionPlayers.Remove(GetPlayer(player));
-        }
-
         public override void PostLateUpdate()
         {
             if (_cachedCenturionPlayers.Count == 0) return;
@@ -151,10 +127,16 @@ namespace CenturionCC.System.Player.Centurion
             _lastUpdatedCenturionPlayerIndex = (_lastUpdatedCenturionPlayerIndex + 1) % _cachedCenturionPlayers.Count;
 
             var centurionPlayer = (CenturionPlayer)_cachedCenturionPlayers[_lastUpdatedCenturionPlayerIndex].Reference;
-            var vrcPlayer = centurionPlayer.VrcPlayer;
-            if (!Utilities.IsValid(vrcPlayer))
+            if (centurionPlayer == null)
             {
-                logger.LogError($"{LogPrefix}Could not update player: vrcPlayer is not valid");
+                logger.LogError($"{LogPrefix}PostLateUpdate: could not update player: destroyed CenturionPlayer is still present in the list at idx of {_lastUpdatedCenturionPlayerIndex}");
+                return;
+            }
+
+            var vrcPlayer = centurionPlayer.VrcPlayer;
+            if (vrcPlayer == null || !Utilities.IsValid(vrcPlayer))
+            {
+                logger.LogError($"{LogPrefix}PostLateUpdate: could not update player: vrcPlayer is not valid");
                 return;
             }
 
@@ -174,28 +156,27 @@ namespace CenturionCC.System.Player.Centurion
 
         public override PlayerBase[] GetPlayers()
         {
-            var players = new VRCPlayerApi[VRCPlayerApi.GetPlayerCount()];
-            var playerBases = new PlayerBase[players.Length];
-            VRCPlayerApi.GetPlayers(players);
-            for (int i = 0; i < players.Length; i++)
+            var players = new PlayerBase[_cachedCenturionPlayers.Count];
+            for (var i = 0; i < players.Length; i++)
             {
-                playerBases[i] = GetPlayer(players[i]);
+                players[i] = (PlayerBase)_cachedCenturionPlayers[i].Reference;
             }
 
-            return playerBases;
+            return players;
         }
 
         public override PlayerBase GetPlayer(VRCPlayerApi vrcPlayer)
         {
             if (!Utilities.IsValid(vrcPlayer)) return null;
 
-            var objects = Networking.GetPlayerObjects(vrcPlayer);
-            foreach (var obj in objects)
+            // you just can't. DataList doesn't support that.
+            // ReSharper disable once ForCanBeConvertedToForeach
+            for (var i = 0; i < _cachedCenturionPlayers.Count; i++)
             {
-                if (!Utilities.IsValid(obj)) continue;
-                var player = obj.GetComponentInChildren<CenturionPlayer>();
-                if (!Utilities.IsValid(player)) continue;
-                return player;
+                var centurionPlayer = (CenturionPlayer)_cachedCenturionPlayers[i].Reference;
+                if (!centurionPlayer || centurionPlayer.VrcPlayer != vrcPlayer) continue;
+
+                return centurionPlayer;
             }
 
             return null;
@@ -238,6 +219,24 @@ namespace CenturionCC.System.Player.Centurion
             return teamColors[teamId];
         }
 
+        public override void Invoke_OnPlayerAdded(PlayerBase player)
+        {
+            if (_cachedCenturionPlayers.Contains(player))
+            {
+                logger.LogWarn($"{LogPrefix}Invoke_OnPlayerAdded: player {player.PlayerId} has already been added");
+                return;
+            }
+
+            _cachedCenturionPlayers.Add(player);
+            base.Invoke_OnPlayerAdded(player);
+        }
+
+        public override void Invoke_OnPlayerRemoved(PlayerBase player)
+        {
+            _cachedCenturionPlayers.Remove(player);
+            base.Invoke_OnPlayerRemoved(player);
+        }
+
         public bool CanDamageFriendly()
         {
             switch (friendlyFireMode)
@@ -270,7 +269,6 @@ namespace CenturionCC.System.Player.Centurion
         }
 
         #region BroadcastRequests
-
         public bool RequestDamageBroadcast(DamageInfo info)
         {
             var localVrcPlayer = Networking.LocalPlayer;
@@ -425,11 +423,9 @@ namespace CenturionCC.System.Player.Centurion
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_ApplySimpleCalls),
                 playerId, PlayerBaseSimpleCalls.Revive);
         }
-
         #endregion
 
         #region Internals
-
         public void Internal_ProcessDamageInfo(DamageInfo info)
         {
             var victimPlayer = GetPlayerById(info.VictimId());
@@ -553,7 +549,6 @@ namespace CenturionCC.System.Player.Centurion
                     return;
             }
         }
-
         #endregion
     }
 }
