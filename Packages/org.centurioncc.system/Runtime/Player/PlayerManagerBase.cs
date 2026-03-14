@@ -286,7 +286,7 @@ namespace CenturionCC.System.Player
         }
 
         [PublicAPI]
-        public virtual bool IsFriendly(PlayerBase lhs, PlayerBase rhs)
+        public virtual bool IsFriendly([CanBeNull] PlayerBase lhs, [CanBeNull] PlayerBase rhs)
         {
             if (!lhs || !rhs) return false;
 
@@ -295,21 +295,21 @@ namespace CenturionCC.System.Player
         }
 
         [PublicAPI]
-        public bool IsInFreeForAllTeam(PlayerBase player)
+        public bool IsInFreeForAllTeam([CanBeNull] PlayerBase player)
         {
-            return IsFreeForAllTeamId(player.TeamId);
+            return player && IsFreeForAllTeamId(player.TeamId);
         }
 
         [PublicAPI]
-        public bool IsInStaffTeam(PlayerBase player)
+        public bool IsInStaffTeam([CanBeNull] PlayerBase player)
         {
-            return IsStaffTeamId(player.TeamId);
+            return player && IsStaffTeamId(player.TeamId);
         }
 
         [PublicAPI]
-        public bool IsInSpecialTeam(PlayerBase player)
+        public bool IsInSpecialTeam([CanBeNull] PlayerBase player)
         {
-            return IsSpecialTeamId(player.TeamId);
+            return player && IsSpecialTeamId(player.TeamId);
         }
         #endregion
 
