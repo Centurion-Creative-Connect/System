@@ -315,13 +315,13 @@ namespace CenturionCC.System.Gun
             ? VariantData.WeaponName
             : name;
 
-        [PublicAPI] public ProjectileDataProvider ProjectileData => VariantData ? VariantData.ProjectileData : null;
-        [PublicAPI] public ProjectilePoolBase ProjectilePool => VariantData ? VariantData.ProjectilePool : null;
-        [PublicAPI] public GunAudioDataStore AudioData => VariantData ? VariantData.AudioData : null;
-        [PublicAPI] public GunHapticDataStore HapticData => VariantData ? VariantData.HapticData : null;
-        [PublicAPI] public GunCameraDataStore CameraData => VariantData ? VariantData.CameraData : null;
+        [PublicAPI] [CanBeNull] public ProjectileDataProvider ProjectileData => VariantData ? VariantData.ProjectileData : null;
+        [PublicAPI] [CanBeNull] public ProjectilePoolBase ProjectilePool => VariantData ? VariantData.ProjectilePool : null;
+        [PublicAPI] [CanBeNull] public GunAudioDataStore AudioData => VariantData ? VariantData.AudioData : null;
+        [PublicAPI] [CanBeNull] public GunHapticDataStore HapticData => VariantData ? VariantData.HapticData : null;
+        [PublicAPI] [CanBeNull] public GunCameraDataStore CameraData => VariantData ? VariantData.CameraData : null;
 
-        [PublicAPI] public GunBehaviourBase[] Behaviours =>
+        [PublicAPI] [ItemCanBeNull] public GunBehaviourBase[] Behaviours =>
             VariantData ? VariantData.Behaviours : new GunBehaviourBase[0];
 
         [PublicAPI] public Vector3 FiringOffsetPosition =>
@@ -479,13 +479,24 @@ namespace CenturionCC.System.Gun
             {
                 Trigger = TriggerState.Fired;
 
+                _EmptyShoot();
+                gunManager.Invoke_OnShootFailed(this, 13);
+                return ShotResult.Failed;
+            }
+
+            if (!ReloadHelper.HasMagazine && !VariantData.CanShootWithoutMagazine)
+            {
+                Trigger = TriggerState.Fired;
+
                 if (HasCocked)
                 {
                     _EmptyShoot();
+                    gunManager.Invoke_OnShootFailed(this, 15);
+                    return ShotResult.Failed;
                 }
 
-                gunManager.Invoke_OnShootFailed(this, 13);
-                return ShotResult.Failed;
+                gunManager.Invoke_OnShootCancelled(this, 15);
+                return ShotResult.Cancelled;
             }
 
             var now = Networking.GetNetworkDateTime();
@@ -514,6 +525,14 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public void _EmptyShoot()
         {
+            if (!HasCocked)
+            {
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
+                Debug.Log($"{Prefix}_EmptyShoot: will not invoke because its not cocked");
+#endif
+                return;
+            }
+
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_NetworkedEmptyShoot));
         }
 
@@ -728,7 +747,7 @@ namespace CenturionCC.System.Gun
                 gunManager.Invoke_OnEmptyShoot(this);
         }
 
-        protected void _PlayAudio(AudioDataStore dataStore, Vector3 offset)
+        public void _PlayAudio(AudioDataStore dataStore, Vector3 offset)
         {
             audioManager.PlayAudioAtTransform(dataStore, transform, offset);
         }
@@ -804,6 +823,7 @@ namespace CenturionCC.System.Gun
 
             foreach (var behaviour in Behaviours)
             {
+                if (behaviour == null) continue;
                 behaviour.Setup(this);
             }
         }
@@ -849,12 +869,14 @@ namespace CenturionCC.System.Gun
 
                 foreach (var behaviour in behaviours)
                 {
+                    if (behaviour == null) continue;
                     behaviour.OnGunPickup(this);
                 }
             }
 
             foreach (var behaviour in behaviours)
             {
+                if (behaviour == null) continue;
                 behaviour.OnHandlePickup(this, instance);
             }
 
@@ -879,6 +901,7 @@ namespace CenturionCC.System.Gun
 
             foreach (var behaviour in behaviours)
             {
+                if (behaviour == null) continue;
                 behaviour.OnHandleUseDown(this, instance);
             }
 
@@ -889,6 +912,7 @@ namespace CenturionCC.System.Gun
                     Trigger = TriggerState.Firing;
                     foreach (var behaviour in behaviours)
                     {
+                        if (behaviour == null) continue;
                         behaviour.OnTriggerDown(this);
                     }
 
@@ -898,6 +922,7 @@ namespace CenturionCC.System.Gun
                 {
                     foreach (var behaviour in behaviours)
                     {
+                        if (behaviour == null) continue;
                         behaviour.OnAction(this);
                     }
 
@@ -922,6 +947,7 @@ namespace CenturionCC.System.Gun
 
             foreach (var behaviour in behaviours)
             {
+                if (behaviour == null) continue;
                 behaviour.OnHandleUseUp(this, instance);
             }
 
@@ -946,6 +972,7 @@ namespace CenturionCC.System.Gun
 
                     foreach (var behaviour in behaviours)
                     {
+                        if (behaviour == null) continue;
                         behaviour.OnTriggerUp(this);
                     }
 
@@ -970,6 +997,7 @@ namespace CenturionCC.System.Gun
 
             foreach (var behaviour in behaviours)
             {
+                if (behaviour == null) continue;
                 behaviour.OnHandleDrop(this, instance);
             }
 
@@ -1002,6 +1030,7 @@ namespace CenturionCC.System.Gun
 
                 foreach (var behaviour in behaviours)
                 {
+                    if (behaviour == null) continue;
                     behaviour.OnGunDrop(this);
                 }
 
@@ -1042,14 +1071,7 @@ namespace CenturionCC.System.Gun
                         break;
                     }
 
-                    if (previousState == GunState.Reloading)
-                    {
-                        _PlayAudio(AudioData.MagazineInserted, AudioData.MagazineInsertedOffset);
-                    }
-                    else
-                    {
-                        _PlayAudio(AudioData.CockingRelease, AudioData.CockingReleaseOffset);
-                    }
+                    _PlayAudio(AudioData.CockingRelease, AudioData.CockingReleaseOffset);
                     break;
                 }
                 case GunState.InCockingTwisting:
@@ -1097,16 +1119,6 @@ namespace CenturionCC.System.Gun
                     }
 
                     _PlayAudio(AudioData.CockingPull, AudioData.CockingPullOffset);
-                    break;
-                }
-                case GunState.Reloading:
-                {
-                    if (!AudioData)
-                    {
-                        break;
-                    }
-
-                    _PlayAudio(AudioData.MagazineReleased, AudioData.MagazineReleasedOffset);
                     break;
                 }
             }

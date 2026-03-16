@@ -25,7 +25,7 @@ namespace CenturionCC.System.Gun.Behaviour
                     instance._LoadBullet();
                 }
 
-                if (!instance.HasCocked)
+                if (!instance.HasCocked && instance.HasBulletInChamber)
                 {
                     instance.HasCocked = true;
                 }

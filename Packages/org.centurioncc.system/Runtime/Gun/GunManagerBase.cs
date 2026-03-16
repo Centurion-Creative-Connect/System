@@ -162,6 +162,10 @@ namespace CenturionCC.System.Gun
         {
             if (instance == null) return;
 
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
+            Logger.Log($"{Prefix}OnShoot: {instance.name}");
+#endif
+
             foreach (var callback in _eventCallbacks)
             {
                 if (callback == null) continue;
@@ -172,6 +176,10 @@ namespace CenturionCC.System.Gun
         public void Invoke_OnEmptyShoot(GunBase instance)
         {
             if (instance == null) return;
+
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
+            Logger.Log($"{Prefix}OnEmptyShoot: {instance.name}");
+#endif
 
             foreach (var callback in _eventCallbacks)
             {
@@ -184,6 +192,10 @@ namespace CenturionCC.System.Gun
         {
             if (instance == null) return;
 
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
+            Logger.Log($"{Prefix}OnShootFailed: {instance.name}, {reasonId}");
+#endif
+
             foreach (var callback in _eventCallbacks)
             {
                 if (callback == null) continue;
@@ -195,6 +207,10 @@ namespace CenturionCC.System.Gun
         {
             if (instance == null) return;
 
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
+            Logger.Log($"{Prefix}OnShootCancelled: {instance.name}, {reasonId}");
+#endif
+
             foreach (var callback in _eventCallbacks)
             {
                 if (callback == null) continue;
@@ -205,6 +221,10 @@ namespace CenturionCC.System.Gun
         public void Invoke_OnFireModeChanged(GunBase instance)
         {
             if (instance == null) return;
+
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
+            Logger.Log($"{Prefix}OnFireModeChanged: {instance.name}");
+#endif
 
             foreach (var callback in _eventCallbacks)
             {

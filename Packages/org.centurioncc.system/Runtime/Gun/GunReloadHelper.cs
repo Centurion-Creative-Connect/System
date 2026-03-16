@@ -18,6 +18,7 @@ namespace CenturionCC.System.Gun
         private float _reloadStartedTime;
 
         public bool IsReloading => Time.timeSinceLevelLoad < _reloadStartedTime + _reloadDuration;
+        public bool HasMagazine { get; private set; }
 
         [PublicAPI]
         public void _DoSimplifiedReload(bool force = false)
@@ -51,8 +52,13 @@ namespace CenturionCC.System.Gun
             _reloadDuration = reloadDuration;
             _nextBulletsRemaining = nextBulletsRemaining;
 
-            // FIXME: should be in _Internal_SimplifiedReloadTick() but didnt work for some reason (repeatedly reverted back to Idle)
-            gun.State = GunState.Reloading;
+            HasMagazine = false;
+            gun.BulletsInMagazine = 0;
+
+            if (gun.AudioData != null)
+            {
+                gun._PlayAudio(gun.AudioData.MagazineReleased, gun.AudioData.MagazineReleasedOffset);
+            }
 
             if (_isReloadTicking)
             {
@@ -79,9 +85,15 @@ namespace CenturionCC.System.Gun
                 return;
             }
 
-            gun.State = GunState.Idle;
+            HasMagazine = true;
             gun.BulletsInMagazine = _nextBulletsRemaining;
+
             _isReloadTicking = false;
+
+            if (gun.AudioData != null)
+            {
+                gun._PlayAudio(gun.AudioData.MagazineInserted, gun.AudioData.MagazineInsertedOffset);
+            }
 
 #if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             Debug.Log($"[GunReloadHelper-{name}] _Internal_SimplifiedReloadTick: reload completed");

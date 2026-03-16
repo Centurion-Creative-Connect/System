@@ -37,6 +37,9 @@ namespace CenturionCC.System.Gun
         private TranslatableMessage onCantShootBecauseCallback;
 
         [SerializeField]
+        private TranslatableMessage onCantShootBecauseMagazineNotInserted;
+
+        [SerializeField]
         private TranslatableMessage onCantShootUnknown;
 
         [SerializeField]
@@ -95,6 +98,7 @@ namespace CenturionCC.System.Gun
             // 12  = Gun.FireMode is 0 == safety
             // 13  = Gun.State != Idle
             // 14  = Gun.HasBulletInChamber == false
+            // 15  = Gun.ReloadHelper.HasMagazine == false && Gun.VariantData.CanShootWithoutMagazine == false
             // 100 = in wall
             // 101 = in safe zone
             // 200 = callback returned false
@@ -111,6 +115,9 @@ namespace CenturionCC.System.Gun
                     break;
                 case 14:
                     SendNotification(onCantShootBecauseNoBulletInChamber, true);
+                    break;
+                case 15:
+                    SendNotification(onCantShootBecauseMagazineNotInserted, true);
                     break;
                 case 100:
                     SendNotification(onCantShootInWall, true);

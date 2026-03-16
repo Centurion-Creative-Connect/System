@@ -1,6 +1,5 @@
 ﻿using CenturionCC.System.Gun.DataStore;
 using UdonSharp;
-using UnityEditor;
 using UnityEngine;
 
 namespace CenturionCC.System.Gun.Behaviour
@@ -20,9 +19,11 @@ namespace CenturionCC.System.Gun.Behaviour
 
         [SerializeField] private bool isDoubleAction;
 
+        [SerializeField] private bool doHoldOpenOnLastBullet = true;
+
         [SerializeField] private bool requireManualPushingAfterFire;
 
-        [SerializeField] private bool dropCustomHandleOnFire;
+        [SerializeField] private bool dropCustomHandleOnFire = true;
 
         [SerializeField] private Transform cockingPosition;
 
@@ -157,125 +158,9 @@ namespace CenturionCC.System.Gun.Behaviour
             handleTransform.localRotation = targetRot;
         }
 
-        #region StateCheckMethods
-        private bool CanShoot(GunBase target)
-        {
-            return target.Trigger == TriggerState.Firing &&
-                   target.State == GunState.Idle &&
-                   (target.HasBulletInChamber || isDoubleAction);
-        }
-        #endregion
-
-#if !COMPILER_UDONSHARP && UNITY_EDITOR
-
-        private void OnDrawGizmosSelected()
-        {
-            DrawGizmos();
-            if (requireTwist)
-                DrawTwistGizmos();
-        }
-
-        private void DrawGizmos()
-        {
-            // NOTE: cocking pos might be null
-            var cockingPos = cockingPosition.position;
-            GizmosUtil.SetColor(Color.cyan, 0.8F);
-            GizmosUtil.DrawArrow(cockingPos, cockingPos + -cockingLength * cockingPosition.forward, 0.01F);
-        }
-
-        private void DrawTwistGizmos()
-        {
-            GizmosUtil.SetColor(Color.green, 0.5F);
-            GizmosUtil.DrawWireSphere(idleTwistPosition.position, 0.01F);
-            GizmosUtil.DrawWireSphere(activeTwistPosition.position, 0.01F);
-
-            var cockingPos = cockingPosition.position;
-            var toOffset = cockingLength * cockingPosition.forward * -1;
-            var twistOffset = activeTwistPosition.position - cockingPos;
-            var twistOffsetCockingPos = cockingPos + twistOffset;
-            GizmosUtil.SetColor(Color.blue, 0.8F);
-            // TODO: make twist offset pos properly based on cockingPosition transform
-            GizmosUtil.DrawArrow(twistOffsetCockingPos, twistOffsetCockingPos + toOffset, 0.01F);
-
-            var segments = Mathf.RoundToInt(twistMaxAngle / 2);
-            if (Mathf.RoundToInt(twistMaxAngle / segments) >= 0)
-            {
-                GizmosUtil.DrawWireArc(cockingPos, twistOffset.magnitude, twistMaxAngle, segments,
-                    Quaternion.Euler(twistAngleOffset - twistMinAngle, -90, -90), cockingPos);
-            }
-        }
-
-#endif
-
-
-        #region GunBehaviourBase
-        public override void OnTriggerDown(GunBase instance)
-        {
-            if (!CanShoot(instance))
-            {
-                instance._EmptyShoot();
-                instance.Trigger = TriggerState.Armed;
-
-                if (requireManualPushingAfterFire)
-                {
-                    instance.HasCocked = true;
-                    instance._LoadBullet();
-                    instance.State = GunState.InCockingPush;
-                }
-
-                if (dropCustomHandleOnFire)
-                {
-                    customHandle.ForceDrop();
-                    UpdateCustomHandlePosition(instance);
-                }
-            }
-        }
-
-        public override void OnGunPickup(GunBase instance)
-        {
-            Debug.Log("[CockingGunBehaviour] OnGunPickup");
-            UpdateCustomHandlePosition(instance);
-            customHandle.SetPickupable(true);
-        }
-
-        public override void OnGunDrop(GunBase instance)
-        {
-            Debug.Log("[CockingGunBehaviour] OnGunDrop");
-            UpdateCustomHandlePosition(instance);
-            customHandle.SetPickupable(false);
-        }
-
-        public override void OnGunUpdate(GunBase instance)
+        private void DoCocking(GunBase instance)
         {
             float progressNormalized, twistNormalized;
-
-            // Shoot a gun whenever it's able to shoot. load new bullet if it's blow back variant
-            if (CanShoot(instance))
-            {
-                var shotResult = instance._TryToShoot();
-                var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
-                if (hasSucceeded)
-                {
-                    if (isBlowBack || requireManualPushingAfterFire)
-                    {
-                        instance.HasCocked = true;
-                        instance._LoadBullet();
-                    }
-
-                    if (requireManualPushingAfterFire)
-                    {
-                        instance.State = GunState.InCockingPush;
-                    }
-
-                    if (dropCustomHandleOnFire)
-                    {
-                        customHandle.ForceDrop();
-                        UpdateCustomHandlePosition(instance);
-                    }
-                }
-            }
-
-
             // Calculate cocking/twist progress
             if (instance.IsVR)
             {
@@ -337,6 +222,7 @@ namespace CenturionCC.System.Gun.Behaviour
 
             // Change states using GunUtility
             if (requireTwist)
+            {
                 GunUtility.UpdateStateBoltAction(
                     instance,
                     cockingHapticData,
@@ -347,7 +233,9 @@ namespace CenturionCC.System.Gun.Behaviour
                     twistNormalized,
                     twistMargin
                 );
+            }
             else
+            {
                 GunUtility.UpdateStateStraightPull(
                     instance,
                     cockingHapticData,
@@ -356,6 +244,107 @@ namespace CenturionCC.System.Gun.Behaviour
                     cockingAutoLoadMargin,
                     1 - cockingAutoLoadMargin
                 );
+            }
+        }
+
+#if !COMPILER_UDONSHARP && UNITY_EDITOR
+
+        private void OnDrawGizmosSelected()
+        {
+            DrawGizmos();
+            if (requireTwist)
+                DrawTwistGizmos();
+        }
+
+        private void DrawGizmos()
+        {
+            // NOTE: cocking pos might be null
+            var cockingPos = cockingPosition.position;
+            GizmosUtil.SetColor(Color.cyan, 0.8F);
+            GizmosUtil.DrawArrow(cockingPos, cockingPos + -cockingLength * cockingPosition.forward, 0.01F);
+        }
+
+        private void DrawTwistGizmos()
+        {
+            GizmosUtil.SetColor(Color.green, 0.5F);
+            GizmosUtil.DrawWireSphere(idleTwistPosition.position, 0.01F);
+            GizmosUtil.DrawWireSphere(activeTwistPosition.position, 0.01F);
+
+            var cockingPos = cockingPosition.position;
+            var toOffset = cockingLength * cockingPosition.forward * -1;
+            var twistOffset = activeTwistPosition.position - cockingPos;
+            var twistOffsetCockingPos = cockingPos + twistOffset;
+            GizmosUtil.SetColor(Color.blue, 0.8F);
+            // TODO: make twist offset pos properly based on cockingPosition transform
+            GizmosUtil.DrawArrow(twistOffsetCockingPos, twistOffsetCockingPos + toOffset, 0.01F);
+
+            var segments = Mathf.RoundToInt(twistMaxAngle / 2);
+            if (Mathf.RoundToInt(twistMaxAngle / segments) >= 0)
+            {
+                GizmosUtil.DrawWireArc(cockingPos, twistOffset.magnitude, twistMaxAngle, segments,
+                    Quaternion.Euler(twistAngleOffset - twistMinAngle, -90, -90), cockingPos);
+            }
+        }
+#endif
+
+        #region GunBehaviourBase
+        public override void OnGunPickup(GunBase instance)
+        {
+            Debug.Log("[CockingGunBehaviour] OnGunPickup");
+            UpdateCustomHandlePosition(instance);
+            customHandle.SetPickupable(true);
+        }
+
+        public override void OnGunDrop(GunBase instance)
+        {
+            Debug.Log("[CockingGunBehaviour] OnGunDrop");
+            UpdateCustomHandlePosition(instance);
+            customHandle.SetPickupable(false);
+        }
+
+        public override void OnGunUpdate(GunBase instance)
+        {
+            // Shoot a gun whenever it's able to shoot. load a new bullet if it's a blow back variant
+            if (instance.Trigger == TriggerState.Firing)
+            {
+                var shotResult = instance._TryToShoot();
+                var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
+                if (hasSucceeded)
+                {
+                    if (doHoldOpenOnLastBullet && instance.BulletsInMagazine == 0 && instance.ReloadHelper.HasMagazine)
+                    {
+                        instance.State = GunState.InCockingPull;
+                        customHandle.ForceDrop();
+                        UpdateCustomHandlePosition(instance);
+                        instance.AnimationHelper._SetCockingProgress(1);
+                    }
+
+                    if (isBlowBack || requireManualPushingAfterFire)
+                    {
+                        instance.HasCocked = true;
+                        instance._LoadBullet();
+                    }
+
+                    if (requireManualPushingAfterFire)
+                    {
+                        instance.State = GunState.InCockingPush;
+                    }
+
+                    if (dropCustomHandleOnFire)
+                    {
+                        customHandle.ForceDrop();
+                        UpdateCustomHandlePosition(instance);
+                    }
+                }
+            }
+
+            if (instance.IsVR && !customHandle.IsPickedUpLocally)
+            {
+                Debug.Log("wont process cocking");
+                return;
+            }
+
+            DoCocking(instance);
         }
 
         public override void Setup(GunBase instance)
@@ -427,6 +416,10 @@ namespace CenturionCC.System.Gun.Behaviour
 
             handle.MoveToLocalPosition(expectedPos, Quaternion.identity);
             Debug.Log($"[CockingGunBehaviour] OnHandleDrop: {instance.name} moved handle to {expectedPos.ToString("F2")}");
+
+            // I have no idea, but calling DoCocking twice will fix the desync issue
+            DoCocking(instance);
+            DoCocking(instance);
         }
         #endregion
     }
