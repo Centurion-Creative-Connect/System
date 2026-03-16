@@ -311,7 +311,7 @@ namespace CenturionCC.System.Gun.Behaviour
                 var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
                 if (hasSucceeded)
                 {
-                    if (doHoldOpenOnLastBullet && instance.BulletsInMagazine == 0)
+                    if (doHoldOpenOnLastBullet && instance.BulletsInMagazine == 0 && instance.ReloadHelper.HasMagazine)
                     {
                         instance.State = GunState.InCockingPull;
                         customHandle.ForceDrop();
