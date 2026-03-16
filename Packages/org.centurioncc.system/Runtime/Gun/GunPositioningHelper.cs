@@ -58,7 +58,7 @@ namespace CenturionCC.System.Gun
             RecalculatePivot();
         }
 
-        private void Update()
+        public override void PostLateUpdate()
         {
             var t = 1 - Mathf.Exp(-_recoilErgonomics * Time.deltaTime);
             _recoilOffsetRot = Quaternion.Lerp(_recoilOffsetRot, Quaternion.identity, t);
