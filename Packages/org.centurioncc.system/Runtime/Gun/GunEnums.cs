@@ -49,11 +49,6 @@ namespace CenturionCC.System.Gun
         /// When it's twisting state. For most of guns in this state should not be able to shoot.
         /// </summary>
         InCockingTwisting = 3,
-
-        /// <summary>
-        /// When it's reloading state. Should not be able to shoot.'
-        /// </summary>
-        Reloading = 4,
     }
 
     public enum TriggerState
@@ -140,7 +135,7 @@ namespace CenturionCC.System.Gun
 
     public static class GunStateHelper
     {
-        public const byte MaxValue = (byte)GunState.Reloading;
+        public const byte MaxValue = (byte)GunState.InCockingTwisting;
         public const byte MinValue = (byte)GunState.Idle;
 
         private static string GetStateString(byte value)
@@ -151,7 +146,6 @@ namespace CenturionCC.System.Gun
                 value == (int)GunState.InCockingPull ? "InCockingPull" :
                 value == (int)GunState.InCockingPush ? "InCockingPush" :
                 value == (int)GunState.InCockingTwisting ? "InCockingTwisting" :
-                value == (int)GunState.Reloading ? "Reloading" :
                 $"Unknown ({value})";
         }
 

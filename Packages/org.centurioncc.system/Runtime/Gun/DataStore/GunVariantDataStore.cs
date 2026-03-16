@@ -58,6 +58,8 @@ namespace CenturionCC.System.Gun.DataStore
 
         [SerializeField] private bool isDoubleHanded;
 
+        [SerializeField] private bool canShootWithoutMagazine = true;
+
         [SerializeField] private bool useWallCheck = true;
 
         [SerializeField] private bool useSafeZoneCheck = true;
@@ -127,6 +129,7 @@ namespace CenturionCC.System.Gun.DataStore
         public ProjectilePoolBase ProjectilePool => projectilePoolOverride ? projectilePoolOverride : defaultProjectilePool;
 
         public bool IsDoubleHanded => isDoubleHanded;
+        public bool CanShootWithoutMagazine => canShootWithoutMagazine;
         public bool UseWallCheck => useWallCheck;
         public bool UseSafeZoneCheck => useSafeZoneCheck;
 

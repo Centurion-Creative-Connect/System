@@ -429,6 +429,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
                 {
                     EditorGUILayout.PropertyField(so.FindProperty("reloadTimeInSeconds"));
                     EditorGUILayout.PropertyField(so.FindProperty("defaultMagazineSize"));
+                    EditorGUILayout.PropertyField(so.FindProperty("canShootWithoutMagazine"));
                     break;
                 }
             }

@@ -34,11 +34,6 @@ namespace CenturionCC.System.Gun.Behaviour
             return target.State != GunState.Idle || !target.HasBulletInChamber;
         }
 
-        private static bool CanShoot(GunBase target)
-        {
-            return target.Trigger == TriggerState.Firing && target.State == GunState.Idle && target.HasBulletInChamber;
-        }
-
         private float GetProgressNormalized(float localZ)
         {
             return GetProgress(localZ) / cockingLength;
@@ -53,21 +48,12 @@ namespace CenturionCC.System.Gun.Behaviour
         }
 
         #region BehaviourBase
-        public override void OnTriggerDown(GunBase instance)
-        {
-            if (instance.State != GunState.Idle || instance.HasBulletInChamber == false)
-            {
-                instance.Trigger = TriggerState.Fired;
-                instance._EmptyShoot();
-            }
-        }
-
         public override void OnGunUpdate(GunBase instance)
         {
             float progressNormalized;
 
             // Shoot a gun whenever it's able to shoot
-            if (CanShoot(instance))
+            if (instance.Trigger == TriggerState.Firing)
             {
                 var shotResult = instance._TryToShoot();
 
