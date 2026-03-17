@@ -42,13 +42,13 @@ namespace CenturionCC.System.Utils
         public override void OnPickup()
         {
             if (controller != null)
-                controller.AddHoldingObject(this);
+                controller.AddMarker(this);
         }
 
         public override void OnDrop()
         {
             if (controller != null)
-                controller.RemoveHoldingObject(this);
+                controller.RemoveMarker(this);
         }
 
 #if UNITY_EDITOR && !COMPILER_UDONSHARP

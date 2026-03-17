@@ -856,7 +856,7 @@ namespace CenturionCC.System.Gun
             {
                 if (playerController != null)
                 {
-                    playerController.AddHoldingObject(this);
+                    playerController.AddMarker(this);
                 }
 
                 if (gunManager)
@@ -1020,7 +1020,7 @@ namespace CenturionCC.System.Gun
 
                 if (playerController != null)
                 {
-                    playerController.RemoveHoldingObject(this);
+                    playerController.RemoveMarker(this);
                 }
 
                 if (gunManager)
