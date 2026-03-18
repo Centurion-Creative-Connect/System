@@ -41,6 +41,16 @@ namespace CenturionCC.System.Gun
         private int _lastIsActionPressed;
         private int _wasPerformedThisFrame;
 
+        public float CurrentPrimaryXOffset
+        {
+            get => _currentPrimaryXOffset;
+            set
+            {
+                _currentPrimaryXOffset = value;
+                ApplyPrimaryXOffset();
+            }
+        }
+
         public VRActionType ReloadAction
         {
             get => reloadActionType;
@@ -136,8 +146,7 @@ namespace CenturionCC.System.Gun
             var scrollDelta = Input.GetAxisRaw("Mouse ScrollWheel") * 80F;
             if (!Mathf.Approximately(scrollDelta, 0))
             {
-                _currentPrimaryXOffset += scrollDelta;
-                ApplyPrimaryXOffset();
+                CurrentPrimaryXOffset += scrollDelta;
             }
         }
 
@@ -149,6 +158,7 @@ namespace CenturionCC.System.Gun
 
                 foreach (var behaviour in gun.Behaviours)
                 {
+                    if (!behaviour) continue;
                     behaviour.OnGunUpdate(gun);
                 }
 
