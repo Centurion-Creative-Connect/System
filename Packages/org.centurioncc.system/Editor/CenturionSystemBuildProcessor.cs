@@ -129,8 +129,6 @@ namespace CenturionCC.System.Editor
             licenseProperty.stringValue = license;
 
             so.ApplyModifiedProperties();
-
-            Debug.Log($"[CenturionSystemBuildProcessor] Baked version and license\nversion: {version}\nhash: {commitHash}\nbranch: {branch}\nlicense: {license}");
         }
 
         [CanBeNull]
