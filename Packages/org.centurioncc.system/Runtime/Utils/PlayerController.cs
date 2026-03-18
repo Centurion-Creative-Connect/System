@@ -40,7 +40,7 @@ namespace CenturionCC.System.Utils
         private FootstepAudioStore footstepAudioStore;
 
         private readonly DataList _activeTags = new DataList();
-        private readonly DataList _heldObjects = new DataList();
+        private readonly DataList _objectMarkers = new DataList();
 
         private bool _canRun = true;
         private bool _combatTagged;
@@ -276,12 +276,13 @@ namespace CenturionCC.System.Utils
         }
         #endregion
 
-        #region ObjectBaseHandlingAPIs
+        #region MarkerAPIs
         /// <summary>
-        /// Adds object's weight to player's current weight.
+        /// Adds a marker in manipulation of local player.
         /// </summary>
-        /// <param name="anObject">an object which begin holding.</param>
-        public void AddHoldingObject(ObjectMarkerBase anObject)
+        /// <param name="anObject">The object marker to be added. Must not be null. If duplicates are not allowed, the object should not yet exist in the list.</param>
+        [PublicAPI]
+        public void AddMarker(ObjectMarkerBase anObject)
         {
             if (anObject == null)
             {
@@ -289,25 +290,26 @@ namespace CenturionCC.System.Utils
                 return;
             }
 
-            if (_heldObjects.Contains(anObject) && !allowDuplicateHeldObjects)
+            if (_objectMarkers.Contains(anObject) && !allowDuplicateHeldObjects)
             {
                 Debug.LogWarning(
                     $"[PlayerController] Tried to add {anObject.name}, but it already exists in held objects list!");
                 return;
             }
 
-            _heldObjects.Add(anObject);
+            _objectMarkers.Add(anObject);
             foreach (var objectTag in anObject.Tags) _activeTags.Add(objectTag);
-            UpdateHoldingObjects();
+            UpdateMarker();
             Invoke_OnActiveTagsUpdated();
             Invoke_OnHeldObjectsUpdated();
         }
 
         /// <summary>
-        /// Subtracts object's weight from player's current weight.
+        /// Subtracts object's weight from the player's current weight.
         /// </summary>
         /// <param name="anObject">an object which stopped holding.</param>
-        public void RemoveHoldingObject(ObjectMarkerBase anObject)
+        [PublicAPI]
+        public void RemoveMarker(ObjectMarkerBase anObject)
         {
             if (anObject == null)
             {
@@ -315,24 +317,41 @@ namespace CenturionCC.System.Utils
                 return;
             }
 
-            _heldObjects.Remove(anObject);
+            if (!_objectMarkers.Remove(anObject))
+            {
+                Debug.LogWarning("[PlayerController] Tried to remove object that isn't in the held objects list!");
+                return;
+            }
+
             foreach (var objectTag in anObject.Tags) _activeTags.Remove(objectTag);
-            UpdateHoldingObjects();
+            UpdateMarker();
             Invoke_OnActiveTagsUpdated();
             Invoke_OnHeldObjectsUpdated();
+        }
+
+        /// <summary>
+        /// Checks whether the player is currently holding the specified object.
+        /// </summary>
+        /// <param name="anObject">The object to check against the player's held objects.</param>
+        /// <returns>True if the player is holding the specified object; otherwise, false.</returns>
+        [PublicAPI]
+        public bool HasMarker(ObjectMarkerBase anObject)
+        {
+            return _objectMarkers.Contains(anObject);
         }
 
         /// <summary>
         /// Update <see cref="PlayerWeight"/> by currently known held objects.
         /// </summary>
         /// <remarks>
-        /// This also updates current VrcPlayer. see <see cref="UpdateLocalVrcPlayer"/>.
+        /// This also updates the current VrcPlayer. See <see cref="UpdateLocalVrcPlayer"/>.
         /// </remarks>
         /// <seealso cref="UpdateLocalVrcPlayer"/>
-        public void UpdateHoldingObjects()
+        [PublicAPI]
+        public void UpdateMarker()
         {
             var totalWeight = 0F;
-            var arr = _heldObjects.ToArray();
+            var arr = _objectMarkers.ToArray();
             foreach (var o in arr)
                 if (((ObjectMarkerBase)o.Reference) != null)
                     totalWeight += ((ObjectMarkerBase)o.Reference).ObjectWeight;
@@ -345,11 +364,12 @@ namespace CenturionCC.System.Utils
         /// <remarks>
         /// This method can be used to ensure no objects are left held.
         /// </remarks>
-        public void RemoveAllHoldingObject()
+        [PublicAPI]
+        public void RemoveAllMarkers()
         {
-            _heldObjects.Clear();
+            _objectMarkers.Clear();
             _activeTags.Clear();
-            UpdateHoldingObjects();
+            UpdateMarker();
 
             if (CurrentSurface == null) return;
 
@@ -384,7 +404,7 @@ namespace CenturionCC.System.Utils
         /// <code>((ObjectMarkerBase)HeldObjects[0].Reference).ObjectType</code>
         /// </example>
         [PublicAPI]
-        public DataList HeldObjects => _heldObjects.DeepClone();
+        public DataList HeldObjects => _objectMarkers.DeepClone();
 
         /// <summary>
         /// Current effective <see cref="string"/> tags

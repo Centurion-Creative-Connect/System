@@ -47,7 +47,7 @@ namespace CenturionCC.System.Gimmick.Defuser
 
         public override void OnPickup()
         {
-            if (controller != null) controller.AddHoldingObject(this);
+            if (controller != null) controller.AddMarker(this);
             defuser.Close();
             defuser.HideIconForTeam();
         }
@@ -64,7 +64,7 @@ namespace CenturionCC.System.Gimmick.Defuser
 
         public override void OnDrop()
         {
-            if (controller != null) controller.RemoveHoldingObject(this);
+            if (controller != null) controller.RemoveMarker(this);
             switch (defuser.State)
             {
                 default:

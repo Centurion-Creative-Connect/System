@@ -47,7 +47,7 @@ namespace CenturionCC.System.Gimmick.Payload
         public override void OnPickup()
         {
             updateManager.SubscribeUpdate(this);
-            controller.AddHoldingObject(this);
+            controller.AddMarker(this);
             UpdateUI();
         }
 
@@ -60,7 +60,7 @@ namespace CenturionCC.System.Gimmick.Payload
 
         public override void OnDrop()
         {
-            controller.RemoveHoldingObject(this);
+            controller.RemoveMarker(this);
             updateManager.UnsubscribeUpdate(this);
         }
 
@@ -144,7 +144,7 @@ namespace CenturionCC.System.Gimmick.Payload
             _currentStatus = status;
             _currentContext = context;
             ui.UpdateStatus(status, context);
-            controller.UpdateHoldingObjects();
+            controller.UpdateMarker();
         }
 
         private void UpdateUI()

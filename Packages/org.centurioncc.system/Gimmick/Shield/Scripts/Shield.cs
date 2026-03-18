@@ -69,7 +69,7 @@ namespace CenturionCC.System.Gimmick.Shield
             context = DropContext.UserInput;
 
             // Process ObjectMarker logic before anything
-            playerController.AddHoldingObject(this);
+            playerController.AddMarker(this);
 
             var invokeResult = shieldManager.Invoke_OnShieldPickup(this);
             if (!invokeResult)
@@ -103,7 +103,7 @@ namespace CenturionCC.System.Gimmick.Shield
 
         public override void OnDrop()
         {
-            playerController.RemoveHoldingObject(this);
+            playerController.RemoveMarker(this);
 
             isHeldLocally = false;
             pickup.pickupable = true;
