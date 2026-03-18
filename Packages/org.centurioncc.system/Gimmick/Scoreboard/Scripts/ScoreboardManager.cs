@@ -42,7 +42,7 @@ namespace CenturionCC.System.Gimmick.Scoreboard
                 return;
             }
 
-            element.UpdateText();
+            element.SendCustomEventDelayedSeconds(nameof(element.UpdateText), 1f);
         }
 
         public override void OnPlayerTeamChanged(PlayerBase player, int oldTeam)

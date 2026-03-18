@@ -18,6 +18,7 @@ namespace CenturionCC.System.Gimmick.Scoreboard
         [SerializeField] private Text displayNameText;
         [SerializeField] private Text killsText;
         [SerializeField] private Text deathsText;
+        [Header("Unused Texts")]
         [SerializeField] private Text scoreText;
         [SerializeField] private Text weaponText;
 
@@ -35,12 +36,12 @@ namespace CenturionCC.System.Gimmick.Scoreboard
 
         public int GetPriority()
         {
-            return Source != null ? Source.Kills * 100 - Source.Deaths : -1;
+            return Source ? Source.Kills * 100 - Source.Deaths : -1;
         }
 
         public void UpdateText()
         {
-            if (Source == null)
+            if (!Source)
             {
                 SetText(rankingText, "??");
                 SetText(displayNameText, "???(InvalidSource)");
@@ -53,36 +54,15 @@ namespace CenturionCC.System.Gimmick.Scoreboard
 
             SetText(rankingText, $"{(transform.GetSiblingIndex() + 1)}");
             SetText(displayNameText, Source.VrcPlayer.SafeGetDisplayName("???(InvalidVrcPlayer)"));
-            SetText(weaponText, SearchForHeldWeapon());
+            SetText(weaponText, "???");
             SetText(killsText, Source.Kills.ToString());
             SetText(deathsText, Source.Deaths.ToString());
             SetText(scoreText, "????");
         }
 
-        private string SearchForHeldWeapon(string unknown = "???")
-        {
-            if (Source == null) return unknown;
-            var vrcPlayer = Source.VrcPlayer;
-            if (vrcPlayer == null || !vrcPlayer.IsValid()) return unknown;
-
-            var gunBase = TryGetGunBase(vrcPlayer.GetPickupInHand(VRC_Pickup.PickupHand.Left));
-            if (gunBase == null)
-                gunBase = TryGetGunBase(vrcPlayer.GetPickupInHand(VRC_Pickup.PickupHand.Right));
-
-            return gunBase == null ? unknown : gunBase.WeaponName;
-        }
-
-        private static GunBase TryGetGunBase(VRC_Pickup pickup)
-        {
-            if (pickup == null) return null;
-            var handle = pickup.GetComponent<GunHandle>();
-            if (handle == null) return null;
-            return (GunBase)handle.callback;
-        }
-
         private static void SetText(Text t, string msg)
         {
-            if (t == null) return;
+            if (!t) return;
             t.text = msg;
         }
     }
