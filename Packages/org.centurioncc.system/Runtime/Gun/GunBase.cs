@@ -847,6 +847,8 @@ namespace CenturionCC.System.Gun
 
             // OnHandlePickup is only called locally, thus setting isLocal here is appropriate
             IsLocal = true;
+            IsHolstered = false;
+            MainHandle.UnHolster();
 
             animationHelper._SetPickedUpLocally(true);
             animationHelper._SetTriggerProgress(0);
