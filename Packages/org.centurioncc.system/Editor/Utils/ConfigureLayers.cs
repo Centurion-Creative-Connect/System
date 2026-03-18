@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using VRC.PackageManagement.Core;
 
 namespace CenturionCC.System.Editor.Utils
 {
@@ -41,6 +41,8 @@ namespace CenturionCC.System.Editor.Utils
             }
         }
 
+        private static int FindLayerIdx(string value) => CenturionSystemLayers.Where(kvp => kvp.Value == value).Select(kvp => kvp.Key).First();
+
         public static bool IsConfigured()
         {
             if (!UpdateLayers.IsCollisionLayerMatrixSetup()) return false;
@@ -49,10 +51,10 @@ namespace CenturionCC.System.Editor.Utils
             var environmentLayer = LayerMask.NameToLayer("Environment");
             var walkthroughLayer = LayerMask.NameToLayer("Walkthrough");
             var mirrorReflectionLayer = LayerMask.NameToLayer("MirrorReflection");
-            var gamePickupLayer = CenturionSystemLayers.FindFirstKeyByValue("GamePickup");
-            var gamePlayerLayer = CenturionSystemLayers.FindFirstKeyByValue("GamePlayer");
-            var gameGunLayer = CenturionSystemLayers.FindFirstKeyByValue("GameGun");
-            var gameProjectileLayer = CenturionSystemLayers.FindFirstKeyByValue("GameProjectile");
+            var gamePickupLayer = FindLayerIdx("GamePickup");
+            var gamePlayerLayer = FindLayerIdx("GamePlayer");
+            var gameGunLayer = FindLayerIdx("GameGun");
+            var gameProjectileLayer = FindLayerIdx("GameProjectile");
 
             for (var i = 0; i < 32; i++)
             {
