@@ -1,7 +1,9 @@
-﻿using System;
+﻿using CenturionCC.System.Editor.Validation;
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 namespace CenturionCC.System.Editor.ControlPanel
 {
     public interface IControlPanelDrawer
@@ -11,12 +13,12 @@ namespace CenturionCC.System.Editor.ControlPanel
 
     public class CenturionSystemControlPanelWindow : UnityEditor.EditorWindow
     {
-
         private static Texture2D _headerTexture;
         private static GUIStyle _centeredLabel;
         private static GUIStyle _activeStyle;
         private static GUIStyle _inactiveStyle;
         private static ControlPanelTab _currentTab = ControlPanelTab.Info;
+        private static bool _shouldPerformValidation = true;
         private static readonly Dictionary<ControlPanelTab, IControlPanelDrawer> TabDrawers = new Dictionary<ControlPanelTab, IControlPanelDrawer>
         {
             [ControlPanelTab.Info] = new InfoPanelDrawer(),
@@ -25,8 +27,28 @@ namespace CenturionCC.System.Editor.ControlPanel
             [ControlPanelTab.Migration] = new MigrationPanelDrawer(),
         };
 
-        public void OnGUI()
+        private void Awake() => MarkForValidation();
+
+        private void OnEnable()
         {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void OnDisable()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        private void OnGUI()
+        {
+            if (_shouldPerformValidation)
+            {
+                CenturionSystemBuildProcessor.BakeVersionAndLicense();
+                Validator.PerformValidation();
+                _shouldPerformValidation = false;
+            }
+
             var controlPanelTabs = Enum.GetValues(typeof(ControlPanelTab));
             void DrawTabButton(string label, ControlPanelTab tab)
             {
@@ -61,6 +83,8 @@ namespace CenturionCC.System.Editor.ControlPanel
 
             TabDrawers[_currentTab].Draw();
         }
+        private void OnHierarchyChange() => MarkForValidation();
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => MarkForValidation();
 
         [MenuItem("Centurion System/Control Panel")]
         public static void OpenWindow()
@@ -68,6 +92,11 @@ namespace CenturionCC.System.Editor.ControlPanel
             var window = GetWindow<CenturionSystemControlPanelWindow>();
             window.titleContent = new GUIContent("Centurion System Control Panel");
             window.Show();
+        }
+
+        public static void MarkForValidation()
+        {
+            _shouldPerformValidation = true;
         }
 
         private enum ControlPanelTab

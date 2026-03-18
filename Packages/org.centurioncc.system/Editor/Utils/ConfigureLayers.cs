@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using VRC.PackageManagement.Core;
 
 namespace CenturionCC.System.Editor.Utils
 {
@@ -30,14 +31,61 @@ namespace CenturionCC.System.Editor.Utils
                     i != defaultLayer && i != environmentLayer && i != gameProjectileLayer && i != gameGunLayer);
 
                 Physics.IgnoreLayerCollision(gameProjectileLayer, i,
-                    i != environmentLayer && i != gamePlayerLayer && i != walkthroughLayer);
+                    i != environmentLayer && i != gamePlayerLayer && i != walkthroughLayer && i != gamePickupLayer);
 
                 Physics.IgnoreLayerCollision(gameGunLayer, i,
-                    i != environmentLayer && i != gameGunLayer && i != walkthroughLayer);
+                    i != environmentLayer && i != gameGunLayer && i != walkthroughLayer && i != gamePickupLayer);
 
                 Physics.IgnoreLayerCollision(gamePlayerLayer, i,
                     i != gameProjectileLayer && i != mirrorReflectionLayer);
             }
+        }
+
+        public static bool IsConfigured()
+        {
+            if (!UpdateLayers.IsCollisionLayerMatrixSetup()) return false;
+
+            var defaultLayer = LayerMask.NameToLayer("Default");
+            var environmentLayer = LayerMask.NameToLayer("Environment");
+            var walkthroughLayer = LayerMask.NameToLayer("Walkthrough");
+            var mirrorReflectionLayer = LayerMask.NameToLayer("MirrorReflection");
+            var gamePickupLayer = CenturionSystemLayers.FindFirstKeyByValue("GamePickup");
+            var gamePlayerLayer = CenturionSystemLayers.FindFirstKeyByValue("GamePlayer");
+            var gameGunLayer = CenturionSystemLayers.FindFirstKeyByValue("GameGun");
+            var gameProjectileLayer = CenturionSystemLayers.FindFirstKeyByValue("GameProjectile");
+
+            for (var i = 0; i < 32; i++)
+            {
+                var gamePickupIntersection = i != defaultLayer && i != environmentLayer && i != gameProjectileLayer && i != gameGunLayer;
+                if (Physics.GetIgnoreLayerCollision(gamePickupLayer, i) != gamePickupIntersection)
+                {
+                    Debug.LogError($"Collision layer {LayerMask.LayerToName(i)} vs GamePickupLayer is not configured correctly");
+                    return false;
+                }
+
+                var gameProjectileIntersection = i != environmentLayer && i != gamePlayerLayer && i != walkthroughLayer && i != gamePickupLayer;
+                if (Physics.GetIgnoreLayerCollision(gameProjectileLayer, i) != gameProjectileIntersection)
+                {
+                    Debug.LogError($"Collision layer {LayerMask.LayerToName(i)} vs GameProjectileLayer is not configured correctly");
+                    return false;
+                }
+
+                var gameGunIntersection = i != environmentLayer && i != gameGunLayer && i != walkthroughLayer && i != gamePickupLayer;
+                if (Physics.GetIgnoreLayerCollision(gameGunLayer, i) != gameGunIntersection)
+                {
+                    Debug.LogError($"Collision layer {LayerMask.LayerToName(i)} vs GameGunLayer is not configured correctly");
+                    return false;
+                }
+
+                var gamePlayerIntersection = i != gameProjectileLayer && i != mirrorReflectionLayer;
+                if (Physics.GetIgnoreLayerCollision(gamePlayerLayer, i) != gamePlayerIntersection)
+                {
+                    Debug.LogError($"Collision layer {LayerMask.LayerToName(i)} vs GamePlayerLayer is not configured correctly");
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }
