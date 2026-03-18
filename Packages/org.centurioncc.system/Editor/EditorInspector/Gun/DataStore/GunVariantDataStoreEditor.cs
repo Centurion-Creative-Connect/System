@@ -303,25 +303,19 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
                 var helpBoxContents = string.Empty;
                 var helpBoxMessageType = MessageType.None;
 
-                if (fireMode == FireMode.FullAuto)
+                if (fireMode != FireMode.Safety)
                 {
-                    if (float.IsNegative(secondsPerRound) || float.IsInfinity(secondsPerRound))
+                    if (secondsPerRound <= 0 || tapInterval <= 0)
                     {
-                        helpBoxContents = "Negative or Infinity is not a valid value for \"RPM\" or \"RPS\", and can cause unexpected behaviour at runtime.";
+                        helpBoxContents = "Setting 0 or below for \"RPM\", \"RPS\", or \"Per Burst Intervals\" allows guns fire at rate of users framerate.";
+                        helpBoxMessageType = MessageType.Warning;
+                    }
+
+                    if (float.IsPositiveInfinity(secondsPerRound) || float.IsPositiveInfinity(secondsPerRound) || float.IsPositiveInfinity(tapInterval))
+                    {
+                        helpBoxContents = "Setting Positive Infinity for \"RPM\", \"RPS\", or \"Per Burst Intervals\" makes guns unable to fire.";
                         helpBoxMessageType = MessageType.Error;
                     }
-                }
-
-                if (fireMode != FireMode.Safety && secondsPerRound == 0)
-                {
-                    helpBoxContents = "0 is not a valid value for \"RPM\" or \"RPS\", and can cause unexpected behaviour at runtime.";
-                    helpBoxMessageType = MessageType.Error;
-                }
-
-                if (float.IsPositiveInfinity(tapInterval))
-                {
-                    helpBoxContents = "Setting \"Per Burst Intervals\" to Infinity disables further firing.";
-                    helpBoxMessageType = MessageType.Warning;
                 }
 
                 fireModeSettings.Add(
@@ -338,7 +332,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
 
             var reorderableList = new ReorderableList(fireModeSettings, typeof(FireModeSetting))
             {
-                elementHeightCallback = idx => string.IsNullOrEmpty(fireModeSettings[idx].HelpBoxContents) ? EditorGUIUtility.singleLineHeight : EditorGUIUtility.singleLineHeight * 3,
+                elementHeightCallback = idx => string.IsNullOrEmpty(fireModeSettings[idx].HelpBoxContents) ? EditorGUIUtility.singleLineHeight : EditorGUIUtility.singleLineHeight * 3.5f,
                 drawHeaderCallback = rect =>
                 {
                     var singleRect = new Rect(rect.x, rect.y, rect.width / 4 - 10, rect.height);
@@ -380,7 +374,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
 
                     if (!string.IsNullOrEmpty(setting.HelpBoxContents))
                     {
-                        var helpBoxRect = new Rect(rect.x, rect.y + EditorGUIUtility.singleLineHeight * 1.25f, rect.width, EditorGUIUtility.singleLineHeight * 1.5f);
+                        var helpBoxRect = new Rect(rect.x, rect.y + EditorGUIUtility.singleLineHeight * 1.25f, rect.width, EditorGUIUtility.singleLineHeight * 2f);
                         EditorGUI.HelpBox(helpBoxRect, setting.HelpBoxContents, setting.HelpBoxMessageType);
                     }
 
