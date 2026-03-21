@@ -59,6 +59,8 @@ namespace CenturionCC.System.Gun
                 if (curr != GunState.Idle && twistNormalized < twistMaxMargin)
                 {
                     next = GunState.Idle;
+                    if (target.HasCocked)
+                        target._LoadBullet();
                     if (hapticData && hapticData.Done)
                         hapticData.Done.PlayInHand(hand);
                 }
@@ -82,7 +84,6 @@ namespace CenturionCC.System.Gun
                 if (curr != GunState.InCockingPush)
                 {
                     next = GunState.InCockingPush;
-                    target._LoadBullet();
                     target.HasCocked = true;
                     if (hapticData && hapticData.Pull)
                         hapticData.Pull.PlayInHand(hand);
@@ -117,6 +118,9 @@ namespace CenturionCC.System.Gun
             if (progressNormalized < minMargin &&
                 curr != GunState.Idle)
             {
+                if (curr == GunState.InCockingPush)
+                    target._LoadBullet();
+
                 next = GunState.Idle;
                 if (hapticData && hapticData.Done)
                     hapticData.Done.PlayInHand(hand);
@@ -132,7 +136,6 @@ namespace CenturionCC.System.Gun
             else if (progressNormalized > maxMargin && curr != GunState.InCockingPush)
             {
                 next = GunState.InCockingPush;
-                target._LoadBullet();
                 target.HasCocked = true;
                 if (hapticData && hapticData.Pull)
                     hapticData.Pull.PlayInHand(hand);
