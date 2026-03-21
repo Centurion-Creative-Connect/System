@@ -52,7 +52,7 @@ namespace CenturionCC.System.Utils
         private RaycastHit _hit;
         private bool _isApplyingGroundSnap;
         private float _lastGroundSnapUpdatedTime;
-        private bool _lastSurfaceNoFootstep;
+        private bool _lastNoFootstep;
         private float _lastSurfaceUpdatedTime;
 
         private VRCPlayerApi _localPlayer;
@@ -81,7 +81,7 @@ namespace CenturionCC.System.Utils
             if (UpdateTimer())
                 CurrentSurfaceUpdatePass();
 
-            if (playFootstepSound && !_lastSurfaceNoFootstep)
+            if (playFootstepSound && !_lastNoFootstep)
                 FootstepUpdatePass();
 
             if (useGunIntegration)
@@ -128,13 +128,13 @@ namespace CenturionCC.System.Utils
                     _activeTags.Add(surfTag);
 
                 EnvironmentEffectMultiplier = CurrentSurface.WalkingSpeedMultiplier;
-                _lastSurfaceNoFootstep = CurrentSurface.Tags.ContainsString("NoFootstep");
             }
             else
             {
                 EnvironmentEffectMultiplier = 1;
-                _lastSurfaceNoFootstep = true;
             }
+
+            _lastNoFootstep = _activeTags.Contains("NoFootstep");
 
             Invoke_OnActiveTagsUpdated();
             Invoke_OnSurfaceUpdated(lastSurf, CurrentSurface);
@@ -356,6 +356,7 @@ namespace CenturionCC.System.Utils
                 if (((ObjectMarkerBase)o.Reference) != null)
                     totalWeight += ((ObjectMarkerBase)o.Reference).ObjectWeight;
             PlayerWeight = totalWeight;
+            _lastNoFootstep = _activeTags.Contains("NoFootstep");
         }
 
         /// <summary>
