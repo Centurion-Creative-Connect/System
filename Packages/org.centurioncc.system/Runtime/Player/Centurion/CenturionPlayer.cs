@@ -27,11 +27,12 @@ namespace CenturionCC.System.Player.Centurion
         private CenturionPlayerTag[] playerTags;
 
         private readonly DataList _playerAreas = new DataList();
-
         private short _deaths;
 
         [UdonSynced] [FieldChangeCallback(nameof(SyncedHealth))]
         private float _health = 100;
+
+        private bool _isCollidersActive = true;
 
         private bool _isInSafeZone;
 
@@ -163,7 +164,7 @@ namespace CenturionCC.System.Player.Centurion
         public override VRCPlayerApi VrcPlayer => Networking.GetOwner(gameObject);
         public override RoleData[] Roles => roleProvider.GetPlayerRoles(VrcPlayer);
         public bool IsCulled { get; set; }
-        public bool IsCollidersActive { get; private set; } = true;
+        public bool IsCollidersActive { get => _isCollidersActive && !playerManager.IsInStaffTeam(this); private set => _isCollidersActive = value; }
 
         private void Start()
         {
