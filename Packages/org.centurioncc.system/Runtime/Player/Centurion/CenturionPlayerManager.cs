@@ -314,7 +314,7 @@ namespace CenturionCC.System.Player.Centurion
             }
 
             // on friendly fire
-            if (IsFriendly(victimCenturionPlayer, attackerCenturionPlayer))
+            if (IsFriendly(victimCenturionPlayer, attackerCenturionPlayer) && !IsInStaffTeam(attackerCenturionPlayer))
             {
                 // if damage cannot be applied to friendly, ignore it
                 if (!info.CanDamageFriendly())
@@ -459,7 +459,7 @@ namespace CenturionCC.System.Player.Centurion
                 AddResolvedEventId(info.EventId());
             }
 
-            if (IsFriendly(attackerPlayer, victimPlayer) && CanDamageFriendly())
+            if (IsFriendly(attackerPlayer, victimPlayer) && CanDamageFriendly() && !IsInStaffTeam(attackerPlayer))
             {
                 switch (friendlyFireMode)
                 {
