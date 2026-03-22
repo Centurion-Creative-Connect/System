@@ -84,6 +84,7 @@ namespace CenturionCC.System.Gun
                 if (curr != GunState.InCockingPush)
                 {
                     next = GunState.InCockingPush;
+                    target._EjectBullet();
                     target.HasCocked = true;
                     if (hapticData && hapticData.Pull)
                         hapticData.Pull.PlayInHand(hand);
@@ -136,6 +137,7 @@ namespace CenturionCC.System.Gun
             else if (progressNormalized > maxMargin && curr != GunState.InCockingPush)
             {
                 next = GunState.InCockingPush;
+                target._EjectBullet();
                 target.HasCocked = true;
                 if (hapticData && hapticData.Pull)
                     hapticData.Pull.PlayInHand(hand);
