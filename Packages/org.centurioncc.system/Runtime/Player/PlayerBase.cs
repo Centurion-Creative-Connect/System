@@ -105,7 +105,7 @@ namespace CenturionCC.System.Player
         public abstract int Score { get; set; }
 
         [PublicAPI]
-        public abstract int KillStreak { get; protected set; }
+        public abstract int KillStreak { get; set; }
 
         // UdonSharp does not support merge conditional expr
         // ReSharper disable once MergeConditionalExpression

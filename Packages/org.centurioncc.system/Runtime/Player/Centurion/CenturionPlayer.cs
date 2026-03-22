@@ -153,7 +153,7 @@ namespace CenturionCC.System.Player.Centurion
             }
         }
 
-        public override int KillStreak { get; protected set; }
+        public override int KillStreak { get; set; }
 
         public override float Health => SyncedHealth;
         public override float MaxHealth => _maxHealth;
