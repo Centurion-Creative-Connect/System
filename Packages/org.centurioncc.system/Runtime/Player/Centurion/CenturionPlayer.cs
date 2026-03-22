@@ -81,7 +81,7 @@ namespace CenturionCC.System.Player.Centurion
                             ? KillType.FriendlyFire
                             : KillType.Default;
 
-                    if (attacker)
+                    if (attacker && type == KillType.Default)
                     {
                         attacker.Kills += 1;
                         attacker.KillStreak += 1;
