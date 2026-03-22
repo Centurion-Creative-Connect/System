@@ -134,8 +134,7 @@ namespace CenturionCC.System.Utils
                 EnvironmentEffectMultiplier = 1;
             }
 
-            _lastNoFootstep = _activeTags.Contains("NoFootstep");
-
+            UpdateMarker();
             Invoke_OnActiveTagsUpdated();
             Invoke_OnSurfaceUpdated(lastSurf, CurrentSurface);
         }
@@ -353,8 +352,13 @@ namespace CenturionCC.System.Utils
             var totalWeight = 0F;
             var arr = _objectMarkers.ToArray();
             foreach (var o in arr)
-                if (((ObjectMarkerBase)o.Reference) != null)
-                    totalWeight += ((ObjectMarkerBase)o.Reference).ObjectWeight;
+            {
+                var marker = (ObjectMarkerBase)o.Reference;
+                if (!marker) continue;
+
+                totalWeight += marker.ObjectWeight;
+            }
+
             PlayerWeight = totalWeight;
             _lastNoFootstep = _activeTags.Contains("NoFootstep");
         }
@@ -370,11 +374,16 @@ namespace CenturionCC.System.Utils
         {
             _objectMarkers.Clear();
             _activeTags.Clear();
+
+            if (CurrentSurface != null)
+            {
+                foreach (var surfTags in CurrentSurface.Tags)
+                {
+                    _activeTags.Add(surfTags);
+                }
+            }
+
             UpdateMarker();
-
-            if (CurrentSurface == null) return;
-
-            foreach (var surfTags in CurrentSurface.Tags) _activeTags.Add(surfTags);
             Invoke_OnActiveTagsUpdated();
             Invoke_OnHeldObjectsUpdated();
         }
