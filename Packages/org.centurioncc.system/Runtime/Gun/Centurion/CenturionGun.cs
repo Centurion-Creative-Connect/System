@@ -3,7 +3,6 @@ using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
-using VRC.SDK3.UdonNetworkCalling;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
 namespace CenturionCC.System.Gun.Centurion
@@ -42,7 +41,11 @@ namespace CenturionCC.System.Gun.Centurion
                 _variantDataUniqueId = value;
 
                 // recurse guard
-                if (_isUpdatingVariantData) return;
+                if (_isUpdatingVariantData)
+                {
+                    Debug.LogWarning($"{Prefix}VariantDataUniqueId is being updated recursively!");
+                    return;
+                }
                 _isUpdatingVariantData = true;
 
                 if (_variantDataUniqueId == 0xFF)
@@ -138,38 +141,41 @@ namespace CenturionCC.System.Gun.Centurion
             gunManager.OnGunVariantChanged(this);
         }
 
-        private void Internal_ResetVariantData()
+        public void Internal_ResetVariantData()
         {
 #if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             logger.LogVerbose($"{Prefix}ResetVariantData");
 #endif
 
             foreach (var behaviour in Behaviours)
+            {
+                if (behaviour == null) continue;
                 behaviour.Dispose(this);
+            }
 
             VariantDataUniqueId = 0xFF;
+            positioningHelper.SetPrimaryXAngleOffset(0);
             animationHelper.TargetAnimator = null;
+
+            MainHandle.ForceDrop();
+            MainHandle.UnHolster();
+
             if (model)
+            {
                 Destroy(model);
+                model = null;
+            }
 
             _variantData = null;
-
-            MainHandle.UnHolster();
-            CurrentFireModeIndex = 0;
-            ShotCount = 0;
-
-            Trigger = TriggerState.Idle;
-            State = GunState.Idle;
-            HasBulletInChamber = false;
-            HasCocked = false;
-
-            CollisionCount = 0;
-
             IsOccupied = false;
         }
 
         public void RequestDisposeToMaster()
         {
+            MainHandle.ForceDrop();
+            if (SubHandle)
+                SubHandle.ForceDrop();
+
             if (!Networking.IsMaster)
                 return;
 
@@ -214,11 +220,16 @@ namespace CenturionCC.System.Gun.Centurion
             }
 
             _RequestSync();
-            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_PreApplyVariantData), VariantDataUniqueId);
         }
 
         public bool MasterOnly_Dispose()
         {
+            if (!IsOccupied)
+            {
+                // Already disposed
+                return false;
+            }
+
             if (!Networking.IsMaster)
             {
                 logger.LogError($"{Prefix}You must be a master to dispose a ManagedGun!");
@@ -229,21 +240,13 @@ namespace CenturionCC.System.Gun.Centurion
             if (SubHandle)
                 SubHandle.ForceDrop();
 
-            Internal_ResetVariantData();
-
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_ResetVariantData));
             _RequestSync();
 
             MoveTo(Vector3.down * 5, Quaternion.identity);
 
             logger.Log($"{Prefix}{name} has been <color=red>disposed</color>");
             return true;
-        }
-
-        [NetworkCallable]
-        public void Internal_PreApplyVariantData(byte uniqueId)
-        {
-            logger.Log($"{Prefix}Internal_PreApplyVariantData: {uniqueId}");
-            VariantDataUniqueId = uniqueId;
         }
     }
 }

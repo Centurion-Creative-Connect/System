@@ -1,5 +1,7 @@
-﻿using UdonSharp;
+﻿using DerpyNewbie.Common;
+using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Components;
 using VRC.SDKBase;
 namespace CenturionCC.System.Gun
 {
@@ -18,6 +20,10 @@ namespace CenturionCC.System.Gun
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class GunPositioningHelper : UdonSharpBehaviour
     {
+        [NewbieInject(SearchScope.Children)]
+        [SerializeField]
+        private VRCObjectSync[] objectSyncs;
+
         [SerializeField] private Transform target;
         [SerializeField] private Transform primaryHandle;
         [SerializeField] private Transform secondaryHandle;
@@ -58,7 +64,7 @@ namespace CenturionCC.System.Gun
             RecalculatePivot();
         }
 
-        private void Update()
+        public void Update()
         {
             var t = 1 - Mathf.Exp(-_recoilErgonomics * Time.deltaTime);
             _recoilOffsetRot = Quaternion.Lerp(_recoilOffsetRot, Quaternion.identity, t);
@@ -125,10 +131,14 @@ namespace CenturionCC.System.Gun
             _pivotLookAtOffsetPos = target.worldToLocalMatrix.MultiplyPoint3x4(_pivotLookAtTransform.position);
         }
 
-        private void _RequestSync()
+        public void _RequestSync()
         {
             if (!Networking.IsOwner(gameObject))
                 Networking.SetOwner(Networking.LocalPlayer, gameObject);
+
+            foreach (var sync in objectSyncs)
+                if (!Networking.IsOwner(sync.gameObject))
+                    Networking.SetOwner(Networking.LocalPlayer, sync.gameObject);
 
             RequestSerialization();
         }
@@ -169,6 +179,8 @@ namespace CenturionCC.System.Gun
 
         public void MoveTo(Vector3 position, Quaternion rotation)
         {
+            FlagDiscontinuity();
+
             var targetMatrix = Matrix4x4.TRS(position, rotation, Vector3.one) * _primaryOffset.inverse;
             target.SetPositionAndRotation(targetMatrix.GetPosition(), targetMatrix.rotation);
 
@@ -183,7 +195,17 @@ namespace CenturionCC.System.Gun
         {
             _primaryXAngleOffset = angle;
             RecalculatePivot();
-            _RequestSync();
+        }
+
+        public void FlagDiscontinuity()
+        {
+            foreach (var sync in objectSyncs)
+            {
+                if (!Networking.IsOwner(sync.gameObject))
+                    Networking.SetOwner(Networking.LocalPlayer, sync.gameObject);
+
+                sync.FlagDiscontinuity();
+            }
         }
     }
 }
