@@ -208,6 +208,7 @@ namespace CenturionCC.System.Gun
             foreach (var gun in gunManager.GetLocallyHeldGunInstances())
             {
                 gun.PositioningHelper.SetPrimaryXAngleOffset(_currentPrimaryXOffset);
+                gun.PositioningHelper._RequestSync();
             }
         }
 
@@ -232,6 +233,7 @@ namespace CenturionCC.System.Gun
         public override void OnPickedUpLocally(GunBase instance)
         {
             instance.PositioningHelper.SetPrimaryXAngleOffset(_currentPrimaryXOffset);
+            instance.PositioningHelper._RequestSync();
         }
     }
 }
