@@ -72,7 +72,17 @@ namespace CenturionCC.System.Gimmick.Scoreboard
             SortScoreboard();
         }
 
+        public override void OnPlayerStatsChanged(PlayerBase player)
+        {
+            UpdateElement(player);
+        }
+
         public override void OnPlayerReset(PlayerBase player)
+        {
+            UpdateElement(player);
+        }
+
+        private void UpdateElement(PlayerBase player)
         {
             var element = GetOrCreateElement(player);
 
