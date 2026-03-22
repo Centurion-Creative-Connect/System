@@ -105,11 +105,24 @@ namespace CenturionCC.System.Gun.Centurion
             }
 
             var data = gunManager.GetVariantData(VariantDataUniqueId);
+            if (data == null)
+            {
+                logger.LogError($"{Prefix}Will not refresh it's data because data is not found. maybe GunManager hasn't been initialized. Refreshing in 10 seconds!: {VariantDataUniqueId}");
+                SendCustomEventDelayedSeconds(nameof(RefreshData), 10f);
+                return;
+            }
+
             Internal_SetVariantData(data);
         }
 
         private void Internal_SetVariantData(GunVariantDataStore data)
         {
+            if (data == null)
+            {
+                logger.LogError($"{Prefix}Internal_SetVariantData: data is null!");
+                return;
+            }
+
 #if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             logger.LogVerbose($"{Prefix}Internal_SetVariantData: {data.UniqueId}");
 #endif
