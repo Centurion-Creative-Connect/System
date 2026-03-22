@@ -96,16 +96,16 @@ namespace CenturionCC.System.Player
         public abstract int TeamId { get; }
 
         [PublicAPI]
-        public abstract int Kills { get; protected set; }
+        public abstract int Kills { get; set; }
 
         [PublicAPI]
-        public abstract int Deaths { get; protected set; }
+        public abstract int Deaths { get; set; }
 
         [PublicAPI]
         public abstract int Score { get; set; }
 
         [PublicAPI]
-        public abstract int KillStreak { get; protected set; }
+        public abstract int KillStreak { get; set; }
 
         // UdonSharp does not support merge conditional expr
         // ReSharper disable once MergeConditionalExpression

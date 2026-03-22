@@ -26,10 +26,10 @@ namespace CenturionCC.System.Tests.Editor
         public override float Health { get; }
         public override float MaxHealth { get; }
         public override int TeamId => _teamId;
-        public override int Kills { get; protected set; }
-        public override int Deaths { get; protected set; }
+        public override int Kills { get; set; }
+        public override int Deaths { get; set; }
         public override int Score { get; set; }
-        public override int KillStreak { get; protected set; }
+        public override int KillStreak { get; set; }
         public override bool IsInSafeZone { get; }
         public override VRCPlayerApi VrcPlayer { get; }
         public override RoleData[] Roles => _roles;

@@ -82,8 +82,8 @@ namespace CenturionCC.System.Player.Centurion
 
                     if (attacker)
                     {
-                        ++attacker.Kills;
-                        ++attacker.KillStreak;
+                        attacker.Kills += 1;
+                        attacker.KillStreak += 1;
                     }
 
                     KillStreak = 0;
@@ -120,7 +120,7 @@ namespace CenturionCC.System.Player.Centurion
         public override int Kills
         {
             get => _kills;
-            protected set
+            set
             {
                 var changed = _kills != value;
                 _kills = (short)value;
@@ -132,7 +132,7 @@ namespace CenturionCC.System.Player.Centurion
         public override int Deaths
         {
             get => _deaths;
-            protected set
+            set
             {
                 var changed = _deaths != value;
                 _deaths = (short)value;
@@ -153,7 +153,7 @@ namespace CenturionCC.System.Player.Centurion
             }
         }
 
-        public override int KillStreak { get; protected set; }
+        public override int KillStreak { get; set; }
 
         public override float Health => SyncedHealth;
         public override float MaxHealth => _maxHealth;
