@@ -593,12 +593,6 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual void _EjectBullet()
         {
-            // FIXME: do proper bullet consuming
-            if (!HasBulletInChamber)
-            {
-                --BulletsInMagazine;
-            }
-
             HasBulletInChamber = false;
         }
 
