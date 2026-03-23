@@ -73,15 +73,12 @@ namespace CenturionCC.System.Command
                 }
                 case "version":
                 {
-                    console.Println($"Centurion System   - v{gameManager.GetVersion()}");
-                    console.Println("Centurion System Commands - v0.7.0-alpha.1");
+                    console.Println($"Centurion System - v{gameManager.GetVersion()}");
                     return gameManager.GetVersion();
                 }
                 case "license":
                 {
                     console.Println(gameManager.GetLicense());
-                    console.Println(
-                        "Centurion System Commands © 2022 by Centurion Creative Connect is licensed under CC BY-NC 4.0");
                     return gameManager.GetLicense();
                 }
                 default:
