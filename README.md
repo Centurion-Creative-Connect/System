@@ -23,7 +23,7 @@ Airsoft game system made for Centurion VR Survival Game Field.
 1. Download and Import all dependencies.
     - [Newbie Commons](https://github.com/DerpyNewbie/NewbieCommons/releases)
     - [Newbie Logger](https://github.com/DerpyNewbie/NewbieLogger/releases)
-2. Open [Releases in Centurion System](https://github.com/Centurion-Creative-Connect/System/releases/latest) and [Releases in Centurion System Commands](https://github.com/Centurion-Creative-Connect/System.Commands/releases/latest).
+2. Open [Releases in Centurion System](https://github.com/Centurion-Creative-Connect/System/releases/latest).
 3. Download unitypackage in assets.
 4. Import downloaded unitypackage.
 5. Done!
