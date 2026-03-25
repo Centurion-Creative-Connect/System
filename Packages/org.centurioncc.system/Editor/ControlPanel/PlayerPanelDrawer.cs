@@ -1,12 +1,11 @@
 ﻿using CenturionCC.System.Editor.Utils;
-using CenturionCC.System.Player.Centurion;
-using DerpyNewbie.Common.Role;
+using System;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 namespace CenturionCC.System.Editor.ControlPanel
 {
-    public class PlayerPanelDrawer : IControlPanelDrawer
+    public class PlayerPanelDrawer : IControlPanelDrawer, IDisposable
     {
         private static CachedEditor _playerManagerEditor;
         private static CachedEditor _roleProviderEditor;
@@ -31,6 +30,11 @@ namespace CenturionCC.System.Editor.ControlPanel
             if (GUIUtil.HeaderFoldout("RoleProvider", ref _isRoleManagerFoldout))
                 using (new EditorGUI.IndentLevelScope())
                     DrawRoleManager();
+        }
+        public void Dispose()
+        {
+            _playerManagerEditor?.Dispose();
+            _roleProviderEditor?.Dispose();
         }
 
         private static void DrawPlayerManager()
