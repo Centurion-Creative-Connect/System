@@ -1,4 +1,5 @@
-﻿using CenturionCC.System.Editor.Validation;
+﻿using CenturionCC.System.Editor.Utils;
+using CenturionCC.System.Editor.Validation;
 using System;
 using System.Collections.Generic;
 using UnityEditor;
@@ -19,6 +20,7 @@ namespace CenturionCC.System.Editor.ControlPanel
         private static GUIStyle _inactiveStyle;
         private static ControlPanelTab _currentTab = ControlPanelTab.Info;
         private static bool _shouldPerformValidation = true;
+        private static Vector2 _scrollPosition;
         private static readonly Dictionary<ControlPanelTab, IControlPanelDrawer> TabDrawers = new Dictionary<ControlPanelTab, IControlPanelDrawer>
         {
             [ControlPanelTab.Info] = new InfoPanelDrawer(),
@@ -50,7 +52,7 @@ namespace CenturionCC.System.Editor.ControlPanel
             }
 
             var controlPanelTabs = Enum.GetValues(typeof(ControlPanelTab));
-            void DrawTabButton(string label, ControlPanelTab tab)
+            bool DrawTabButton(string label, ControlPanelTab tab)
             {
                 var style = _currentTab == tab ? _activeStyle : _inactiveStyle;
                 var scaleRatio = 100f / _headerTexture.height;
@@ -58,7 +60,10 @@ namespace CenturionCC.System.Editor.ControlPanel
                 if (GUILayout.Button(label, style, GUILayout.Width(_headerTexture != null ? actualWidth / controlPanelTabs.Length : 200f)))
                 {
                     _currentTab = tab;
+                    return true;
                 }
+
+                return false;
             }
 
             _headerTexture ??= AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/org.centurioncc.system/Editor/Textures/centurion-system-banner-v2.png");
@@ -75,13 +80,18 @@ namespace CenturionCC.System.Editor.ControlPanel
             {
                 GUILayout.FlexibleSpace();
                 foreach (var controlPanelTab in controlPanelTabs)
-                    DrawTabButton(controlPanelTab.ToString(), (ControlPanelTab)controlPanelTab);
+                    if (DrawTabButton(controlPanelTab.ToString(), (ControlPanelTab)controlPanelTab))
+                        _scrollPosition = Vector2.zero;
                 GUILayout.FlexibleSpace();
             }
 
-            EditorGUILayout.Separator();
+            GUIUtil.HorizontalBar();
 
-            TabDrawers[_currentTab].Draw();
+            using (var scroll = new GUILayout.ScrollViewScope(_scrollPosition, GUI.skin.box))
+            {
+                _scrollPosition = scroll.scrollPosition;
+                TabDrawers[_currentTab].Draw();
+            }
         }
         private void OnHierarchyChange() => MarkForValidation();
         private static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => MarkForValidation();

@@ -1,21 +1,18 @@
 ﻿using CenturionCC.System.Audio;
 using CenturionCC.System.Gun;
-using System;
-using System.Collections.Generic;
 using CenturionCC.System.Player;
 using CenturionCC.System.UI.HeadUI;
 using DerpyNewbie.Common;
 using DerpyNewbie.Common.Role;
 using DerpyNewbie.Logger;
+using System.Collections.Generic;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-
 namespace CenturionCC.System.Editor.Utils
 {
-    public static class CenturionSystemReferenceCache
+    public static class CenturionReferenceCache
     {
-
         private static Scene _cachedScene;
         private static CenturionSystem _cachedCenturionSystem;
         private static UpdateManager _cachedUpdateManager;
