@@ -535,6 +535,7 @@ MonoBehaviour:
   defaultProjectilePool: {fileID: 0}
   projectilePoolOverride: {fileID: 0}
   isDoubleHanded: 1
+  canShootWithoutMagazine: 1
   useWallCheck: 1
   useSafeZoneCheck: 1
   shooterOffset: {fileID: 7025496643513007884}
@@ -548,8 +549,7 @@ MonoBehaviour:
   defaultMagazineSize: 30
   objectType: 3
   objectWeight: 0
-  tags:
-  - NoFootstep
+  tags: []
   movementOption: 0
   walkSpeed: 1
   sprintSpeed: 1
@@ -586,6 +586,7 @@ MonoBehaviour:
   canCockAfterCock: 1
   isBlowBack: 0
   isDoubleAction: 0
+  doHoldOpenOnLastBullet: 1
   requireManualPushingAfterFire: 0
   dropCustomHandleOnFire: 0
   cockingPosition: {fileID: 5778308172574087}

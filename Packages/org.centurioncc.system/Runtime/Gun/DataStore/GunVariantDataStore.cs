@@ -86,7 +86,7 @@ namespace CenturionCC.System.Gun.DataStore
 
         [SerializeField] private float objectWeight;
 
-        [SerializeField] private string[] tags = { "NoFootstep" };
+        [SerializeField] private string[] tags;
 
         [SerializeField] private MovementOption movementOption = MovementOption.Inherit;
 
