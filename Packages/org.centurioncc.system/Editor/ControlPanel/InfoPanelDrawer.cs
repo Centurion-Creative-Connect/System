@@ -7,35 +7,48 @@ namespace CenturionCC.System.Editor.ControlPanel
 {
     public class InfoPanelDrawer : IControlPanelDrawer
     {
+        private bool _isSceneValidationFoldout = true;
+        private bool _isVersionInfoFoldout = true;
+
         public void Draw()
         {
-            EditorGUILayout.LabelField("Version Info", EditorStyles.boldLabel);
-            var system = CenturionSystemReferenceCache.CenturionSystem;
-            if (system != null)
-            {
-                EditorGUILayout.LabelField("Version", system.GetVersion());
-                EditorGUILayout.LabelField("Branch", system.GetBranch());
-                EditorGUILayout.LabelField("Commit", system.GetCommitHash());
-                if (GUILayout.Button("Refresh"))
-                {
-                    CenturionSystemBuildProcessor.BakeVersionAndLicense();
-                }
-            }
-            else
+            if (GUIUtil.HeaderFoldout("Version Info", ref _isVersionInfoFoldout))
+                using (new EditorGUI.IndentLevelScope())
+                    DrawVersionInfo();
+
+            GUIUtil.HorizontalBar();
+
+            if (GUIUtil.HeaderFoldout("Scene Validation", ref _isSceneValidationFoldout))
+                using (new EditorGUI.IndentLevelScope())
+                    DrawSceneValidation();
+        }
+
+        private static void DrawVersionInfo()
+        {
+            var system = CenturionReferenceCache.CenturionSystem;
+            if (!system)
             {
                 EditorGUILayout.HelpBox("CenturionSystem component is not in the scene!", MessageType.Error);
                 if (GUILayout.Button("Generate CenturionSystem Object"))
                 {
-                    var go = new GameObject("CenturionSystem");
-                    go.AddComponent<CenturionSystem>();
-                    SceneManager.MoveGameObjectToScene(go, SceneManager.GetActiveScene());
+                    CenturionSampleFactory.Create(CenturionSampleFactory.ObjectType.CenturionSystem, SceneManager.GetActiveScene());
                     CenturionSystemControlPanelWindow.MarkForValidation();
                 }
+
+                return;
             }
 
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Scene Validation", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Version", system.GetVersion());
+            EditorGUILayout.LabelField("Branch", system.GetBranch());
+            EditorGUILayout.LabelField("Commit", system.GetCommitHash());
+            if (GUILayout.Button("Refresh"))
+            {
+                CenturionSystemBuildProcessor.BakeVersionAndLicense();
+            }
+        }
 
+        private static void DrawSceneValidation()
+        {
             var validationResult = Validator.GetLastValidationResult();
             if (validationResult.Count == 0)
             {
@@ -64,8 +77,6 @@ namespace CenturionCC.System.Editor.ControlPanel
             {
                 Validator.PerformValidation();
             }
-
-            EditorGUILayout.Space();
         }
     }
 }

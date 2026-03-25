@@ -7,8 +7,8 @@ namespace CenturionCC.System.Editor.Validation
     {
         public void Validate(ValidationTarget target)
         {
-            CenturionSystemReferenceCache.TargetScene = target.Scene;
-            var roleProvider = CenturionSystemReferenceCache.RoleProvider;
+            CenturionReferenceCache.TargetScene = target.Scene;
+            var roleProvider = CenturionReferenceCache.RoleProvider;
             if (roleProvider == null) return;
 
             var roleManager = roleProvider as RoleManager;

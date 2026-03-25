@@ -2,7 +2,7 @@
 using UnityEngine;
 namespace CenturionCC.System.Editor.Utils
 {
-    public static class CenturionSystemSampleResources
+    public static class CenturionSampleResources
     {
         public static GameObject GunManagerSample => AssetDatabase.LoadAssetAtPath<GameObject>("Packages/org.centurioncc.system/Samples/Prefabs/Systems/Gun/CenturionGunSystemSample.prefab");
         public static GameObject GunSummonerSample => AssetDatabase.LoadAssetAtPath<GameObject>("Packages/org.centurioncc.system/Samples/Prefabs/Utilities/SampleGunSummoners.prefab");
