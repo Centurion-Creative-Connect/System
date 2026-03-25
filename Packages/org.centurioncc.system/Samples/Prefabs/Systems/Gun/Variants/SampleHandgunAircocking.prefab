@@ -89,6 +89,7 @@ MonoBehaviour:
   defaultProjectilePool: {fileID: 0}
   projectilePoolOverride: {fileID: 0}
   isDoubleHanded: 0
+  canShootWithoutMagazine: 1
   useWallCheck: 1
   useSafeZoneCheck: 1
   shooterOffset: {fileID: 8925030073004849081}
@@ -102,8 +103,7 @@ MonoBehaviour:
   defaultMagazineSize: 30
   objectType: 3
   objectWeight: 0
-  tags:
-  - NoFootstep
+  tags: []
   movementOption: 0
   walkSpeed: 1
   sprintSpeed: 1
@@ -166,6 +166,7 @@ MonoBehaviour:
   canCockAfterCock: 1
   isBlowBack: 0
   isDoubleAction: 0
+  doHoldOpenOnLastBullet: 1
   requireManualPushingAfterFire: 0
   dropCustomHandleOnFire: 0
   cockingPosition: {fileID: 7441385323076822856}
@@ -873,6 +874,12 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 3427073243273793998}
     m_Modifications:
+    - target: {fileID: 3087810688484911979, guid: 29d8e196718d5934ba50c6cec564d5fd,
+        type: 3}
+      propertyPath: serializationData.Prefab
+      value: 
+      objectReference: {fileID: 3087810688484911979, guid: 29d8e196718d5934ba50c6cec564d5fd,
+        type: 3}
     - target: {fileID: 5503889769207367291, guid: 29d8e196718d5934ba50c6cec564d5fd,
         type: 3}
       propertyPath: serializationData.Prefab
@@ -975,6 +982,12 @@ PrefabInstance:
       propertyPath: serializationData.Prefab
       value: 
       objectReference: {fileID: 5503889770949212625, guid: 29d8e196718d5934ba50c6cec564d5fd,
+        type: 3}
+    - target: {fileID: 7538760022051715930, guid: 29d8e196718d5934ba50c6cec564d5fd,
+        type: 3}
+      propertyPath: serializationData.Prefab
+      value: 
+      objectReference: {fileID: 7538760022051715930, guid: 29d8e196718d5934ba50c6cec564d5fd,
         type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
