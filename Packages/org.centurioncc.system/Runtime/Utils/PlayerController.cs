@@ -11,6 +11,7 @@ using UnityEngine.Serialization;
 using VRC.SDK3.Data;
 using VRC.SDK3.UdonNetworkCalling;
 using VRC.SDKBase;
+using VRC.Udon.Common.Interfaces;
 
 namespace CenturionCC.System.Utils
 {
@@ -187,7 +188,7 @@ namespace CenturionCC.System.Utils
             if (!playerBase || playerManager.IsInStaffTeam(playerBase)) return;
 
             var isSlow = footstepSlowThresholdTime < timeDiff;
-            PlayFootstepSound(localPlayerPos, CurrentSurface.ObjectType, isSlow);
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(PlayFootstepSound), localPlayerPos, CurrentSurface.ObjectType, isSlow);
         }
 
         [NetworkCallable(100)]
