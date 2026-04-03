@@ -24,7 +24,7 @@ namespace CenturionCC.System.Player.Centurion
         private CenturionPlayerColliderSimple simpleCollider;
 
         [SerializeField] [NewbieInject]
-        private CenturionPlayerTag[] playerTags;
+        private PlayerExtensionBase[] playerExtensions;
 
         private readonly DataList _playerAreas = new DataList();
         private short _deaths;
@@ -262,10 +262,10 @@ namespace CenturionCC.System.Player.Centurion
             simpleCollider.PostLateUpdate();
             simpleCollider.IsDebugVisible = playerManager.IsDebug;
 
-            foreach (var playerTag in playerTags)
+            foreach (var playerExtension in playerExtensions)
             {
-                if (!playerTag) continue;
-                playerTag.Refresh();
+                if (!playerExtension) continue;
+                playerExtension.OnUpdateView();
             }
         }
 

@@ -8,7 +8,7 @@ using UnityEngine.UI;
 namespace CenturionCC.System.Player.Centurion
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class CenturionPlayerTag : UdonSharpBehaviour
+    public class CenturionPlayerTag : PlayerExtensionBase
     {
         [SerializeField] [NewbieInject]
         private PlayerManagerBase playerManager;
@@ -70,10 +70,10 @@ namespace CenturionCC.System.Player.Centurion
 
         private void Start()
         {
-            Refresh();
+            OnUpdateView();
         }
 
-        public void Refresh()
+        public override void OnUpdateView()
         {
             if (useTeamColor)
             {
@@ -128,7 +128,6 @@ namespace CenturionCC.System.Player.Centurion
         }
 
         #region RoleChecks
-
         private bool IsEnabledByRole()
         {
             return (onlyShowOnRoleNames.Length == 0 || IsShownByRole()) &&
@@ -159,7 +158,6 @@ namespace CenturionCC.System.Player.Centurion
 
             return false;
         }
-
         #endregion
     }
 }
