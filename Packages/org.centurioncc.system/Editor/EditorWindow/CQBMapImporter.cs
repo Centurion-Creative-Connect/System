@@ -39,12 +39,6 @@ namespace CenturionCC.System.Editor.EditorWindow
                     DestroyImmediate(meshCol);
                 go.AddComponent<MeshCollider>();
 
-#pragma warning disable CS0618
-                // Remove old FootstepMarker
-                foreach (var footstepMarker in go.GetComponentsInChildren<FootstepMarker>())
-                    UdonSharpEditorUtility.DestroyImmediate(footstepMarker);
-#pragma warning restore CS0618
-
                 foreach (var objectMarker in go.GetComponentsInChildren<ObjectMarker>())
                     UdonSharpEditorUtility.DestroyImmediate(objectMarker);
 

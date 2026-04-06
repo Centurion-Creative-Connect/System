@@ -1,6 +1,5 @@
 ﻿using System;
 using CenturionCC.System.Gun;
-using CenturionCC.System.Gun.Centurion;
 using CenturionCC.System.Player;
 using CenturionCC.System.Utils;
 using DerpyNewbie.Common;

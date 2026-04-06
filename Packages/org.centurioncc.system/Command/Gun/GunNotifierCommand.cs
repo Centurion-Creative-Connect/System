@@ -1,5 +1,4 @@
 ﻿using CenturionCC.System.Gun;
-using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using UdonSharp;
 using UnityEngine;
