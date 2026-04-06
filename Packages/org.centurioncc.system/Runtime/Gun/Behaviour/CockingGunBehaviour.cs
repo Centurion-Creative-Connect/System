@@ -358,8 +358,10 @@ namespace CenturionCC.System.Gun.Behaviour
                 instance.State = GunState.Idle;
             }
 
+            customHandle.handleType = HandleType.CustomHandle;
             customHandle.callback = instance;
             customHandle.transform.SetPositionAndRotation(cockingPosition.position, Quaternion.identity);
+            customHandle.SetPickupable(false);
         }
 
         public override void OnHandleDrop(GunBase instance, GunHandle handle)
