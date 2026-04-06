@@ -1,4 +1,5 @@
 ﻿using DerpyNewbie.Common;
+using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Components;
@@ -19,24 +20,24 @@ namespace CenturionCC.System.Gun
 
         [SerializeField] [NewbieInject(SearchScope.Self)]
         private VRCObjectSync objectSync;
+        [SerializeField] [NewbieInject(SearchScope.Self)]
+        private VRC_Pickup pickup;
         [SerializeField] [NewbieInject(SearchScope.Children)]
         private MeshRenderer mesh;
+        [SerializeField] [NewbieInject(SearchScope.Children)]
+        private Collider childCollider;
 
-        private Collider _collider;
         private Material _defaultMaterial;
-
         private Vector3 _initialScale;
 
         private bool _isAttached;
-        private VRC_Pickup _pickup;
 
         public bool IsVisible
         {
             get => mesh && mesh.enabled;
             set
             {
-                if (mesh)
-                    mesh.enabled = value;
+                if (mesh) mesh.enabled = value;
             }
         }
 
@@ -47,33 +48,38 @@ namespace CenturionCC.System.Gun
         }
 
         public bool IsHolstered { get; private set; }
-        public bool IsPickupable => _pickup.pickupable;
+        public bool IsPickupable => pickup && pickup.pickupable;
 
         public float Proximity
         {
-            get => _pickup.proximity;
-            set => _pickup.proximity = value;
+            get => pickup ? pickup.proximity : float.NaN;
+            set
+            {
+                if (pickup) pickup.proximity = value;
+            }
         }
 
+        [CanBeNull]
         public string UseText
         {
-            get => _pickup.UseText;
-            set => _pickup.UseText = value;
+            get => pickup ? pickup.UseText : null;
+            set
+            {
+                if (pickup) pickup.UseText = value;
+            }
         }
 
         public bool IsPickedUpLocally { get; private set; }
 
-        public bool IsPickedUp => _pickup.IsHeld;
-        public VRC_Pickup.PickupHand CurrentHand => _pickup.currentHand;
-        public VRCPlayerApi CurrentPlayer => _pickup.currentPlayer;
+        public bool IsPickedUp => pickup && pickup.IsHeld;
+        public VRC_Pickup.PickupHand CurrentHand => pickup ? pickup.currentHand : VRC_Pickup.PickupHand.None;
+
+        [CanBeNull]
+        public VRCPlayerApi CurrentPlayer => pickup ? pickup.currentPlayer : null;
 
         private void Start()
         {
-            _pickup = (VRC_Pickup)GetComponent(typeof(VRC_Pickup));
-            _collider = GetComponent<Collider>();
-            mesh = GetComponentInChildren<MeshRenderer>();
-
-            if (mesh != null)
+            if (mesh)
             {
                 _defaultMaterial = mesh.material;
                 if (IsPickupable && pickupableMaterial)
@@ -84,8 +90,9 @@ namespace CenturionCC.System.Gun
                 target = transform.parent;
             if (free == null)
                 free = transform.root;
-            if (_collider)
-                _collider.enabled = _pickup.pickupable;
+
+            if (childCollider)
+                childCollider.enabled = pickup.pickupable;
 
             _initialScale = transform.localScale;
         }
@@ -105,9 +112,11 @@ namespace CenturionCC.System.Gun
 
         public void SetPickupable(bool isPickupable)
         {
-            _pickup.pickupable = isPickupable;
-            if (_collider != null)
-                _collider.enabled = isPickupable;
+            if (pickup)
+                pickup.pickupable = isPickupable;
+
+            if (childCollider)
+                childCollider.enabled = isPickupable;
 
             if (mesh && pickupableMaterial)
                 mesh.material = IsPickupable ? pickupableMaterial : _defaultMaterial;
@@ -134,8 +143,8 @@ namespace CenturionCC.System.Gun
 
         public void ForceDrop()
         {
-            if (_pickup)
-                _pickup.Drop();
+            if (pickup)
+                pickup.Drop();
         }
 
         public override void OnPickup()
@@ -186,6 +195,8 @@ namespace CenturionCC.System.Gun
 
         public void Holster(GunHolster holster)
         {
+            if (holster == null) return;
+
             holster.IsHighlighting = false;
             transform.SetParent(holster.transform, true);
             IsHolstered = true;
@@ -208,7 +219,7 @@ namespace CenturionCC.System.Gun
 
         public void Internal_FlagDiscontinuity()
         {
-            if (objectSync != null) objectSync.FlagDiscontinuity();
+            if (objectSync) objectSync.FlagDiscontinuity();
         }
     }
 }
