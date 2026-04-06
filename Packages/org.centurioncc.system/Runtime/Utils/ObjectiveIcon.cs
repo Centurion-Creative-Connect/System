@@ -24,8 +24,6 @@ namespace CenturionCC.System.Utils
         [SerializeField] [NewbieInject]
         private PlayerManagerBase playerManager;
 
-        private float _transparency = 1F;
-
         public override void OnPickup()
         {
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(OnPickupGlobal));

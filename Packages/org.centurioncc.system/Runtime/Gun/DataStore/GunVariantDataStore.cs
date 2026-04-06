@@ -102,7 +102,10 @@ namespace CenturionCC.System.Gun.DataStore
 
         [SerializeField] private float combatTagTime = 1F;
 
+        // Only used via SerializedProperty to check data compatibility
+#pragma warning disable 414
         [SerializeField] private int dataVersion = DataVersion;
+#pragma warning restore 414
 
         public byte UniqueId => uniqueId;
         public string WeaponName => weaponName;
