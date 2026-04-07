@@ -203,7 +203,7 @@ namespace CenturionCC.System.Gimmick.StaffControlPanel
             var players = playerManager.GetPlayers();
             foreach (var player in players)
             {
-                if (!playerManager.IsInStaffTeam(player))
+                if (!player.IsInStaffTeam())
                     player.SetTeam(0);
             }
         }
@@ -217,7 +217,7 @@ namespace CenturionCC.System.Gimmick.StaffControlPanel
             var playerList = new DataList();
             foreach (var player in players)
             {
-                if (!playerManager.IsInStaffTeam(player))
+                if (!player.IsInStaffTeam())
                     playerList.Add(player);
             }
 

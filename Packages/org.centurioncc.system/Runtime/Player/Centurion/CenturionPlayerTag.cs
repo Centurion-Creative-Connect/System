@@ -8,7 +8,7 @@ using UnityEngine.UI;
 namespace CenturionCC.System.Player.Centurion
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class CenturionPlayerTag : PlayerExtensionBase
+    public class CenturionPlayerTag : PlayerViewBase
     {
         [SerializeField] [NewbieInject]
         private PlayerManagerBase playerManager;
@@ -96,17 +96,17 @@ namespace CenturionCC.System.Player.Centurion
             var localPlayer = playerManager.GetLocalPlayer();
             var result = false;
             if (showOnFriendlyTeam)
-                result |= playerManager.IsFriendly(localPlayer, player);
+                result |= localPlayer.IsFriendly(player);
             if (showOnFreeForAllTeam)
-                result |= playerManager.IsInFreeForAllTeam(player) || playerManager.IsInFreeForAllTeam(localPlayer);
+                result |= player.IsInFreeForAllTeam() || localPlayer.IsInFreeForAllTeam();
 
             if (showOnStaffTeam)
-                result |= playerManager.IsInStaffTeam(player);
+                result |= player.IsInStaffTeam();
             if (showOnDeath)
                 result |= player.IsDead;
 
             if (excludeStaffTeam)
-                result &= !playerManager.IsInStaffTeam(player);
+                result &= !player.IsInStaffTeam();
 
             if (onlyShowOnMaster && player.VrcPlayer != null)
                 result &= player.VrcPlayer.isMaster;

@@ -93,7 +93,7 @@ namespace CenturionCC.System.Player.HitDisplay
                 return;
             }
 
-            if (playerManager.IsStaffTeamId(localPlayer.TeamId) && bypassPlayHitDisplayWhenStaffTeam)
+            if (localPlayer.IsInStaffTeam() && bypassPlayHitDisplayWhenStaffTeam)
             {
                 Play(victim);
                 return;

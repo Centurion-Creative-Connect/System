@@ -403,7 +403,7 @@ namespace CenturionCC.System.Command.Player
 
                         foreach (var player in players)
                         {
-                            if (!includeMod && playerManager.IsStaffTeamId(player.TeamId))
+                            if (!includeMod && player.IsInStaffTeam())
                                 continue;
                             activePlayers[activePlayerCount] = player;
                             ++activePlayerCount;

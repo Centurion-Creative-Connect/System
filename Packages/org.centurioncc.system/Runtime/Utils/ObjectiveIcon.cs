@@ -50,7 +50,7 @@ namespace CenturionCC.System.Utils
         {
             // LocalPlayer must be same team or in special team to be able to see icon.
             // Except when current defuser team is special, no one should be able to see the icon.
-            var shouldShow = !playerManager.IsSpecialTeamId(GetCurrentTeamId());
+            var shouldShow = !PlayerBaseExtensions.IsSpecialTeamId(GetCurrentTeamId());
             if (iconParticle != null) iconParticle.gameObject.SetActive(shouldShow);
         }
 

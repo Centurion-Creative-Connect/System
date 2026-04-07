@@ -147,7 +147,7 @@ namespace CenturionCC.System.Gimmick.Shield
             }
 
             // Staff should not be able to occupy a shield as a team
-            if (playerManager.IsStaffTeamId(playerBase.TeamId))
+            if (playerBase.IsInStaffTeam())
             {
                 teamId = 0;
                 return;
