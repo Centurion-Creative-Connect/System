@@ -9,32 +9,49 @@ namespace CenturionCC.System.Gun.Behaviour
     {
         [SerializeField] private GunHandle customHandle;
 
+        [Tooltip("Make gun ready to shoot on setup? If checked, summoned gun will always be loaded.")]
+        [SerializeField] private bool hotOnSetup;
+
+        [Tooltip("If checked, CustomHandle snaps to the Cocking Position on drop.")]
         [SerializeField] private bool returnToCockingPositionOnDrop;
 
+        [Tooltip("If checked, CustomHandle snaps to the closest of Cocking Position, Idle Twist Position, or Active Twist Position on drop.")]
         [SerializeField] private bool snapToClosestPositionOnDrop;
 
-        [Header("Cocking")] [SerializeField] private bool canCockAfterCock;
+        [Header("Cocking")]
+        [Tooltip("If checked, Gun will be able to cock any time even if the gun was cocked.")]
+        [SerializeField] private bool canCockAfterCock;
 
+        [Tooltip("If checked, Gun will load itself after a successful shot.")]
         [SerializeField] private bool isBlowBack;
 
+        [Tooltip("If checked, Gun will cock itself when pulling the trigger.")]
         [SerializeField] private bool isDoubleAction;
 
+        [Tooltip("If checked, Gun will hold open on the last shot of a magazine.")]
         [SerializeField] private bool doHoldOpenOnLastBullet = true;
 
+        [Tooltip("If checked, Gun will be set to hold open state after a successful shot.")]
         [SerializeField] private bool requireManualPushingAfterFire;
 
+        [Tooltip("If checked, CustomHandle will be dropped after a successful shot.")]
         [SerializeField] private bool dropCustomHandleOnFire = true;
 
         [SerializeField] private Transform cockingPosition;
 
         [SerializeField] private float cockingLength;
 
+        [Tooltip("Mostly for twisting, Wiggle room when it's CustomHandle is in the idle position. 0 = No wiggle. 1 = Moves Freely")]
         [SerializeField] [Range(0, 1)] private float cockingMargin;
 
+        [Tooltip("Tolerance of pull detection. 1 = Will be accepted as pull without moving, 0 = Has to pull full cocking length to be accepted as pulling.")]
         [SerializeField] [Range(0, 1)] private float cockingAutoLoadMargin;
 
-        [Header("Twisting")] [SerializeField] private bool requireTwist;
+        [Header("Twisting")]
+        [Tooltip("If checked, Gun will behave like a bolt action.")]
+        [SerializeField] private bool requireTwist;
 
+        [Tooltip("If checked, CustomHandle's rotation will be used to calculate twist angle. Like a welrod.")]
         [SerializeField] private bool useHandleRotation;
 
         [SerializeField] private Transform idleTwistPosition;
@@ -307,6 +324,11 @@ namespace CenturionCC.System.Gun.Behaviour
             // Shoot a gun whenever it's able to shoot. load a new bullet if it's a blow back variant
             if (instance.Trigger == TriggerState.Firing)
             {
+                if (isDoubleAction && !instance.HasCocked)
+                {
+                    instance.HasCocked = true;
+                }
+
                 var shotResult = instance._TryToShoot();
                 var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
                 if (hasSucceeded)
@@ -362,6 +384,12 @@ namespace CenturionCC.System.Gun.Behaviour
             customHandle.callback = instance;
             customHandle.transform.SetPositionAndRotation(cockingPosition.position, Quaternion.identity);
             customHandle.SetPickupable(false);
+
+            if (hotOnSetup)
+            {
+                instance.HasCocked = true;
+                if (!instance.HasBulletInChamber) instance._LoadBullet();
+            }
         }
 
         public override void OnHandleDrop(GunBase instance, GunHandle handle)
