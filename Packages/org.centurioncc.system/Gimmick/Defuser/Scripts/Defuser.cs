@@ -84,8 +84,8 @@ namespace CenturionCC.System.Gimmick.Defuser
 
                 // LocalPlayer must be same team or in special team to be able to see defuser icon.
                 // Except when current defuser team is special, no one should be able to see the icon.
-                var shouldShow = (localPlayerTeam == currentTeamId || playerManager.IsSpecialTeamId(localPlayerTeam)) &&
-                                 !playerManager.IsSpecialTeamId(currentTeamId);
+                var shouldShow = (localPlayerTeam == currentTeamId || PlayerBaseExtensions.IsSpecialTeamId(localPlayerTeam)) &&
+                                 !PlayerBaseExtensions.IsSpecialTeamId(currentTeamId);
                 var showing = value && useIconParticle && shouldShow;
 
                 if (iconParticle != null) iconParticle.gameObject.SetActive(showing);
@@ -309,7 +309,7 @@ namespace CenturionCC.System.Gimmick.Defuser
 
         public bool CanDefuseAsTeam(int teamId)
         {
-            return teamId != PlanterTeamId || teamId == 0 || playerManager.IsStaffTeamId(teamId);
+            return teamId != PlanterTeamId || teamId == 0 || PlayerBaseExtensions.IsStaffTeamId(teamId);
         }
 
         private void OnStateChanged(DefuserState old, DefuserState next)

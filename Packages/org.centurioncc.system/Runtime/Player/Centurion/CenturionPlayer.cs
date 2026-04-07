@@ -5,6 +5,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
 using VRC.SDKBase;
+using VRC.Udon.Common.Enums;
 
 namespace CenturionCC.System.Player.Centurion
 {
@@ -24,7 +25,7 @@ namespace CenturionCC.System.Player.Centurion
         private CenturionPlayerColliderSimple simpleCollider;
 
         [SerializeField] [NewbieInject]
-        private PlayerExtensionBase[] playerExtensions;
+        private PlayerViewBase[] playerViews;
 
         private readonly DataList _playerAreas = new DataList();
         private short _deaths;
@@ -35,6 +36,7 @@ namespace CenturionCC.System.Player.Centurion
         private bool _isCollidersActive = true;
 
         private bool _isInSafeZone;
+        private bool _isUpdateViewScheduled;
 
         private short _kills;
 
@@ -55,7 +57,7 @@ namespace CenturionCC.System.Player.Centurion
                 _teamId = value;
                 if (lastTeam == _teamId) return;
 
-                playerManager.Invoke_OnPlayerTeamChanged(this, lastTeam);
+                playerManager.Event.Invoke_OnPlayerTeamChanged(this, lastTeam);
                 UpdateView();
             }
         }
@@ -69,7 +71,7 @@ namespace CenturionCC.System.Player.Centurion
                 var lastHealth = _health;
                 _health = value;
 
-                playerManager.Invoke_OnPlayerHealthChanged(this, lastHealth);
+                playerManager.Event.Invoke_OnPlayerHealthChanged(this, lastHealth);
                 if (lastIsDead == IsDead) return;
 
                 if (IsDead)
@@ -77,7 +79,7 @@ namespace CenturionCC.System.Player.Centurion
                     var attacker = (CenturionPlayer)playerManager.GetPlayerById(LastDamageInfo.AttackerId());
                     var type = LastDamageInfo.AttackerId() == PlayerId
                         ? KillType.ReverseFriendlyFire
-                        : playerManager.IsFriendly(this, attacker)
+                        : attacker.IsFriendly(this)
                             ? KillType.FriendlyFire
                             : KillType.Default;
 
@@ -90,7 +92,7 @@ namespace CenturionCC.System.Player.Centurion
                     KillStreak = 0;
                     ++Deaths;
 
-                    playerManager.Invoke_OnPlayerKilled(
+                    playerManager.Event.Invoke_OnPlayerKilled(
                         attacker,
                         this,
                         type
@@ -98,7 +100,7 @@ namespace CenturionCC.System.Player.Centurion
                 }
                 else
                 {
-                    playerManager.Invoke_OnPlayerRevived(this);
+                    playerManager.Event.Invoke_OnPlayerRevived(this);
                 }
             }
         }
@@ -109,12 +111,11 @@ namespace CenturionCC.System.Player.Centurion
             set
             {
                 _maxHealth = value;
-                playerManager.Invoke_OnPlayerHealthChanged(this, SyncedHealth);
+                playerManager.Event.Invoke_OnPlayerHealthChanged(this, SyncedHealth);
             }
         }
 
-        public override string DisplayName =>
-            $"<color=#{playerManager.GetTeamColor(TeamId).ToHtmlStringRGBA()}>{VrcPlayer.SafeGetDisplayName()}</color>";
+        public override string DisplayName => $"<color=#{playerManager.GetTeamColor(TeamId).ToHtmlStringRGBA()}>{VrcPlayer.SafeGetDisplayName()}</color>";
 
         public override int PlayerId => Networking.GetOwner(gameObject).playerId;
 
@@ -126,7 +127,7 @@ namespace CenturionCC.System.Player.Centurion
                 var changed = _kills != value;
                 _kills = (short)value;
 
-                if (changed) playerManager.Invoke_OnPlayerStatsChanged(this);
+                if (changed) playerManager.Event.Invoke_OnPlayerStatsChanged(this);
             }
         }
 
@@ -138,7 +139,7 @@ namespace CenturionCC.System.Player.Centurion
                 var changed = _deaths != value;
                 _deaths = (short)value;
 
-                if (changed) playerManager.Invoke_OnPlayerStatsChanged(this);
+                if (changed) playerManager.Event.Invoke_OnPlayerStatsChanged(this);
             }
         }
 
@@ -150,7 +151,7 @@ namespace CenturionCC.System.Player.Centurion
                 var changed = _score != value;
                 _score = (short)value;
 
-                if (changed) playerManager.Invoke_OnPlayerStatsChanged(this);
+                if (changed) playerManager.Event.Invoke_OnPlayerStatsChanged(this);
             }
         }
 
@@ -164,7 +165,7 @@ namespace CenturionCC.System.Player.Centurion
         public override VRCPlayerApi VrcPlayer => Networking.GetOwner(gameObject);
         public override RoleData[] Roles => roleProvider.GetPlayerRoles(VrcPlayer);
         public bool IsCulled { get; set; }
-        public bool IsCollidersActive { get => _isCollidersActive && !playerManager.IsInStaffTeam(this); private set => _isCollidersActive = value; }
+        public bool IsCollidersActive { get => _isCollidersActive && !this.IsInStaffTeam(); private set => _isCollidersActive = value; }
 
         private void Start()
         {
@@ -173,13 +174,52 @@ namespace CenturionCC.System.Player.Centurion
 
         private void OnDestroy()
         {
-            playerManager.Invoke_OnPlayerRemoved(this);
+            playerManager.RemovePlayerFromCache(this);
+            playerManager.Event.Invoke_OnPlayerRemoved(this);
         }
 
+        public void Internal_UpdateView()
+        {
+            foreach (var col in playerColliders)
+            {
+                if (!col) continue;
+                col.gameObject.SetActive(!IsCulled && IsCollidersActive);
+                col.PostLateUpdate();
+                col.IsDebugVisible = playerManager.IsDebug;
+            }
+
+            simpleCollider.gameObject.SetActive(IsCulled && IsCollidersActive);
+            simpleCollider.PostLateUpdate();
+            simpleCollider.IsDebugVisible = playerManager.IsDebug;
+
+            foreach (var playerExtension in playerViews)
+            {
+                if (!playerExtension) continue;
+                playerExtension.OnUpdateView();
+            }
+
+            _isUpdateViewScheduled = false;
+        }
+
+        private void UpdateSafeZoneStatus()
+        {
+            _isInSafeZone = false;
+
+            var playerAreas = GetCurrentPlayerAreas();
+            foreach (var playerAreaBase in playerAreas)
+            {
+                if (!playerAreaBase.IsSafeZone) continue;
+                _isInSafeZone = true;
+                return;
+            }
+        }
+
+        #region OverridenMethods
         public override void OnPlayerRestored(VRCPlayerApi player)
         {
             if (!player.IsOwner(gameObject)) return;
-            playerManager.Invoke_OnPlayerAdded(this);
+            playerManager.AddPlayerToCache(this);
+            playerManager.Event.Invoke_OnPlayerAdded(this);
         }
 
         public override void SetTeam(int teamId)
@@ -250,23 +290,9 @@ namespace CenturionCC.System.Player.Centurion
 
         public override void UpdateView()
         {
-            foreach (var col in playerColliders)
-            {
-                if (!col) continue;
-                col.gameObject.SetActive(!IsCulled && IsCollidersActive);
-                col.PostLateUpdate();
-                col.IsDebugVisible = playerManager.IsDebug;
-            }
-
-            simpleCollider.gameObject.SetActive(IsCulled && IsCollidersActive);
-            simpleCollider.PostLateUpdate();
-            simpleCollider.IsDebugVisible = playerManager.IsDebug;
-
-            foreach (var playerExtension in playerExtensions)
-            {
-                if (!playerExtension) continue;
-                playerExtension.OnUpdateView();
-            }
+            if (_isUpdateViewScheduled) return;
+            _isUpdateViewScheduled = true;
+            SendCustomEventDelayedFrames(nameof(Internal_UpdateView), 1, EventTiming.LateUpdate);
         }
 
         public override void ResetToDefault()
@@ -283,7 +309,7 @@ namespace CenturionCC.System.Player.Centurion
             SyncedHealth = SyncedMaxHealth;
             IsCollidersActive = true;
 
-            playerManager.Invoke_OnPlayerReset(this);
+            playerManager.Event.Invoke_OnPlayerReset(this);
             RequestSerialization();
         }
 
@@ -330,7 +356,7 @@ namespace CenturionCC.System.Player.Centurion
             _playerAreas.Add(area);
             UpdateSafeZoneStatus();
             UpdateView();
-            playerManager.Invoke_OnPlayerEnteredArea(this, area);
+            playerManager.Event.Invoke_OnPlayerEnteredArea(this, area);
         }
 
         public override void OnAreaExit(PlayerAreaBase area)
@@ -338,7 +364,7 @@ namespace CenturionCC.System.Player.Centurion
             _playerAreas.RemoveAll(area);
             UpdateSafeZoneStatus();
             UpdateView();
-            playerManager.Invoke_OnPlayerExitedArea(this, area);
+            playerManager.Event.Invoke_OnPlayerExitedArea(this, area);
         }
 
         public override PlayerAreaBase[] GetCurrentPlayerAreas()
@@ -351,18 +377,6 @@ namespace CenturionCC.System.Player.Centurion
 
             return result;
         }
-
-        private void UpdateSafeZoneStatus()
-        {
-            _isInSafeZone = false;
-
-            var playerAreas = GetCurrentPlayerAreas();
-            foreach (var playerAreaBase in playerAreas)
-            {
-                if (!playerAreaBase.IsSafeZone) continue;
-                _isInSafeZone = true;
-                return;
-            }
-        }
+        #endregion
     }
 }

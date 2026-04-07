@@ -62,7 +62,7 @@ namespace CenturionCC.System.Player.Centurion
                 if (isDebug == value) return;
 
                 isDebug = value;
-                Invoke_OnDebugModeChanged(value);
+                Event.Invoke_OnDebugModeChanged(value);
             }
         }
 
@@ -74,7 +74,7 @@ namespace CenturionCC.System.Player.Centurion
                 if (showTeamTag == value) return;
 
                 showTeamTag = value;
-                Invoke_OnPlayerTagChanged(TagType.Team, value);
+                Event.Invoke_OnPlayerTagChanged(TagType.Team, value);
             }
         }
 
@@ -86,7 +86,7 @@ namespace CenturionCC.System.Player.Centurion
                 if (showStaffTag == value) return;
 
                 showStaffTag = value;
-                Invoke_OnPlayerTagChanged(TagType.Staff, value);
+                Event.Invoke_OnPlayerTagChanged(TagType.Staff, value);
             }
         }
 
@@ -98,7 +98,7 @@ namespace CenturionCC.System.Player.Centurion
                 if (showCreatorTag == value) return;
 
                 showCreatorTag = value;
-                Invoke_OnPlayerTagChanged(TagType.Creator, value);
+                Event.Invoke_OnPlayerTagChanged(TagType.Creator, value);
             }
         }
 
@@ -110,7 +110,7 @@ namespace CenturionCC.System.Player.Centurion
                 if (friendlyFireMode == value) return;
 
                 friendlyFireMode = value;
-                Invoke_OnFriendlyFireModeChanged(value);
+                Event.Invoke_OnFriendlyFireModeChanged(value);
             }
         }
 
@@ -213,13 +213,13 @@ namespace CenturionCC.System.Player.Centurion
 
         public override Color GetTeamColor(int teamId)
         {
-            if (IsStaffTeamId(teamId)) return staffTeamColor;
+            if (PlayerBaseExtensions.IsStaffTeamId(teamId)) return staffTeamColor;
             if (teamId < 0 || teamId >= teamColors.Length) return teamColors[0];
 
             return teamColors[teamId];
         }
 
-        public override void Invoke_OnPlayerAdded(PlayerBase player)
+        public void AddPlayerToCache(PlayerBase player)
         {
             if (_cachedCenturionPlayers.Contains(player))
             {
@@ -228,13 +228,11 @@ namespace CenturionCC.System.Player.Centurion
             }
 
             _cachedCenturionPlayers.Add(player);
-            base.Invoke_OnPlayerAdded(player);
         }
 
-        public override void Invoke_OnPlayerRemoved(PlayerBase player)
+        public void RemovePlayerFromCache(PlayerBase player)
         {
             _cachedCenturionPlayers.Remove(player);
-            base.Invoke_OnPlayerRemoved(player);
         }
 
         public bool CanDamageFriendly()
@@ -278,8 +276,8 @@ namespace CenturionCC.System.Player.Centurion
                 return false;
             }
 
-            var victimCenturionPlayer = GetPlayerById(info.VictimId());
-            var attackerCenturionPlayer = GetPlayerById(info.AttackerId());
+            var victimCenturionPlayer = this.GetPlayerById(info.VictimId());
+            var attackerCenturionPlayer = this.GetPlayerById(info.AttackerId());
 
             if (!victimCenturionPlayer || !attackerCenturionPlayer)
             {
@@ -289,7 +287,7 @@ namespace CenturionCC.System.Player.Centurion
 
             // in special case
             // if the victim was in a staff team, ignore it
-            if (IsInStaffTeam(victimCenturionPlayer))
+            if (victimCenturionPlayer.IsInStaffTeam())
             {
                 return false;
             }
@@ -314,7 +312,7 @@ namespace CenturionCC.System.Player.Centurion
             }
 
             // on friendly fire
-            if (IsFriendly(victimCenturionPlayer, attackerCenturionPlayer) && !IsInStaffTeam(attackerCenturionPlayer))
+            if (victimCenturionPlayer.IsFriendly(attackerCenturionPlayer) && !attackerCenturionPlayer.IsInStaffTeam())
             {
                 // if damage cannot be applied to friendly, ignore it
                 if (!info.CanDamageFriendly())
@@ -376,7 +374,7 @@ namespace CenturionCC.System.Player.Centurion
             }
 
             // if callbacks have rejected the damage, ignore it
-            if (Invoke_OnDamagePreBroadcast(info))
+            if (Event.Invoke_OnDamagePreBroadcast(info))
             {
                 return false;
             }
@@ -428,14 +426,14 @@ namespace CenturionCC.System.Player.Centurion
         #region Internals
         public void Internal_ProcessDamageInfo(DamageInfo info)
         {
-            var victimPlayer = GetPlayerById(info.VictimId());
+            var victimPlayer = this.GetPlayerById(info.VictimId());
             if (!victimPlayer)
             {
                 logger.LogWarn($"{LogPrefix}Victim Player {info.VictimId()} is not found");
                 return;
             }
 
-            var attackerPlayer = GetPlayerById(info.AttackerId());
+            var attackerPlayer = this.GetPlayerById(info.AttackerId());
             if (!attackerPlayer)
             {
                 logger.LogWarn($"{LogPrefix}Attacker Player {info.AttackerId()} is not found");
@@ -448,7 +446,7 @@ namespace CenturionCC.System.Player.Centurion
                 return;
             }
 
-            if (Invoke_OnDamagePostBroadcast(info))
+            if (Event.Invoke_OnDamagePostBroadcast(info))
             {
                 logger.LogWarn($"{LogPrefix}Callback has rejected to apply damage");
                 return;
@@ -459,7 +457,7 @@ namespace CenturionCC.System.Player.Centurion
                 AddResolvedEventId(info.EventId());
             }
 
-            if (IsFriendly(attackerPlayer, victimPlayer) && CanDamageFriendly() && !IsInStaffTeam(attackerPlayer))
+            if (attackerPlayer.IsFriendly(victimPlayer) && CanDamageFriendly() && !attackerPlayer.IsInStaffTeam())
             {
                 switch (friendlyFireMode)
                 {
@@ -476,7 +474,7 @@ namespace CenturionCC.System.Player.Centurion
                         attackerPlayer.ApplyDamage(info);
                         break;
                     case FriendlyFireMode.Warning:
-                        if (attackerPlayer.IsLocal) Invoke_OnPlayerFriendlyFireWarning(victimPlayer, info);
+                        if (attackerPlayer.IsLocal) Event.Invoke_OnPlayerFriendlyFireWarning(victimPlayer, info);
                         break;
                 }
 

@@ -185,7 +185,7 @@ namespace CenturionCC.System.Utils
             if (!CurrentSurface) return;
 
             var playerBase = playerManager.GetLocalPlayer();
-            if (!playerBase || playerManager.IsInStaffTeam(playerBase)) return;
+            if (!playerBase || playerBase.IsInStaffTeam()) return;
 
             var isSlow = footstepSlowThresholdTime < timeDiff;
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(PlayFootstepSound), localPlayerPos, CurrentSurface.ObjectType, isSlow);
