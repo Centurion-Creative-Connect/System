@@ -6208,6 +6208,12 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 6850616877629945038}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &748114322 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7760531952385576976, guid: 7f06808fa3a79e94a806004644426850,
+    type: 3}
+  m_PrefabInstance: {fileID: 3281396927226801131}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &749685017 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8688547277415311344, guid: b5bbf1cce143c0d46b1299d801259934,
@@ -8991,7 +8997,7 @@ PrefabInstance:
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: NetworkIDs.Array.size
-      value: 1169
+      value: 1170
       objectReference: {fileID: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
@@ -14897,6 +14903,11 @@ PrefabInstance:
         type: 3}
       propertyPath: NetworkIDs.Array.data[1168].ID
       value: 1188
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[1169].ID
+      value: 1189
       objectReference: {fileID: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
@@ -22315,6 +22326,11 @@ PrefabInstance:
       objectReference: {fileID: 1002091862}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
+      propertyPath: NetworkIDs.Array.data[1169].gameObject
+      value: 
+      objectReference: {fileID: 748114322}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
       propertyPath: NetworkIDs.Array.data[0].SerializedTypeNames.Array.size
       value: 1
       objectReference: {fileID: 0}
@@ -28161,6 +28177,11 @@ PrefabInstance:
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: NetworkIDs.Array.data[1168].SerializedTypeNames.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[1169].SerializedTypeNames.Array.size
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
@@ -53878,6 +53899,11 @@ PrefabInstance:
       propertyPath: NetworkIDs.Array.data[1168].SerializedTypeNames.Array.data[0]
       value: VRC.Udon.UdonBehaviour
       objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[1169].SerializedTypeNames.Array.data[0]
+      value: VRC.Udon.UdonBehaviour
+      objectReference: {fileID: 0}
     - target: {fileID: 8464459589408506562, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: serializedProgramAsset
@@ -54498,16 +54524,16 @@ MonoBehaviour:
   notification: {fileID: 1938280938378434858}
   moderatorTool: {fileID: 0}
   movement: {fileID: 0}
-  version: 1.0.0-rc.2
-  commitHash: f335911ed916e7a7325fac59bcea0670b281d5f3
+  version: 1.0.0-rc.4
+  commitHash: 098d1c333a28f5ad2230804ffb34fb53c38bf065
   branch: master
   license: 'MIT License
 
-
+    
 
     Copyright (c) 2026 Centurion Creative Connect
 
-
+    
 
     Permission
     is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -54517,12 +54543,12 @@ MonoBehaviour:
     to permit persons to whom the Software is furnished to do so, subject to the
     following conditions:
 
+    
 
+    The above copyright notice and this permission
+    notice shall be included in all copies or substantial portions of the Software.
 
-    The above copyright notice and this permission notice
-    shall be included in all copies or substantial portions of the Software.
-
-
+    
 
     THE
     SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
@@ -54634,6 +54660,18 @@ GameObject:
 --- !u!1 &940075933 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2341613430007232077, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
+    type: 3}
+  m_PrefabInstance: {fileID: 2428846941591081301}
+  m_PrefabAsset: {fileID: 0}
+--- !u!135 &940075934 stripped
+SphereCollider:
+  m_CorrespondingSourceObject: {fileID: 4106733696588499144, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
+    type: 3}
+  m_PrefabInstance: {fileID: 2428846941591081301}
+  m_PrefabAsset: {fileID: 0}
+--- !u!54 &940075937 stripped
+Rigidbody:
+  m_CorrespondingSourceObject: {fileID: 9134296699620751776, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
     type: 3}
   m_PrefabInstance: {fileID: 2428846941591081301}
   m_PrefabAsset: {fileID: 0}
@@ -55835,6 +55873,7 @@ Transform:
   - {fileID: 706635474}
   - {fileID: 1153982991}
   - {fileID: 324498820}
+  - {fileID: 1758023383}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1189693762 stripped
@@ -60056,6 +60095,37 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 6819403045167011312}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1758023382
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1758023383}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1758023383
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1758023382}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1188725775}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1761081832 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5663789855158032346, guid: b5bbf1cce143c0d46b1299d801259934,
@@ -67308,6 +67378,16 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 6153726003437046158, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
         type: 3}
+    - target: {fileID: 6157697747032778520, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
+        type: 3}
+      propertyPath: rb
+      value: 
+      objectReference: {fileID: 940075937}
+    - target: {fileID: 6157697747032778520, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
+        type: 3}
+      propertyPath: col
+      value: 
+      objectReference: {fileID: 940075934}
     - target: {fileID: 6157697747032778520, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
         type: 3}
       propertyPath: updateManager

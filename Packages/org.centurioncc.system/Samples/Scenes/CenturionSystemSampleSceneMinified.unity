@@ -49106,16 +49106,16 @@ MonoBehaviour:
   notification: {fileID: 1938280938378434858}
   moderatorTool: {fileID: 0}
   movement: {fileID: 0}
-  version: 1.0.0-rc.3
-  commitHash: 781552b34072fa8460bc7bb18362320c4c40c8b0
+  version: 1.0.0-rc.4
+  commitHash: 098d1c333a28f5ad2230804ffb34fb53c38bf065
   branch: master
   license: 'MIT License
 
-
+    
 
     Copyright (c) 2026 Centurion Creative Connect
 
-
+    
 
     Permission
     is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -49125,12 +49125,12 @@ MonoBehaviour:
     to permit persons to whom the Software is furnished to do so, subject to the
     following conditions:
 
+    
 
+    The above copyright notice and this permission
+    notice shall be included in all copies or substantial portions of the Software.
 
-    The above copyright notice and this permission notice
-    shall be included in all copies or substantial portions of the Software.
-
-
+    
 
     THE
     SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
@@ -49176,6 +49176,12 @@ GameObject:
 --- !u!1 &940075933 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2341613430007232077, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
+    type: 3}
+  m_PrefabInstance: {fileID: 2428846941591081301}
+  m_PrefabAsset: {fileID: 0}
+--- !u!54 &940075937 stripped
+Rigidbody:
+  m_CorrespondingSourceObject: {fileID: 9134296699620751776, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
     type: 3}
   m_PrefabInstance: {fileID: 2428846941591081301}
   m_PrefabAsset: {fileID: 0}
@@ -53162,6 +53168,18 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 2428846941591081301}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2090231464 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 82920698715261742, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
+    type: 3}
+  m_PrefabInstance: {fileID: 2428846941591081301}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2090231463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01e9ab2a658d01043a4674dcc1d3477a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2095969788 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6981863480440169021, guid: fc558ff19a0ea0f41884f56d9849b87b,
@@ -54188,6 +54206,11 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2818678183181012002, guid: f4c7dc1149e5dd649a85000c6d1a5eb4,
+        type: 3}
+      propertyPath: gunController
+      value: 
+      objectReference: {fileID: 2090231464}
     - target: {fileID: 2818678183181012002, guid: f4c7dc1149e5dd649a85000c6d1a5eb4,
         type: 3}
       propertyPath: serializationData.Prefab
@@ -57693,6 +57716,11 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 6153726003437046158, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
         type: 3}
+    - target: {fileID: 6157697747032778520, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
+        type: 3}
+      propertyPath: rb
+      value: 
+      objectReference: {fileID: 940075937}
     - target: {fileID: 6157697747032778520, guid: 7c8c98bf08e10b446b79a8a5bc7aaa8a,
         type: 3}
       propertyPath: updateManager

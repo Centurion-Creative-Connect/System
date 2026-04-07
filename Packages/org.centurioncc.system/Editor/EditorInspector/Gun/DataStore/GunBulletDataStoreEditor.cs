@@ -122,7 +122,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
             var pos = l2w.MultiplyPoint3x4(offsetPos);
             var rot = offsetRot * l2w.rotation;
 
-            var line = CenturionBBBullet.PredictTrajectory(pos, rot, data, offset, _simPoints);
+            var line = CenturionBBBulletUtility.PredictTrajectory(pos, rot, data, offset, _simPoints);
             var highestPoint = Vector3.negativeInfinity;
             var zeroedInPoint = Vector3.negativeInfinity;
             for (int i = 1; i < line.Length; i++)
@@ -171,7 +171,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
 
         public static void GetPredictedStats(GunBulletDataStore data, int offset, out float distance, out float highest)
         {
-            var line = CenturionBBBullet.PredictTrajectory(Vector3.zero, Quaternion.identity, data, offset, _simPoints);
+            var line = CenturionBBBulletUtility.PredictTrajectory(Vector3.zero, Quaternion.identity, data, offset, _simPoints);
             highest = float.NegativeInfinity;
             distance = float.NegativeInfinity;
             for (int i = 1; i < line.Length; i++)

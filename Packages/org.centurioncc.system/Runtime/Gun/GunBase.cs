@@ -696,7 +696,9 @@ namespace CenturionCC.System.Gun
                 }
 
                 if (gunManager)
+                {
                     gunManager.Invoke_OnShoot(this, projectile);
+                }
             }
 
             data.GetRecoil(out var recoilPos, out var recoilRot);
