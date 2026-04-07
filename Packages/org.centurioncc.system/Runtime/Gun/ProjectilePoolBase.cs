@@ -10,10 +10,10 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public abstract bool HasInitialized { get; }
 
-        [PublicAPI]
+        [PublicAPI] [CanBeNull]
         public abstract ProjectileBase GetProjectile();
 
-        [PublicAPI]
+        [PublicAPI] [CanBeNull]
         public abstract ProjectileBase Shoot(Guid eventId,
                                              Vector3 pos, Quaternion rot,
                                              Vector3 velocity, Vector3 torque, float drag,
@@ -22,7 +22,7 @@ namespace CenturionCC.System.Gun
                                              float trailTime, Gradient trailGradient,
                                              float lifeTimeInSeconds);
 
-        [PublicAPI]
+        [PublicAPI] [CanBeNull]
         public virtual ProjectileBase Shoot(Guid eventId,
                                             Vector3 pos, Quaternion rot,
                                             Vector3 velocity, Vector3 torque, float drag,
@@ -36,7 +36,7 @@ namespace CenturionCC.System.Gun
                 time, playerId,
                 trailTime, trailGradient, 5F);
 
-        [PublicAPI]
+        [PublicAPI] [CanBeNull]
         public virtual ProjectileBase Shoot(Guid eventId,
                                             Vector3 pos, Quaternion rot,
                                             Vector3 velocity, Vector3 torque, float drag,

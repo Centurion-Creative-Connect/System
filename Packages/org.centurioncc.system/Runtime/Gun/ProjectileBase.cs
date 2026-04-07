@@ -7,36 +7,33 @@ namespace CenturionCC.System.Gun
 {
     public abstract class ProjectileBase : DamageData
     {
-        [NonSerialized]
-        public bool IsCurrentlyActive;
-
         [PublicAPI]
         public virtual void Shoot(Guid eventId,
-            Vector3 pos, Quaternion rot,
-            Vector3 velocity, Vector3 torque, float drag,
-            string damageType, float damageAmount,
-            DateTime originTime, int playerId)
+                                  Vector3 pos, Quaternion rot,
+                                  Vector3 velocity, Vector3 torque, float drag,
+                                  string damageType, float damageAmount,
+                                  DateTime originTime, int playerId)
             => Shoot(eventId, pos, rot, velocity, torque, drag, damageType, damageAmount, originTime, playerId,
                 float.NaN, null, 5F);
 
         [PublicAPI]
         public virtual void Shoot(Guid eventId,
-            Vector3 pos, Quaternion rot,
-            Vector3 velocity, Vector3 torque, float drag,
-            string damageType, float damageAmount,
-            DateTime originTime, int playerId,
-            float trailTime, Gradient trailGradient)
+                                  Vector3 pos, Quaternion rot,
+                                  Vector3 velocity, Vector3 torque, float drag,
+                                  string damageType, float damageAmount,
+                                  DateTime originTime, int playerId,
+                                  float trailTime, Gradient trailGradient)
             => Shoot(eventId, pos, rot, velocity, torque, drag, damageType, damageAmount, originTime, playerId,
                 float.NaN, null, 5F);
 
         [PublicAPI]
         public abstract void Shoot(Guid eventId,
-            Vector3 pos, Quaternion rot,
-            Vector3 velocity, Vector3 torque, float drag,
-            string damageType, float damageAmount,
-            DateTime originTime, int playerId,
-            float trailTime, Gradient trailGradient,
-            float lifeTimeInSeconds);
+                                   Vector3 pos, Quaternion rot,
+                                   Vector3 velocity, Vector3 torque, float drag,
+                                   string damageType, float damageAmount,
+                                   DateTime originTime, int playerId,
+                                   float trailTime, Gradient trailGradient,
+                                   float lifeTimeInSeconds);
 
         public void SetDamageSetting(
             DetectionType type,

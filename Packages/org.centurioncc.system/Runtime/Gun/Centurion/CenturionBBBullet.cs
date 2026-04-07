@@ -18,17 +18,15 @@ namespace CenturionCC.System.Gun.Centurion
         [SerializeField] [NewbieInject]
         private RicochetHandlerBase[] ricochetHandlers;
 
-        [SerializeField] [NewbieInject]
-        private UpdateManager updateManager;
-
         [SerializeField]
         private TrailRenderer trailRenderer;
 
         [SerializeField]
         private TrailRenderer debugTrailRenderer;
 
+        [SerializeField] [NewbieInject(SearchScope.Self)]
+        private Rigidbody rb;
 
-        private Collider _collider;
         private float _damageAmount;
         private Vector3 _damageOriginPos;
         private Quaternion _damageOriginRot;
@@ -45,7 +43,6 @@ namespace CenturionCC.System.Gun.Centurion
 
         private Vector3 _nextVelocity;
         private int _ricochetCount;
-        private Rigidbody _rigidbody;
         private bool UseTrail => gunManager.UseBulletTrail && _nextUseTrail;
         private bool UseDebugTrail => gunManager.UseDebugBulletTrail;
 
@@ -63,27 +60,37 @@ namespace CenturionCC.System.Gun.Centurion
 
         public void Start()
         {
-            _rigidbody = gameObject.GetComponent<Rigidbody>();
-            _collider = gameObject.GetComponent<Collider>();
-            SendCustomEventDelayedFrames(nameof(LateStart), 1);
+            gameObject.SetActive(false);
+            rb.Sleep();
+        }
+
+        private void FixedUpdate()
+        {
+            // Apply HopUp
+            var vel = rb.velocity;
+            rb.AddForce(
+                _initialRotationUp * (new Vector3(vel.x, 0, vel.z).magnitude * _hopUpStrength),
+                ForceMode.Force
+            );
         }
 
         private void OnCollisionEnter(Collision collision)
         {
             ++_ricochetCount;
-            _rigidbody.velocity /= DampingCoefficient;
+            rb.velocity /= DampingCoefficient;
             foreach (var ricochetHandler in ricochetHandlers)
             {
                 ricochetHandler.OnRicochet(this, collision);
             }
         }
 
-        public override void Shoot(Guid eventId,
-                                   Vector3 pos, Quaternion rot,
-                                   Vector3 velocity, Vector3 torque, float drag,
-                                   string damageType, float damageAmount,
-                                   DateTime time, int playerId,
-                                   float trailTime, Gradient trailGradient, float lifeTimeInSeconds)
+        public override void Shoot(
+            Guid eventId,
+            Vector3 pos, Quaternion rot,
+            Vector3 velocity, Vector3 torque, float drag,
+            string damageType, float damageAmount,
+            DateTime time, int playerId,
+            float trailTime, Gradient trailGradient, float lifeTimeInSeconds)
         {
             // Damage data
             _eventId = eventId;
@@ -95,7 +102,7 @@ namespace CenturionCC.System.Gun.Centurion
             _damagerPlayerId = playerId;
 
             // Speed data
-            _rigidbody.drag = drag;
+            rb.drag = drag;
 
             _nextVelocity = velocity;
             _nextTorque = torque;
@@ -117,68 +124,41 @@ namespace CenturionCC.System.Gun.Centurion
                 trailRenderer.colorGradient = trailGradient;
             }
 
-            // Prepare
-            _collider.enabled = false;
+            // Move to shooting pos/rot
+            transform.SetPositionAndRotation(pos, rot);
+
+            // Setup rigidbody
+            rb.velocity = _damageOriginRot * _nextVelocity;
+            rb.angularVelocity = _damageOriginRot * _nextTorque;
+
+            // Reset ricochet count
             _ricochetCount = 0;
 
-            Activate();
+            // Wake things up
+            gameObject.SetActive(true);
+            rb.WakeUp();
+            SetTrailRendererEmission(true);
+
+            // FIXME: when the reuse occurred, Deactivate will be called very early on because of previously scheduled call 
+            // Schedule lifetime destroy
             SendCustomEventDelayedSeconds(nameof(Deactivate), lifeTimeInSeconds);
-        }
-
-        // _FixedUpdate will only be subscribed when it's in their lifetime.
-        public void _FixedUpdate()
-        {
-            // Apply HopUp
-            var vel = _rigidbody.velocity;
-            _rigidbody.AddForce(
-                _initialRotationUp * (new Vector3(vel.x, 0, vel.z).magnitude * _hopUpStrength),
-                ForceMode.Force);
-        }
-
-        public void LateStart()
-        {
-            gameObject.SetActive(false);
-            _rigidbody.Sleep();
         }
 
         public void Deactivate()
         {
-            updateManager.UnsubscribeFixedUpdate(this);
             gameObject.SetActive(false);
-            IsCurrentlyActive = false;
 
             _ricochetCount = int.MaxValue;
 
-            _rigidbody.velocity = Vector3.zero;
-            _rigidbody.angularVelocity = Vector3.zero;
-            _rigidbody.Sleep();
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.Sleep();
 
-            TrailRendererEmission(false);
+            SetTrailRendererEmission(false);
+            transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
         }
 
-        public void Activate()
-        {
-            updateManager.UnsubscribeFixedUpdate(this);
-            updateManager.SubscribeFixedUpdate(this);
-            gameObject.SetActive(true);
-            _rigidbody.WakeUp();
-            _rigidbody.MovePosition(_damageOriginPos);
-
-            _rigidbody.AddForce(_damageOriginRot * _nextVelocity - _rigidbody.velocity, ForceMode.VelocityChange);
-            _rigidbody.AddTorque(_damageOriginRot * _nextTorque, ForceMode.Force);
-
-            IsCurrentlyActive = true;
-            _collider.enabled = true;
-            _ricochetCount = 0;
-            SendCustomEventDelayedFrames(nameof(LateActivate), 1);
-        }
-
-        public void LateActivate()
-        {
-            TrailRendererEmission(true);
-        }
-
-        private void TrailRendererEmission(bool emit)
+        private void SetTrailRendererEmission(bool emit)
         {
             if (trailRenderer)
             {
@@ -192,9 +172,12 @@ namespace CenturionCC.System.Gun.Centurion
                 debugTrailRenderer.emitting = emit && UseDebugTrail;
             }
         }
+    }
 
+    public static class CenturionBBBulletUtility
+    {
         /// <summary>
-        /// This is very inaccurate approximation, do not expect accuracy!
+        /// This is a very inaccurate approximation, do not expect accuracy!
         /// </summary>
         /// <param name="startingPos">Shooting position</param>
         /// <param name="startingRot">Shooting rotation</param>
@@ -211,10 +194,10 @@ namespace CenturionCC.System.Gun.Centurion
                 out var posOffset, out var velocity,
                 out var rotOffset, out var torque,
                 out var drag,
-                out var trailDuration,
-                out var trailColor,
-                out var lifeTimeInSeconds,
-                out var damageAmount
+                out _,
+                out _,
+                out _,
+                out _
             );
 
             var tempRot = startingRot * rotOffset;
@@ -223,7 +206,7 @@ namespace CenturionCC.System.Gun.Centurion
         }
 
         /// <summary>
-        /// This is very inaccurate approximation, do not expect accuracy!
+        /// This is a very inaccurate approximation, do not expect accuracy!
         /// </summary>
         /// <param name="pos">Shooting position</param>
         /// <param name="rot">Shooting rotation</param>
