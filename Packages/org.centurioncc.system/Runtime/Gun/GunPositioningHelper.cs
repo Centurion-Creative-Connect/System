@@ -64,41 +64,13 @@ namespace CenturionCC.System.Gun
             RecalculatePivot();
         }
 
-        public void Update()
+        private void Update()
         {
             var t = 1 - Mathf.Exp(-_recoilErgonomics * Time.deltaTime);
             _recoilOffsetRot = Quaternion.Lerp(_recoilOffsetRot, Quaternion.identity, t);
             _recoilOffsetPos = Vector3.Lerp(_recoilOffsetPos, Vector3.zero, t);
-            var recoilMatrix = Matrix4x4.TRS(_recoilOffsetPos, _recoilOffsetRot, Vector3.one);
 
-            switch (_controlType)
-            {
-                default:
-                case ControlType.OneHanded:
-                {
-                    var targetMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset * recoilMatrix;
-                    target.SetPositionAndRotation(targetMatrix.GetPosition(), targetMatrix.rotation);
-
-                    var lookAtMatrix = targetMatrix * _pivotLookAtOffset;
-                    _pivotLookAtTransform.SetPositionAndRotation(lookAtMatrix.GetPosition(), lookAtMatrix.rotation);
-                    break;
-                }
-                case ControlType.TwoHanded:
-                {
-                    var targetMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset * recoilMatrix;
-
-                    var desiredSecondaryPos = _pivotLookAtTransform.position;
-                    var currentSecondaryPos = targetMatrix.MultiplyPoint3x4(_pivotLookAtOffsetPos);
-
-                    var currentDir = currentSecondaryPos - targetMatrix.GetPosition();
-                    var desiredDir = desiredSecondaryPos - targetMatrix.GetPosition();
-
-                    var rotCorrection = Quaternion.FromToRotation(currentDir, desiredDir);
-
-                    target.SetPositionAndRotation(targetMatrix.GetPosition(), rotCorrection * targetMatrix.rotation);
-                    break;
-                }
-            }
+            _UpdatePosition();
         }
 
         public override void OnDeserialization()
@@ -129,6 +101,40 @@ namespace CenturionCC.System.Gun
             _pivotOffsetRot = _pivotOffset.rotation;
 
             _pivotLookAtOffsetPos = target.worldToLocalMatrix.MultiplyPoint3x4(_pivotLookAtTransform.position);
+        }
+
+        public void _UpdatePosition()
+        {
+            var recoilMatrix = Matrix4x4.TRS(_recoilOffsetPos, _recoilOffsetRot, Vector3.one);
+
+            switch (_controlType)
+            {
+                default:
+                case ControlType.OneHanded:
+                {
+                    var targetMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset * recoilMatrix;
+                    target.SetPositionAndRotation(targetMatrix.GetPosition(), targetMatrix.rotation);
+
+                    var lookAtMatrix = targetMatrix * _pivotLookAtOffset;
+                    _pivotLookAtTransform.SetPositionAndRotation(lookAtMatrix.GetPosition(), lookAtMatrix.rotation);
+                    break;
+                }
+                case ControlType.TwoHanded:
+                {
+                    var targetMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset * recoilMatrix;
+
+                    var desiredSecondaryPos = _pivotLookAtTransform.position;
+                    var currentSecondaryPos = targetMatrix.MultiplyPoint3x4(_pivotLookAtOffsetPos);
+
+                    var currentDir = currentSecondaryPos - targetMatrix.GetPosition();
+                    var desiredDir = desiredSecondaryPos - targetMatrix.GetPosition();
+
+                    var rotCorrection = Quaternion.FromToRotation(currentDir, desiredDir);
+
+                    target.SetPositionAndRotation(targetMatrix.GetPosition(), rotCorrection * targetMatrix.rotation);
+                    break;
+                }
+            }
         }
 
         public void _RequestSync()

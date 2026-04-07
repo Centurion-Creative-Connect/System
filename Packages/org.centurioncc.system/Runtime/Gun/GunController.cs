@@ -69,7 +69,7 @@ namespace CenturionCC.System.Gun
             gunManager.SubscribeCallback(this);
         }
 
-        private void Update()
+        public override void PostLateUpdate()
         {
             HandleVRInputs();
             HandleDesktopInputs();
@@ -155,6 +155,7 @@ namespace CenturionCC.System.Gun
             foreach (var gun in gunManager.GetLocallyHeldGunInstances())
             {
                 gun.AnimationHelper._SetTriggerProgress(GetMainTriggerPull(gun));
+                gun.PositioningHelper._UpdatePosition();
 
                 foreach (var behaviour in gun.Behaviours)
                 {
