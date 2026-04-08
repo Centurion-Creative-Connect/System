@@ -2,6 +2,7 @@
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
+using VRC.SDKBase;
 
 namespace CenturionCC.System.Utils.Watchdog
 {
@@ -101,8 +102,15 @@ namespace CenturionCC.System.Utils.Watchdog
                         ErrorMessageFormatJp,
                         errorDescription);
 
-            if (globalNotifier)
+            var errorDiag = ErrorDiagnostic.GetInstance();
+            if (errorDiag != null)
+            {
+                errorDiag.BroadcastError($"Watchdog has detected an error with code: {errorCode}, cause: {errorCause}");
+            }
+            else if (globalNotifier)
+            {
                 globalNotifier.NotifyGlobally(errorCode);
+            }
         }
 
         private void ActivateErrorObject(bool isError)
@@ -179,7 +187,6 @@ namespace CenturionCC.System.Utils.Watchdog
         }
 
         #region ProcCallback
-
         public override void OnException(WatchdogProc wd, int errCode)
         {
             errorCode = errCode;
@@ -222,7 +229,6 @@ namespace CenturionCC.System.Utils.Watchdog
                 Debug.LogWarning($"{Prefix} callback init with wd null!");
             Debug.Log($"{Prefix} callback init complete");
         }
-
         #endregion
     }
 }
