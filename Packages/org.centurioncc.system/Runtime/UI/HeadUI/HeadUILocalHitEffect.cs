@@ -17,6 +17,7 @@ namespace CenturionCC.System.UI.HeadUI
         [SerializeField] public bool useHaptic;
         [SerializeField] public bool showFriendlyFireAttackerName;
         [SerializeField] private RectTransform rectTransform;
+        [SerializeField] private CanvasGroup canvasGroup;
 
         [SerializeField] private AudioSource hitSound;
         [SerializeField] private AudioClip hapticSource;
@@ -32,9 +33,7 @@ namespace CenturionCC.System.UI.HeadUI
         [SerializeField] private string bothFriendlyFireDescriptionFormat =
             "Hit by <color=maroon>ReverseFriendlyFire</color> for %victim% in the %bodyParts%";
 
-        [SerializeField] private Image descriptionBackground;
         [SerializeField] private Image hitSprite;
-        [SerializeField] private Image labelSprite;
         [SerializeField] private Sprite[] availableSprites;
 
         [SerializeField] private float inTime = 0.05F;
@@ -154,15 +153,7 @@ namespace CenturionCC.System.UI.HeadUI
 
         private void SetAlpha(float a)
         {
-            hitSprite.color = WithAlpha(hitSprite.color, a);
-            labelSprite.color = WithAlpha(labelSprite.color, a);
-            if (descriptionText != null) descriptionText.color = WithAlpha(descriptionText.color, a);
-            if (descriptionBackground != null) descriptionBackground.color = WithAlpha(descriptionBackground.color, a);
-        }
-
-        private static Color WithAlpha(Color c, float a)
-        {
-            return new Color(c.r, c.g, c.b, a);
+            canvasGroup.alpha = a;
         }
 
         private int RandomNoDouble()
@@ -232,7 +223,6 @@ namespace CenturionCC.System.UI.HeadUI
         }
 
         #region PlayerManagerCallback
-
         public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
             if (!victim.IsLocal) return;
@@ -263,7 +253,6 @@ namespace CenturionCC.System.UI.HeadUI
 
             Play();
         }
-
         #endregion
     }
 }
