@@ -1,10 +1,8 @@
-﻿using CenturionCC.System.Utils;
-using DerpyNewbie.Common;
+﻿using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
-using VRC.SDK3.Data;
 using VRC.SDKBase;
 
 namespace CenturionCC.System.Player
