@@ -32,6 +32,7 @@ namespace CenturionCC.System.Player.Centurion
 
         [UdonSynced] [FieldChangeCallback(nameof(SyncedHealth))]
         private float _health = 100;
+        private bool _isAddedToManager;
 
         private bool _isCollidersActive = true;
 
@@ -76,14 +77,14 @@ namespace CenturionCC.System.Player.Centurion
 
                 if (IsDead)
                 {
-                    var attacker = (CenturionPlayer)playerManager.GetPlayerById(LastDamageInfo.AttackerId());
+                    var attacker = playerManager.GetPlayerById(LastDamageInfo.AttackerId());
                     var type = LastDamageInfo.AttackerId() == PlayerId
                         ? KillType.ReverseFriendlyFire
                         : attacker.IsFriendly(this)
                             ? KillType.FriendlyFire
                             : KillType.Default;
 
-                    if (attacker && type == KillType.Default)
+                    if (attacker != null && type == KillType.Default)
                     {
                         attacker.Kills += 1;
                         attacker.KillStreak += 1;
@@ -176,6 +177,7 @@ namespace CenturionCC.System.Player.Centurion
         {
             playerManager.RemovePlayerFromCache(this);
             playerManager.Event.Invoke_OnPlayerRemoved(this);
+            _isAddedToManager = false;
         }
 
         public void Internal_UpdateView()
@@ -217,9 +219,10 @@ namespace CenturionCC.System.Player.Centurion
         #region OverridenMethods
         public override void OnPlayerRestored(VRCPlayerApi player)
         {
-            if (!player.IsOwner(gameObject)) return;
+            if (!player.IsOwner(gameObject) || _isAddedToManager) return;
             playerManager.AddPlayerToCache(this);
             playerManager.Event.Invoke_OnPlayerAdded(this);
+            _isAddedToManager = true;
         }
 
         public override void SetTeam(int teamId)
