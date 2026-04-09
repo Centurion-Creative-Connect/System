@@ -7,12 +7,14 @@ namespace CenturionCC.System.Gun.Centurion
 {
     public class CenturionRicochetHandler : RicochetHandlerBase
     {
-        private const float RicochetVolumeSpeedCoefficient = 3F;
-        private const float MinCollisionMagnitude = 0.05F;
-        private const float MaxAudioDistance = 10F;
-
         [SerializeField]
         private AudioDataStore ricochetAudioData;
+
+        [SerializeField]
+        private float magnitudeVolumeMultiplier = .65f;
+
+        [SerializeField]
+        private float minCollisionMagnitude = 0.1f;
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private AudioManager audioManager;
@@ -27,10 +29,10 @@ namespace CenturionCC.System.Gun.Centurion
         public override void OnRicochet(ProjectileBase projectileBase, Collision collision)
         {
             var contact = collision.GetContact(0);
-            if (Vector3.Distance(contact.point, _localPlayer.GetPosition()) > MaxAudioDistance)
+            if (Vector3.Distance(contact.point, _localPlayer.GetPosition()) > ricochetAudioData.MaxDistance)
                 return;
 
-            if (collision.impulse.magnitude < MinCollisionMagnitude)
+            if (collision.impulse.magnitude < minCollisionMagnitude)
                 return;
 
             var objMarker = collision.gameObject.GetComponent<ObjectMarkerBase>();
@@ -40,7 +42,7 @@ namespace CenturionCC.System.Gun.Centurion
             audioManager.PlayAudioAtPosition(
                 ricochetAudioData.Clip,
                 contact.point,
-                ricochetAudioData.Volume * Mathf.Clamp01(collision.impulse.magnitude / RicochetVolumeSpeedCoefficient),
+                ricochetAudioData.Volume * Mathf.Clamp01(collision.impulse.magnitude * magnitudeVolumeMultiplier),
                 ricochetAudioData.Pitch,
                 ricochetAudioData.DopplerLevel,
                 ricochetAudioData.Spread,
