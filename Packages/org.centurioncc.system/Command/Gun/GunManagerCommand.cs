@@ -239,7 +239,7 @@ namespace CenturionCC.System.Command.Gun
                     }
 
                     var index = ConsoleParser.TryParseByte(vars[1]);
-                    var variantData = gunManager.GetVariantData(index);
+                    var variantData = gunManager.GetVariantDataById(index, false);
 
                     if (variantData == null)
                     {

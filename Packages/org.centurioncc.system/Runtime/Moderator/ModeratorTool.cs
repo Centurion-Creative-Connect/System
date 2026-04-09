@@ -39,12 +39,12 @@ namespace CenturionCC.System.Moderator
         private void OnEnable()
         {
             if (roleManager.GetPlayerRole().IsGameStaff())
-                gunManager.SubscribeCallback(this);
+                gunManager.Subscribe(this);
         }
 
         private void OnDisable()
         {
-            gunManager.UnsubscribeCallback(this);
+            gunManager.Unsubscribe(this);
         }
 
         public override void OnShoot(GunBase instance, ProjectileBase projectile)
@@ -80,7 +80,7 @@ namespace CenturionCC.System.Moderator
         {
             return GetPlayerSuspicionDict(playerId)["suspicionLevel"].Int;
         }
-        
+
         private void SetPlayerSuspicionLevel(int playerId, int level)
         {
             var dict = GetPlayerSuspicionDict(playerId);
@@ -101,7 +101,7 @@ namespace CenturionCC.System.Moderator
             var dict = new DataDictionary();
             dict.Add("suspicionLevel", 0);
             dict.Add("lastUpdated", 0.0F);
-            
+
             _suspicionDict.Add(playerId, dict);
             return dict;
         }

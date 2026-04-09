@@ -81,7 +81,7 @@ namespace CenturionCC.System.UI
                 o.SetActive(false);
             }
 
-            gunManager.SubscribeCallback(this);
+            gunManager.Subscribe(this);
             playerManager.Subscribe(this);
 
             SendCustomEventDelayedSeconds(nameof(UpdateToggleState), 5F);

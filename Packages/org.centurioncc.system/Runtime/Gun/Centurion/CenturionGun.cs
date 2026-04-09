@@ -28,7 +28,7 @@ namespace CenturionCC.System.Gun.Centurion
 
         /// <summary>
         /// Current Gun Variant ID
-        /// <seealso cref="CenturionGunManager.GetVariantData"/>
+        /// <seealso cref="GunManagerBase.GetVariantDataById"/>
         /// </summary>
         /// <remarks>
         /// Should only be changed by instance master.
@@ -104,7 +104,7 @@ namespace CenturionCC.System.Gun.Centurion
                 return;
             }
 
-            var data = gunManager.GetVariantData(VariantDataUniqueId);
+            var data = gunManager.GetVariantDataById(VariantDataUniqueId);
             if (data == null)
             {
                 logger.LogError($"{Prefix}Will not refresh it's data because data is not found. maybe GunManager hasn't been initialized. Refreshing in 10 seconds!: {VariantDataUniqueId}");

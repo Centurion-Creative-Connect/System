@@ -48,7 +48,7 @@ namespace CenturionCC.System.Gimmick.ResetStatusDisplay
 
         private void Start()
         {
-            gunManager.SubscribeCallback(this);
+            gunManager.Subscribe(this);
             _RecursiveUpdateResetStatusText();
         }
 
