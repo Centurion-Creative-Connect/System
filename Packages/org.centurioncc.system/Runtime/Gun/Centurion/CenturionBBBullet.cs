@@ -27,6 +27,9 @@ namespace CenturionCC.System.Gun.Centurion
         [SerializeField] [NewbieInject(SearchScope.Self)]
         private Rigidbody rb;
 
+        [SerializeField]
+        private bool disableTrailEmissionOnCollision = true;
+
         private float _damageAmount;
         private Vector3 _damageOriginPos;
         private Quaternion _damageOriginRot;
@@ -78,9 +81,16 @@ namespace CenturionCC.System.Gun.Centurion
         {
             ++_ricochetCount;
             rb.velocity /= DampingCoefficient;
+            rb.angularVelocity /= DampingCoefficient;
+
             foreach (var ricochetHandler in ricochetHandlers)
             {
                 ricochetHandler.OnRicochet(this, collision);
+            }
+
+            if (disableTrailEmissionOnCollision)
+            {
+                trailRenderer.emitting = false;
             }
         }
 
