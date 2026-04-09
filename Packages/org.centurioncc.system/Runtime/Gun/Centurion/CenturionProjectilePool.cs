@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CenturionCC.System.Utils;
+using System;
 using System.Diagnostics;
 using UdonSharp;
 using UnityEngine;
@@ -50,7 +51,7 @@ namespace CenturionCC.System.Gun.Centurion
                 var bullet = obj.GetComponent<ProjectileBase>();
                 if (bullet == null)
                 {
-                    UnityEngine.Debug.LogError($"[CenturionProjectilePool] GunBullet at {obj.name} is null!");
+                    CenturionDiagnostic.LogWarning($"[CenturionProjectilePool] GunBullet at {obj.name} is null!");
                     continue;
                 }
 

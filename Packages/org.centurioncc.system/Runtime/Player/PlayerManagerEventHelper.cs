@@ -33,7 +33,7 @@ namespace CenturionCC.System.Player
 
         public void Invoke_OnPlayerAdded(PlayerBase player)
         {
-            if (ErrorDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerAdded: Player is null"))
+            if (CenturionDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerAdded: Player is null"))
                 return;
 
             logger.Log($"{Prefix}OnPlayerAdded: {player.GetDisplayName(true)}");
@@ -48,7 +48,7 @@ namespace CenturionCC.System.Player
 
         public void Invoke_OnPlayerRemoved(PlayerBase player)
         {
-            if (ErrorDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerRemoved: Player is null"))
+            if (CenturionDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerRemoved: Player is null"))
                 return;
 
             logger.Log($"{Prefix}OnPlayerRemoved: {player.GetDisplayName(true)}");
@@ -63,7 +63,7 @@ namespace CenturionCC.System.Player
 
         public bool Invoke_OnDamagePreBroadcast(DamageInfo info)
         {
-            if (ErrorDiagnostic.Assert(info != null, "PlayerManagerEventHelper:OnDamagePreBroadcast: DamageInfo is null"))
+            if (CenturionDiagnostic.Assert(info != null, "PlayerManagerEventHelper:OnDamagePreBroadcast: DamageInfo is null"))
                 return true;
 
 #if CENTURIONSYSTEM_PLAYER_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
@@ -85,7 +85,7 @@ namespace CenturionCC.System.Player
 
         public bool Invoke_OnDamagePostBroadcast(DamageInfo info)
         {
-            if (ErrorDiagnostic.Assert(info != null, "PlayerManagerEventHelper:OnDamagePostBroadcast: DamageInfo is null"))
+            if (CenturionDiagnostic.Assert(info != null, "PlayerManagerEventHelper:OnDamagePostBroadcast: DamageInfo is null"))
                 return true;
 
 #if CENTURIONSYSTEM_PLAYER_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
@@ -107,7 +107,7 @@ namespace CenturionCC.System.Player
 
         public void Invoke_OnPlayerHealthChanged(PlayerBase player, float previousHealth)
         {
-            if (ErrorDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerHealthChanged: Player is null"))
+            if (CenturionDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerHealthChanged: Player is null"))
                 return;
 
             logger.Log($"{Prefix}OnPlayerHealthChanged: {player.GetDisplayName(true)}, {previousHealth:F2} -> {player.Health:F2}");
@@ -122,7 +122,7 @@ namespace CenturionCC.System.Player
 
         public void Invoke_OnPlayerRevived(PlayerBase player)
         {
-            if (ErrorDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerRevived: Player is null"))
+            if (CenturionDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerRevived: Player is null"))
                 return;
 
             logger.Log($"{Prefix}OnPlayerRevived: {player.GetDisplayName(true)}");
@@ -137,8 +137,8 @@ namespace CenturionCC.System.Player
 
         public void Invoke_OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
-            if (ErrorDiagnostic.Assert(attacker, "PlayerManagerEventHelper:OnPlayerKilled: Attacker is null") |
-                ErrorDiagnostic.Assert(victim, "PlayerManagerEventHelper:OnPlayerKilled: Victim is null"))
+            if (CenturionDiagnostic.Assert(attacker, "PlayerManagerEventHelper:OnPlayerKilled: Attacker is null") |
+                CenturionDiagnostic.Assert(victim, "PlayerManagerEventHelper:OnPlayerKilled: Victim is null"))
                 return;
 
             logger.Log($"{Prefix}OnPlayerKilled: {type.ToEnumName()}, {attacker.GetDisplayName(true)} -> {victim.GetDisplayName(true)}");
@@ -154,8 +154,8 @@ namespace CenturionCC.System.Player
 
         public void Invoke_OnPlayerFriendlyFireWarning(PlayerBase victim, DamageInfo damageInfo)
         {
-            if (ErrorDiagnostic.Assert(victim, "PlayerManagerEventHelper:OnPlayerFriendlyFireWarning: Victim is null") |
-                ErrorDiagnostic.Assert(damageInfo != null, "PlayerManagerEventHelper:OnPlayerFriendlyFireWarning: DamageInfo is null"))
+            if (CenturionDiagnostic.Assert(victim, "PlayerManagerEventHelper:OnPlayerFriendlyFireWarning: Victim is null") |
+                CenturionDiagnostic.Assert(damageInfo != null, "PlayerManagerEventHelper:OnPlayerFriendlyFireWarning: DamageInfo is null"))
                 return;
 
             logger.Log($"{Prefix}OnPlayerFriendlyFireWarning: {victim.GetDisplayName(true)}, {damageInfo.DamageType()}");
@@ -169,7 +169,7 @@ namespace CenturionCC.System.Player
 
         public void Invoke_OnPlayerTeamChanged(PlayerBase player, int oldTeam)
         {
-            if (ErrorDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerTeamChanged: Player is null"))
+            if (CenturionDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerTeamChanged: Player is null"))
                 return;
 
             logger.Log($"{Prefix}OnPlayerTeamChanged: {player.GetDisplayName(true)}, {oldTeam} -> {player.TeamId}");
@@ -191,7 +191,7 @@ namespace CenturionCC.System.Player
 
         public void Invoke_OnPlayerStatsChanged(PlayerBase player)
         {
-            if (ErrorDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerStatsChanged: Player is null"))
+            if (CenturionDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerStatsChanged: Player is null"))
                 return;
 
 #if CENTURIONSYSTEM_PLAYER_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
@@ -208,7 +208,7 @@ namespace CenturionCC.System.Player
 
         public void Invoke_OnPlayerReset(PlayerBase player)
         {
-            if (ErrorDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerReset: Player is null"))
+            if (CenturionDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerReset: Player is null"))
                 return;
 
 #if CENTURIONSYSTEM_PLAYER_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
@@ -260,8 +260,8 @@ namespace CenturionCC.System.Player
 
         public void Invoke_OnPlayerEnteredArea(PlayerBase player, PlayerAreaBase area)
         {
-            if (ErrorDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerEnteredArea: Player is null") |
-                ErrorDiagnostic.Assert(area, "PlayerManagerEventHelper:OnPlayerEnteredArea: Area is null"))
+            if (CenturionDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerEnteredArea: Player is null") |
+                CenturionDiagnostic.Assert(area, "PlayerManagerEventHelper:OnPlayerEnteredArea: Area is null"))
                 return;
 
 #if CENTURIONSYSTEM_PLAYER_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
@@ -278,8 +278,8 @@ namespace CenturionCC.System.Player
 
         public void Invoke_OnPlayerExitedArea(PlayerBase player, PlayerAreaBase area)
         {
-            if (ErrorDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerExitedArea: Player is null") |
-                ErrorDiagnostic.Assert(area, "PlayerManagerEventHelper:OnPlayerExitedArea: Area is null"))
+            if (CenturionDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerExitedArea: Player is null") |
+                CenturionDiagnostic.Assert(area, "PlayerManagerEventHelper:OnPlayerExitedArea: Area is null"))
                 return;
 
 #if CENTURIONSYSTEM_PLAYER_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING

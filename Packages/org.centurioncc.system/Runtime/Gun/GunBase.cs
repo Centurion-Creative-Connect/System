@@ -691,7 +691,7 @@ namespace CenturionCC.System.Gun
 
                 if (!projectile)
                 {
-                    logger.LogError($"{Prefix}Projectile not found!!!");
+                    CenturionDiagnostic.LogWarning($"{Prefix}Projectile not found!!!");
                     continue;
                 }
 
@@ -831,14 +831,9 @@ namespace CenturionCC.System.Gun
             var behaviours = Behaviours;
             if (behaviours == null || behaviours.Length == 0)
             {
-                logger.LogError($"{Prefix}OnHandlePickup: Behaviour is null or empty!");
+                CenturionDiagnostic.LogWarning($"{Prefix}OnHandlePickup: Behaviour is null or empty!");
                 instance.ForceDrop();
                 return;
-            }
-
-            if (behaviours.Length == 0)
-            {
-                logger.LogError($"{Prefix}OnHandlePickup: Behaviour is empty!");
             }
 
             // OnHandlePickup is only called locally, thus setting isLocal here is appropriate
@@ -888,7 +883,7 @@ namespace CenturionCC.System.Gun
             var behaviours = Behaviours;
             if (behaviours == null)
             {
-                logger.LogError($"{Prefix}OnHandleUseDown: Behaviour is null!");
+                CenturionDiagnostic.LogWarning($"{Prefix}OnHandleUseDown: Behaviour is null!");
                 return;
             }
 
@@ -934,7 +929,7 @@ namespace CenturionCC.System.Gun
             var behaviours = Behaviours;
             if (behaviours == null)
             {
-                logger.LogError($"{Prefix}OnHandleTriggerUp: Behaviour is null!");
+                CenturionDiagnostic.LogWarning($"{Prefix}OnHandleTriggerUp: Behaviour is null!");
                 return;
             }
 
@@ -984,13 +979,13 @@ namespace CenturionCC.System.Gun
             var behaviours = Behaviours;
             if (behaviours == null || behaviours.Length == 0)
             {
-                logger.LogError($"{Prefix}OnHandleDrop: Behaviour is null!");
+                CenturionDiagnostic.LogWarning($"{Prefix}OnHandleDrop: Behaviour is null!");
                 return;
             }
 
             if (behaviours.Length == 0)
             {
-                logger.LogError($"{Prefix}OnHandleDrop: Behaviour is empty!");
+                logger.LogWarn($"{Prefix}OnHandleDrop: Behaviour is empty!");
             }
 
             foreach (var behaviour in behaviours)

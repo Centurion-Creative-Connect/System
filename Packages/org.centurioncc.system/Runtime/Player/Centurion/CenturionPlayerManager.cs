@@ -129,14 +129,14 @@ namespace CenturionCC.System.Player.Centurion
             var centurionPlayer = (CenturionPlayer)_cachedCenturionPlayers[_lastUpdatedCenturionPlayerIndex].Reference;
             if (centurionPlayer == null)
             {
-                logger.LogError($"{Prefix}PostLateUpdate: could not update player: destroyed CenturionPlayer is still present in the list at idx of {_lastUpdatedCenturionPlayerIndex}");
+                CenturionDiagnostic.LogWarning($"{Prefix}PostLateUpdate: could not update player: destroyed CenturionPlayer is still present in the list at idx of {_lastUpdatedCenturionPlayerIndex}");
                 return;
             }
 
             var vrcPlayer = centurionPlayer.VrcPlayer;
             if (vrcPlayer == null || !Utilities.IsValid(vrcPlayer))
             {
-                logger.LogError($"{Prefix}PostLateUpdate: could not update player: vrcPlayer is not valid");
+                CenturionDiagnostic.LogWarning($"{Prefix}PostLateUpdate: could not update player: vrcPlayer is not valid");
                 return;
             }
 
@@ -223,7 +223,7 @@ namespace CenturionCC.System.Player.Centurion
         {
             if (_cachedCenturionPlayers.Contains(player))
             {
-                logger.LogWarn($"{Prefix}Invoke_OnPlayerAdded: player {player.PlayerId} has already been added");
+                CenturionDiagnostic.LogWarning($"{Prefix}Invoke_OnPlayerAdded: player {player.PlayerId} has already been added");
                 return;
             }
 
@@ -279,9 +279,9 @@ namespace CenturionCC.System.Player.Centurion
             var victimCenturionPlayer = this.GetPlayerById(info.VictimId());
             var attackerCenturionPlayer = this.GetPlayerById(info.AttackerId());
 
-            if (!victimCenturionPlayer || !attackerCenturionPlayer)
+            if (victimCenturionPlayer == null || attackerCenturionPlayer == null)
             {
-                logger.LogWarn($"{Prefix}Victim or Attacker CenturionPlayer is not found");
+                CenturionDiagnostic.LogWarning($"{Prefix}Victim or Attacker CenturionPlayer is not found");
                 return false;
             }
 
@@ -427,16 +427,16 @@ namespace CenturionCC.System.Player.Centurion
         public void Internal_ProcessDamageInfo(DamageInfo info)
         {
             var victimPlayer = this.GetPlayerById(info.VictimId());
-            if (!victimPlayer)
+            if (victimPlayer == null)
             {
-                logger.LogWarn($"{Prefix}Victim Player {info.VictimId()} is not found");
+                CenturionDiagnostic.LogWarning($"{Prefix}Victim Player {info.VictimId()} is not found");
                 return;
             }
 
             var attackerPlayer = this.GetPlayerById(info.AttackerId());
-            if (!attackerPlayer)
+            if (attackerPlayer == null)
             {
-                logger.LogWarn($"{Prefix}Attacker Player {info.AttackerId()} is not found");
+                CenturionDiagnostic.LogWarning($"{Prefix}Attacker Player {info.AttackerId()} is not found");
                 return;
             }
 
@@ -490,7 +490,8 @@ namespace CenturionCC.System.Player.Centurion
             if (Networking.LocalPlayer.playerId != playerId) return;
             var localPlayer = GetLocalPlayer();
 
-            if (!localPlayer) return;
+            if (CenturionDiagnostic.Assert(localPlayer != null, "PlayerManager:Internal_ApplyTeamChange: localPlayer != null")) return;
+
             localPlayer.SetTeam(teamId);
         }
 
@@ -500,7 +501,7 @@ namespace CenturionCC.System.Player.Centurion
             if (Networking.LocalPlayer.playerId != playerId) return;
             var localPlayer = GetLocalPlayer();
 
-            if (!localPlayer) return;
+            if (CenturionDiagnostic.Assert(localPlayer != null, "PlayerManager:Internal_ApplyHealthChange: localPlayer != null")) return;
             localPlayer.SetHealth(health);
         }
 
@@ -510,7 +511,7 @@ namespace CenturionCC.System.Player.Centurion
             if (Networking.LocalPlayer.playerId != playerId) return;
             var localPlayer = GetLocalPlayer();
 
-            if (!localPlayer) return;
+            if (CenturionDiagnostic.Assert(localPlayer != null, "PlayerManager:Internal_ApplyMaxHealthChange: localPlayer != null")) return;
             localPlayer.SetMaxHealth(maxHealth);
         }
 
@@ -527,7 +528,7 @@ namespace CenturionCC.System.Player.Centurion
             if (Networking.LocalPlayer.playerId != playerId) return;
             var localPlayer = GetLocalPlayer();
 
-            if (!localPlayer) return;
+            if (CenturionDiagnostic.Assert(localPlayer != null, "PlayerManager:Internal_ApplySimpleCalls: localPlayer != null")) return;
             switch (simpleCallType)
             {
                 case PlayerBaseSimpleCalls.Kill:
@@ -543,7 +544,7 @@ namespace CenturionCC.System.Player.Centurion
                     localPlayer.ResetStats();
                     break;
                 default:
-                    logger.LogError($"{Prefix}Internal_ApplySimpleCalls: Unknown call type {simpleCallType}");
+                    CenturionDiagnostic.LogError($"PlayerManager:Internal_ApplySimpleCalls: Unknown call type {simpleCallType}");
                     return;
             }
         }

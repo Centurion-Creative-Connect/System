@@ -1,4 +1,5 @@
 ﻿using CenturionCC.System.Gun.DataStore;
+using CenturionCC.System.Utils;
 using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
@@ -94,7 +95,7 @@ namespace CenturionCC.System.Gun.Centurion
         {
             if (gunManager == null)
             {
-                logger.LogError($"{Prefix}ParentManager is null but trying to refresh data!: {VariantDataUniqueId}");
+                CenturionDiagnostic.LogError($"{Prefix}ParentManager is null but trying to refresh data!: {VariantDataUniqueId}");
                 return;
             }
 
@@ -107,7 +108,7 @@ namespace CenturionCC.System.Gun.Centurion
             var data = gunManager.GetVariantDataById(VariantDataUniqueId);
             if (data == null)
             {
-                logger.LogError($"{Prefix}Will not refresh it's data because data is not found. maybe GunManager hasn't been initialized. Refreshing in 10 seconds!: {VariantDataUniqueId}");
+                CenturionDiagnostic.LogWarning($"{Prefix}Will not refresh it's data because data is not found. maybe GunManager hasn't been initialized. Refreshing in 10 seconds!: {VariantDataUniqueId}");
                 SendCustomEventDelayedSeconds(nameof(RefreshData), 10f);
                 return;
             }
@@ -119,7 +120,7 @@ namespace CenturionCC.System.Gun.Centurion
         {
             if (data == null)
             {
-                logger.LogError($"{Prefix}Internal_SetVariantData: data is null!");
+                CenturionDiagnostic.LogWarning($"{Prefix}Internal_SetVariantData: data is null!");
                 return;
             }
 
@@ -199,7 +200,7 @@ namespace CenturionCC.System.Gun.Centurion
         {
             if (!Networking.IsMaster)
             {
-                logger.LogError($"{Prefix}You must be a master to occupy a ManagedGun!");
+                CenturionDiagnostic.LogWarning($"{Prefix}You must be a master to occupy a ManagedGun!");
                 return false;
             }
 
@@ -218,7 +219,7 @@ namespace CenturionCC.System.Gun.Centurion
         {
             if (!Networking.IsMaster)
             {
-                logger.LogError($"{Prefix}You must be a master to execute MasterOnly_SetVariantData!");
+                CenturionDiagnostic.LogWarning($"{Prefix}You must be a master to execute MasterOnly_SetVariantData!");
                 return;
             }
 
@@ -245,7 +246,7 @@ namespace CenturionCC.System.Gun.Centurion
 
             if (!Networking.IsMaster)
             {
-                logger.LogError($"{Prefix}You must be a master to dispose a ManagedGun!");
+                CenturionDiagnostic.LogWarning($"{Prefix}You must be a master to dispose a ManagedGun!");
                 return false;
             }
 
