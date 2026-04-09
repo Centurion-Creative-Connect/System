@@ -1,4 +1,5 @@
-﻿using DerpyNewbie.Common;
+﻿using CenturionCC.System.Utils;
+using DerpyNewbie.Common;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
@@ -124,7 +125,7 @@ namespace CenturionCC.System.Player.HitDisplay
         {
             if (player == null)
             {
-                Debug.LogError("[ExternalHitDisplayManager] Provided player is null");
+                CenturionDiagnostic.LogWarning("ExternalHitDisplayManager:Play: Player is null");
                 return;
             }
 

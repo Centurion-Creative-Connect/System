@@ -102,7 +102,7 @@ namespace CenturionCC.System.Utils.Watchdog
                         ErrorMessageFormatJp,
                         errorDescription);
 
-            var errorDiag = ErrorDiagnostic.GetInstance();
+            var errorDiag = CenturionDiagnostic.GetInstance();
             if (errorDiag != null)
             {
                 errorDiag.BroadcastError($"Watchdog has detected an error with code: {errorCode}, cause: {errorCause}");

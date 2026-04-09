@@ -44,7 +44,7 @@ namespace CenturionCC.System.Gun
 
         public void Invoke_OnVariantChanged(GunBase instance)
         {
-            if (ErrorDiagnostic.Assert(instance, "GunManagerEventHelper:OnVariantChanged: Instance is null"))
+            if (CenturionDiagnostic.Assert(instance, "GunManagerEventHelper:OnVariantChanged: Instance is null"))
                 return;
 
             logger.Log($"{Prefix}OnVariantChanged: {instance.name}");
@@ -58,7 +58,7 @@ namespace CenturionCC.System.Gun
 
         public void Invoke_OnPickedUpLocally(GunBase instance)
         {
-            if (ErrorDiagnostic.Assert(instance, "GunManagerEventHelper:OnPickedUpLocally: Instance is null"))
+            if (CenturionDiagnostic.Assert(instance, "GunManagerEventHelper:OnPickedUpLocally: Instance is null"))
                 return;
 
             logger.Log($"{Prefix}OnPickedUpLocally: {instance.name}");
@@ -72,7 +72,7 @@ namespace CenturionCC.System.Gun
 
         public void Invoke_OnDropLocally(GunBase instance)
         {
-            if (ErrorDiagnostic.Assert(instance, "GunManagerEventHelper:OnDropLocally: Instance is null"))
+            if (CenturionDiagnostic.Assert(instance, "GunManagerEventHelper:OnDropLocally: Instance is null"))
                 return;
 
             logger.Log($"{Prefix}OnDropLocally: {instance.name}");
@@ -86,8 +86,8 @@ namespace CenturionCC.System.Gun
 
         public void Invoke_OnShoot(GunBase instance, ProjectileBase projectile)
         {
-            if (ErrorDiagnostic.Assert(instance, "GunManagerEventHelper:OnShoot: Instance is null") |
-                ErrorDiagnostic.Assert(projectile, "GunManagerEventHelper:OnShoot: Projectile is null"))
+            if (CenturionDiagnostic.Assert(instance, "GunManagerEventHelper:OnShoot: Instance is null") |
+                CenturionDiagnostic.Assert(projectile, "GunManagerEventHelper:OnShoot: Projectile is null"))
                 return;
 
 #if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
@@ -103,7 +103,7 @@ namespace CenturionCC.System.Gun
 
         public void Invoke_OnEmptyShoot(GunBase instance)
         {
-            if (ErrorDiagnostic.Assert(instance, "GunManagerEventHelper:OnEmptyShoot: Instance is null"))
+            if (CenturionDiagnostic.Assert(instance, "GunManagerEventHelper:OnEmptyShoot: Instance is null"))
                 return;
 
 #if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
@@ -119,7 +119,7 @@ namespace CenturionCC.System.Gun
 
         public void Invoke_OnShootFailed(GunBase instance, int reasonId)
         {
-            if (ErrorDiagnostic.Assert(instance, "GunManagerEventHelper:OnShootFailed: Instance is null"))
+            if (CenturionDiagnostic.Assert(instance, "GunManagerEventHelper:OnShootFailed: Instance is null"))
                 return;
 
 #if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
@@ -135,7 +135,7 @@ namespace CenturionCC.System.Gun
 
         public void Invoke_OnShootCancelled(GunBase instance, int reasonId)
         {
-            if (ErrorDiagnostic.Assert(instance, "GunManagerEventHelper:OnShootCancelled: Instance is null"))
+            if (CenturionDiagnostic.Assert(instance, "GunManagerEventHelper:OnShootCancelled: Instance is null"))
                 return;
 
 #if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
@@ -151,7 +151,7 @@ namespace CenturionCC.System.Gun
 
         public void Invoke_OnFireModeChanged(GunBase instance)
         {
-            if (ErrorDiagnostic.Assert(instance, "GunManagerEventHelper:OnFireModeChanged: Instance is null"))
+            if (CenturionDiagnostic.Assert(instance, "GunManagerEventHelper:OnFireModeChanged: Instance is null"))
                 return;
 
 #if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
