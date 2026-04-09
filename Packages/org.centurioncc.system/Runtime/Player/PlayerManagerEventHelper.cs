@@ -9,7 +9,7 @@ namespace CenturionCC.System.Player
     [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
     public class PlayerManagerEventHelper : UdonSharpBehaviour
     {
-        private const string LogPrefix = "[<color=yellow>PlayerManagerEvent</color>] ";
+        private const string Prefix = "[<color=cyan>PlayerManagerEvent</color>] ";
 
         [SerializeField] [NewbieInject]
         private PlayerManagerBase playerManager;
@@ -36,7 +36,7 @@ namespace CenturionCC.System.Player
             if (ErrorDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerAdded: Player is null"))
                 return;
 
-            logger.Log($"{LogPrefix}OnPlayerAdded: {player.GetDisplayName(true)}");
+            logger.Log($"{Prefix}OnPlayerAdded: {player.GetDisplayName(true)}");
             playerManager.UpdateAllPlayerView();
 
             for (var i = 0; i < _callbackCount; i++)
@@ -51,7 +51,7 @@ namespace CenturionCC.System.Player
             if (ErrorDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerRemoved: Player is null"))
                 return;
 
-            logger.Log($"{LogPrefix}OnPlayerRemoved: {player.GetDisplayName(true)}");
+            logger.Log($"{Prefix}OnPlayerRemoved: {player.GetDisplayName(true)}");
             playerManager.UpdateAllPlayerView();
 
             for (var i = 0; i < _callbackCount; i++)
@@ -67,7 +67,7 @@ namespace CenturionCC.System.Player
                 return true;
 
 #if CENTURIONSYSTEM_PLAYER_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            logger.Log($"{LogPrefix}OnDamagePreBroadcast: {this.GetPlayerById(info.AttackerId()).GetDisplayName(true)} -> {this.GetPlayerById(info.VictimId()).GetDisplayName(true)}");
+            logger.Log($"{Prefix}OnDamagePreBroadcast: {playerManager.GetPlayerById(info.AttackerId()).GetDisplayName(true)} -> {playerManager.GetPlayerById(info.VictimId()).GetDisplayName(true)}");
 #endif
             var result = false;
 
@@ -78,7 +78,7 @@ namespace CenturionCC.System.Player
             }
 
 #if CENTURIONSYSTEM_PLAYER_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            logger.Log($"{LogPrefix}OnDamagePreBroadcast-result: {result}");
+            logger.Log($"{Prefix}OnDamagePreBroadcast-result: {result}");
 #endif
             return result;
         }
@@ -89,7 +89,7 @@ namespace CenturionCC.System.Player
                 return true;
 
 #if CENTURIONSYSTEM_PLAYER_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            logger.Log($"{LogPrefix}OnDamagePostBroadcast: {this.GetPlayerById(info.AttackerId()).GetDisplayName(true)} -> {this.GetPlayerById(info.VictimId()).GetDisplayName(true)}");
+            logger.Log($"{Prefix}OnDamagePostBroadcast: {playerManager.GetPlayerById(info.AttackerId()).GetDisplayName(true)} -> {playerManager.GetPlayerById(info.VictimId()).GetDisplayName(true)}");
 #endif
             var result = false;
 
@@ -100,7 +100,7 @@ namespace CenturionCC.System.Player
             }
 
 #if CENTURIONSYSTEM_PLAYER_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            logger.Log($"{LogPrefix}OnDamagePostBroadcast-result: {result}");
+            logger.Log($"{Prefix}OnDamagePostBroadcast-result: {result}");
 #endif
             return result;
         }
@@ -110,7 +110,7 @@ namespace CenturionCC.System.Player
             if (ErrorDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerHealthChanged: Player is null"))
                 return;
 
-            logger.Log($"{LogPrefix}OnPlayerHealthChanged: {player.GetDisplayName(true)}, {previousHealth:F2} -> {player.Health:F2}");
+            logger.Log($"{Prefix}OnPlayerHealthChanged: {player.GetDisplayName(true)}, {previousHealth:F2} -> {player.Health:F2}");
             player.UpdateView();
 
             for (var i = 0; i < _callbackCount; i++)
@@ -125,7 +125,7 @@ namespace CenturionCC.System.Player
             if (ErrorDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerRevived: Player is null"))
                 return;
 
-            logger.Log($"{LogPrefix}OnPlayerRevived: {player.GetDisplayName(true)}");
+            logger.Log($"{Prefix}OnPlayerRevived: {player.GetDisplayName(true)}");
             player.UpdateView();
 
             for (var i = 0; i < _callbackCount; i++)
@@ -141,7 +141,7 @@ namespace CenturionCC.System.Player
                 ErrorDiagnostic.Assert(victim, "PlayerManagerEventHelper:OnPlayerKilled: Victim is null"))
                 return;
 
-            logger.Log($"{LogPrefix}OnPlayerKilled: {type.ToEnumName()}, {attacker.GetDisplayName(true)} -> {victim.GetDisplayName(true)}");
+            logger.Log($"{Prefix}OnPlayerKilled: {type.ToEnumName()}, {attacker.GetDisplayName(true)} -> {victim.GetDisplayName(true)}");
             attacker.UpdateView();
             victim.UpdateView();
 
@@ -158,7 +158,7 @@ namespace CenturionCC.System.Player
                 ErrorDiagnostic.Assert(damageInfo != null, "PlayerManagerEventHelper:OnPlayerFriendlyFireWarning: DamageInfo is null"))
                 return;
 
-            logger.Log($"{LogPrefix}OnPlayerFriendlyFireWarning: {victim.GetDisplayName(true)}, {damageInfo.DamageType()}");
+            logger.Log($"{Prefix}OnPlayerFriendlyFireWarning: {victim.GetDisplayName(true)}, {damageInfo.DamageType()}");
 
             for (var i = 0; i < _callbackCount; i++)
             {
@@ -172,7 +172,7 @@ namespace CenturionCC.System.Player
             if (ErrorDiagnostic.Assert(player, "PlayerManagerEventHelper:OnPlayerTeamChanged: Player is null"))
                 return;
 
-            logger.Log($"{LogPrefix}OnPlayerTeamChanged: {player.GetDisplayName(true)}, {oldTeam} -> {player.TeamId}");
+            logger.Log($"{Prefix}OnPlayerTeamChanged: {player.GetDisplayName(true)}, {oldTeam} -> {player.TeamId}");
             if (player.IsLocal)
             {
                 playerManager.UpdateAllPlayerView();
@@ -195,7 +195,7 @@ namespace CenturionCC.System.Player
                 return;
 
 #if CENTURIONSYSTEM_PLAYER_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            logger.Log($"{LogPrefix}OnPlayerStatsChanged: {player.GetDisplayName(true)}");
+            logger.Log($"{Prefix}OnPlayerStatsChanged: {player.GetDisplayName(true)}");
 #endif
             player.UpdateView();
 
@@ -212,7 +212,7 @@ namespace CenturionCC.System.Player
                 return;
 
 #if CENTURIONSYSTEM_PLAYER_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            logger.Log($"{LogPrefix}OnPlayerReset: {player.GetDisplayName(true)}");
+            logger.Log($"{Prefix}OnPlayerReset: {player.GetDisplayName(true)}");
 #endif
             player.UpdateView();
 
@@ -225,7 +225,7 @@ namespace CenturionCC.System.Player
 
         public void Invoke_OnPlayerTagChanged(TagType type, bool isOn)
         {
-            logger.Log($"{LogPrefix}OnPlayerTagChanged: {type.ToEnumName()}, {isOn}");
+            logger.Log($"{Prefix}OnPlayerTagChanged: {type.ToEnumName()}, {isOn}");
             playerManager.UpdateAllPlayerView();
 
             for (var i = 0; i < _callbackCount; i++)
@@ -237,7 +237,7 @@ namespace CenturionCC.System.Player
 
         public void Invoke_OnFriendlyFireModeChanged(FriendlyFireMode previousMode)
         {
-            logger.Log($"{LogPrefix}OnFriendlyFireModeChanged: {previousMode.ToEnumName()} -> {playerManager.FriendlyFireMode.ToEnumName()}");
+            logger.Log($"{Prefix}OnFriendlyFireModeChanged: {previousMode.ToEnumName()} -> {playerManager.FriendlyFireMode.ToEnumName()}");
 
             for (var i = 0; i < _callbackCount; i++)
             {
@@ -248,7 +248,7 @@ namespace CenturionCC.System.Player
 
         public void Invoke_OnDebugModeChanged(bool isOn)
         {
-            logger.Log($"{LogPrefix}OnDebugModeChanged: {isOn}");
+            logger.Log($"{Prefix}OnDebugModeChanged: {isOn}");
             playerManager.UpdateAllPlayerView();
 
             for (var i = 0; i < _callbackCount; i++)
@@ -265,7 +265,7 @@ namespace CenturionCC.System.Player
                 return;
 
 #if CENTURIONSYSTEM_PLAYER_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            logger.Log($"{LogPrefix}OnPlayerEnteredArea: {player.GetDisplayName(true)}, {area.AreaName} ({player.IsInSafeZone})");
+            logger.Log($"{Prefix}OnPlayerEnteredArea: {player.GetDisplayName(true)}, {area.AreaName} ({player.IsInSafeZone})");
 #endif
             player.UpdateView();
 
@@ -283,7 +283,7 @@ namespace CenturionCC.System.Player
                 return;
 
 #if CENTURIONSYSTEM_PLAYER_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            logger.Log($"{LogPrefix}OnPlayerExitedArea: {player.GetDisplayName(true)}, {area.AreaName} ({player.IsInSafeZone})");
+            logger.Log($"{Prefix}OnPlayerExitedArea: {player.GetDisplayName(true)}, {area.AreaName} ({player.IsInSafeZone})");
 #endif
             player.UpdateView();
 

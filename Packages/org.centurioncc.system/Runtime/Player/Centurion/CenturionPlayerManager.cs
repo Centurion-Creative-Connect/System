@@ -22,7 +22,7 @@ namespace CenturionCC.System.Player.Centurion
     public class CenturionPlayerManager : PlayerManagerBase
     {
         private const int MaxResolvedIdPoolSize = 8;
-        private const string LogPrefix = "[CPlayerManager] ";
+        private const string Prefix = "[<color=teal>PlayerManager</color>] ";
 
         [SerializeField]
         private Color[] teamColors;
@@ -129,14 +129,14 @@ namespace CenturionCC.System.Player.Centurion
             var centurionPlayer = (CenturionPlayer)_cachedCenturionPlayers[_lastUpdatedCenturionPlayerIndex].Reference;
             if (centurionPlayer == null)
             {
-                logger.LogError($"{LogPrefix}PostLateUpdate: could not update player: destroyed CenturionPlayer is still present in the list at idx of {_lastUpdatedCenturionPlayerIndex}");
+                logger.LogError($"{Prefix}PostLateUpdate: could not update player: destroyed CenturionPlayer is still present in the list at idx of {_lastUpdatedCenturionPlayerIndex}");
                 return;
             }
 
             var vrcPlayer = centurionPlayer.VrcPlayer;
             if (vrcPlayer == null || !Utilities.IsValid(vrcPlayer))
             {
-                logger.LogError($"{LogPrefix}PostLateUpdate: could not update player: vrcPlayer is not valid");
+                logger.LogError($"{Prefix}PostLateUpdate: could not update player: vrcPlayer is not valid");
                 return;
             }
 
@@ -223,7 +223,7 @@ namespace CenturionCC.System.Player.Centurion
         {
             if (_cachedCenturionPlayers.Contains(player))
             {
-                logger.LogWarn($"{LogPrefix}Invoke_OnPlayerAdded: player {player.PlayerId} has already been added");
+                logger.LogWarn($"{Prefix}Invoke_OnPlayerAdded: player {player.PlayerId} has already been added");
                 return;
             }
 
@@ -281,7 +281,7 @@ namespace CenturionCC.System.Player.Centurion
 
             if (!victimCenturionPlayer || !attackerCenturionPlayer)
             {
-                logger.LogWarn($"{LogPrefix}Victim or Attacker CenturionPlayer is not found");
+                logger.LogWarn($"{Prefix}Victim or Attacker CenturionPlayer is not found");
                 return false;
             }
 
@@ -429,26 +429,26 @@ namespace CenturionCC.System.Player.Centurion
             var victimPlayer = this.GetPlayerById(info.VictimId());
             if (!victimPlayer)
             {
-                logger.LogWarn($"{LogPrefix}Victim Player {info.VictimId()} is not found");
+                logger.LogWarn($"{Prefix}Victim Player {info.VictimId()} is not found");
                 return;
             }
 
             var attackerPlayer = this.GetPlayerById(info.AttackerId());
             if (!attackerPlayer)
             {
-                logger.LogWarn($"{LogPrefix}Attacker Player {info.AttackerId()} is not found");
+                logger.LogWarn($"{Prefix}Attacker Player {info.AttackerId()} is not found");
                 return;
             }
 
             if (victimPlayer.IsDead)
             {
-                logger.LogWarn($"{LogPrefix}Victim Player {info.VictimId()} is already dead");
+                logger.LogWarn($"{Prefix}Victim Player {info.VictimId()} is already dead");
                 return;
             }
 
             if (Event.Invoke_OnDamagePostBroadcast(info))
             {
-                logger.LogWarn($"{LogPrefix}Callback has rejected to apply damage");
+                logger.LogWarn($"{Prefix}Callback has rejected to apply damage");
                 return;
             }
 
@@ -543,7 +543,7 @@ namespace CenturionCC.System.Player.Centurion
                     localPlayer.ResetStats();
                     break;
                 default:
-                    logger.LogError($"{LogPrefix}Internal_ApplySimpleCalls: Unknown call type {simpleCallType}");
+                    logger.LogError($"{Prefix}Internal_ApplySimpleCalls: Unknown call type {simpleCallType}");
                     return;
             }
         }
