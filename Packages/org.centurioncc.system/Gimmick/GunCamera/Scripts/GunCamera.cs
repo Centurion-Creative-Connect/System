@@ -129,7 +129,7 @@ namespace CenturionCC.System.Gimmick.GunCamera
 
         private void Start()
         {
-            gunManager.SubscribeCallback(this);
+            gunManager.Subscribe(this);
             CustomTargetIndex = 0;
             OffsetIndex = 0;
             IsPickupable = false;

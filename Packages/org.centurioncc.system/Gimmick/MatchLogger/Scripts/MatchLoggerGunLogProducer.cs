@@ -16,12 +16,12 @@ namespace CenturionCC.System.Gimmick.MatchLogger
 
         private void OnEnable()
         {
-            gunManager.SubscribeCallback(this);
+            gunManager.Subscribe(this);
         }
 
         private void OnDisable()
         {
-            gunManager.UnsubscribeCallback(this);
+            gunManager.Unsubscribe(this);
         }
 
         public override void OnShoot(GunBase instance, ProjectileBase projectile)

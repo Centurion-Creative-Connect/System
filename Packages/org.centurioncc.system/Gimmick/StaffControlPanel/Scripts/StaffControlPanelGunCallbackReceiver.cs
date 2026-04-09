@@ -15,7 +15,7 @@ namespace CenturionCC.System.Gimmick.StaffControlPanel
 
         private void Start()
         {
-            gunManager.SubscribeCallback(this);
+            gunManager.Subscribe(this);
         }
 
         public override void OnGunsReset(GunManagerResetType type)

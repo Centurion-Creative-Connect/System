@@ -7,7 +7,6 @@ using UnityEngine;
 using VRC.SDK3.UdonNetworkCalling;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
-using NotImplementedException = System.NotImplementedException;
 
 namespace CenturionCC.System.Gun.Centurion
 {
@@ -94,7 +93,7 @@ namespace CenturionCC.System.Gun.Centurion
         {
             if (!Networking.IsMaster) return;
 
-            var variantData = GetVariantData(variantId);
+            var variantData = this.GetVariantDataById(variantId);
             _MasterOnly_SpawnByData(variantData, position, rotation);
         }
 
@@ -151,7 +150,7 @@ namespace CenturionCC.System.Gun.Centurion
                 }
             }
 
-            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Invoke_OnGunsReset), (int)type);
+            Event.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Event.Invoke_OnGunsReset), (int)type);
         }
 
         [NetworkCallable]

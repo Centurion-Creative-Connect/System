@@ -67,7 +67,7 @@ namespace CenturionCC.System.Utils
         {
             _localPlayer = Networking.LocalPlayer;
 
-            if (gunManager) gunManager.SubscribeCallback(this);
+            if (gunManager) gunManager.Subscribe(this);
 
             SendCustomEventDelayedFrames(nameof(UpdateLocalVrcPlayer), 1);
         }

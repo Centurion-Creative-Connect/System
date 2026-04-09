@@ -66,7 +66,7 @@ namespace CenturionCC.System.Gun
 
         private void Start()
         {
-            gunManager.SubscribeCallback(this);
+            gunManager.Subscribe(this);
         }
 
         public override void PostLateUpdate()

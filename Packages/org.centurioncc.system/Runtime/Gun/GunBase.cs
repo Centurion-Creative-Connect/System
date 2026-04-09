@@ -19,7 +19,7 @@ namespace CenturionCC.System.Gun
     public abstract class GunBase : GunHandleCallbackBase
     {
         #region Constants
-        protected string Prefix => $"<color=olive>[{WeaponName}]</color> ";
+        protected string Prefix => $"[<color=orange>Gun-{WeaponName}</color>] ";
         #endregion
 
         #region WatchdogProc
@@ -167,7 +167,7 @@ namespace CenturionCC.System.Gun
                 animationHelper._SetSelectorType((int)FireMode);
 
                 if (gunManager && IsLocal && prev != FireMode)
-                    gunManager.Invoke_OnFireModeChanged(this);
+                    gunManager.Event.Invoke_OnFireModeChanged(this);
             }
         }
 
@@ -431,7 +431,7 @@ namespace CenturionCC.System.Gun
             {
                 Trigger = TriggerState.Fired;
 
-                if (gunManager) gunManager.Invoke_OnShootCancelled(this, 1);
+                if (gunManager) gunManager.Event.Invoke_OnShootCancelled(this, 1);
                 return ShotResult.Cancelled;
             }
 
@@ -439,7 +439,7 @@ namespace CenturionCC.System.Gun
             {
                 Trigger = TriggerState.Fired;
 
-                if (gunManager) gunManager.Invoke_OnShootCancelled(this, 12);
+                if (gunManager) gunManager.Event.Invoke_OnShootCancelled(this, 12);
                 return ShotResult.Cancelled;
             }
 
@@ -450,11 +450,11 @@ namespace CenturionCC.System.Gun
                 if (HasCocked)
                 {
                     _EmptyShoot();
-                    gunManager.Invoke_OnShootFailed(this, 14);
+                    gunManager.Event.Invoke_OnShootFailed(this, 14);
                     return ShotResult.Failed;
                 }
 
-                gunManager.Invoke_OnShootCancelled(this, 14);
+                gunManager.Event.Invoke_OnShootCancelled(this, 14);
                 return ShotResult.Cancelled;
             }
 
@@ -463,7 +463,7 @@ namespace CenturionCC.System.Gun
             {
                 Trigger = TriggerState.Fired;
 
-                if (gunManager) gunManager.Invoke_OnShootCancelled(this, 100);
+                if (gunManager) gunManager.Event.Invoke_OnShootCancelled(this, 100);
                 return ShotResult.Cancelled;
             }
 
@@ -471,7 +471,7 @@ namespace CenturionCC.System.Gun
             {
                 Trigger = TriggerState.Fired;
 
-                gunManager.Invoke_OnShootCancelled(this, reasonId);
+                gunManager.Event.Invoke_OnShootCancelled(this, reasonId);
                 return ShotResult.Cancelled;
             }
 
@@ -480,7 +480,7 @@ namespace CenturionCC.System.Gun
                 Trigger = TriggerState.Fired;
 
                 _EmptyShoot();
-                gunManager.Invoke_OnShootFailed(this, 13);
+                gunManager.Event.Invoke_OnShootFailed(this, 13);
                 return ShotResult.Failed;
             }
 
@@ -491,11 +491,11 @@ namespace CenturionCC.System.Gun
                 if (HasCocked)
                 {
                     _EmptyShoot();
-                    gunManager.Invoke_OnShootFailed(this, 15);
+                    gunManager.Event.Invoke_OnShootFailed(this, 15);
                     return ShotResult.Failed;
                 }
 
-                gunManager.Invoke_OnShootCancelled(this, 15);
+                gunManager.Event.Invoke_OnShootCancelled(this, 15);
                 return ShotResult.Cancelled;
             }
 
@@ -697,7 +697,7 @@ namespace CenturionCC.System.Gun
 
                 if (gunManager)
                 {
-                    gunManager.Invoke_OnShoot(this, projectile);
+                    gunManager.Event.Invoke_OnShoot(this, projectile);
                 }
             }
 
@@ -740,7 +740,7 @@ namespace CenturionCC.System.Gun
             HasCocked = false;
 
             if (gunManager)
-                gunManager.Invoke_OnEmptyShoot(this);
+                gunManager.Event.Invoke_OnEmptyShoot(this);
         }
 
         public void _PlayAudio(AudioDataStore dataStore, Vector3 offset)

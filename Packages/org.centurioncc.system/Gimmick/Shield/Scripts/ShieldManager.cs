@@ -43,7 +43,7 @@ namespace CenturionCC.System.Gimmick.Shield
         private void Start()
         {
             playerManager.Subscribe(this);
-            gunManager.SubscribeCallback(this);
+            gunManager.Subscribe(this);
         }
 
         public void SubscribeCallback(UdonSharpBehaviour behaviour)

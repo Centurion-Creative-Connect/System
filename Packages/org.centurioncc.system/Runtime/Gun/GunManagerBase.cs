@@ -1,6 +1,5 @@
 ﻿using CenturionCC.System.Gun.DataStore;
 using CenturionCC.System.Gun.Rule;
-using CenturionCC.System.Utils;
 using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
@@ -8,23 +7,27 @@ using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
-using VRC.SDK3.UdonNetworkCalling;
 namespace CenturionCC.System.Gun
 {
+    [RequireComponent(typeof(GunManagerEventHelper))]
     public abstract class GunManagerBase : UdonSharpBehaviour
     {
-        protected const string Prefix = "[GunManager] ";
+        protected const string Prefix = "[<color=olive>GunManager</color>] ";
 
         [SerializeField] [NewbieInject]
         private PrintableBase logger;
 
-        private int _eventCallbackCount;
-        private UdonSharpBehaviour[] _eventCallbacks = new UdonSharpBehaviour[0];
+        [SerializeField] [NewbieInject]
+        private GunManagerEventHelper eventHelper;
+
         private bool _isDebugGunHandleVisible;
 
         private GunBase[] _locallyHeldGuns = new GunBase[0];
 
         protected PrintableBase Logger => logger;
+
+        [PublicAPI]
+        public GunManagerEventHelper Event => eventHelper;
 
         [PublicAPI]
         public virtual bool IsHoldingGun => _locallyHeldGuns.Length > 0;
@@ -62,175 +65,42 @@ namespace CenturionCC.System.Gun
         public abstract void _RequestRefresh();
         public abstract void _RequestSync();
 
-        public virtual GunBase[] GetLocallyHeldGunInstances()
+        public GunBase[] GetLocallyHeldGunInstances()
         {
             return _locallyHeldGuns;
-        }
-
-        public virtual GunVariantDataStore GetVariantData(byte uniqueId)
-        {
-            foreach (var dataStore in GetVariantDataInstances())
-            {
-                if (dataStore == null || dataStore.UniqueId != uniqueId) continue;
-                return dataStore;
-            }
-
-            return FallbackVariantData;
         }
 
         #region GunBaseCallbacks
         public virtual void OnGunPickedUpLocally(GunBase gun)
         {
             _locallyHeldGuns = _locallyHeldGuns.AddAsSet(gun);
-            Invoke_OnPickedUpLocally(gun);
+            Event.Invoke_OnPickedUpLocally(gun);
         }
 
         public virtual void OnGunDroppedLocally(GunBase gun)
         {
             _locallyHeldGuns = _locallyHeldGuns.RemoveItem(gun);
-            Invoke_OnDropLocally(gun);
+            Event.Invoke_OnDropLocally(gun);
         }
 
         [PublicAPI]
         public virtual void OnGunVariantChanged(GunBase gun)
         {
-            Invoke_OnVariantChanged(gun);
+            Event.Invoke_OnVariantChanged(gun);
         }
         #endregion
 
         #region GunManagerEvents
         [PublicAPI]
-        public void SubscribeCallback(UdonSharpBehaviour behaviour)
+        public bool Subscribe(UdonSharpBehaviour behaviour)
         {
-            CallbackUtil.AddBehaviour(behaviour, ref _eventCallbackCount, ref _eventCallbacks);
+            return Event.Subscribe(behaviour);
         }
 
         [PublicAPI]
-        public void UnsubscribeCallback(UdonSharpBehaviour behaviour)
+        public bool Unsubscribe(UdonSharpBehaviour behaviour)
         {
-            CallbackUtil.RemoveBehaviour(behaviour, ref _eventCallbackCount, ref _eventCallbacks);
-        }
-
-        [NetworkCallable]
-        public void Invoke_OnGunsReset(GunManagerResetType type)
-        {
-            Logger.Log($"{Prefix}OnGunsResetAll");
-            foreach (var callback in _eventCallbacks)
-            {
-                if (callback == null) continue;
-                ((GunManagerCallbackBase)callback).OnGunsReset(type);
-            }
-        }
-
-        private void Invoke_OnVariantChanged(GunBase instance)
-        {
-            if (instance == null) return;
-
-            Logger.Log($"{Prefix}OnVariantChanged: {instance.name}");
-            foreach (var callback in _eventCallbacks)
-            {
-                if (callback == null) continue;
-                ((GunManagerCallbackBase)callback).OnVariantChanged(instance);
-            }
-        }
-
-        private void Invoke_OnPickedUpLocally(GunBase instance)
-        {
-            if (instance == null) return;
-
-            Logger.Log($"{Prefix}OnPickedUpLocally: {instance.name}");
-            foreach (var callback in _eventCallbacks)
-            {
-                if (callback == null) continue;
-                ((GunManagerCallbackBase)callback).OnPickedUpLocally(instance);
-            }
-        }
-
-        private void Invoke_OnDropLocally(GunBase instance)
-        {
-            if (instance == null) return;
-
-            Logger.Log($"{Prefix}OnDropLocally: {instance.name}");
-            foreach (var callback in _eventCallbacks)
-            {
-                if (callback == null) continue;
-                ((GunManagerCallbackBase)callback).OnDropLocally(instance);
-            }
-        }
-
-        public void Invoke_OnShoot(GunBase instance, ProjectileBase projectile)
-        {
-            if (instance == null) return;
-
-#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            Logger.Log($"{Prefix}OnShoot: {instance.name}");
-#endif
-
-            foreach (var callback in _eventCallbacks)
-            {
-                if (callback == null) continue;
-                ((GunManagerCallbackBase)callback).OnShoot(instance, projectile);
-            }
-        }
-
-        public void Invoke_OnEmptyShoot(GunBase instance)
-        {
-            if (instance == null) return;
-
-#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            Logger.Log($"{Prefix}OnEmptyShoot: {instance.name}");
-#endif
-
-            foreach (var callback in _eventCallbacks)
-            {
-                if (callback == null) continue;
-                ((GunManagerCallbackBase)callback).OnEmptyShoot(instance);
-            }
-        }
-
-        public void Invoke_OnShootFailed(GunBase instance, int reasonId)
-        {
-            if (instance == null) return;
-
-#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            Logger.Log($"{Prefix}OnShootFailed: {instance.name}, {reasonId}");
-#endif
-
-            foreach (var callback in _eventCallbacks)
-            {
-                if (callback == null) continue;
-                ((GunManagerCallbackBase)callback).OnShootFailed(instance, reasonId);
-            }
-        }
-
-        public void Invoke_OnShootCancelled(GunBase instance, int reasonId)
-        {
-            if (instance == null) return;
-
-#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            Logger.Log($"{Prefix}OnShootCancelled: {instance.name}, {reasonId}");
-#endif
-
-            foreach (var callback in _eventCallbacks)
-            {
-                if (callback == null) continue;
-                ((GunManagerCallbackBase)callback).OnShootCancelled(instance, reasonId);
-            }
-        }
-
-        public void Invoke_OnFireModeChanged(GunBase instance)
-        {
-            if (instance == null) return;
-
-#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
-            Logger.Log($"{Prefix}OnFireModeChanged: {instance.name}");
-#endif
-
-            foreach (var callback in _eventCallbacks)
-            {
-                if (callback == null) continue;
-                ((GunManagerCallbackBase)callback).OnFireModeChanged(instance);
-            }
+            return Event.Unsubscribe(behaviour);
         }
         #endregion
 
@@ -263,10 +133,8 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public virtual bool CanShoot(GunBase instance, out int ruleId)
         {
-            foreach (var callback in _eventCallbacks)
+            if (!Event.Invoke_CanShoot())
             {
-                if (callback == null || ((GunManagerCallbackBase)callback).CanShoot())
-                    continue;
                 ruleId = 200;
                 return false;
             }
