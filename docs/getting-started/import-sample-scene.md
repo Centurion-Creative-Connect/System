@@ -27,7 +27,7 @@ Package Manager ウィンドウ左側の Description, Version History, Dependenc
 
 `Assets/Samples/Centurion System/<version>/Sample Scene/` 内に 2 つのサンプルシーンが存在することを確認します。
 
-- CenturionSystemSampleScene.unity
+- `CenturionSystemSampleScene.unity`
     - Player & Gun システムに加え、様々なギミックサンプルをまとめたシーンです。
-- CenturionSystemSampleSceneMinified.unity
+- `CenturionSystemSampleSceneMinified.unity`
     - Player & Gun システムのみのシンプルなサンプルシーンです。
