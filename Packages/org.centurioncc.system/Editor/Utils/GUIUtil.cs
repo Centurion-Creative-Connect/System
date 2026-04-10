@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -86,6 +87,47 @@ namespace CenturionCC.System.Editor.Utils
             return style;
         }
 
+        public static void ObjectSelectUtils(UnityEngine.Object target)
+        {
+            if (target != null && GUILayout.Button("Ping Object", GUILayout.Width(100)))
+            {
+                EditorGUIUtility.PingObject(target);
+            }
+
+            var transform = target as Transform ?? (target as Component)?.transform ?? (target as GameObject)?.transform;
+            if (transform != null && GUILayout.Button("∂", GUILayout.Width(20)))
+            {
+                Selection.activeTransform = transform;
+                SceneView.lastActiveSceneView.FrameSelected();
+            }
+            if (target != null && GUILayout.Button("→", GUILayout.Width(20)))
+            {
+                CreateInspectorWindow(target);
+            }
+        }
+
+        public static void CreateInspectorWindow(UnityEngine.Object obj)
+        {
+            var inspectorWindowType = Assembly.Load("UnityEditor").GetType("UnityEditor.InspectorWindow");
+            var inspectorWindow = ScriptableObject.CreateInstance(inspectorWindowType) as UnityEditor.EditorWindow;
+            if (inspectorWindow == null)
+            {
+                Debug.LogError("Failed to create inspector window");
+                return;
+            }
+
+            inspectorWindow.Show(true);
+
+            var prevSelection = Selection.objects;
+            Selection.objects = new[] { obj };
+
+            var isLockedProperty = inspectorWindowType.GetProperty("isLocked", BindingFlags.Public | BindingFlags.Instance);
+            if (isLockedProperty != null)
+                isLockedProperty.SetValue(inspectorWindow, true);
+
+            Selection.objects = prevSelection;
+        }
+
         public readonly struct IconType
         {
             public static readonly IconType Info = new IconType("console.infoicon");
@@ -117,6 +159,15 @@ namespace CenturionCC.System.Editor.Utils
         #region Foldouts
         public static bool Foldout(string text, ref bool result, bool depthColor = false) => Impl_Foldout(text, ref result, depthColor);
         public static bool HeaderFoldout(string text, ref bool result, bool depthColor = false) => Impl_Foldout(ToBold(text), ref result, depthColor);
+        public static bool HeaderFoldoutWithObjectSelection(string text, UnityEngine.Object target, ref bool foldout)
+        {
+            using (new GUILayout.HorizontalScope())
+            {
+                var result = HeaderFoldout(text, ref foldout);
+                ObjectSelectUtils(target);
+                return result;
+            }
+        }
         #endregion
 
         #region Buttons
@@ -310,10 +361,55 @@ namespace CenturionCC.System.Editor.Utils
 
         private static bool Impl_Foldout(string text, ref bool result, bool depthColor = false)
         {
-            return result = EditorGUILayout.Foldout(
-                result, depthColor ? ToDepthColor(text) : text, true,
-                new GUIStyle("foldoutHeader") { richText = true }
-            );
+            var style = new GUIStyle(EditorStyles.label)
+            {
+                richText = true,
+            };
+
+            var rect = GUILayoutUtility.GetRect(0, 20, GUILayout.ExpandWidth(true));
+            rect = EditorGUI.IndentedRect(rect);
+
+            var e = Event.current;
+            const float arrowWidth = 13;
+            if (e.type == EventType.Repaint)
+            {
+                EditorStyles.foldout.Draw(new Rect(rect.x, rect.y, arrowWidth, rect.height), false, false, result, false);
+            }
+
+            if (e.type == EventType.MouseDown && rect.Contains(e.mousePosition))
+            {
+                result = !result;
+                e.Use();
+            }
+
+            GUI.Label(new Rect(rect.x + arrowWidth, rect.y, rect.width - arrowWidth, rect.height), depthColor ? ToDepthColor(text) : text, style);
+            return result;
+
+            // return result = EditorGUILayout.Foldout(
+            //     result, depthColor ? ToDepthColor(text) : text, true,
+            //     new GUIStyle("FoldoutHeader")
+            //     {
+            //         richText = true,
+            //         normal =
+            //         {
+            //             background = null,
+            //             textColor = GUI.skin.label.normal.textColor,
+            //         },
+            //         onNormal = { background = null },
+            //         active =
+            //         {
+            //             background = null,
+            //             textColor = GUI.skin.label.active.textColor,
+            //         },
+            //         onActive = { background = null },
+            //         hover =
+            //         {
+            //             background = null,
+            //             textColor = GUI.skin.label.hover.textColor,
+            //         },
+            //         onHover = { background = null },
+            //     }
+            // );
         }
 
         private static void Impl_Label(string text, bool depthColor = true)

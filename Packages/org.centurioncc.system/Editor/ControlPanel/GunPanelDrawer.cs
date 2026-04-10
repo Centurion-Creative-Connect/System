@@ -3,6 +3,7 @@ using CenturionCC.System.Gun;
 using CenturionCC.System.Gun.DataStore;
 using JetBrains.Annotations;
 using System;
+using UdonSharpEditor;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -18,21 +19,23 @@ namespace CenturionCC.System.Editor.ControlPanel
 
         public void Draw()
         {
-            if (GUILayout.Button("Ping GunManager"))
-                EditorGUIUtility.PingObject(CenturionReferenceCache.GunManager);
-
-            if (GUIUtil.HeaderFoldout("GunManager", ref _isGunManagerFoldout))
-                using (new EditorGUI.IndentLevelScope())
+            using (new GUILayout.VerticalScope("GroupBox"))
+            {
+                if (GUIUtil.HeaderFoldoutWithObjectSelection("GunManager", CenturionReferenceCache.GunManager, ref _isGunManagerFoldout))
+                {
+                    GUILayout.Space(5);
                     DrawGunManager();
+                }
+            }
 
-            GUIUtil.HorizontalBar();
-
-            if (GUILayout.Button("Ping VariantsRoot"))
-                EditorGUIUtility.PingObject(_lastVariantsRoot);
-
-            if (GUIUtil.HeaderFoldout("GunVariantDataStores", ref _isGunVariantDataStoresFoldout))
-                using (new EditorGUI.IndentLevelScope())
+            using (new GUILayout.VerticalScope("GroupBox"))
+            {
+                if (GUIUtil.HeaderFoldoutWithObjectSelection("GunVariantDataStores", _lastVariantsRoot, ref _isGunVariantDataStoresFoldout))
+                {
+                    GUILayout.Space(5);
                     DrawGunVariantDataStores();
+                }
+            }
         }
 
         public void Dispose()
@@ -189,10 +192,11 @@ namespace CenturionCC.System.Editor.ControlPanel
                         return;
                     }
 
-                    if (GUIUtil.HeaderFoldout($"{_variantData.UniqueId:000}: {_variantData.WeaponName}", ref _isFoldout))
+                    using (new GUILayout.VerticalScope(new GUIStyle("HelpBox") { padding = new RectOffset(10, 10, 2, 2) }))
                     {
-                        using (new EditorGUI.IndentLevelScope())
+                        if (GUIUtil.HeaderFoldoutWithObjectSelection($"{_variantData.UniqueId:000}: {_variantData.WeaponName}", _variantData, ref _isFoldout))
                         {
+                            UdonSharpGUI.DrawUILine();
                             _editor ??= new CachedEditor(_variantData);
                             _editor.SetTarget(_variantData);
                             _editor.OnInspectorGUI();
