@@ -1,4 +1,6 @@
 ﻿using CenturionCC.System.Editor.Utils;
+using CenturionCC.System.Player;
+using DerpyNewbie.Common.Role;
 using System;
 using UnityEditor;
 using UnityEngine;
@@ -15,21 +17,25 @@ namespace CenturionCC.System.Editor.ControlPanel
 
         public void Draw()
         {
-            if (GUILayout.Button("Ping PlayerManager"))
-                EditorGUIUtility.PingObject(CenturionReferenceCache.PlayerManager);
+            using (new GUILayout.VerticalScope("GroupBox"))
+            {
+                var playerManager = CenturionReferenceCache.PlayerManager;
+                if (GUIUtil.HeaderFoldoutWithObjectSelection("PlayerManager", playerManager, ref _isPlayerManagerFoldout))
+                {
+                    GUILayout.Space(5);
+                    DrawPlayerManager(playerManager);
+                }
+            }
 
-            if (GUIUtil.HeaderFoldout("PlayerManager", ref _isPlayerManagerFoldout))
-                using (new EditorGUI.IndentLevelScope())
-                    DrawPlayerManager();
-
-            GUIUtil.HorizontalBar();
-
-            if (GUILayout.Button("Ping RoleProvider"))
-                EditorGUIUtility.PingObject(CenturionReferenceCache.RoleProvider);
-
-            if (GUIUtil.HeaderFoldout("RoleProvider", ref _isRoleManagerFoldout))
-                using (new EditorGUI.IndentLevelScope())
-                    DrawRoleManager();
+            using (new GUILayout.VerticalScope("GroupBox"))
+            {
+                var roleProvider = CenturionReferenceCache.RoleProvider;
+                if (GUIUtil.HeaderFoldoutWithObjectSelection("RoleProvider", roleProvider, ref _isRoleManagerFoldout))
+                {
+                    GUILayout.Space(5);
+                    DrawRoleManager(roleProvider);
+                }
+            }
         }
         public void Dispose()
         {
@@ -37,9 +43,8 @@ namespace CenturionCC.System.Editor.ControlPanel
             _roleProviderEditor?.Dispose();
         }
 
-        private static void DrawPlayerManager()
+        private static void DrawPlayerManager(PlayerManagerBase playerManager)
         {
-            var playerManager = CenturionReferenceCache.PlayerManager;
             if (!playerManager)
             {
                 EditorGUILayout.HelpBox("PlayerManager is not in the scene!", MessageType.Error);
@@ -54,9 +59,8 @@ namespace CenturionCC.System.Editor.ControlPanel
             _playerManagerEditor.OnInspectorGUI();
         }
 
-        private static void DrawRoleManager()
+        private static void DrawRoleManager(RoleProvider roleProvider)
         {
-            var roleProvider = CenturionReferenceCache.RoleProvider;
             if (!roleProvider)
             {
                 EditorGUILayout.HelpBox("RoleProvider is not in the scene!", MessageType.Error);

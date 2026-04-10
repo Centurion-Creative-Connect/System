@@ -12,15 +12,36 @@ namespace CenturionCC.System.Editor.ControlPanel
 
         public void Draw()
         {
-            if (GUIUtil.HeaderFoldout("Version Info", ref _isVersionInfoFoldout))
-                using (new EditorGUI.IndentLevelScope())
+            using (new GUILayout.VerticalScope("GroupBox"))
+            {
+                GUILayout.Label("Shortcuts", "BoldLabel", GUILayout.ExpandWidth(true));
+                var selected = GUILayout.SelectionGrid(-1, new[] { "Getting Started", "How To", "Discord" }, 3);
+                switch (selected)
+                {
+                    case -1: break;
+                    case 0: Application.OpenURL("https://system.centurioncc.org/getting-started/"); break;
+                    case 1: Application.OpenURL("https://system.centurioncc.org/category/how-to"); break;
+                    case 2: Application.OpenURL("https://discord.gg/CFw8Bhdgjq"); break;
+                }
+            }
+
+            using (new GUILayout.VerticalScope("GroupBox"))
+            {
+                if (GUIUtil.HeaderFoldout("Version Info", ref _isVersionInfoFoldout))
+                {
+                    GUILayout.Space(5);
                     DrawVersionInfo();
+                }
+            }
 
-            GUIUtil.HorizontalBar();
-
-            if (GUIUtil.HeaderFoldout("Scene Validation", ref _isSceneValidationFoldout))
-                using (new EditorGUI.IndentLevelScope())
+            using (new GUILayout.VerticalScope("GroupBox"))
+            {
+                if (GUIUtil.HeaderFoldout("Scene Validation", ref _isSceneValidationFoldout))
+                {
+                    GUILayout.Space(5);
                     DrawSceneValidation();
+                }
+            }
         }
 
         private static void DrawVersionInfo()
