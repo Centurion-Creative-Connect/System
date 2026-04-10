@@ -31,7 +31,7 @@
 
 1. `SampleMassGunManager.prefab`(SampleMassGun) を用いている場合は Prefab を 2 回 Unpack してください。
     - Unpack Completely は使わないでください。
-      入れ子になっている Prefab まで Unpack してしまうため、維持が困難になります。
+      入れ子になっている Prefab まで Unpack してしまうため、更新後のメンテナンスが困難になります。
 
 2. VariantData と VariantData 内で参照している GameObject を全て選択します。
     - サンプルの銃が参照しているのは以下 3 つの GameObject です。
