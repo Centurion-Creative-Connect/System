@@ -35,7 +35,7 @@
 
 ### ClientSim や VRChat クライアントで召喚できることを確認する
 
-GunSummoner のインタラクトや、NewbieConsole にて `gun summon <Unique Id>` の形で召喚できることを確認します。
+GunSummoner のインタラクトや、NewbieConsole にて `gun summon <Unique Id>` の形で追加した銃が召喚できることを確認します。
 
 ------
 
