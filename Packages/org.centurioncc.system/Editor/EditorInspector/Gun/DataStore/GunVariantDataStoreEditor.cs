@@ -15,6 +15,11 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
     [CustomEditor(typeof(GunVariantDataStore))]
     public class GunVariantDataStoreEditor : UnityEditor.Editor
     {
+        public enum TimeUnit
+        {
+            Seconds,
+            Minutes,
+        }
 
         private static readonly string[] PlayerMovementMessages =
         {
@@ -42,12 +47,14 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
         {
             { "FireMode", new GUIContent("Fire Mode", "Firing mode when holding down the trigger.") },
             { "FireModeTooltip", new GUIContent("", "Firing mode when holding down the trigger.") },
-            { "MaxRPM", new GUIContent("Rounds Per Minute (RPM)", "Rounds per Minute.") },
+            { "MaxRPM", new GUIContent("Rounds per Minute", "Rounds per Minute.") },
             { "MaxRPMTooltip", new GUIContent("", "Rounds per Minute.") },
-            { "MaxRPS", new GUIContent("Rounds Per Second (RPS)", "Rounds per Second.") },
+            { "MaxRPS", new GUIContent("Rounds per Second", "Rounds per Second.") },
             { "MaxRPSTooltip", new GUIContent("", "Rounds per Second.") },
-            { "PerBurstInterval", new GUIContent("Per Burst Intervals", "Minimum seconds required between bursts.") },
-            { "PerBurstIntervalTooltip", new GUIContent("", "Minimum seconds required between bursts.") },
+            { "MaxTPS", new GUIContent("Triggers per Second", "Minimum seconds required between single trigger bursts.") },
+            { "MaxTPSTooltip", new GUIContent("", "Minimum seconds required between single trigger bursts. (Trigger Per Second.)") },
+            { "MaxTPM", new GUIContent("Triggers per Minute", "Minimum minutes required between single trigger bursts.") },
+            { "MaxTPMTooltip", new GUIContent("", "Minimum minutes required between single trigger bursts. (Trigger Per Minute.)") },
         };
 
         private static bool _foldoutAnimation;
@@ -60,6 +67,8 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
         private static bool _foldoutFireMode;
         private static bool _foldoutObsolete;
         private static bool _foldoutAdvancedOptions;
+
+        private static TimeUnit _timeUnit;
 
         public void OnSceneGUI()
         {
@@ -120,6 +129,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
             {
                 using (new EditorGUI.IndentLevelScope())
                 {
+                    _timeUnit = (TimeUnit)EditorGUILayout.EnumPopup("Per Time Scale", _timeUnit);
                     DrawFireModeInspector(so);
                 }
             }
@@ -305,15 +315,15 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
 
                 if (fireMode != FireMode.Safety)
                 {
-                    if (secondsPerRound <= 0 || tapInterval <= 0)
+                    if (secondsPerRound <= 0)
                     {
-                        helpBoxContents = "Setting 0 or below for \"RPM\", \"RPS\", or \"Per Burst Intervals\" allows guns fire at rate of users framerate.";
+                        helpBoxContents = $"Setting 0 or below for {(_timeUnit == TimeUnit.Minutes ? "RPM" : "RPS")} allows guns fire at rate of users framerate.";
                         helpBoxMessageType = MessageType.Warning;
                     }
 
                     if (float.IsPositiveInfinity(secondsPerRound) || float.IsPositiveInfinity(secondsPerRound) || float.IsPositiveInfinity(tapInterval))
                     {
-                        helpBoxContents = "Setting Positive Infinity for \"RPM\", \"RPS\", or \"Per Burst Intervals\" makes guns unable to fire.";
+                        helpBoxContents = $"Setting Positive Infinity for {(_timeUnit == TimeUnit.Minutes ? "RPM" : "RPS")}, {(_timeUnit == TimeUnit.Minutes ? "TPM" : "TPS")} makes guns unable to fire.";
                         helpBoxMessageType = MessageType.Error;
                     }
                 }
@@ -321,8 +331,11 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
                 fireModeSettings.Add(
                     new FireModeSetting
                     {
+                        FireModeProperty = fireModeProperty,
                         FireMode = fireMode,
+                        SecondsPerRoundProperty = secondsPerRoundProperty,
                         MaxRoundsPerSecond = float.IsFinite(secondsPerRound) && secondsPerRound != 0 ? 1 / secondsPerRound : secondsPerRound,
+                        MinTriggerTapIntervalsProperty = triggerTapIntervalProperty,
                         MinTriggerTapIntervals = tapInterval,
                         HelpBoxContents = helpBoxContents,
                         HelpBoxMessageType = helpBoxMessageType,
@@ -335,62 +348,116 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
                 elementHeightCallback = idx => string.IsNullOrEmpty(fireModeSettings[idx].HelpBoxContents) ? EditorGUIUtility.singleLineHeight : EditorGUIUtility.singleLineHeight * 3.5f,
                 drawHeaderCallback = rect =>
                 {
-                    var singleRect = new Rect(rect.x, rect.y, rect.width / 4 - 10, rect.height);
+                    var singleRect = new Rect(rect.x, rect.y, rect.width / 3 - 10, rect.height);
                     EditorGUI.LabelField(singleRect, GUIContents["FireMode"]);
-                    singleRect.x += singleRect.width + 5;
-                    EditorGUI.LabelField(singleRect, GUIContents["MaxRPS"]);
-                    singleRect.x += singleRect.width + 5;
-                    EditorGUI.LabelField(singleRect, GUIContents["MaxRPM"]);
-                    singleRect.x += singleRect.width + 5;
-                    EditorGUI.LabelField(singleRect, GUIContents["PerBurstInterval"]);
+                    switch (_timeUnit)
+                    {
+                        case TimeUnit.Minutes:
+                        {
+                            singleRect.x += singleRect.width + 5;
+                            EditorGUI.LabelField(singleRect, GUIContents["MaxRPM"]);
+                            singleRect.x += singleRect.width + 5;
+                            EditorGUI.LabelField(singleRect, GUIContents["MaxTPM"]);
+                            break;
+                        }
+                        case TimeUnit.Seconds:
+                        {
+                            singleRect.x += singleRect.width + 5;
+                            EditorGUI.LabelField(singleRect, GUIContents["MaxRPS"]);
+                            singleRect.x += singleRect.width + 5;
+                            EditorGUI.LabelField(singleRect, GUIContents["MaxTPS"]);
+                            break;
+                        }
+                    }
                 },
                 drawElementCallback = (rect, index, _, _) =>
                 {
                     var setting = fireModeSettings[index];
-                    var singleRect = new Rect(rect.x, rect.y, rect.width / 4 - 10, EditorGUIUtility.singleLineHeight);
-                    EditorGUI.BeginChangeCheck();
 
-                    var newMode = (FireMode)EditorGUI.EnumPopup(singleRect, setting.FireMode);
-                    GUI.Label(singleRect, GUIContents["FireModeTooltip"]);
+                    var singleRect = new Rect(rect.x, rect.y, rect.width / 3 - 10, EditorGUIUtility.singleLineHeight);
+                    switch (_timeUnit)
+                    {
+                        case TimeUnit.Minutes:
+                        {
+                            DrawFireMode(singleRect, GUIContents["FireModeTooltip"]);
 
-                    singleRect.x += singleRect.width + 5;
+                            singleRect.x += singleRect.width + 5;
 
-                    EditorGUI.BeginChangeCheck();
-                    var newRps = EditorGUI.FloatField(singleRect, setting.MaxRoundsPerSecond);
-                    GUI.Label(singleRect, GUIContents["MaxRPSTooltip"]);
-                    var rpsChanged = EditorGUI.EndChangeCheck();
+                            DrawRps(singleRect, 60, GUIContents["MaxRPMTooltip"]);
 
-                    singleRect.x += singleRect.width + 5;
+                            singleRect.x += singleRect.width + 5;
 
-                    EditorGUI.BeginChangeCheck();
-                    var newRpm = EditorGUI.FloatField(singleRect, setting.MaxRoundsPerSecond * 60);
-                    GUI.Label(singleRect, GUIContents["MaxRPSTooltip"]);
-                    var rpmChanged = EditorGUI.EndChangeCheck();
+                            DrawTps(singleRect, 60, GUIContents["MaxTPMTooltip"]);
+                            break;
+                        }
+                        case TimeUnit.Seconds:
+                        {
+                            DrawFireMode(singleRect, GUIContents["FireModeTooltip"]);
 
-                    singleRect.x += singleRect.width + 5;
+                            singleRect.x += singleRect.width + 5;
 
-                    var newTapIntervals = EditorGUI.FloatField(singleRect, setting.MinTriggerTapIntervals);
-                    GUI.Label(singleRect, GUIContents["PerBurstIntervalTooltip"]);
+                            DrawRps(singleRect, 1, GUIContents["MaxRPSTooltip"]);
+
+                            singleRect.x += singleRect.width + 5;
+
+                            DrawTps(singleRect, 1, GUIContents["MaxTPSTooltip"]);
+                            break;
+                        }
+                        default:
+                        {
+                            throw new ArgumentOutOfRangeException();
+                        }
+                    }
 
                     if (!string.IsNullOrEmpty(setting.HelpBoxContents))
                     {
                         var helpBoxRect = new Rect(rect.x, rect.y + EditorGUIUtility.singleLineHeight * 1.25f, rect.width, EditorGUIUtility.singleLineHeight * 2f);
                         EditorGUI.HelpBox(helpBoxRect, setting.HelpBoxContents, setting.HelpBoxMessageType);
                     }
+                    return;
 
-                    if (EditorGUI.EndChangeCheck())
+                    void DrawRps(Rect pos, float multiplier, GUIContent tooltip)
                     {
-                        fireModesArrayProperty.GetArrayElementAtIndex(index).enumValueIndex = (int)newMode;
-                        var sprProperty = secondsPerRoundArrayProperty.GetArrayElementAtIndex(index);
-                        if (rpsChanged)
+                        using (new EditorGUI.PropertyScope(pos, tooltip, setting.SecondsPerRoundProperty))
                         {
-                            sprProperty.floatValue = float.IsFinite(newRps) && newRps != 0 ? 1 / newRps : newRps;
+                            EditorGUI.BeginChangeCheck();
+                            var newRps = EditorGUI.FloatField(pos, tooltip, setting.MaxRoundsPerSecond * multiplier);
+                            GUI.Label(singleRect, tooltip);
+                            if (!EditorGUI.EndChangeCheck())
+                                return;
+
+                            setting.SecondsPerRoundProperty.floatValue = float.IsFinite(newRps) && newRps != 0 ? 1 / (newRps / multiplier) : newRps;
+                            so.ApplyModifiedProperties();
                         }
-                        else if (rpmChanged)
+                    }
+
+                    void DrawTps(Rect pos, float multiplier, GUIContent tooltip)
+                    {
+                        using (new EditorGUI.PropertyScope(pos, tooltip, setting.MinTriggerTapIntervalsProperty))
                         {
-                            sprProperty.floatValue = float.IsFinite(newRps) && newRps != 0 ? 1 / (newRpm / 60) : newRpm;
+                            EditorGUI.BeginChangeCheck();
+                            var tapInterval = EditorGUI.FloatField(pos, tooltip, setting.MinTriggerTapIntervals * multiplier);
+                            GUI.Label(singleRect, tooltip);
+                            if (!EditorGUI.EndChangeCheck())
+                                return;
+
+                            setting.MinTriggerTapIntervalsProperty.floatValue = tapInterval / multiplier;
+                            so.ApplyModifiedProperties();
                         }
-                        triggerTapIntervalArrayProperty.GetArrayElementAtIndex(index).floatValue = newTapIntervals;
+                    }
+
+                    void DrawFireMode(Rect pos, GUIContent tooltip)
+                    {
+                        using (new EditorGUI.PropertyScope(pos, tooltip, setting.FireModeProperty))
+                        {
+                            EditorGUI.BeginChangeCheck();
+                            var newFireMode = (FireMode)EditorGUI.EnumPopup(pos, setting.FireMode);
+                            if (!EditorGUI.EndChangeCheck())
+                                return;
+
+                            setting.FireModeProperty.enumValueIndex = (int)newFireMode;
+                            so.ApplyModifiedProperties();
+                        }
                     }
                 },
                 onAddCallback = _ =>
@@ -456,9 +523,13 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
 
         private struct FireModeSetting
         {
+            public SerializedProperty FireModeProperty;
             public FireMode FireMode;
+            public SerializedProperty SecondsPerRoundProperty;
             public float MaxRoundsPerSecond;
+            public SerializedProperty MinTriggerTapIntervalsProperty;
             public float MinTriggerTapIntervals;
+
             public MessageType HelpBoxMessageType;
             public string HelpBoxContents;
         }
