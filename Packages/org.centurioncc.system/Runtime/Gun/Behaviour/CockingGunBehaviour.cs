@@ -187,15 +187,15 @@ namespace CenturionCC.System.Gun.Behaviour
             {
                 // Initiate desktop cocking on key press
                 var cockingInput = Input.GetKeyDown(desktopCockingKey) || doDesktopCockingAutomatically;
-                var shouldCock = instance.State == GunState.Idle &&
-                                 ((!instance.HasCocked && !isBlowBack) || !instance.HasBulletInChamber) &&
+                var shouldCock = ((!instance.HasCocked && !isBlowBack) || !instance.HasBulletInChamber) &&
                                  instance._HasNextBullet();
+
                 if (!_isOnDesktopCocking && shouldCock && cockingInput)
                 {
                     Debug.Log("[CockingGunBehaviour] Begin Desktop Reloading");
                     _isOnDesktopCocking = true;
-                    _isDesktopCockingCurrentlyPulling = true;
-                    _desktopCockingTimer = 0F;
+                    _isDesktopCockingCurrentlyPulling = instance.State == GunState.Idle;
+                    _desktopCockingTimer = _isDesktopCockingCurrentlyPulling ? 0F : desktopCockingTime / 2F;
                 }
 
                 // Do desktop cocking work
@@ -232,8 +232,8 @@ namespace CenturionCC.System.Gun.Behaviour
                 }
                 else
                 {
-                    progressNormalized = 0;
-                    twistNormalized = 0;
+                    progressNormalized = instance.State == GunState.Idle ? 0 : 1;
+                    twistNormalized = !requireTwist || instance.State == GunState.Idle ? 0 : 1;
                 }
             }
 
@@ -349,7 +349,8 @@ namespace CenturionCC.System.Gun.Behaviour
 
                     if (requireManualPushingAfterFire)
                     {
-                        instance.State = GunState.InCockingPush;
+                        instance.State = GunState.InCockingPull;
+                        instance.AnimationHelper._SetCockingProgress(1);
                     }
 
                     if (dropCustomHandleOnFire)
