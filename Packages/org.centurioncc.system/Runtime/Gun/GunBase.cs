@@ -768,7 +768,7 @@ namespace CenturionCC.System.Gun
             }
 
             positioningHelper.SetControlAndPivot(
-                MainHandle.IsPickedUp && SubHandle.IsPickedUp ? ControlType.TwoHanded : ControlType.OneHanded,
+                MainHandle.IsPickedUp && SubHandle.IsPickedUp ? ControlType.TwoHanded : MainHandle.IsPickedUp || SubHandle.IsPickedUp || IsHolstered ? ControlType.OneHanded : ControlType.None,
                 !MainHandle.IsPickedUp && SubHandle.IsPickedUp ? PivotType.Secondary : PivotType.Primary
             );
         }
@@ -807,6 +807,7 @@ namespace CenturionCC.System.Gun
                     );
 
                     positioningHelper.SetRecoilErgonomics(VariantData.Ergonomics);
+                    positioningHelper.SetGravity(VariantData.UseGravity);
                 }
             }
 

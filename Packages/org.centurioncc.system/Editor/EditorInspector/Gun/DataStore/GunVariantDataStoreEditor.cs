@@ -199,6 +199,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
                     EditorGUILayout.PropertyField(so.FindProperty("useWallCheck"));
                     EditorGUILayout.PropertyField(so.FindProperty("useSafeZoneCheck"));
                     EditorGUILayout.PropertyField(so.FindProperty("projectilePoolOverride"));
+                    EditorGUILayout.PropertyField(so.FindProperty("useGravity"));
 
                     using (new EditorGUI.DisabledScope(true))
                     {
