@@ -7,6 +7,7 @@ namespace CenturionCC.System.Gun
 {
     public enum ControlType
     {
+        None,
         OneHanded,
         TwoHanded,
     }
@@ -23,6 +24,9 @@ namespace CenturionCC.System.Gun
         [NewbieInject(SearchScope.Children)]
         [SerializeField]
         private VRCObjectSync[] objectSyncs;
+
+        [SerializeField] [NewbieInject(SearchScope.Self)]
+        private Rigidbody rb;
 
         [SerializeField] private Transform target;
         [SerializeField] private Transform primaryHandle;
@@ -79,6 +83,8 @@ namespace CenturionCC.System.Gun
             _pivotLookAtTransform = _pivotType == PivotType.Primary ? secondaryHandle : primaryHandle;
             _pivotLookAtOffset = _pivotType == PivotType.Primary ? _secondaryOffset : _primaryOffset;
             _pivotOffset = Matrix4x4.TRS(_pivotOffsetPos, _pivotOffsetRot, Vector3.one);
+
+            UpdateRigidbody();
         }
 
         private void RecalculatePrimary()
@@ -103,6 +109,13 @@ namespace CenturionCC.System.Gun
             _pivotLookAtOffsetPos = target.worldToLocalMatrix.MultiplyPoint3x4(_pivotLookAtTransform.position);
         }
 
+        private void UpdateRigidbody()
+        {
+            rb.isKinematic = _controlType != ControlType.None;
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
         public void _UpdatePosition()
         {
             var recoilMatrix = Matrix4x4.TRS(_recoilOffsetPos, _recoilOffsetRot, Vector3.one);
@@ -110,6 +123,14 @@ namespace CenturionCC.System.Gun
             switch (_controlType)
             {
                 default:
+                case ControlType.None:
+                {
+                    var targetMatrix = target.localToWorldMatrix * _pivotOffset.inverse;
+                    _pivotTransform.SetPositionAndRotation(targetMatrix.GetPosition(), targetMatrix.rotation);
+
+                    // TODO: update lookAtTransform
+                    break;
+                }
                 case ControlType.OneHanded:
                 {
                     var targetMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset * recoilMatrix;
@@ -168,6 +189,7 @@ namespace CenturionCC.System.Gun
                 _controlType = ControlType.OneHanded;
             }
 
+            UpdateRigidbody();
             RecalculatePivot();
             _RequestSync();
         }
