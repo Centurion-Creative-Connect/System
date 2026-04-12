@@ -442,7 +442,24 @@ namespace CenturionCC.System.Gun.Behaviour
 
             if (snapToClosestPositionOnDrop)
             {
-                // TODO: check for closest handles
+                var transforms = new[]
+                {
+                    cockingPosition,
+                    idleTwistPosition,
+                    activeTwistPosition,
+                };
+
+                var distance = Mathf.Infinity;
+                foreach (var refTransforms in transforms)
+                {
+                    if (refTransforms == null) continue;
+
+                    var refPos = refTransforms.localPosition;
+                    if (Vector3.Distance(refPos, handlePos) < distance) continue;
+
+                    expectedPos = refPos;
+                    distance = Vector3.Distance(refPos, handlePos);
+                }
             }
 
             handle.MoveToLocalPosition(expectedPos, Quaternion.identity);
