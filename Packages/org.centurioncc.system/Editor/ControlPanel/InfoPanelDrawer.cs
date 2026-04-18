@@ -1,12 +1,18 @@
 ﻿using CenturionCC.System.Editor.Utils;
 using CenturionCC.System.Editor.Validation;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 namespace CenturionCC.System.Editor.ControlPanel
 {
+
     public class InfoPanelDrawer : IControlPanelDrawer
     {
+        private readonly DefineSettings _defineSettings = new DefineSettings();
+        private bool _isAdvancedSettingsFoldout = true;
+
         private bool _isSceneValidationFoldout = true;
         private bool _isVersionInfoFoldout = true;
 
@@ -40,6 +46,15 @@ namespace CenturionCC.System.Editor.ControlPanel
                 {
                     GUILayout.Space(5);
                     DrawSceneValidation();
+                }
+            }
+
+            using (new GUILayout.VerticalScope("GroupBox"))
+            {
+                if (GUIUtil.HeaderFoldout("Advanced Settings", ref _isAdvancedSettingsFoldout))
+                {
+                    GUILayout.Space(5);
+                    _defineSettings.Draw();
                 }
             }
         }
@@ -97,6 +112,69 @@ namespace CenturionCC.System.Editor.ControlPanel
             if (GUILayout.Button("Run Validation"))
             {
                 Validator.PerformValidation();
+            }
+        }
+        private class DefineSettings
+        {
+            private bool _gunLogging;
+            private bool _isDirty;
+            private bool _playerLogging;
+            private bool _verboseLogging;
+
+            public void Draw()
+            {
+                if (!_isDirty)
+                {
+                    Read();
+                }
+
+                EditorGUI.BeginChangeCheck();
+                _verboseLogging = EditorGUILayout.Toggle("Verbose Logging (All)", _verboseLogging);
+                _gunLogging = EditorGUILayout.Toggle("Gun Logging", _gunLogging);
+                _playerLogging = EditorGUILayout.Toggle("Player Logging", _playerLogging);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    _isDirty = true;
+                }
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    GUILayout.FlexibleSpace();
+
+                    using (new EditorGUI.DisabledScope(!_isDirty))
+                    {
+                        if (GUILayout.Button("Revert"))
+                            Read();
+                        if (GUILayout.Button("Apply"))
+                            Write();
+                    }
+                }
+            }
+
+            public void Read()
+            {
+                _verboseLogging = CenturionDefines.IsSymbolDefined(CenturionDefines.VERBOSE_LOGGING);
+                _gunLogging = CenturionDefines.IsSymbolDefined(CenturionDefines.GUN_LOGGING);
+                _playerLogging = CenturionDefines.IsSymbolDefined(CenturionDefines.PLAYER_LOGGING);
+                _isDirty = false;
+            }
+
+            public void Write()
+            {
+                var symbols = new Dictionary<string, bool>
+                {
+                    { CenturionDefines.VERBOSE_LOGGING, _verboseLogging },
+                    { CenturionDefines.GUN_LOGGING, _gunLogging },
+                    { CenturionDefines.PLAYER_LOGGING, _playerLogging },
+                };
+
+                var addingSymbols = symbols.Where(kv => kv.Value).Select(kv => kv.Key).ToArray();
+                var removingSymbols = symbols.Where(kv => !kv.Value).Select(kv => kv.Key).ToArray();
+
+                if (addingSymbols.Length > 0) CenturionDefines.AddSymbols(addingSymbols);
+                if (removingSymbols.Length > 0) CenturionDefines.RemoveSymbols(removingSymbols);
+
+                _isDirty = false;
             }
         }
     }
