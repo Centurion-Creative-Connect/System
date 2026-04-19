@@ -53,7 +53,7 @@ namespace CenturionCC.System.Gimmick.Scoreboard
             }
 
             SetText(rankingText, $"{(transform.GetSiblingIndex() + 1)}");
-            SetText(displayNameText, Source.VrcPlayer.SafeGetDisplayName("???(InvalidVrcPlayer)"));
+            SetText(displayNameText, Source.ColoredDisplayName);
             SetText(weaponText, "???");
             SetText(killsText, Source.Kills.ToString());
             SetText(deathsText, Source.Deaths.ToString());

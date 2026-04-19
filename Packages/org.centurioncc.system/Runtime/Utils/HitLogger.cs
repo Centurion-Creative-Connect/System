@@ -30,8 +30,8 @@ namespace CenturionCC.System.Utils
         {
             if (logOnKilled)
                 Debug.Log(
-                    $"[HitLogger] OnKilled: {NewbieUtils.GetPlayerName(attacker.VrcPlayer)} " +
-                    $"killed {NewbieUtils.GetPlayerName(victim.VrcPlayer)} " +
+                    $"[HitLogger] OnKilled: {attacker.DisplayName} " +
+                    $"killed {victim.DisplayName} " +
                     $"at {victim.LastDamageInfo.HitTime():s}");
 
             if (drawOnKilled)

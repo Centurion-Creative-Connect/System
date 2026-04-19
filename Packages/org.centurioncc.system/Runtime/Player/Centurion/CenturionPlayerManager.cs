@@ -133,14 +133,7 @@ namespace CenturionCC.System.Player.Centurion
                 return;
             }
 
-            var vrcPlayer = centurionPlayer.VrcPlayer;
-            if (vrcPlayer == null || !Utilities.IsValid(vrcPlayer))
-            {
-                CenturionDiagnostic.LogWarning($"{Prefix}PostLateUpdate: could not update player: vrcPlayer is not valid");
-                return;
-            }
-
-            var distance = Vector3.Distance(vrcPlayer.GetPosition(), Networking.LocalPlayer.GetPosition());
+            var distance = Vector3.Distance(centurionPlayer.GetPosition(), Networking.LocalPlayer.GetPosition());
             centurionPlayer.IsCulled = distance > CullingDistance || centurionPlayer.IsInSafeZone;
             centurionPlayer.UpdateView();
         }

@@ -232,7 +232,7 @@ namespace CenturionCC.System.UI
             foreach (var modPlayerApi in modPlayers)
             {
                 var player = playerManager.GetPlayerById(modPlayerApi.playerId);
-                message += $"{(!player ? NewbieUtils.GetPlayerName(modPlayerApi.playerId) : player.DisplayName)}\n";
+                message += $"{(!player ? NewbieUtils.GetPlayerName(modPlayerApi.playerId) : player.ColoredDisplayName)}\n";
             }
 
             activeModeratorListText.text = message;

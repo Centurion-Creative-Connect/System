@@ -25,6 +25,7 @@ namespace CenturionCC.System.Player
         /// <summary>
         /// Resets the player's statistics to 0.
         /// </summary>
+        [PublicAPI]
         public abstract void ResetStats();
 
         /// <summary>
@@ -55,6 +56,7 @@ namespace CenturionCC.System.Player
         /// Only affects the local view of collider. Not synced!
         /// </remarks>
         /// <param name="isActive">Should the colliders be active?</param>
+        [PublicAPI]
         public abstract void SetCollidersActive(bool isActive);
 
         /// <summary>
@@ -132,6 +134,35 @@ namespace CenturionCC.System.Player
 
         [PublicAPI]
         public virtual string DisplayName => VrcPlayer.SafeGetDisplayName();
+
+        [PublicAPI]
+        public virtual string ColoredDisplayName => DisplayName;
+        #endregion
+
+        #region VrcPlayerWrap
+        [PublicAPI]
+        public virtual Vector3 GetPosition()
+        {
+            return Utilities.IsValid(VrcPlayer) ? VrcPlayer.GetPosition() : Vector3.zero;
+        }
+
+        [PublicAPI]
+        public virtual Quaternion GetRotation()
+        {
+            return Utilities.IsValid(VrcPlayer) ? VrcPlayer.GetRotation() : Quaternion.identity;
+        }
+
+        [PublicAPI]
+        public virtual Vector3 GetBonePosition(HumanBodyBones bone)
+        {
+            return Utilities.IsValid(VrcPlayer) ? VrcPlayer.GetBonePosition(bone) : Vector3.zero;
+        }
+
+        [PublicAPI]
+        public virtual Quaternion GetBoneRotation(HumanBodyBones bone)
+        {
+            return Utilities.IsValid(VrcPlayer) ? VrcPlayer.GetBoneRotation(bone) : Quaternion.identity;
+        }
         #endregion
 
         #region PlayerArea
