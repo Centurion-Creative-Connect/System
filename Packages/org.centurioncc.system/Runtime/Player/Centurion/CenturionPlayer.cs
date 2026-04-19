@@ -116,7 +116,7 @@ namespace CenturionCC.System.Player.Centurion
             }
         }
 
-        public override string DisplayName => $"<color=#{playerManager.GetTeamColor(TeamId).ToHtmlStringRGBA()}>{VrcPlayer.SafeGetDisplayName()}</color>";
+        public override string ColoredDisplayName => $"<color=#{playerManager.GetTeamColor(TeamId).ToHtmlStringRGBA()}>{DisplayName}</color>";
 
         public override int PlayerId => Networking.GetOwner(gameObject).playerId;
 
@@ -274,7 +274,7 @@ namespace CenturionCC.System.Player.Centurion
                 return;
             }
 
-            var damageInfo = DamageInfo.New(VrcPlayer, contactPoint, playerCollider.BodyParts, data);
+            var damageInfo = DamageInfo.New(this, contactPoint, playerCollider.BodyParts, data);
             playerManager.RequestDamageBroadcast(damageInfo);
         }
 

@@ -29,11 +29,8 @@ namespace CenturionCC.System.Player
         {
             var players = playerManager.GetPlayers();
             foreach (var player in players)
-            {
-                var vrcPlayer = player.VrcPlayer;
-                if (vrcPlayer != null && Utilities.IsValid(vrcPlayer) && vrcPlayer.displayName == displayName)
+                if (player.DisplayName == displayName)
                     return player;
-            }
 
             return null;
         }

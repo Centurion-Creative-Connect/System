@@ -56,8 +56,7 @@ namespace CenturionCC.System.Player
 
         public override void OnPlayerTeamChanged(PlayerBase player, int oldTeam)
         {
-            var vrcPlayer = player.VrcPlayer;
-            if (vrcPlayer == null || !vrcPlayer.isLocal) return;
+            if (player == null || !player.IsLocal) return;
 
             if (player.TeamId >= 0 && player.TeamId < teamChangeNotificationMessages.Length)
                 notification.ShowInfo(teamChangeNotificationMessages[player.TeamId].Message);

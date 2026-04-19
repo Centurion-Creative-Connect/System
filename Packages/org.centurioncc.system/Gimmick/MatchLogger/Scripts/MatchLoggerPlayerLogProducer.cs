@@ -54,8 +54,7 @@ namespace CenturionCC.System.Gimmick.MatchLogger
             dict.Add("id", player.PlayerId);
             dict.Add("name", VRCPlayerApi.GetPlayerById(player.PlayerId).SafeGetDisplayName());
             dict.Add("time", Networking.GetNetworkDateTime().ToString("O"));
-            if (Utilities.IsValid(player.VrcPlayer) && player.VrcPlayer != null)
-                dict.Add("position", player.VrcPlayer.GetPosition().ToDictionary());
+            dict.Add("position", player.GetPosition().ToDictionary());
 
             matchLogger.AddMatchEventLog("revived", dict);
         }
