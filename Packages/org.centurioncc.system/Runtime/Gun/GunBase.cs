@@ -3,6 +3,7 @@ using CenturionCC.System.Audio;
 using CenturionCC.System.Gun.Behaviour;
 using CenturionCC.System.Gun.DataStore;
 using CenturionCC.System.Utils;
+using CenturionCC.System.Utils.PlayerLocomotion;
 using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
