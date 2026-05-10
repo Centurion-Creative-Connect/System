@@ -84,6 +84,12 @@ namespace CenturionCC.System.Utils.PlayerLocomotion
                 UpdateVrcPlayer();
         }
 
+        public override void OnAvatarEyeHeightChanged(VRCPlayerApi player, float prevEyeHeightAsMeters)
+        {
+            if (!player.isLocal) return;
+            UpdateLocalVrcPlayer();
+        }
+
         private bool UpdateTimer()
         {
             if (surfaceUpdateFrequency < Time.timeSinceLevelLoad - _lastSurfaceUpdatedTime)
@@ -466,6 +472,13 @@ namespace CenturionCC.System.Utils.PlayerLocomotion
                  "Allows duplicate occuring for `PlayerController#AddHeldObject` method.\n" +
                  "Leave it unchecked if you are not experiencing issues.")]
         private bool allowDuplicateHeldObjects;
+
+        [SerializeField]
+        private bool useAvatarEyeHeightForMovementMultiplier;
+
+        [SerializeField]
+        [Tooltip("(AvatarEyeHeight / BaseAvatarEyeHeight) will be used as multiplier on all movement properties")]
+        private float baseAvatarEyeHeight = 1.65f;
         #endregion
 
         #region FootstepSerializeFields
@@ -547,6 +560,17 @@ namespace CenturionCC.System.Utils.PlayerLocomotion
             }
         }
 
+        [PublicAPI]
+        public float BaseAvatarEyeHeight
+        {
+            get => baseAvatarEyeHeight;
+            set
+            {
+                baseAvatarEyeHeight = value;
+                UpdateLocalVrcPlayer();
+            }
+        }
+
         /// <summary>
         /// In unit of kilogram
         /// </summary>
@@ -575,8 +599,11 @@ namespace CenturionCC.System.Utils.PlayerLocomotion
         [PublicAPI]
         public float CustomEffectMultiplier { get; set; } = 1F;
 
+        [PublicAPI] 
+        public float AvatarEyeHeightMultiplier => useAvatarEyeHeightForMovementMultiplier ? ActualAvatarEyeHeight / BaseAvatarEyeHeight : 1F;
+
         [PublicAPI]
-        public float TotalMultiplier => (1 - (PlayerWeight / maximumCarryingWeightInKilogram)) * EnvironmentEffectMultiplier * CustomEffectMultiplier;
+        public float TotalMultiplier => (1 - (PlayerWeight / maximumCarryingWeightInKilogram)) * EnvironmentEffectMultiplier * CustomEffectMultiplier * AvatarEyeHeightMultiplier;
 
         [PublicAPI]
         public bool CanRun { get; private set; }
@@ -595,6 +622,9 @@ namespace CenturionCC.System.Utils.PlayerLocomotion
 
         [PublicAPI]
         public float ActualGravityStrength => BaseGravityStrength * TotalMultiplier;
+
+        [PublicAPI]
+        public float ActualAvatarEyeHeight => _localPlayer.GetAvatarEyeHeightAsMeters();
         #endregion
 
         #region EventInvokers
