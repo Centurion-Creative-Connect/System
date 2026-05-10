@@ -1,6 +1,6 @@
 ﻿using System;
 using CenturionCC.System.UI;
-using CenturionCC.System.Utils;
+using CenturionCC.System.Utils.PlayerLocomotion;
 using DerpyNewbie.Common;
 using UnityEngine;
 
