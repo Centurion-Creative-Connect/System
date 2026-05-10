@@ -1,5 +1,4 @@
 ﻿using DerpyNewbie.Common;
-using UdonSharp;
 using UnityEngine;
 namespace CenturionCC.System.Gun.Behaviour
 {
@@ -7,6 +6,8 @@ namespace CenturionCC.System.Gun.Behaviour
     {
         [SerializeField] [Tooltip("Allow reloading when magazine is full?")]
         private bool doForceReload = false;
+        [SerializeField] [Tooltip("How many bullets to load by single interaction? Setting this to 0 makes it load fully.")]
+        private int reloadAmount;
 
         private GunBase[] _targetGuns = new GunBase[0];
 
@@ -14,7 +15,7 @@ namespace CenturionCC.System.Gun.Behaviour
         {
             foreach (var targetGun in _targetGuns)
             {
-                targetGun.ReloadHelper._DoSimplifiedReload(doForceReload);
+                targetGun.ReloadHelper._DoSimplifiedReload(reloadAmount, doForceReload);
             }
         }
 
