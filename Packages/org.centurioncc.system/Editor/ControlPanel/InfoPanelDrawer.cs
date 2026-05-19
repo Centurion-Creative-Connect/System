@@ -117,6 +117,7 @@ namespace CenturionCC.System.Editor.ControlPanel
         private class DefineSettings
         {
             private bool _gunLogging;
+            private bool _gunPhysics;
             private bool _isDirty;
             private bool _playerLogging;
             private bool _verboseLogging;
@@ -132,6 +133,7 @@ namespace CenturionCC.System.Editor.ControlPanel
                 _verboseLogging = EditorGUILayout.Toggle("Verbose Logging (All)", _verboseLogging);
                 _gunLogging = EditorGUILayout.Toggle("Gun Logging", _gunLogging);
                 _playerLogging = EditorGUILayout.Toggle("Player Logging", _playerLogging);
+                _gunPhysics = EditorGUILayout.Toggle("Gun Physics (Experimental)", _gunPhysics);
                 if (EditorGUI.EndChangeCheck())
                 {
                     _isDirty = true;
@@ -156,6 +158,7 @@ namespace CenturionCC.System.Editor.ControlPanel
                 _verboseLogging = CenturionDefines.IsSymbolDefined(CenturionDefines.VERBOSE_LOGGING);
                 _gunLogging = CenturionDefines.IsSymbolDefined(CenturionDefines.GUN_LOGGING);
                 _playerLogging = CenturionDefines.IsSymbolDefined(CenturionDefines.PLAYER_LOGGING);
+                _gunPhysics = CenturionDefines.IsSymbolDefined(CenturionDefines.GUN_PHYSICS);
                 _isDirty = false;
             }
 
@@ -166,6 +169,7 @@ namespace CenturionCC.System.Editor.ControlPanel
                     { CenturionDefines.VERBOSE_LOGGING, _verboseLogging },
                     { CenturionDefines.GUN_LOGGING, _gunLogging },
                     { CenturionDefines.PLAYER_LOGGING, _playerLogging },
+                    { CenturionDefines.GUN_PHYSICS, _gunPhysics },
                 };
 
                 var addingSymbols = symbols.Where(kv => kv.Value).Select(kv => kv.Key).ToArray();

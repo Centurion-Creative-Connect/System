@@ -7,6 +7,7 @@ namespace CenturionCC.System.Gun
 {
     public enum ControlType
     {
+        None,
         OneHanded,
         TwoHanded,
     }
@@ -23,6 +24,9 @@ namespace CenturionCC.System.Gun
         [NewbieInject(SearchScope.Children)]
         [SerializeField]
         private VRCObjectSync[] objectSyncs;
+
+        [SerializeField] [NewbieInject(SearchScope.Self)]
+        private Rigidbody rb;
 
         [SerializeField] private Transform target;
         [SerializeField] private Transform primaryHandle;
@@ -51,6 +55,7 @@ namespace CenturionCC.System.Gun
         private Vector3 _recoilOffsetPos = Vector3.zero;
         private Quaternion _recoilOffsetRot = Quaternion.identity;
         private Matrix4x4 _secondaryOffset;
+        [UdonSynced] private bool _useGravity;
 
         private void Start()
         {
@@ -64,7 +69,11 @@ namespace CenturionCC.System.Gun
             RecalculatePivot();
         }
 
+#if CENTURIONSYSTEM_GUN_PHYSICS
+        private void FixedUpdate()
+#else
         private void Update()
+#endif
         {
             var t = 1 - Mathf.Exp(-_recoilErgonomics * Time.deltaTime);
             _recoilOffsetRot = Quaternion.Lerp(_recoilOffsetRot, Quaternion.identity, t);
@@ -79,6 +88,8 @@ namespace CenturionCC.System.Gun
             _pivotLookAtTransform = _pivotType == PivotType.Primary ? secondaryHandle : primaryHandle;
             _pivotLookAtOffset = _pivotType == PivotType.Primary ? _secondaryOffset : _primaryOffset;
             _pivotOffset = Matrix4x4.TRS(_pivotOffsetPos, _pivotOffsetRot, Vector3.one);
+
+            UpdateRigidbody();
         }
 
         private void RecalculatePrimary()
@@ -103,6 +114,21 @@ namespace CenturionCC.System.Gun
             _pivotLookAtOffsetPos = target.worldToLocalMatrix.MultiplyPoint3x4(_pivotLookAtTransform.position);
         }
 
+        private void UpdateRigidbody()
+        {
+#if CENTURIONSYSTEM_GUN_PHYSICS
+            rb.isKinematic = false;
+            rb.useGravity = _useGravity && _controlType == ControlType.None;
+            rb.drag = 0.5f;
+#else
+            rb.isKinematic = !_useGravity || _controlType != ControlType.None;
+            rb.useGravity = _useGravity && _controlType == ControlType.None;
+            rb.drag = 0;
+#endif
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
         public void _UpdatePosition()
         {
             var recoilMatrix = Matrix4x4.TRS(_recoilOffsetPos, _recoilOffsetRot, Vector3.one);
@@ -110,11 +136,25 @@ namespace CenturionCC.System.Gun
             switch (_controlType)
             {
                 default:
+                case ControlType.None:
+                {
+                    var targetMatrix = target.localToWorldMatrix * _pivotOffset.inverse;
+                    _pivotTransform.SetPositionAndRotation(targetMatrix.GetPosition(), targetMatrix.rotation);
+
+                    var lookAtMatrix = targetMatrix * _pivotLookAtOffset;
+                    _pivotLookAtTransform.SetPositionAndRotation(lookAtMatrix.GetPosition(), lookAtMatrix.rotation);
+                    break;
+                }
                 case ControlType.OneHanded:
                 {
                     var targetMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset * recoilMatrix;
-                    target.SetPositionAndRotation(targetMatrix.GetPosition(), targetMatrix.rotation);
 
+#if CENTURIONSYSTEM_GUN_PHYSICS
+                    rb.MovePosition(targetMatrix.GetPosition());
+                    rb.MoveRotation(targetMatrix.rotation);
+#else
+                    target.SetPositionAndRotation(targetMatrix.GetPosition(), targetMatrix.rotation);
+#endif
                     var lookAtMatrix = targetMatrix * _pivotLookAtOffset;
                     _pivotLookAtTransform.SetPositionAndRotation(lookAtMatrix.GetPosition(), lookAtMatrix.rotation);
                     break;
@@ -131,7 +171,12 @@ namespace CenturionCC.System.Gun
 
                     var rotCorrection = Quaternion.FromToRotation(currentDir, desiredDir);
 
+#if CENTURIONSYSTEM_GUN_PHYSICS
+                    rb.MovePosition(targetMatrix.GetPosition());
+                    rb.MoveRotation(rotCorrection * targetMatrix.rotation);
+#else
                     target.SetPositionAndRotation(targetMatrix.GetPosition(), rotCorrection * targetMatrix.rotation);
+#endif
                     break;
                 }
             }
@@ -168,7 +213,15 @@ namespace CenturionCC.System.Gun
                 _controlType = ControlType.OneHanded;
             }
 
+            UpdateRigidbody();
             RecalculatePivot();
+            _RequestSync();
+        }
+
+        public void SetGravity(bool useGravity)
+        {
+            _useGravity = useGravity;
+            UpdateRigidbody();
             _RequestSync();
         }
 
@@ -205,6 +258,8 @@ namespace CenturionCC.System.Gun
 
         public void FlagDiscontinuity()
         {
+            UpdateRigidbody();
+
             foreach (var sync in objectSyncs)
             {
                 if (!Networking.IsOwner(sync.gameObject))

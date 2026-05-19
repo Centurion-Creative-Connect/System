@@ -64,6 +64,8 @@ namespace CenturionCC.System.Gun.DataStore
 
         [SerializeField] private bool useSafeZoneCheck = true;
 
+        [SerializeField] private bool useGravity;
+
         [SerializeField] private Transform shooterOffset;
 
         [SerializeField] private Transform mainHandleOffset;
@@ -135,6 +137,7 @@ namespace CenturionCC.System.Gun.DataStore
         public bool CanShootWithoutMagazine => canShootWithoutMagazine;
         public bool UseWallCheck => useWallCheck;
         public bool UseSafeZoneCheck => useSafeZoneCheck;
+        public bool UseGravity => useGravity;
 
         public Vector3 FiringPositionOffset =>
             shooterOffset ? shooterOffset.localPosition : Vector3.zero;

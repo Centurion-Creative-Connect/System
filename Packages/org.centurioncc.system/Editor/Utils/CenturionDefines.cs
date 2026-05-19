@@ -8,6 +8,7 @@ namespace CenturionCC.System.Editor.Utils
         public const string VERBOSE_LOGGING = CENTURION_SYSTEM_PREFIX + "VERBOSE_LOGGING";
         public const string GUN_LOGGING = CENTURION_SYSTEM_PREFIX + "GUN_LOGGING";
         public const string PLAYER_LOGGING = CENTURION_SYSTEM_PREFIX + "PLAYER_LOGGING";
+        public const string GUN_PHYSICS = CENTURION_SYSTEM_PREFIX + "GUN_PHYSICS";
 
         public static bool IsSymbolDefined(string define)
         {

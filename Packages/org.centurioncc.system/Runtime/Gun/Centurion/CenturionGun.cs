@@ -169,6 +169,7 @@ namespace CenturionCC.System.Gun.Centurion
 
             VariantDataUniqueId = 0xFF;
             positioningHelper.SetPrimaryXAngleOffset(0);
+            positioningHelper.SetGravity(false);
             animationHelper.TargetAnimator = null;
 
             MainHandle.ForceDrop();
