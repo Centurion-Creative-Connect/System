@@ -3,7 +3,7 @@ using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
-namespace CenturionCC.System.Gimmick.HealthDisplay.Scripts
+namespace CenturionCC.System.Gimmick.HealthDisplay
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class HealthBarDisplay : PlayerManagerCallbackBase
