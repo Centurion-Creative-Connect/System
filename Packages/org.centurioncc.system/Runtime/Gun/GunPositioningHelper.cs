@@ -1,4 +1,5 @@
 ﻿using DerpyNewbie.Common;
+using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Components;
@@ -12,10 +13,37 @@ namespace CenturionCC.System.Gun
         TwoHanded,
     }
 
+    public static class ControlTypeHelper
+    {
+        public static string ToEnumString(this ControlType type)
+        {
+            switch (type)
+            {
+                case ControlType.None: return "None";
+                case ControlType.OneHanded: return "OneHanded";
+                case ControlType.TwoHanded: return "TwoHanded";
+                default: return $"UnknownState:{type}";
+            }
+        }
+    }
+
     public enum PivotType
     {
         Primary,
         Secondary,
+    }
+
+    public static class PivotTypeHelper
+    {
+        public static string ToEnumString(this PivotType type)
+        {
+            switch (type)
+            {
+                case PivotType.Primary: return "Primary";
+                case PivotType.Secondary: return "Secondary";
+                default: return $"UnknownState:{type}";
+            }
+        }
     }
 
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
@@ -90,6 +118,10 @@ namespace CenturionCC.System.Gun
             _pivotOffset = Matrix4x4.TRS(_pivotOffsetPos, _pivotOffsetRot, Vector3.one);
 
             UpdateRigidbody();
+
+#if CENTURIONSYSTEM_VERBOSE_LOGGING || CENTURIONSYSTEM_GUN_LOGGING
+            Debug.Log($"{name}: OnDeserialization: {ToString()}");
+#endif
         }
 
         private void RecalculatePrimary()
@@ -116,6 +148,8 @@ namespace CenturionCC.System.Gun
 
         private void UpdateRigidbody()
         {
+            if (rb == null) return;
+
 #if CENTURIONSYSTEM_GUN_PHYSICS
             rb.isKinematic = false;
             rb.useGravity = _useGravity && _controlType == ControlType.None;
@@ -129,6 +163,7 @@ namespace CenturionCC.System.Gun
             rb.angularVelocity = Vector3.zero;
         }
 
+        [PublicAPI]
         public void _UpdatePosition()
         {
             var recoilMatrix = Matrix4x4.TRS(_recoilOffsetPos, _recoilOffsetRot, Vector3.one);
@@ -138,11 +173,25 @@ namespace CenturionCC.System.Gun
                 default:
                 case ControlType.None:
                 {
-                    var targetMatrix = target.localToWorldMatrix * _pivotOffset.inverse;
-                    _pivotTransform.SetPositionAndRotation(targetMatrix.GetPosition(), targetMatrix.rotation);
+                    if (Networking.IsOwner(gameObject))
+                    {
+                        var targetMatrix = target.localToWorldMatrix * _pivotOffset.inverse;
+                        _pivotTransform.SetPositionAndRotation(targetMatrix.GetPosition(), targetMatrix.rotation);
+                        var lookAtMatrix = targetMatrix * _pivotLookAtOffset;
+                        _pivotLookAtTransform.SetPositionAndRotation(lookAtMatrix.GetPosition(), lookAtMatrix.rotation);
+                    }
+                    else
+                    {
+                        var targetMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset * recoilMatrix;
 
-                    var lookAtMatrix = targetMatrix * _pivotLookAtOffset;
-                    _pivotLookAtTransform.SetPositionAndRotation(lookAtMatrix.GetPosition(), lookAtMatrix.rotation);
+#if CENTURIONSYSTEM_GUN_PHYSICS
+                        rb.MovePosition(targetMatrix.GetPosition());
+                        rb.MoveRotation(targetMatrix.rotation);
+#else
+                        target.SetPositionAndRotation(targetMatrix.GetPosition(), targetMatrix.rotation);
+#endif
+                    }
+
                     break;
                 }
                 case ControlType.OneHanded:
@@ -182,6 +231,7 @@ namespace CenturionCC.System.Gun
             }
         }
 
+        [PublicAPI]
         public void _RequestSync()
         {
             if (!Networking.IsOwner(gameObject))
@@ -194,15 +244,20 @@ namespace CenturionCC.System.Gun
             RequestSerialization();
         }
 
+        [PublicAPI]
         public void SetOffsets(Matrix4x4 primaryOffset, Matrix4x4 secondaryOffset)
         {
             _primaryOffset = primaryOffset;
             _secondaryOffset = secondaryOffset;
 
             RecalculatePivot();
+
+#if CENTURIONSYSTEM_VERBOSE_LOGGING || CENTURIONSYSTEM_GUN_LOGGING
             Debug.Log("Offsets updated");
+#endif
         }
 
+        [PublicAPI]
         public void SetControlAndPivot(ControlType controlType, PivotType pivotType)
         {
             _controlType = controlType;
@@ -218,24 +273,27 @@ namespace CenturionCC.System.Gun
             _RequestSync();
         }
 
+        [PublicAPI]
         public void SetGravity(bool useGravity)
         {
             _useGravity = useGravity;
             UpdateRigidbody();
-            _RequestSync();
         }
 
+        [PublicAPI]
         public void SetRecoilErgonomics(float recoilErgonomics)
         {
             _recoilErgonomics = recoilErgonomics;
         }
 
+        [PublicAPI]
         public void AddRecoil(Vector3 position, Quaternion rotation)
         {
             _recoilOffsetPos += position;
             _recoilOffsetRot *= rotation;
         }
 
+        [PublicAPI]
         public void MoveTo(Vector3 position, Quaternion rotation)
         {
             FlagDiscontinuity();
@@ -250,12 +308,14 @@ namespace CenturionCC.System.Gun
             secondaryHandle.SetPositionAndRotation(secondaryMatrix.GetPosition(), secondaryMatrix.rotation);
         }
 
+        [PublicAPI]
         public void SetPrimaryXAngleOffset(float angle)
         {
             _primaryXAngleOffset = angle;
             RecalculatePivot();
         }
 
+        [PublicAPI]
         public void FlagDiscontinuity()
         {
             UpdateRigidbody();
@@ -267,6 +327,12 @@ namespace CenturionCC.System.Gun
 
                 sync.FlagDiscontinuity();
             }
+        }
+
+        public override string ToString()
+        {
+            return "GunPositioningHelper: " +
+                   $"{_controlType.ToEnumString()} {_pivotType.ToEnumString()} {_useGravity} {_recoilErgonomics}";
         }
     }
 }
