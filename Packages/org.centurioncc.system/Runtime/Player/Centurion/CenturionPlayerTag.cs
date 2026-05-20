@@ -75,7 +75,7 @@ namespace CenturionCC.System.Player.Centurion
 
         public override void OnUpdateView()
         {
-            if (useTeamColor)
+            if (useTeamColor && image)
             {
                 image.color = playerManager.GetTeamColor(player.TeamId);
             }
