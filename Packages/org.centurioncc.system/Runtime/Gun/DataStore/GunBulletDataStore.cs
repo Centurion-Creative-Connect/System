@@ -1,9 +1,8 @@
-﻿using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Paddings;
+﻿using CenturionCC.System.Player;
+using CenturionCC.System.Utils;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.Serialization;
-using NotImplementedException = System.NotImplementedException;
-
 namespace CenturionCC.System.Gun.DataStore
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
@@ -11,9 +10,6 @@ namespace CenturionCC.System.Gun.DataStore
     {
         [FormerlySerializedAs("bulletSpeed")] [SerializeField] [Tooltip("In m/s")]
         private float baseSpeed = 85F;
-
-        [SerializeField]
-        private float baseDamage = 100F;
 
         [FormerlySerializedAs("bulletDrag")] [SerializeField]
         private float baseDrag = 1F;
@@ -33,8 +29,27 @@ namespace CenturionCC.System.Gun.DataStore
         [SerializeField] private int projectileCount = 1;
         [SerializeField] private GunRecoilPatternDataStore recoilPattern;
 
+        [Header("Damage Data Settings")]
+        [SerializeField] private float baseDamage = 100F;
+        [SerializeField] private DetectionType detectionType = DetectionType.All;
+        [SerializeField] private bool respectFriendlyFireSetting = true;
+        [SerializeField] private bool canDamageSelf = false;
+        [SerializeField] private bool canDamageFriendly = true;
+        [SerializeField] private bool canDamageEnemy = true;
+
+        [Header("Damage Multipliers")]
+        [SerializeField] private float bodyDamageMultiplier = 1;
+        [SerializeField] private float headDamageMultiplier = 1;
+        [SerializeField] private float armDamageMultiplier = 1;
+        [SerializeField] private float legDamageMultiplier = 1;
+
         public GunRecoilPatternDataStore RecoilPattern => recoilPattern;
         public override int ProjectileCount => projectileCount;
+        public override DetectionType DetectionType => detectionType;
+        public override bool RespectFriendlyFireSetting => respectFriendlyFireSetting;
+        public override bool CanDamageFriendly => canDamageFriendly;
+        public override bool CanDamageEnemy => canDamageEnemy;
+        public override bool CanDamageSelf => canDamageSelf;
 
         public override void Get(int i,
                                  out Vector3 positionOffset, out Vector3 velocity,
@@ -68,6 +83,19 @@ namespace CenturionCC.System.Gun.DataStore
             }
 
             recoilPattern.GetRecoil(out position, out rotation);
+        }
+        public override float GetDamageMultiplier(BodyParts parts)
+        {
+            switch (parts)
+            {
+                case BodyParts.Body: return bodyDamageMultiplier;
+                case BodyParts.Head: return headDamageMultiplier;
+                case BodyParts.LeftArm:
+                case BodyParts.RightArm: return armDamageMultiplier;
+                case BodyParts.LeftLeg:
+                case BodyParts.RightLeg: return legDamageMultiplier;
+                default: return 1;
+            }
         }
     }
 }

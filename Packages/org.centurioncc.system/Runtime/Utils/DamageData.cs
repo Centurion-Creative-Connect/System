@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CenturionCC.System.Player;
+using JetBrains.Annotations;
+using System;
 using UdonSharp;
 using UnityEngine;
 
@@ -6,20 +8,21 @@ namespace CenturionCC.System.Utils
 {
     public abstract class DamageData : UdonSharpBehaviour
     {
-        public abstract Guid EventId { get; }
-        public abstract bool ShouldApplyDamage { get; }
-        public abstract int DamagerPlayerId { get; }
-        public abstract Vector3 DamageOriginPosition { get; }
-        public abstract Quaternion DamageOriginRotation { get; }
-        public abstract DateTime DamageOriginTime { get; }
-        public abstract string DamageType { get; }
+        [PublicAPI] public abstract Guid EventId { get; }
+        [PublicAPI] public abstract bool ShouldApplyDamage { get; }
+        [PublicAPI] public abstract int DamagerPlayerId { get; }
+        [PublicAPI] public abstract Vector3 DamageOriginPosition { get; }
+        [PublicAPI] public abstract Quaternion DamageOriginRotation { get; }
+        [PublicAPI] public abstract DateTime DamageOriginTime { get; }
+        [PublicAPI] public abstract string DamageType { get; }
 
-        public virtual float DamageAmount { get; protected set; } = 100;
-        public virtual DetectionType DetectionType { get; protected set; } = DetectionType.All;
-        public virtual bool RespectFriendlyFireSetting { get; protected set; } = true;
-        public virtual bool CanDamageSelf { get; protected set; } = false;
-        public virtual bool CanDamageFriendly { get; protected set; } = true;
-        public virtual bool CanDamageEnemy { get; protected set; } = true;
+        [PublicAPI] public virtual float DamageAmount { get; protected set; } = 100;
+        [PublicAPI] public virtual DetectionType DetectionType { get; protected set; } = DetectionType.All;
+        [PublicAPI] public virtual bool RespectFriendlyFireSetting { get; protected set; } = true;
+        [PublicAPI] public virtual bool CanDamageSelf { get; protected set; } = false;
+        [PublicAPI] public virtual bool CanDamageFriendly { get; protected set; } = true;
+        [PublicAPI] public virtual bool CanDamageEnemy { get; protected set; } = true;
+        [PublicAPI] public virtual float GetDamageMultiplier(BodyParts bodyParts) => 1;
     }
 
     public enum DetectionType
