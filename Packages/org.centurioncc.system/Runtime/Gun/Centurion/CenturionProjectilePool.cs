@@ -128,7 +128,7 @@ namespace CenturionCC.System.Gun.Centurion
                 return null;
             }
 
-            projectile.ResetDamageSetting();
+            projectile.SetProjectileDataProvider(null);
             projectile.Shoot(
                 eventId,
                 pos, rot,

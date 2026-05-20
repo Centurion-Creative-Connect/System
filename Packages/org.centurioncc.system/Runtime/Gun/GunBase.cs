@@ -696,6 +696,8 @@ namespace CenturionCC.System.Gun
                     continue;
                 }
 
+                projectile.SetProjectileDataProvider(data);
+
                 if (gunManager)
                 {
                     gunManager.Event.Invoke_OnShoot(this, projectile);

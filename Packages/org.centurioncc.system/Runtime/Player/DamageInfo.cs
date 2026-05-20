@@ -64,7 +64,7 @@ namespace CenturionCC.System.Player
                 Networking.GetNetworkDateTime(),
                 data.DamageOriginTime,
                 data.DamageType,
-                data.DamageAmount,
+                data.DamageAmount * data.GetDamageMultiplier(contactParts),
                 data.DetectionType,
                 data.RespectFriendlyFireSetting,
                 data.CanDamageSelf,
@@ -86,7 +86,7 @@ namespace CenturionCC.System.Player
                 Networking.GetNetworkDateTime(),
                 data.DamageOriginTime,
                 data.DamageType,
-                data.DamageAmount,
+                data.DamageAmount * data.GetDamageMultiplier(contactParts),
                 data.DetectionType,
                 data.RespectFriendlyFireSetting,
                 data.CanDamageSelf,
@@ -108,7 +108,7 @@ namespace CenturionCC.System.Player
                 Networking.GetNetworkDateTime(),
                 data.DamageOriginTime,
                 data.DamageType,
-                data.DamageAmount,
+                data.DamageAmount * data.GetDamageMultiplier(contactParts),
                 data.DetectionType,
                 data.RespectFriendlyFireSetting,
                 data.CanDamageSelf,
@@ -226,9 +226,6 @@ namespace CenturionCC.System.Player
     public static class DamageInfoExt
     {
         private const int IntSize = sizeof(int);
-        private const int FloatSize = sizeof(float);
-        private const int LongSize = sizeof(long);
-        private const int ByteSize = sizeof(byte);
 
         public static Guid EventId(this DamageInfo instance) =>
             (Guid)instance[(int)DamageInfoFields.EventId].Reference;
