@@ -17,6 +17,13 @@ namespace CenturionCC.System.Gimmick.HitMarker
         private ParticleSystem particle;
         [SerializeField]
         private AudioDataStore audioData;
+        [SerializeField]
+        private Color normalHitColor = Color.white;
+        [SerializeField]
+        private Color criticalHitColor = Color.red;
+
+        public Color NormalHitColor { get => normalHitColor; set => normalHitColor = value; }
+        public Color CriticalHitColor { get => criticalHitColor; set => criticalHitColor = value; }
 
         private void OnEnable()
         {
@@ -33,15 +40,17 @@ namespace CenturionCC.System.Gimmick.HitMarker
             if (player.Health > previousHealth) return;
             if (player.LastDamageInfo.AttackerId() != Networking.LocalPlayer.playerId) return;
 
-            PlayHitMarker(player.LastDamageInfo.HitPosition());
+            var parts = player.LastDamageInfo.HitParts();
+            PlayHitMarker(player.LastDamageInfo.HitPosition(), parts == BodyParts.Head ? CriticalHitColor : NormalHitColor);
         }
 
-        private void PlayHitMarker(Vector3 position)
+        private void PlayHitMarker(Vector3 position, Color color)
         {
             if (particle)
             {
                 var emitParams = new ParticleSystem.EmitParams();
                 emitParams.position = position;
+                emitParams.startColor = color;
                 emitParams.applyShapeToPosition = false;
 
                 particle.Emit(emitParams, 1);
