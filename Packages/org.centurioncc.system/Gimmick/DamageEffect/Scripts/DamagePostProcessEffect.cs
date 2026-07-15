@@ -17,8 +17,17 @@ namespace CenturionCC.System.Gimmick.DamageEffect
 
         [SerializeField] private float damageAdditionalWeight = 0.2f;
         [SerializeField] private float weightLerpSpeed = 10f;
+        [Tooltip("If enabled, the weight will decay over specified time.")]
+        [SerializeField] private bool doDecay = true;
+        [Tooltip("The decay delay is the time in seconds to wait before the weight starts to decay.")]
+        [SerializeField] private float decayDelaySecs = 3f;
+        [SerializeField] private float decayLerpSpeed = 1f;
+        [Tooltip("The decay rate is the multiplier of weights to subtract. current weight * decay rate = new weight")] [Range(0, 1)]
+        [SerializeField] private float decayRate = 1f;
+        private float _decayTargetTime;
 
         private bool _isDead;
+        private float _lerpSpeed;
         private float _weightTarget;
 
         private void Update()
@@ -28,14 +37,21 @@ namespace CenturionCC.System.Gimmick.DamageEffect
                 return;
             }
 
-            var t = 1 - Mathf.Exp(-weightLerpSpeed * Time.deltaTime);
+            if (doDecay && Time.time > _decayTargetTime)
+            {
+                _weightTarget = Mathf.Clamp01(_weightTarget - _weightTarget * decayRate);
+                _lerpSpeed = decayLerpSpeed;
+                _decayTargetTime = float.PositiveInfinity;
+            }
+
+            var t = 1 - Mathf.Exp(-_lerpSpeed * Time.deltaTime);
             damageVolume.weight = Mathf.Lerp(damageVolume.weight, _weightTarget, t);
         }
 
         private void OnEnable()
         {
+            _lerpSpeed = weightLerpSpeed;
             playerManager.Subscribe(this);
-
         }
 
         private void OnDisable()
@@ -48,6 +64,7 @@ namespace CenturionCC.System.Gimmick.DamageEffect
             if (!player.IsLocal) return;
 
             _weightTarget = 1 - (player.Health / player.MaxHealth);
+            _lerpSpeed = weightLerpSpeed;
             _isDead = player.IsDead;
 
             if (deadVolume)
@@ -64,6 +81,11 @@ namespace CenturionCC.System.Gimmick.DamageEffect
             if (damageVolume)
             {
                 damageVolume.weight = _isDead ? 0 : Mathf.Clamp01(_weightTarget + damageAdditionalWeight);
+            }
+
+            if (doDecay)
+            {
+                _decayTargetTime = Time.time + decayDelaySecs;
             }
         }
     }
