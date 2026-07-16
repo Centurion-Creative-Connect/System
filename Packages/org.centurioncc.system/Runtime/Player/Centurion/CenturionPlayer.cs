@@ -29,6 +29,7 @@ namespace CenturionCC.System.Player.Centurion
 
         private readonly DataList _playerAreas = new DataList();
         private short _deaths;
+        private string _displayName = "%%UninitializedPlayer%%";
 
         [UdonSynced] [FieldChangeCallback(nameof(SyncedHealth))]
         private float _health = 100;
@@ -43,11 +44,13 @@ namespace CenturionCC.System.Player.Centurion
 
         [UdonSynced] [FieldChangeCallback(nameof(SyncedMaxHealth))]
         private float _maxHealth = 100;
+        private int _playerId = -1;
 
         private short _score;
 
         [UdonSynced] [FieldChangeCallback(nameof(SyncedTeamId))]
         private byte _teamId;
+        private VRCPlayerApi _vrcPlayerApi;
 
         private byte SyncedTeamId
         {
@@ -116,9 +119,9 @@ namespace CenturionCC.System.Player.Centurion
             }
         }
 
-        public override string DisplayName => $"<color=#{playerManager.GetTeamColor(TeamId).ToHtmlStringRGBA()}>{VrcPlayer.SafeGetDisplayName()}</color>";
+        public override string DisplayName => _displayName;
 
-        public override int PlayerId => Networking.GetOwner(gameObject).playerId;
+        public override int PlayerId => _playerId;
 
         public override int Kills
         {
@@ -163,13 +166,17 @@ namespace CenturionCC.System.Player.Centurion
         public override int TeamId => _teamId;
         public override bool IsDead => _health <= 0;
         public override bool IsInSafeZone => _isInSafeZone;
-        public override VRCPlayerApi VrcPlayer => Networking.GetOwner(gameObject);
+        public override VRCPlayerApi VrcPlayer => _vrcPlayerApi;
         public override RoleData[] Roles => roleProvider.GetPlayerRoles(VrcPlayer);
         public bool IsCulled { get; set; }
         public bool IsCollidersActive { get => _isCollidersActive && !this.IsInStaffTeam(); private set => _isCollidersActive = value; }
 
         private void Start()
         {
+            _vrcPlayerApi = Networking.GetOwner(gameObject);
+            _playerId = _vrcPlayerApi.playerId;
+            _displayName = $"<color=#{playerManager.GetTeamColor(TeamId).ToHtmlStringRGBA()}>{VrcPlayer.SafeGetDisplayName()}</color>";
+
             LastDamageInfo = DamageInfo.NewEmpty();
         }
 
