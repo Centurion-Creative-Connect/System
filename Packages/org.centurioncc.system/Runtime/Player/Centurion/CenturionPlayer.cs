@@ -73,7 +73,7 @@ namespace CenturionCC.System.Player.Centurion
                 _health = value;
 
                 playerManager.Event.Invoke_OnPlayerHealthChanged(this, lastHealth);
-                if (lastIsDead == IsDead) return;
+                if (lastIsDead == IsDead || !playerManager.IsReady) return;
 
                 if (IsDead)
                 {
