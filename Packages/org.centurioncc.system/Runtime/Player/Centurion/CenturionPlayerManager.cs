@@ -120,6 +120,8 @@ namespace CenturionCC.System.Player.Centurion
             set => cullingDistance = value;
         }
 
+        public bool IsReady { get; private set; }
+
         public override void PostLateUpdate()
         {
             if (_cachedCenturionPlayers.Count == 0) return;
@@ -216,11 +218,17 @@ namespace CenturionCC.System.Player.Centurion
         {
             if (_cachedCenturionPlayers.Contains(player))
             {
-                CenturionDiagnostic.LogWarning($"{Prefix}Invoke_OnPlayerAdded: player {player.PlayerId} has already been added");
+                CenturionDiagnostic.LogWarning($"{Prefix}AddPlayerToCache: player {player.PlayerId} has already been added");
                 return;
             }
 
             _cachedCenturionPlayers.Add(player);
+
+            if (_cachedCenturionPlayers.Count >= VRCPlayerApi.GetPlayerCount())
+            {
+                logger.Log($"{Prefix}AddPlayerToCache: PlayerManager is now ready!");
+                IsReady = true;
+            }
         }
 
         public void RemovePlayerFromCache(PlayerBase player)
