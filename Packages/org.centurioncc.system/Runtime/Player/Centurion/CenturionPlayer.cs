@@ -176,7 +176,7 @@ namespace CenturionCC.System.Player.Centurion
         {
             _vrcPlayerApi = Networking.GetOwner(gameObject);
             _playerId = _vrcPlayerApi.playerId;
-            _displayName = $"<color=#{playerManager.GetTeamColor(TeamId).ToHtmlStringRGBA()}>{VrcPlayer.SafeGetDisplayName()}</color>";
+            _displayName = VrcPlayer.SafeGetDisplayName();
 
             LastDamageInfo = DamageInfo.NewEmpty();
         }
