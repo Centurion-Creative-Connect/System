@@ -10,19 +10,17 @@ namespace CenturionCC.System.Player
         /// <param name="unknownName">Name used when display name couldn't be retrieved from <paramref name="player"/>.</param>
         /// <param name="appendPlayerId">Append trailing player id?</param>
         /// <returns>`{<see cref="PlayerBase.DisplayName"/>}` or `{<see cref="PlayerBase.DisplayName"/>}.{<see cref="PlayerBase.PlayerId"/>}` or `{<paramref name="unknownName"/>}`</returns>
-        [PublicAPI]
+        [PublicAPI("1.0.0")]
         public static string GetDisplayName([CanBeNull] this PlayerBase player, string unknownName, bool appendPlayerId)
         {
-            return player
-                ? appendPlayerId ? $"{player.DisplayName}.{player.PlayerId}" : player.DisplayName
-                : unknownName;
+            return player ? appendPlayerId ? $"{player.DisplayName}.{player.PlayerId}" : player.DisplayName : unknownName;
         }
 
         /// <inheritdoc cref="GetDisplayName(CenturionCC.System.Player.PlayerBase,string,bool)"/>
         /// <remarks>
         /// Alias of <see cref="GetDisplayName(CenturionCC.System.Player.PlayerBase,string,bool)"/>. The unknownName is `???`.
         /// </remarks>
-        [PublicAPI]
+        [PublicAPI("1.0.0")]
         public static string GetDisplayName([CanBeNull] this PlayerBase player, bool appendPlayerId)
         {
             return player.GetDisplayName("???", appendPlayerId);
@@ -32,13 +30,46 @@ namespace CenturionCC.System.Player
         /// <remarks>
         /// Alias of <see cref="GetDisplayName(CenturionCC.System.Player.PlayerBase,string,bool)"/>. The appendPlayerId is false.
         /// </remarks>
-        [PublicAPI]
+        [PublicAPI("1.0.0")]
         public static string GetDisplayName([CanBeNull] this PlayerBase player, string unknownName = "???")
         {
             return player.GetDisplayName(unknownName, false);
         }
 
-        [PublicAPI]
+        /// <summary>
+        /// Null-safe way to get the colored display name of a <see cref="PlayerBase"/> instance.
+        /// </summary>
+        /// <param name="player">The <see cref="PlayerBase"/> to retrieve colored display name</param>
+        /// <param name="unknownName">Name used when colored display name couldn't be retrieved from <paramref name="player"/>.</param>
+        /// <param name="appendPlayerId">Append trailing player id?</param>
+        /// <returns>`{<see cref="PlayerBase.ColoredDisplayName"/>}` or `{<see cref="PlayerBase.ColoredDisplayName"/>}.{<see cref="PlayerBase.PlayerId"/>}` or `{<paramref name="unknownName"/>}`</returns>
+        [PublicAPI("1.1.0")]
+        public static string GetColoredDisplayName([CanBeNull] this PlayerBase player, string unknownName, bool appendPlayerId)
+        {
+            return player ? appendPlayerId ? $"{player.ColoredDisplayName}.{player.PlayerId}" : player.ColoredDisplayName : unknownName;
+        }
+
+        /// <inheritdoc cref="GetColoredDisplayName(CenturionCC.System.Player.PlayerBase,string,bool)"/>
+        /// <remarks>
+        /// Alias of <see cref="GetColoredDisplayName(CenturionCC.System.Player.PlayerBase,string,bool)"/>. The unknownName is `???`.
+        /// </remarks>
+        [PublicAPI("1.1.0")]
+        public static string GetColoredDisplayName([CanBeNull] this PlayerBase player, bool appendPlayerId)
+        {
+            return player.GetColoredDisplayName("???", appendPlayerId);
+        }
+
+        /// <inheritdoc cref="GetColoredDisplayName(CenturionCC.System.Player.PlayerBase,string,bool)"/>
+        /// <remarks>
+        /// Alias of <see cref="GetColoredDisplayName(CenturionCC.System.Player.PlayerBase,string,bool)"/>. The appendPlayerId is false.
+        /// </remarks>
+        [PublicAPI("1.1.0")]
+        public static string GetColoredDisplayName([CanBeNull] this PlayerBase player, string unknownName = "???")
+        {
+            return player.GetColoredDisplayName(unknownName, false);
+        }
+
+        [PublicAPI("1.0.0")]
         public static bool IsFriendly([CanBeNull] this PlayerBase lhs, [CanBeNull] PlayerBase rhs)
         {
             if (!lhs || !rhs) return false;
@@ -47,37 +78,37 @@ namespace CenturionCC.System.Player
                    (lhs.IsInStaffTeam() || rhs.IsInStaffTeam());
         }
 
-        [PublicAPI]
+        [PublicAPI("1.0.0")]
         public static bool IsStaffTeamId(int teamId)
         {
             return teamId == 255;
         }
 
-        [PublicAPI]
+        [PublicAPI("1.0.0")]
         public static bool IsFreeForAllTeamId(int teamId)
         {
             return teamId == 0;
         }
 
-        [PublicAPI]
+        [PublicAPI("1.0.0")]
         public static bool IsSpecialTeamId(int teamId)
         {
             return IsFreeForAllTeamId(teamId) || IsStaffTeamId(teamId);
         }
 
-        [PublicAPI]
+        [PublicAPI("1.0.0")]
         public static bool IsInFreeForAllTeam([CanBeNull] this PlayerBase player)
         {
             return player && IsFreeForAllTeamId(player.TeamId);
         }
 
-        [PublicAPI]
+        [PublicAPI("1.0.0")]
         public static bool IsInStaffTeam([CanBeNull] this PlayerBase player)
         {
             return player && IsStaffTeamId(player.TeamId);
         }
 
-        [PublicAPI]
+        [PublicAPI("1.0.0")]
         public static bool IsInSpecialTeam([CanBeNull] this PlayerBase player)
         {
             return player && IsSpecialTeamId(player.TeamId);
