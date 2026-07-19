@@ -119,7 +119,7 @@ namespace CenturionCC.System.Player.Centurion
             }
         }
 
-        public override string DisplayName => _displayName;
+        public override string DisplayName => $"<color=#{playerManager.GetTeamColor(TeamId).ToHtmlStringRGBA()}>{_displayName}</color>";
 
         public override int PlayerId => _playerId;
 
@@ -175,7 +175,7 @@ namespace CenturionCC.System.Player.Centurion
         {
             _vrcPlayerApi = Networking.GetOwner(gameObject);
             _playerId = _vrcPlayerApi.playerId;
-            _displayName = $"<color=#{playerManager.GetTeamColor(TeamId).ToHtmlStringRGBA()}>{VrcPlayer.SafeGetDisplayName()}</color>";
+            _displayName = VrcPlayer.SafeGetDisplayName();
 
             LastDamageInfo = DamageInfo.NewEmpty();
         }
