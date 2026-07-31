@@ -4,6 +4,7 @@ using DerpyNewbie.Common.Invoker;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Components;
+using VRC.SDK3.Data;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
 
@@ -20,22 +21,25 @@ namespace CenturionCC.System.Utils
         [SerializeField] [NewbieInject(SearchScope.Parents)]
         private VRCObjectSync objectSync;
 
-        [SerializeField] private int objectSize;
+        [SerializeField] [NewbieInject(SearchScope.Parents)]
+        private Rigidbody rb;
 
-        private GunHolster _currentHolster;
+        [SerializeField] private int objectSize;
+        private readonly DataList _highlightingHolster = new DataList();
+
         private bool _originalIsKinematic;
         private Transform _originalParent;
         private bool _originalUseGravity;
 
         public bool IsHolsteredLocally { get; private set; }
+        public GunHolster ActiveHolster { get; private set; }
 
         private void Start()
         {
             if (target == null) target = transform;
             _originalParent = target.parent;
 
-            if (objectSync == null) return;
-            var rb = objectSync.GetComponent<Rigidbody>();
+            if (rb == null) return;
             _originalIsKinematic = rb.isKinematic;
             _originalUseGravity = rb.useGravity;
         }
@@ -50,16 +54,19 @@ namespace CenturionCC.System.Utils
             if (other.name.ToLower().StartsWith("holster"))
             {
                 var holster = other.GetComponent<GunHolster>();
+                if (holster == null)
+                    return;
+
                 if (holster.HoldableSize < objectSize)
                     return;
 
-                if (_currentHolster != null)
-                    _currentHolster.IsHighlighting = false;
+                _AddHighlightingHolster(holster);
 
+                if (_highlightingHolster.Count == 1)
+                {
+                    Networking.LocalPlayer.PlayHapticEventInHand(pickup.currentHand, .5F, 1F, .1F);
+                }
 
-                _currentHolster = holster;
-                holster.IsHighlighting = true;
-                Networking.LocalPlayer.PlayHapticEventInHand(pickup.currentHand, .5F, 1F, .1F);
                 Debug.Log($"[Holsterable-{name}] holster enter");
             }
         }
@@ -68,9 +75,22 @@ namespace CenturionCC.System.Utils
         {
             if (other.name.ToLower().StartsWith("holster"))
             {
-                if (_currentHolster != null) _currentHolster.IsHighlighting = false;
-                _currentHolster = null;
-                Networking.LocalPlayer.PlayHapticEventInHand(pickup.currentHand, .5F, 1F, .1F);
+                var holster = other.GetComponent<GunHolster>();
+                if (holster == null)
+                    return;
+
+                _RemoveHighlightingHolster(holster);
+
+                if (ActiveHolster == holster)
+                {
+                    _MakeUnholstered();
+                }
+
+                if (_highlightingHolster.Count == 0)
+                {
+                    Networking.LocalPlayer.PlayHapticEventInHand(pickup.currentHand, .5F, 1F, .1F);
+                }
+
                 Debug.Log($"[Holsterable-{name}] holster exit");
             }
         }
@@ -84,30 +104,71 @@ namespace CenturionCC.System.Utils
         public override void OnDropRelayed()
         {
             Debug.Log($"[Holsterable-{name}] on drop");
-            if (_currentHolster)
-                SetHolster(_currentHolster);
+            if (_highlightingHolster.Count == 0) return;
+
+            _MakeHolstered((GunHolster)_highlightingHolster[_highlightingHolster.Count - 1].Reference);
         }
 
-        public void UnHolster()
+        private bool _AddHighlightingHolster(GunHolster holster)
         {
-            SetHolster(null);
+            if (holster == null) return false;
+
+            if (holster.HoldableSize < objectSize) return false;
+
+            holster.AddHighlightingObject(this);
+
+            _highlightingHolster.Add(holster);
+            return true;
         }
 
-        private void SetHolster(GunHolster holster)
+        private bool _RemoveHighlightingHolster(GunHolster holster)
+        {
+            if (holster == null) return false;
+
+            holster.RemoveHighlightingObject(this);
+
+            return _highlightingHolster.RemoveAll(holster);
+        }
+
+        private void _MakeHolstered(GunHolster holster)
         {
             if (holster == null)
             {
-                target.SetParent(_originalParent);
-                objectSync.SetGravity(_originalUseGravity);
-                objectSync.SetKinematic(_originalIsKinematic);
-                IsHolsteredLocally = false;
+                CenturionDiagnostic.LogWarning($"[Holsterable-{name}] _MakeHolstered: target holster is null");
                 return;
             }
 
+            if (IsHolsteredLocally)
+            {
+                _MakeUnholstered();
+            }
+
+            holster.AddHolsteredObject(this);
+            _RemoveHighlightingHolster(holster);
+
+            ActiveHolster = holster;
             objectSync.SetGravity(false);
             objectSync.SetKinematic(true);
             target.SetParent(holster.transform);
             IsHolsteredLocally = true;
+        }
+
+        private void _MakeUnholstered()
+        {
+            if (!IsHolsteredLocally) return;
+
+            if (ActiveHolster) ActiveHolster.RemoveHolsteredObject(this);
+
+            ActiveHolster = null;
+            target.SetParent(_originalParent);
+            objectSync.SetGravity(_originalUseGravity);
+            objectSync.SetKinematic(_originalIsKinematic);
+            IsHolsteredLocally = false;
+        }
+
+        public void UnHolster()
+        {
+            _MakeUnholstered();
         }
     }
 }

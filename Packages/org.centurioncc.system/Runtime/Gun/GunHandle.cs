@@ -197,7 +197,6 @@ namespace CenturionCC.System.Gun
         {
             if (holster == null) return;
 
-            holster.IsHighlighting = false;
             transform.SetParent(holster.transform, true);
             IsHolstered = true;
         }

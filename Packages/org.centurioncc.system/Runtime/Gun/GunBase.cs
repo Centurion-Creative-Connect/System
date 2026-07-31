@@ -10,6 +10,7 @@ using DerpyNewbie.Logger;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Data;
 using VRC.SDK3.UdonNetworkCalling;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
@@ -76,6 +77,7 @@ namespace CenturionCC.System.Gun
         private int _burstCount;
         private int _collisionCount;
         private int _fireModeIndex;
+        private readonly DataList _highlightingHolster = new DataList();
         #endregion
 
         #region Properties
@@ -355,15 +357,14 @@ namespace CenturionCC.System.Gun
 
             if (otherName.StartsWith("holster"))
             {
-                if (!IsLocal || IsHolstered)
-                    return;
+                // do not add holsters as collision count
+                if (!IsLocal || IsHolstered) return;
+
                 var holster = other.GetComponent<GunHolster>();
-                if (holster == null || holster.HoldableSize < HolsterSize)
-                    return;
+                if (holster == null) return;
 
                 Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .5F, 1F, .1F);
-                ActiveHolster = holster;
-                ActiveHolster.IsHighlighting = true;
+                _AddHighlightingHolster(holster);
                 return;
             }
 
@@ -376,15 +377,24 @@ namespace CenturionCC.System.Gun
         {
             var otherName = other.name.ToLower();
 
-            if (otherName.StartsWith("holster") && IsLocal)
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
+            logger.LogVerbose($"{Prefix}OnTriggerExit: {otherName}");
+#endif
+
+            if (otherName.StartsWith("holster"))
             {
-                if (ActiveHolster != null)
+                // do not add holsters as collision count
+                if (!IsLocal) return;
+
+                var holster = other.GetComponent<GunHolster>();
+                if (holster == null) return;
+
+                _RemoveHighlightingHolster(holster);
+
+                if (_GetActiveHolsters().Length == 0)
                 {
                     Networking.LocalPlayer.PlayHapticEventInHand(MainHandle.CurrentHand, .5F, 1F, .1F);
-                    ActiveHolster.IsHighlighting = false;
                 }
-
-                ActiveHolster = null;
                 return;
             }
 
@@ -402,6 +412,19 @@ namespace CenturionCC.System.Gun
             var ltw = Target.localToWorldMatrix;
             firingPosition = ltw.MultiplyPoint3x4(FiringOffsetPosition);
             firingRotation = ltw.rotation * FiringOffsetRotation;
+        }
+
+        [PublicAPI("1.1.0")]
+        public GunHolster[] _GetActiveHolsters()
+        {
+            var result = new GunHolster[_highlightingHolster.Count];
+            var tokenArr = _highlightingHolster.ToArray();
+            for (var i = 0; i < tokenArr.Length; i++)
+            {
+                result[i] = (GunHolster)tokenArr[i].Reference;
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -827,6 +850,76 @@ namespace CenturionCC.System.Gun
                 behaviour.Setup(this);
             }
         }
+
+        protected bool _AddHighlightingHolster(GunHolster holster)
+        {
+            if (holster == null) return false;
+
+            if (holster.HoldableSize < HolsterSize) return false;
+
+            holster.AddHighlightingObject(this);
+
+            _highlightingHolster.Add(holster);
+            return true;
+        }
+
+        protected bool _RemoveHighlightingHolster(GunHolster holster)
+        {
+            if (holster == null) return false;
+
+            holster.RemoveHighlightingObject(this);
+
+            return _highlightingHolster.RemoveAll(holster);
+        }
+
+        protected void _MakeHolstered(GunHolster holster)
+        {
+            if (holster == null)
+            {
+                CenturionDiagnostic.LogWarning($"{Prefix}_MakeHolstered: target holster is null");
+                return;
+            }
+
+            if (!IsLocal)
+            {
+                CenturionDiagnostic.LogWarning($"{Prefix}_MakeHolstered: tried to make non-local holstered");
+                return;
+            }
+
+            if (IsHolstered)
+            {
+                _MakeUnholstered();
+            }
+
+            holster.AddHolsteredObject(this);
+            _RemoveHighlightingHolster(holster);
+
+            MainHandle.Holster(holster);
+            ActiveHolster = holster;
+            IsHolstered = true;
+
+            _UpdatePositioningHelper();
+            _RequestSync();
+        }
+
+        protected void _MakeUnholstered()
+        {
+            if (!IsHolstered) return;
+
+            if (!IsLocal)
+            {
+                CenturionDiagnostic.LogWarning($"{Prefix}_MakeUnholstered: Non-local tried to make gun unholstered");
+                return;
+            }
+
+            if (ActiveHolster) ActiveHolster.RemoveHolsteredObject(this);
+            MainHandle.UnHolster();
+            ActiveHolster = null;
+            IsHolstered = false;
+
+            _UpdatePositioningHelper();
+            _RequestSync();
+        }
         #endregion
 
         #region Callbacks
@@ -842,8 +935,8 @@ namespace CenturionCC.System.Gun
 
             // OnHandlePickup is only called locally, thus setting isLocal here is appropriate
             IsLocal = true;
-            IsHolstered = false;
-            MainHandle.UnHolster();
+
+            _MakeUnholstered();
 
             animationHelper._SetPickedUpLocally(true);
             animationHelper._SetTriggerProgress(0);
@@ -876,7 +969,6 @@ namespace CenturionCC.System.Gun
                 if (behaviour == null) continue;
                 behaviour.OnHandlePickup(this, instance);
             }
-
 
             _UpdatePositioningHelper();
             _RequestSync();
@@ -1004,6 +1096,12 @@ namespace CenturionCC.System.Gun
             var droppedLocally = mainDroppedLocally && subDroppedLocally;
             if (droppedLocally)
             {
+                var activeHolsters = _GetActiveHolsters();
+                if (activeHolsters.Length != 0)
+                {
+                    _MakeHolstered(activeHolsters[activeHolsters.Length - 1]);
+                }
+
                 IsLocal = false;
 
                 animationHelper._SetPickedUpLocally(false);
@@ -1030,16 +1128,22 @@ namespace CenturionCC.System.Gun
                     if (behaviour == null) continue;
                     behaviour.OnGunDrop(this);
                 }
-
-                if (ActiveHolster != null)
-                {
-                    MainHandle.Holster(ActiveHolster);
-                    IsHolstered = true;
-                }
             }
 
             _UpdatePositioningHelper();
             _RequestSync();
+        }
+
+        /// <summary>
+        /// <see cref="GunHolsterCallback.OnHolsterDeactivated"/>
+        /// </summary>
+        /// <param name="holster"></param>
+        public void OnHolsterDeactivated(GunHolster holster)
+        {
+            if (ActiveHolster == holster)
+            {
+                _MakeUnholstered();
+            }
         }
 
         private void ProcessStateChange(GunState previousState, GunState nextState)
