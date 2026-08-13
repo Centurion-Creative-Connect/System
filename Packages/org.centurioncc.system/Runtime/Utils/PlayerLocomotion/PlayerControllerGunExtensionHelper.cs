@@ -36,6 +36,7 @@ namespace CenturionCC.System.Utils.PlayerLocomotion
         public override void OnShoot(GunBase instance, ProjectileBase projectile)
         {
             if (!extension.useGunIntegration) return;
+            if (!instance || !instance.IsLocal) return;
             extension.UpdateLastShotTime();
         }
     }
