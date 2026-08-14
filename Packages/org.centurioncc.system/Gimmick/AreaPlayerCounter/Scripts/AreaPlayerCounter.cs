@@ -6,27 +6,36 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
 using VRC.SDKBase;
+using NotImplementedException = System.NotImplementedException;
 namespace CenturionCC.System.Gimmick.AreaPlayerCounter
 {
+    public abstract class AreaPlayerCounterCallback : UdonSharpBehaviour
+    {
+        public abstract void OnAreaPlayerCountChanged();
+    }
+
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class AreaPlayerCounter : PlayerManagerCallbackBase
+    public class AreaPlayerCounter : PlayerAreaBase
     {
         private const int MinTeamId = 0;
         private const int MaxTeamId = short.MaxValue;
 
-        [SerializeField] [HideInInspector] [NewbieInject]
-        private PlayerManagerBase playerManager;
+        [SerializeField] [NewbieInject(SearchScope.Children)] [HideInInspector]
+        private Collider[] colliders;
+        private readonly DataDictionary _playersInAreaDict = new DataDictionary();
 
         private int _eventCallbackCount;
 
         private UdonSharpBehaviour[] _eventCallbacks = new UdonSharpBehaviour[0];
-        private DataDictionary _playersInAreaDict = new DataDictionary();
 
         [PublicAPI]
         public int TotalPlayerCount => _playersInAreaDict.Count;
 
         [PublicAPI]
         public int[] TeamPlayerCount { get; private set; } = new int[MaxTeamId];
+
+        public override string AreaName => gameObject.name;
+        public override bool IsSafeZone => false;
 
         private void Start()
         {
@@ -56,7 +65,7 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
         }
 
         [PublicAPI]
-        public PlayerBase[] GetPlayersInArea()
+        public override PlayerBase[] GetPlayersInArea()
         {
             // Reconstruct PlayerBase array based on DataDictionary keys because it's easier to use
             var playersInAreaTokens = _playersInAreaDict.GetKeys().ToArray();
@@ -65,6 +74,27 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
                 playerBaseArr[i] = (PlayerBase)playersInAreaTokens[i].Reference;
 
             return playerBaseArr;
+        }
+
+        public override bool IsInside(Vector3 position)
+        {
+            foreach (var col in colliders)
+            {
+                // skip disabled colliders
+                if (col == null || !col.gameObject.activeInHierarchy || !col.enabled)
+                {
+                    continue;
+                }
+
+                // if point is inside, return true
+                if (Mathf.Approximately(Vector3.Distance(col.ClosestPoint(position), position), 0))
+                {
+                    return true;
+                }
+            }
+
+            // otherwise, return false
+            return false;
         }
 
         [PublicAPI]
@@ -79,7 +109,7 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
         {
             Debug.Log($"[PlayerCounter-{name}] OnPlayerTriggerEnter: {player.displayName}");
 
-            var playerBase = playerManager.GetPlayerById(player.playerId);
+            var playerBase = playerManager.GetPlayer(player);
             if (playerBase == null) return;
 
             var key = new DataToken(playerBase);
@@ -88,6 +118,7 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
                 // For the first time player enters collider
                 _playersInAreaDict.Add(key, 0);
                 IncrementTeamCount(playerBase.TeamId);
+                playerBase.OnAreaEnter(this);
             }
 
             var triggerCount = _playersInAreaDict[key].Int + 1;
@@ -110,6 +141,7 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
                 // For the last time player exits collider
                 _playersInAreaDict.Remove(key);
                 DecrementTeamCount(playerBase.TeamId);
+                playerBase.OnAreaExit(this);
             }
             else
             {
@@ -117,7 +149,8 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
             }
         }
 
-        public override void OnPlayerTeamChanged(PlayerBase player, int oldTeam)
+        [UsedImplicitly]
+        public void OnPlayerTeamChanged(PlayerBase player, int oldTeam)
         {
             if (!_playersInAreaDict.ContainsKey(player)) return;
 
@@ -125,12 +158,22 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
             IncrementTeamCount(player.TeamId);
         }
 
-        public override void OnPlayerAdded(PlayerBase player)
+        [UsedImplicitly]
+        public void OnPlayerAdded(PlayerBase player)
         {
-            if (!_playersInAreaDict.ContainsKey(player)) return;
+            if (!_playersInAreaDict.Remove(player)) return;
 
-            _playersInAreaDict.Remove(player);
             DecrementTeamCount(player.TeamId);
+            player.OnAreaExit(this);
+        }
+
+        [UsedImplicitly]
+        public void OnPlayerRemoved(PlayerBase player)
+        {
+            if (!_playersInAreaDict.Remove(player)) return;
+
+            DecrementTeamCount(player.TeamId);
+            player.OnAreaExit(this);
         }
 
         private void DecrementTeamCount(int id)
@@ -149,8 +192,8 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
         {
             for (var i = 0; i < _eventCallbackCount; i++)
             {
-                var b = _eventCallbacks[i];
-                if (b != null) b.SendCustomEvent("OnAreaPlayerCountChanged");
+                var b = (AreaPlayerCounterCallback)_eventCallbacks[i];
+                if (b != null) b.OnAreaPlayerCountChanged();
             }
         }
     }
