@@ -1,4 +1,6 @@
-﻿using CenturionCC.System.Utils;
+﻿using CenturionCC.System.Gun;
+using CenturionCC.System.Utils;
+using CenturionCC.System.Utils.PlayerLocomotion;
 using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using UdonSharp;
@@ -10,6 +12,8 @@ namespace CenturionCC.System.Command.Player
     {
         [SerializeField] [NewbieInject]
         private PlayerController pc;
+        [SerializeField] [NewbieInject]
+        private PlayerControllerGunExtension gunExt;
 
         public override string Label => "PlayerController";
 
@@ -113,21 +117,21 @@ namespace CenturionCC.System.Command.Player
                         $"  TotalMultiplier: {pc.TotalMultiplier}\n" +
                         $"Gun Integration Params:\n" +
                         $"Base:\n" +
-                        $"  UseGunSprint   : {pc.BaseUseGunSprint}\n" +
-                        $"  GunSprintRun   : {pc.BaseGunSprintRunSpeed}\n" +
-                        $"  GunSprintWalk  : {pc.BaseGunSprintWalkSpeed}\n" +
-                        $"  DirThreshold   : {pc.BaseGunSprintDirectionThreshold}\n" +
-                        $"  UseCombatTag   : {pc.BaseUseCombatTag}\n" +
-                        $"  CombatTagTime  : {pc.BaseCombatTagTime}\n" +
-                        $"  CombatTagSpdMul: {pc.BaseCombatTagSpeedMultiplier}\n" +
+                        $"  UseGunSprint   : {gunExt.BaseUseGunSprint}\n" +
+                        $"  GunSprintRun   : {gunExt.BaseGunSprintRunSpeed}\n" +
+                        $"  GunSprintWalk  : {gunExt.BaseGunSprintWalkSpeed}\n" +
+                        $"  DirThreshold   : {gunExt.BaseGunSprintDirectionThreshold}\n" +
+                        $"  UseCombatTag   : {gunExt.BaseUseCombatTag}\n" +
+                        $"  CombatTagTime  : {gunExt.BaseCombatTagTime}\n" +
+                        $"  CombatTagSpdMul: {gunExt.BaseCombatTagSpeedMultiplier}\n" +
                         $"Actual:\n" +
-                        $"  UseGunSprint   : {pc.ActualUseGunSprint}\n" +
-                        $"  GunSprintRun   : {pc.ActualGunSprintRunSpeed}\n" +
-                        $"  GunSprintWalk  : {pc.ActualGunSprintWalkSpeed}\n" +
-                        $"  DirThreshold   : {pc.ActualGunSprintDirectionThreshold}\n" +
-                        $"  UseCombatTag   : {pc.ActualUseCombatTag}\n" +
-                        $"  CombatTagTime  : {pc.ActualCombatTagTime}\n" +
-                        $"  CombatTagSpdMul: {pc.ActualCombatTagSpeedMultiplier}");
+                        $"  UseGunSprint   : {gunExt.ActualUseGunSprint}\n" +
+                        $"  GunSprintRun   : {gunExt.ActualGunSprintRunSpeed}\n" +
+                        $"  GunSprintWalk  : {gunExt.ActualGunSprintWalkSpeed}\n" +
+                        $"  DirThreshold   : {gunExt.ActualGunSprintDirectionThreshold}\n" +
+                        $"  UseCombatTag   : {gunExt.ActualUseCombatTag}\n" +
+                        $"  CombatTagTime  : {gunExt.ActualCombatTagTime}\n" +
+                        $"  CombatTagSpdMul: {gunExt.ActualCombatTagSpeedMultiplier}");
                     return;
                 default:
                     console.PrintUsage(this);
@@ -179,32 +183,32 @@ namespace CenturionCC.System.Command.Player
                 case "dirthreshold":
                 case "gundirup":
                     if (hasValue)
-                        pc.BaseGunSprintDirectionThreshold = value;
-                    console.Println($"Base Gun Sprint Direction Threshold: {pc.BaseGunSprintDirectionThreshold}");
+                        gunExt.BaseGunSprintDirectionThreshold = value;
+                    console.Println($"Base Gun Sprint Direction Threshold: {gunExt.BaseGunSprintDirectionThreshold}");
                     return;
                 case "gunsprintrunspeed":
                 case "gunsprintrun":
                     if (hasValue)
-                        pc.BaseGunSprintRunSpeed = value;
-                    console.Println($"Base Gun Sprint Run Speed: {pc.BaseGunSprintRunSpeed}");
+                        gunExt.BaseGunSprintRunSpeed = value;
+                    console.Println($"Base Gun Sprint Run Speed: {gunExt.BaseGunSprintRunSpeed}");
                     return;
                 case "gunsprintwalkspeed":
                 case "gunsprintwalk":
                     if (hasValue)
-                        pc.BaseGunSprintWalkSpeed = value;
-                    console.Println($"Base Gun Sprint Walk Speed: {pc.BaseGunSprintWalkSpeed}");
+                        gunExt.BaseGunSprintWalkSpeed = value;
+                    console.Println($"Base Gun Sprint Walk Speed: {gunExt.BaseGunSprintWalkSpeed}");
                     return;
                 case "combattagtime":
                     if (hasValue)
-                        pc.BaseCombatTagTime = value;
-                    console.Println($"Base Combat Tag Time: {pc.BaseCombatTagTime}");
+                        gunExt.BaseCombatTagTime = value;
+                    console.Println($"Base Combat Tag Time: {gunExt.BaseCombatTagTime}");
                     return;
                 case "combattagspeedmultiplier":
                 case "combattagspeed":
                 case "combattagspdmul":
                     if (hasValue)
-                        pc.BaseCombatTagSpeedMultiplier = value;
-                    console.Println($"Base Combat Tag Speed Multiplier: {pc.BaseCombatTagSpeedMultiplier}");
+                        gunExt.BaseCombatTagSpeedMultiplier = value;
+                    console.Println($"Base Combat Tag Speed Multiplier: {gunExt.BaseCombatTagSpeedMultiplier}");
                     return;
                 case "groundsnapmaxdistance":
                 case "groundsnapdistance":
@@ -232,11 +236,11 @@ namespace CenturionCC.System.Command.Player
                 {
                     if (hasValue)
                     {
-                        var value = ConsoleParser.TryParseBoolean(vars[1], pc.BaseUseCombatTag);
-                        pc.BaseUseCombatTag = value;
+                        var value = ConsoleParser.TryParseBoolean(vars[1], gunExt.BaseUseCombatTag);
+                        gunExt.BaseUseCombatTag = value;
                     }
 
-                    console.Println($"Base Use Combat Tag: {pc.BaseUseCombatTag}");
+                    console.Println($"Base Use Combat Tag: {gunExt.BaseUseCombatTag}");
                     return;
                 }
                 case "gunsprint":
@@ -245,11 +249,11 @@ namespace CenturionCC.System.Command.Player
                 {
                     if (hasValue)
                     {
-                        var value = ConsoleParser.TryParseBoolean(vars[1], pc.BaseUseGunSprint);
-                        pc.BaseUseGunSprint = value;
+                        var value = ConsoleParser.TryParseBoolean(vars[1], gunExt.BaseUseGunSprint);
+                        gunExt.BaseUseGunSprint = value;
                     }
 
-                    console.Println($"Base Use Gun Sprint: {pc.BaseUseGunSprint}");
+                    console.Println($"Base Use Gun Sprint: {gunExt.BaseUseGunSprint}");
                     return;
                 }
                 case "groundsnap":

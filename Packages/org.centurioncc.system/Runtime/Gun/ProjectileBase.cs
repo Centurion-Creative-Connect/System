@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CenturionCC.System.Gun.DataStore;
+using CenturionCC.System.Player;
+using System;
 using CenturionCC.System.Utils;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -7,6 +9,20 @@ namespace CenturionCC.System.Gun
 {
     public abstract class ProjectileBase : DamageData
     {
+        [CanBeNull]
+        private ProjectileDataProvider _dataProvider;
+
+        public override DetectionType DetectionType => _dataProvider ? _dataProvider.DetectionType : DetectionType.All;
+        public override bool RespectFriendlyFireSetting => !_dataProvider || _dataProvider.RespectFriendlyFireSetting;
+        public override bool CanDamageEnemy => !_dataProvider || _dataProvider.CanDamageEnemy;
+        public override bool CanDamageFriendly => !_dataProvider || _dataProvider.CanDamageFriendly;
+        public override bool CanDamageSelf => _dataProvider && _dataProvider.CanDamageSelf;
+
+        public override float GetDamageMultiplier(BodyParts bodyParts)
+        {
+            return _dataProvider ? _dataProvider.GetDamageMultiplier(bodyParts) : 1;
+        }
+
         [PublicAPI]
         public virtual void Shoot(Guid eventId,
                                   Vector3 pos, Quaternion rot,
@@ -35,24 +51,10 @@ namespace CenturionCC.System.Gun
                                    float trailTime, Gradient trailGradient,
                                    float lifeTimeInSeconds);
 
-        public void SetDamageSetting(
-            DetectionType type,
-            bool respectFriendlyFireSetting = true,
-            bool canDamageSelf = false,
-            bool canDamageFriendly = true,
-            bool canDamageEnemy = true
-        )
+        [PublicAPI]
+        public void SetProjectileDataProvider([CanBeNull] ProjectileDataProvider provider)
         {
-            DetectionType = type;
-            RespectFriendlyFireSetting = respectFriendlyFireSetting;
-            CanDamageSelf = canDamageSelf;
-            CanDamageFriendly = canDamageFriendly;
-            CanDamageEnemy = canDamageEnemy;
-        }
-
-        public void ResetDamageSetting()
-        {
-            SetDamageSetting(DetectionType.All);
+            _dataProvider = provider;
         }
     }
 }

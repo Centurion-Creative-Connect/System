@@ -275,7 +275,7 @@ namespace CenturionCC.System.Gimmick.MatchLogger
         private static void IncrementDeath(DataDictionary statsDict, PlayerBase playerBase)
         {
             if (EnsureStatsTableExist(statsDict, playerBase)) return;
-            var key = playerBase.VrcPlayer.SafeGetDisplayName();
+            var key = playerBase.DisplayName;
             var playerTable = statsDict[key].DataDictionary;
 
             playerTable["team"] = playerBase.TeamId;
@@ -289,7 +289,7 @@ namespace CenturionCC.System.Gimmick.MatchLogger
                                           float distance)
         {
             if (EnsureStatsTableExist(statsDict, playerBase)) return;
-            var key = playerBase.VrcPlayer.SafeGetDisplayName();
+            var key = playerBase.DisplayName;
             var playerTable = statsDict[key].DataDictionary;
 
             playerTable["team"] = playerBase.TeamId;
@@ -308,7 +308,7 @@ namespace CenturionCC.System.Gimmick.MatchLogger
         private static void UpdateTeam(DataDictionary statsDict, PlayerBase playerBase)
         {
             if (EnsureStatsTableExist(statsDict, playerBase)) return;
-            var key = playerBase.VrcPlayer.SafeGetDisplayName();
+            var key = playerBase.DisplayName;
             var playerTable = statsDict[key].DataDictionary;
 
             playerTable["team"] = playerBase.TeamId;
@@ -317,7 +317,7 @@ namespace CenturionCC.System.Gimmick.MatchLogger
         private static void AddWeapon(DataDictionary statsDict, PlayerBase playerBase, string weapon)
         {
             if (EnsureStatsTableExist(statsDict, playerBase)) return;
-            var key = playerBase.VrcPlayer.SafeGetDisplayName();
+            var key = playerBase.DisplayName;
             var playerTable = statsDict[key].DataDictionary;
             playerTable["recentWeapon"] = weapon;
             if (playerTable["weapons"].DataList.Contains(weapon)) return;
@@ -331,13 +331,13 @@ namespace CenturionCC.System.Gimmick.MatchLogger
 
         private static bool EnsureStatsTableExist(DataDictionary statsDict, PlayerBase playerBase)
         {
-            var key = playerBase.VrcPlayer.SafeGetDisplayName("null");
-            if (key == "null") return true;
+            var key = playerBase.DisplayName;
+            if (key == "???") return true;
 
             if (statsDict.ContainsKey(key)) return false;
 
             var d = new DataDictionary();
-            d.Add("displayName", playerBase.VrcPlayer.SafeGetDisplayName());
+            d.Add("displayName", playerBase.DisplayName);
             d.Add("kill", 0);
             d.Add("death", 0);
             d.Add("killStreak", 0);

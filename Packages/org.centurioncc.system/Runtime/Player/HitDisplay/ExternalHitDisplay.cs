@@ -16,7 +16,7 @@ namespace CenturionCC.System.Player.HitDisplay
         [SerializeField]
         private float duration = 5F;
 
-        private VRCPlayerApi _followingPlayer;
+        private PlayerBase _followingPlayer;
         private VRCPlayerApi _localPlayer;
         private Vector3 _posOffset;
 
@@ -28,8 +28,6 @@ namespace CenturionCC.System.Player.HitDisplay
         {
             _transform = transform;
             _localPlayer = Networking.LocalPlayer;
-            if (_followingPlayer == null)
-                _followingPlayer = Networking.LocalPlayer;
         }
 
         private void Update()
@@ -48,16 +46,15 @@ namespace CenturionCC.System.Player.HitDisplay
 
         public override void Play(PlayerBase player)
         {
-            var followingPlayer = player.VrcPlayer;
-            if (followingPlayer == null || !Utilities.IsValid(followingPlayer))
+            if (player == null)
             {
                 DestroyThis();
                 return;
             }
 
-            _followingPlayer = followingPlayer;
-            var headPos = followingPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
-            var playerPos = followingPlayer.GetPosition();
+            _followingPlayer = player;
+            var headPos = player.GetBonePosition(HumanBodyBones.Head);
+            var playerPos = player.GetPosition();
             _posOffset = headPos - playerPos;
             _time = 0;
             gameObject.SetActive(true);

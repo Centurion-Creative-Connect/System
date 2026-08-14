@@ -121,7 +121,7 @@ namespace CenturionCC.System.Command.Player
                     }
 
                     var status =
-                        $"<color=orange><b>{NewbieUtils.GetPlayerName(player.VrcPlayer)}'s Stats</b></color>\n" +
+                        $"<color=orange><b>{player.DisplayName}'s Stats</b></color>\n" +
                         $"K: {player.Kills}\n" +
                         $"D: {player.Deaths}\n" +
                         $"KDR: {(player.Deaths != 0 && player.Deaths != 0 ? $"{player.Kills / player.Deaths:F1}" : "Infinity")}";
@@ -472,11 +472,7 @@ namespace CenturionCC.System.Command.Player
                             if (!player || player.TeamId == _targetTeam)
                                 continue;
 
-                            var vrcPlayer = player.VrcPlayer;
-                            if (vrcPlayer == null)
-                                continue;
-
-                            if (bounds.Contains(vrcPlayer.GetPosition()))
+                            if (bounds.Contains(player.GetPosition()))
                                 player.SetTeam(_targetTeam);
                         }
 
@@ -702,7 +698,7 @@ namespace CenturionCC.System.Command.Player
                     GetTeamNameByInt(player.TeamId),
                     $"{player.Kills}/{player.Deaths}",
                     roleName,
-                    NewbieUtils.GetPlayerName(player.VrcPlayer)
+                    player.DisplayName
                 );
             }
 

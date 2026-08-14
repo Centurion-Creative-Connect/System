@@ -1,8 +1,7 @@
 ﻿using DerpyNewbie.Common;
 using UdonSharp;
 using UnityEngine;
-
-namespace CenturionCC.System.Utils
+namespace CenturionCC.System.Utils.PlayerLocomotion
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PlayerControllerJumpTagExtension : PlayerControllerCallback
@@ -18,7 +17,7 @@ namespace CenturionCC.System.Utils
 
         private void Start()
         {
-            playerController.SubscribeCallback(this);
+            playerController.Subscribe(this);
         }
 
         public override void OnActiveTagsUpdated()

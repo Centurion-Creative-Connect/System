@@ -34,7 +34,7 @@ namespace CenturionCC.System.Utils
             if (!player.IsValid() || !player.isLocal) return;
 
             var local = playerManager.GetLocalPlayer();
-            if (!local || !DoAutoRevive || !local.IsDead) return;
+            if (!local || !DoAutoRevive) return;
 
             local.Revive();
         }

@@ -24,10 +24,10 @@ namespace CenturionCC.System.Gimmick.SystemEventLogger
         {
             if (player.Health < previousHealth)
                 systemEventLogger.AppendLog(Prefix, "Damage",
-                    $"{player.DisplayName} {previousHealth} → {player.Health} <color=red>({previousHealth - player.Health} dmg)</color>");
+                    $"{player.ColoredDisplayName} {previousHealth} → {player.Health} <color=red>({previousHealth - player.Health} dmg)</color>");
             else
                 systemEventLogger.AppendLog(Prefix, "Heal",
-                    $"{player.DisplayName} {previousHealth} → {player.Health} <color=green>({player.Health - previousHealth} heal)</color>");
+                    $"{player.ColoredDisplayName} {previousHealth} → {player.Health} <color=green>({player.Health - previousHealth} heal)</color>");
         }
 
         public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
@@ -35,12 +35,12 @@ namespace CenturionCC.System.Gimmick.SystemEventLogger
             var damageInfo = type != KillType.ReverseFriendlyFire ? victim.LastDamageInfo : attacker.LastDamageInfo;
             var distance = Vector3.Distance(damageInfo.OriginatedPosition(), damageInfo.HitPosition());
             systemEventLogger.AppendLog(Prefix, "Kill",
-                $"{attacker.DisplayName} ─({damageInfo.DamageType().Replace("BBBullet: ", "")})─＞ {victim.DisplayName} ({distance:F1}m){(type != KillType.Default ? $" (<color=red>{type.ToEnumName()}</color>)" : "")}");
+                $"{attacker.ColoredDisplayName} ─({damageInfo.DamageType().Replace("BBBullet: ", "")})─＞ {victim.ColoredDisplayName} ({distance:F1}m){(type != KillType.Default ? $" (<color=red>{type.ToEnumName()}</color>)" : "")}");
         }
 
         public override void OnPlayerRevived(PlayerBase player)
         {
-            systemEventLogger.AppendLog(Prefix, "Revive", $"{player.DisplayName}");
+            systemEventLogger.AppendLog(Prefix, "Revive", $"{player.ColoredDisplayName}");
         }
     }
 }

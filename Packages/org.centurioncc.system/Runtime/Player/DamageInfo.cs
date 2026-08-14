@@ -51,6 +51,50 @@ namespace CenturionCC.System.Player
             );
         }
 
+        public static DamageInfo New(int victimPlayerId, Vector3 contactPoint, BodyParts contactParts, DamageData data)
+        {
+            return New(
+                data.EventId,
+                victimPlayerId,
+                data.DamagerPlayerId,
+                contactPoint,
+                contactParts,
+                data.DamageOriginPosition,
+                data.DamageOriginRotation,
+                Networking.GetNetworkDateTime(),
+                data.DamageOriginTime,
+                data.DamageType,
+                data.DamageAmount * data.GetDamageMultiplier(contactParts),
+                data.DetectionType,
+                data.RespectFriendlyFireSetting,
+                data.CanDamageSelf,
+                data.CanDamageFriendly,
+                data.CanDamageEnemy
+            );
+        }
+
+        public static DamageInfo New(PlayerBase victim, Vector3 contactPoint, BodyParts contactParts, DamageData data)
+        {
+            return New(
+                data.EventId,
+                victim.PlayerId,
+                data.DamagerPlayerId,
+                contactPoint,
+                contactParts,
+                data.DamageOriginPosition,
+                data.DamageOriginRotation,
+                Networking.GetNetworkDateTime(),
+                data.DamageOriginTime,
+                data.DamageType,
+                data.DamageAmount * data.GetDamageMultiplier(contactParts),
+                data.DetectionType,
+                data.RespectFriendlyFireSetting,
+                data.CanDamageSelf,
+                data.CanDamageFriendly,
+                data.CanDamageEnemy
+            );
+        }
+
         public static DamageInfo New(VRCPlayerApi victim, Vector3 contactPoint, BodyParts contactParts, DamageData data)
         {
             return New(
@@ -64,7 +108,7 @@ namespace CenturionCC.System.Player
                 Networking.GetNetworkDateTime(),
                 data.DamageOriginTime,
                 data.DamageType,
-                data.DamageAmount,
+                data.DamageAmount * data.GetDamageMultiplier(contactParts),
                 data.DetectionType,
                 data.RespectFriendlyFireSetting,
                 data.CanDamageSelf,
@@ -74,13 +118,13 @@ namespace CenturionCC.System.Player
         }
 
         public static DamageInfo New(Guid eventId,
-            int victimId, int attackerId,
-            Vector3 hitPos, BodyParts hitParts,
-            Vector3 originPos, Quaternion originRot,
-            DateTime hitTime, DateTime originTime,
-            string damageType, float damageAmount,
-            DetectionType detectionType, bool respectFriendlyFire,
-            bool canDamageSelf, bool canDamageFriendly, bool canDamageEnemy)
+                                     int victimId, int attackerId,
+                                     Vector3 hitPos, BodyParts hitParts,
+                                     Vector3 originPos, Quaternion originRot,
+                                     DateTime hitTime, DateTime originTime,
+                                     string damageType, float damageAmount,
+                                     DetectionType detectionType, bool respectFriendlyFire,
+                                     bool canDamageSelf, bool canDamageFriendly, bool canDamageEnemy)
         {
             var data = new DataToken[(int)DamageInfoFields.Count];
             data[(int)DamageInfoFields.EventId] = new DataToken(eventId);
@@ -182,9 +226,6 @@ namespace CenturionCC.System.Player
     public static class DamageInfoExt
     {
         private const int IntSize = sizeof(int);
-        private const int FloatSize = sizeof(float);
-        private const int LongSize = sizeof(long);
-        private const int ByteSize = sizeof(byte);
 
         public static Guid EventId(this DamageInfo instance) =>
             (Guid)instance[(int)DamageInfoFields.EventId].Reference;

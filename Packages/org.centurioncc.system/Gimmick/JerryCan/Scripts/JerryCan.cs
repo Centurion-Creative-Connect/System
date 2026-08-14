@@ -33,8 +33,8 @@ namespace CenturionCC.System.Gimmick.JerryCan
 
         public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)
         {
-            if (pickup.currentPlayer == victim.VrcPlayer && victim.IsLocal)
-                Drop();
+            if (!victim.IsLocal || pickup.currentPlayer == null || pickup.currentPlayer.playerId != victim.PlayerId) return;
+            Drop();
         }
 
         private void Drop()

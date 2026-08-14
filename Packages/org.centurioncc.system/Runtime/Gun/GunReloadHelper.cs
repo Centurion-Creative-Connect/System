@@ -19,15 +19,27 @@ namespace CenturionCC.System.Gun
 
         public bool IsReloading => Time.timeSinceLevelLoad < _reloadStartedTime + _reloadDuration;
         public bool HasMagazine { get; private set; }
+        public int MagazineCapacity => gun.DefaultMagazineSize;
 
+        /// <summary>
+        /// Starts a simplified reload.
+        /// </summary>
+        /// <param name="bulletsToLoad">How many bullets to load? Defaults 0 for full magazine capacity reload. Value over MagazineCapacity will be clamped down.</param>
+        /// <param name="force">Should we disable the reload cancellation occurring when the magazine is full?</param>
         [PublicAPI]
-        public void _DoSimplifiedReload(bool force = false)
+        public void _DoSimplifiedReload(int bulletsToLoad = 0, bool force = false)
         {
-            _DoSimplifiedReload_Complex(gun.ReloadTimeInSeconds, gun.DefaultMagazineSize, force);
+            _DoSimplifiedReload_Complex(gun.ReloadTimeInSeconds, bulletsToLoad <= 0 ? MagazineCapacity : Mathf.Min(gun.BulletsInMagazine + bulletsToLoad, MagazineCapacity), force);
         }
 
+        /// <summary>
+        /// Starts a simplified reload with a specified duration and bullets remaining.
+        /// </summary>
+        /// <param name="reloadDuration">The duration of this reload</param>
+        /// <param name="nextBulletsRemaining">The next number of bullets remaining. Will not check for upper or lower bound.</param>
+        /// <param name="force">Should reload even if `<paramref name="nextBulletsRemaining"/> == <see cref="GunBase.BulletsInMagazine"/>`?</param>
         [PublicAPI]
-        public void _DoSimplifiedReload_Complex(float reloadDuration, int nextBulletsRemaining, bool force)
+        public void _DoSimplifiedReload_Complex(float reloadDuration, int nextBulletsRemaining, bool force = false)
         {
             if (IsReloading)
             {

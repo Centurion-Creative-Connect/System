@@ -1,6 +1,7 @@
 ﻿using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using JetBrains.Annotations;
+using System;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -72,12 +73,18 @@ namespace CenturionCC.System.Player.HitDisplay
             set => bypassPlayHitDisplayWhenStaffTeam = value;
         }
 
-        private void Start()
+        private void OnEnable()
         {
+            playerManager.Unsubscribe(this);
             playerManager.Subscribe(this);
             sourceExternalHitDisplay.SetActive(false);
             if (parent == null)
                 parent = transform;
+        }
+
+        private void OnDisable()
+        {
+            playerManager.Unsubscribe(this);
         }
 
         public override void OnPlayerKilled(PlayerBase attacker, PlayerBase victim, KillType type)

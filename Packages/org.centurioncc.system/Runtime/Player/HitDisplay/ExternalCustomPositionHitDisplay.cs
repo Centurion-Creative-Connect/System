@@ -20,7 +20,7 @@ namespace CenturionCC.System.Player.HitDisplay
         [SerializeField]
         private Vector3 offsetForView = Vector3.forward * .4F;
 
-        private VRCPlayerApi _followingPlayer;
+        private PlayerBase _followingPlayer;
         private VRCPlayerApi _localPlayer;
 
         private Vector3 _offset;
@@ -30,8 +30,6 @@ namespace CenturionCC.System.Player.HitDisplay
         {
             _transform = transform;
             _localPlayer = Networking.LocalPlayer;
-            if (_followingPlayer == null)
-                _followingPlayer = _localPlayer;
         }
 
         private void Update()
@@ -51,17 +49,16 @@ namespace CenturionCC.System.Player.HitDisplay
 
         public override void Play(PlayerBase player)
         {
-            var followingPlayer = player.VrcPlayer;
-            if (followingPlayer == null || !Utilities.IsValid(followingPlayer))
+            if (player == null)
             {
                 DestroyThis();
                 return;
             }
 
-            _followingPlayer = followingPlayer;
+            _followingPlayer = player;
 
-            var playerPos = followingPlayer.GetPosition();
-            var bonePos = followingPlayer.GetBonePosition(referenceBone) + offsetForReference;
+            var playerPos = player.GetPosition();
+            var bonePos = player.GetBonePosition(referenceBone) + offsetForReference;
             if (bonePos == Vector3.zero)
                 bonePos = playerPos + Vector3.up * 1.7F;
             _offset = bonePos - playerPos;

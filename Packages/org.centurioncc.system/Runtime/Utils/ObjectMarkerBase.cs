@@ -1,4 +1,5 @@
-﻿using UdonSharp;
+﻿using CenturionCC.System.Utils.PlayerLocomotion;
+using UdonSharp;
 
 namespace CenturionCC.System.Utils
 {

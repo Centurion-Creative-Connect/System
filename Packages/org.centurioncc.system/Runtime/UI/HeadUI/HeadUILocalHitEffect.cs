@@ -205,14 +205,14 @@ namespace CenturionCC.System.UI.HeadUI
             if (victim != null)
             {
                 weaponName = victim.LastDamageInfo.DamageType().Replace("BBBullet: ", "");
-                victimName = victim.DisplayName;
+                victimName = victim.ColoredDisplayName;
                 bodyParts = GetHumanFriendlyBodyPartsName(victim.LastDamageInfo.HitParts());
             }
 
             if (attacker && victim &&
                 (victim.TeamId == 0 || victim.TeamId != attacker.TeamId || showFriendlyFireAttackerName))
             {
-                attackerName = attacker.DisplayName;
+                attackerName = attacker.ColoredDisplayName;
             }
 
             return format

@@ -1,6 +1,7 @@
 ﻿using CenturionCC.System.Audio;
 using CenturionCC.System.Gun;
 using CenturionCC.System.Gun.DataStore;
+using CenturionCC.System.Player;
 using CenturionCC.System.Utils;
 using DerpyNewbie.Common;
 using DerpyNewbie.Common.ObjectPool;
@@ -16,7 +17,7 @@ namespace CenturionCC.System.Gimmick.Grenade
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
     [RequireComponent(typeof(VRCPickup))]
-    public class Grenade : UdonSharpBehaviour
+    public class Grenade : ProjectileDataProvider
     {
         private const string TriggerLeft = "Oculus_CrossPlatform_PrimaryIndexTrigger";
         private const string TriggerRight = "Oculus_CrossPlatform_SecondaryIndexTrigger";
@@ -110,12 +111,12 @@ namespace CenturionCC.System.Gimmick.Grenade
         [SerializeField]
         private bool useDebugTrails;
 
+        private readonly ContactPoint[] _contactPoints = new ContactPoint[2];
+
         private readonly int _hashedHasSafetyLever = Animator.StringToHash(AnimParamHasSafetyLever);
         private readonly int _hashedHasSafetyPin = Animator.StringToHash(AnimParamHasSafetyPin);
         private readonly int _hashedHasSafetyPinHeld = Animator.StringToHash(AnimParamHasSafetyPinHeld);
         private readonly int _hashedSafetyPinPull = Animator.StringToHash(AnimParamSafetyPinPull);
-
-        private ContactPoint[] _contactPoints = new ContactPoint[2];
 
         private float _currentExplosionInterval;
 
@@ -135,6 +136,13 @@ namespace CenturionCC.System.Gimmick.Grenade
         private VRC_Pickup _pickup;
         private Rigidbody _rb;
         private float _safetyPinPullProgress;
+
+        public override int ProjectileCount => 1;
+        public override DetectionType DetectionType => DetectionType.VictimSide;
+        public override bool RespectFriendlyFireSetting => false;
+        public override bool CanDamageFriendly => true;
+        public override bool CanDamageEnemy => true;
+        public override bool CanDamageSelf => true;
 
         private void Start()
         {
@@ -210,7 +218,9 @@ namespace CenturionCC.System.Gimmick.Grenade
                         lifeTimeInSeconds
                     );
 
-                    proj.SetDamageSetting(DetectionType.VictimSide, false, true);
+                    if (!proj) continue;
+
+                    proj.SetProjectileDataProvider(this);
                 }
             }
 
@@ -486,6 +496,30 @@ namespace CenturionCC.System.Gimmick.Grenade
             if (dataStore == null) return;
 
             audioManager.PlayAudioAtTransform(dataStore, transform);
+        }
+
+        public override void Get(int i, out Vector3 positionOffset, out Vector3 velocity, out Quaternion rotationOffset, out Vector3 torque, out float drag, out float damageAmount, out float trailDuration, out Gradient trailColor, out float lifeTimeInSeconds)
+        {
+            positionOffset = Vector3.zero;
+            velocity = Vector3.zero;
+            rotationOffset = Quaternion.identity;
+            torque = Vector3.zero;
+            drag = 0;
+            damageAmount = 0;
+            trailDuration = 0;
+            trailColor = new Gradient();
+            lifeTimeInSeconds = 0;
+        }
+
+        public override void GetRecoil(out Vector3 position, out Quaternion rotation)
+        {
+            position = Vector3.zero;
+            rotation = Quaternion.identity;
+        }
+
+        public override float GetDamageMultiplier(BodyParts parts)
+        {
+            return 1;
         }
     }
 }
