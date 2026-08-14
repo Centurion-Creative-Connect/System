@@ -81,7 +81,7 @@ namespace CenturionCC.System.Utils.PlayerLocomotion
             Invoke_OnPlayerControllerUpdate();
 
             if (_shouldUpdateVrcPlayer)
-                UpdateVrcPlayer();
+                Internal_UpdateVrcPlayer();
         }
 
         public override void OnAvatarEyeHeightChanged(VRCPlayerApi player, float prevEyeHeightAsMeters)
@@ -225,8 +225,8 @@ namespace CenturionCC.System.Utils.PlayerLocomotion
             {
                 if (_isApplyingGroundSnap)
                 {
-                    UpdateLocalVrcPlayer();
                     _isApplyingGroundSnap = false;
+                    UpdateLocalVrcPlayer();
                 }
 
                 return;
@@ -235,12 +235,12 @@ namespace CenturionCC.System.Utils.PlayerLocomotion
             // If hit was occuring at roughly same place, don't begin snapping.
             if (_hit.distance <= 1.0075F) return;
 
-            _localPlayer.SetGravityStrength(100F);
             _lastGroundSnapUpdatedTime = Time.timeSinceLevelLoad + .5F;
             _isApplyingGroundSnap = true;
+            UpdateLocalVrcPlayer();
         }
 
-        private void UpdateVrcPlayer()
+        private void Internal_UpdateVrcPlayer()
         {
             if (_localPlayer == null || !_localPlayer.IsValid()) return;
 
@@ -599,7 +599,7 @@ namespace CenturionCC.System.Utils.PlayerLocomotion
         [PublicAPI]
         public float CustomEffectMultiplier { get; set; } = 1F;
 
-        [PublicAPI] 
+        [PublicAPI]
         public float AvatarEyeHeightMultiplier => useAvatarEyeHeightForMovementMultiplier ? ActualAvatarEyeHeight / BaseAvatarEyeHeight : 1F;
 
         [PublicAPI]
@@ -621,10 +621,10 @@ namespace CenturionCC.System.Utils.PlayerLocomotion
         public float ActualJumpImpulse => BaseJumpImpulse * TotalMultiplier;
 
         [PublicAPI]
-        public float ActualGravityStrength => BaseGravityStrength * TotalMultiplier;
+        public float ActualGravityStrength => _isApplyingGroundSnap ? 100f : BaseGravityStrength * TotalMultiplier;
 
         [PublicAPI]
-        public float ActualAvatarEyeHeight => _localPlayer.GetAvatarEyeHeightAsMeters();
+        public float ActualAvatarEyeHeight => Utilities.IsValid(_localPlayer) ? _localPlayer.GetAvatarEyeHeightAsMeters() : 1.65F;
         #endregion
 
         #region EventInvokers
