@@ -16,11 +16,11 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
 
         [SerializeField] [HideInInspector] [NewbieInject]
         private PlayerManagerBase playerManager;
+        private readonly DataDictionary _playersInAreaDict = new DataDictionary();
 
         private int _eventCallbackCount;
 
         private UdonSharpBehaviour[] _eventCallbacks = new UdonSharpBehaviour[0];
-        private DataDictionary _playersInAreaDict = new DataDictionary();
 
         [PublicAPI]
         public int TotalPlayerCount => _playersInAreaDict.Count;
@@ -51,8 +51,17 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
             TeamPlayerCount = new int[short.MaxValue];
 
             var playersInArea = _playersInAreaDict.GetKeys().ToArray();
-            foreach (var player in playersInArea)
-                IncrementTeamCount(((PlayerBase)player.Reference).TeamId);
+            foreach (var playerToken in playersInArea)
+            {
+                var player = (PlayerBase)playerToken.Reference;
+                if (player == null)
+                {
+                    CenturionDiagnostic.LogWarning($"[PlayerAreaCounter-{name}] null player in the dictionary!");
+                    continue;
+                }
+
+                IncrementTeamCount(player.TeamId);
+            }
         }
 
         [PublicAPI]
@@ -127,9 +136,15 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
 
         public override void OnPlayerAdded(PlayerBase player)
         {
-            if (!_playersInAreaDict.ContainsKey(player)) return;
+            if (!_playersInAreaDict.Remove(player)) return;
 
-            _playersInAreaDict.Remove(player);
+            DecrementTeamCount(player.TeamId);
+        }
+
+        public override void OnPlayerRemoved(PlayerBase player)
+        {
+            if (!_playersInAreaDict.Remove(player)) return;
+
             DecrementTeamCount(player.TeamId);
         }
 
