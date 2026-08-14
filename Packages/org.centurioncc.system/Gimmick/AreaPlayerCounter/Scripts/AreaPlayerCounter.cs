@@ -60,8 +60,17 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
             TeamPlayerCount = new int[short.MaxValue];
 
             var playersInArea = _playersInAreaDict.GetKeys().ToArray();
-            foreach (var player in playersInArea)
-                IncrementTeamCount(((PlayerBase)player.Reference).TeamId);
+            foreach (var playerToken in playersInArea)
+            {
+                var player = (PlayerBase)playerToken.Reference;
+                if (player == null)
+                {
+                    CenturionDiagnostic.LogWarning($"[PlayerAreaCounter-{name}] null player in the dictionary!");
+                    continue;
+                }
+
+                IncrementTeamCount(player.TeamId);
+            }
         }
 
         [PublicAPI]
