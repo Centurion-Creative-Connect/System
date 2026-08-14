@@ -1,13 +1,16 @@
-﻿using UdonSharp;
+﻿using DerpyNewbie.Common;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
 using VRC.SDKBase;
-
 namespace CenturionCC.System.Player.Centurion
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class CenturionPlayerArea : PlayerAreaBase
     {
+        [SerializeField] [NewbieInject(SearchScope.Children)] [HideInInspector]
+        private Collider[] colliders;
+
         [SerializeField]
         private string areaName;
 
@@ -40,6 +43,26 @@ namespace CenturionCC.System.Player.Centurion
 
             return players;
         }
+        public override bool IsInside(Vector3 position)
+        {
+            foreach (var col in colliders)
+            {
+                // skip disabled colliders
+                if (col == null || !col.gameObject.activeInHierarchy || !col.enabled)
+                {
+                    continue;
+                }
+
+                // if point is inside, return true
+                if (Mathf.Approximately(Vector3.Distance(col.ClosestPoint(position), position), 0))
+                {
+                    return true;
+                }
+            }
+
+            // otherwise, return false
+            return false;
+        }
 
         public override void OnPlayerTriggerEnter(VRCPlayerApi player)
         {
@@ -59,6 +82,30 @@ namespace CenturionCC.System.Player.Centurion
 
             playerBase.OnAreaExit(this);
             _inAreaPlayers.Remove(playerBase);
+        }
+
+        public override void OnPlayerLeft(VRCPlayerApi player)
+        {
+            // try to get alive PlayerBase instance
+            var playerBase = playerManager.GetPlayer(player);
+            if (playerBase)
+            {
+                playerBase.OnAreaExit(this);
+                _inAreaPlayers.Remove(playerBase);
+                return;
+            }
+
+            // if PlayerBase has already been destroyed, remove nulls from the list
+            var tokens = _inAreaPlayers.ToArray();
+            foreach (var token in tokens)
+            {
+                if (token.TokenType == TokenType.Reference && ((PlayerBase)token.Reference) != null)
+                {
+                    continue;
+                }
+
+                _inAreaPlayers.Remove(token);
+            }
         }
     }
 }

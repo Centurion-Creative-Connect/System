@@ -4,7 +4,7 @@ using UnityEngine.UI;
 namespace CenturionCC.System.Gimmick.AreaPlayerCounter
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class AreaPlayerCounterText : UdonSharpBehaviour
+    public class AreaPlayerCounterText : AreaPlayerCounterCallback
     {
         [SerializeField]
         private AreaPlayerCounter counter;
@@ -25,7 +25,7 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
             counter.SubscribeCallback(this);
         }
 
-        public void OnAreaPlayerCountChanged()
+        public override void OnAreaPlayerCountChanged()
         {
             Debug.Log($"[AreaPlayerCounterText-{name}] OnAreaPlayerCountChanged");
             UpdateText();
