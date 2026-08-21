@@ -63,7 +63,9 @@ namespace CenturionCC.System.Gun.Centurion
             get => _isOccupied;
             private set
             {
+                Debug.Log($"{Prefix}IsOccupied: {value}");
                 _isOccupied = value;
+                gameObject.SetActive(value);
                 if (!value)
                 {
                     Destroy(model);
@@ -76,19 +78,6 @@ namespace CenturionCC.System.Gun.Centurion
         public override bool IsInWall => VariantData && gunManager
             ? gunManager.UseCollisionCheck && VariantData.UseWallCheck && CollisionCount != 0
             : CollisionCount != 0;
-        #endregion
-
-        #region OverridenMethod
-        protected override void OnTriggerEnter(Collider other)
-        {
-            if (IsLocal && other.name.ToLower().StartsWith("eraser"))
-            {
-                SendCustomNetworkEvent(NetworkEventTarget.All, nameof(RequestDisposeToMaster));
-                return;
-            }
-
-            base.OnTriggerEnter(other);
-        }
         #endregion
 
         public void RefreshData()
@@ -263,5 +252,24 @@ namespace CenturionCC.System.Gun.Centurion
             logger.Log($"{Prefix}{name} has been <color=red>disposed</color>");
             return true;
         }
+
+        #region OverridenMethod
+        protected override void Start()
+        {
+            base.Start();
+            gameObject.SetActive(IsOccupied);
+        }
+
+        protected override void OnTriggerEnter(Collider other)
+        {
+            if (IsLocal && other.name.ToLower().StartsWith("eraser"))
+            {
+                SendCustomNetworkEvent(NetworkEventTarget.All, nameof(RequestDisposeToMaster));
+                return;
+            }
+
+            base.OnTriggerEnter(other);
+        }
+        #endregion
     }
 }
