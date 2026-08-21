@@ -3,6 +3,7 @@ using DerpyNewbie.Common;
 using System;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDKBase;
 namespace CenturionCC.System.Gun.Centurion
 {
     [RequireComponent(typeof(Rigidbody), typeof(Collider))]
@@ -34,9 +35,9 @@ namespace CenturionCC.System.Gun.Centurion
         private Vector3 _damageOriginPos;
         private Quaternion _damageOriginRot;
         private DateTime _damageOriginTime;
+        private string _damageType;
 
         private int _damagerPlayerId;
-        private string _damageType;
 
         private Guid _eventId;
         private float _hopUpStrength;
@@ -46,7 +47,6 @@ namespace CenturionCC.System.Gun.Centurion
 
         private Vector3 _nextVelocity;
         private int _ricochetCount;
-        private bool UseTrail => gunManager.UseBulletTrail && _nextUseTrail;
         private bool UseDebugTrail => gunManager.UseDebugBulletTrail;
 
         public override Guid EventId => _eventId;
@@ -129,7 +129,7 @@ namespace CenturionCC.System.Gun.Centurion
             }
             else
             {
-                _nextUseTrail = true;
+                _nextUseTrail = CenturionBBBulletUtility.ShouldActivateTrail(gunManager.BulletTrailMode, playerId);
                 trailRenderer.time = trailTime;
                 trailRenderer.colorGradient = trailGradient;
             }
@@ -173,7 +173,7 @@ namespace CenturionCC.System.Gun.Centurion
             if (trailRenderer)
             {
                 trailRenderer.Clear();
-                trailRenderer.emitting = emit && UseTrail;
+                trailRenderer.emitting = emit && _nextUseTrail;
             }
 
             if (debugTrailRenderer)
@@ -255,6 +255,18 @@ namespace CenturionCC.System.Gun.Centurion
             }
 
             return result;
+        }
+
+        public static bool ShouldActivateTrail(BulletTrailMode mode, int shooterPlayerId)
+        {
+            switch (mode)
+            {
+                default:
+                case BulletTrailMode.All: return true;
+                case BulletTrailMode.Local: return Networking.LocalPlayer.playerId == shooterPlayerId;
+                case BulletTrailMode.Other: return Networking.LocalPlayer.playerId != shooterPlayerId;
+                case BulletTrailMode.None: return false;
+            }
         }
     }
 }
