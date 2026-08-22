@@ -63,7 +63,6 @@ namespace CenturionCC.System.Gun.Centurion
             get => _isOccupied;
             private set
             {
-                Debug.Log($"{Prefix}IsOccupied: {value}");
                 _isOccupied = value;
                 gameObject.SetActive(value);
                 if (!value)
