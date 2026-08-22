@@ -133,6 +133,26 @@ namespace CenturionCC.System.Gun
         Unused,
     }
 
+    public enum BulletTrailMode
+    {
+        /// <summary>
+        /// Traditional. All bullets respect trail settings.
+        /// </summary>
+        All,
+        /// <summary>
+        /// Only the local bullets respect trail settings. Remote bullets will not have trails turned on.
+        /// </summary>
+        Local,
+        /// <summary>
+        /// Only the remote bullets respect trail settings. Local bullets will not have trails turned on.
+        /// </summary>
+        Other,
+        /// <summary>
+        /// Bullets will not have trails turned on.
+        /// </summary>
+        None,
+    }
+
     public static class GunStateHelper
     {
         public const byte MaxValue = (byte)GunState.InCockingTwisting;
@@ -289,6 +309,43 @@ namespace CenturionCC.System.Gun
                 case GunManagerResetType.All: return "All";
                 case GunManagerResetType.Unused: return "Unused";
                 default: return $"UnknownState:{type}";
+            }
+        }
+    }
+
+    public static class BulletTrailModeHelper
+    {
+        public static bool FromString(string str, out BulletTrailMode mode)
+        {
+            switch (str.ToLower())
+            {
+                case "all":
+                    mode = BulletTrailMode.All;
+                    return true;
+                case "local":
+                    mode = BulletTrailMode.Local;
+                    return true;
+                case "other":
+                    mode = BulletTrailMode.Other;
+                    return true;
+                case "none":
+                    mode = BulletTrailMode.None;
+                    return true;
+                default:
+                    mode = BulletTrailMode.All;
+                    return false;
+            }
+        }
+
+        public static string ToEnumName(this BulletTrailMode mode)
+        {
+            switch (mode)
+            {
+                case BulletTrailMode.All: return "All";
+                case BulletTrailMode.Local: return "Local";
+                case BulletTrailMode.Other: return "Other";
+                case BulletTrailMode.None: return "None";
+                default: return $"UnknownMode:{mode}";
             }
         }
     }

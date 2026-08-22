@@ -16,7 +16,7 @@ namespace CenturionCC.System.Command.Gun
         public override string[] Aliases => new[] { "Gun" };
 
         public override string Usage =>
-            "<command> <reset|slowReset|reload|trail|optimizationRange|rePickupDelay|collisionCheck|debug|summon|list|info>";
+            "<command> <reset|slowReset|reload|trailMode|trail|optimizationRange|rePickupDelay|collisionCheck|debug|summon|list|info>";
 
         public override string Description => "Perform gun related manipulation such as summon/reset/list etc.";
 
@@ -182,6 +182,22 @@ namespace CenturionCC.System.Command.Gun
 
                     console.Println($"UseTrail: {gunManager.UseDebugBulletTrail}");
                     return ConsoleLiteral.Of(gunManager.UseDebugBulletTrail);
+                case "trailmode":
+                    if (vars.Length >= 2)
+                    {
+                        if (BulletTrailModeHelper.FromString(vars[1], out var mode))
+                        {
+                            gunManager.BulletTrailMode = mode;
+                        }
+                        else
+                        {
+                            console.Println($"Invalid mode: {vars[1]}, available modes: all, local, remote, none.");
+                            return ConsoleLiteral.GetFalse();
+                        }
+                    }
+
+                    console.Println($"Trail Mode: {gunManager.BulletTrailMode.ToEnumName()}");
+                    return ConsoleLiteral.Of(gunManager.BulletTrailMode.ToEnumName());
                 case "arc":
                 case "ricochetcount":
                 case "allowedricochetcount":

@@ -4,6 +4,7 @@ using CenturionCC.System.Utils.Watchdog;
 using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using JetBrains.Annotations;
+using System;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
@@ -37,8 +38,11 @@ namespace CenturionCC.System.Gun
         public virtual int AllowedRicochetCount { get; set; }
         [PublicAPI]
         public virtual bool UseDebugBulletTrail { get; set; }
-        [PublicAPI]
-        public virtual bool UseBulletTrail { get; set; }
+        [PublicAPI] [Obsolete("Obsolete from 1.1.0. Use BulletTrailMode instead.")]
+        public virtual bool UseBulletTrail { get => BulletTrailMode == BulletTrailMode.All; set => BulletTrailMode = value ? BulletTrailMode.All : BulletTrailMode.None; }
+        [PublicAPI("1.1.0")]
+        public virtual BulletTrailMode BulletTrailMode { get; set; }
+
         [PublicAPI]
         public virtual bool IsDebugGunHandleVisible
         {
