@@ -104,12 +104,6 @@ namespace CenturionCC.System.Player.Centurion
 
         public override void PostLateUpdate()
         {
-            if (!Utilities.IsValid(_vrcPlayer))
-            {
-                Debug.LogError("[CPlayerCollider] PostLateUpdate: Player is null");
-                return;
-            }
-
             var rot = _vrcPlayer.GetBoneRotation(boneFrom) * _calibratedRotOffset;
             transform.SetPositionAndRotation(
                 _vrcPlayer.GetBonePosition(boneFrom) + rot * _calibratedPosOffset,
