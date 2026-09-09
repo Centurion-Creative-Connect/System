@@ -37,6 +37,7 @@ namespace CenturionCC.System.Player.Centurion
         private Quaternion _calibratedRotOffset;
 
         private bool _isVisible;
+        private Transform _transform;
         private VRCPlayerApi _vrcPlayer;
 
         public override bool IsDebugVisible
@@ -55,6 +56,7 @@ namespace CenturionCC.System.Player.Centurion
         private void Start()
         {
             _vrcPlayer = Networking.GetOwner(gameObject);
+            _transform = transform;
         }
 
         private void OnEnable()
@@ -82,7 +84,7 @@ namespace CenturionCC.System.Player.Centurion
         public void OnTriggerEnter(Collider other)
         {
             var damageData = other.gameObject.GetComponentInChildren<DamageData>();
-            var closestPoint = other.ClosestPoint(transform.position);
+            var closestPoint = other.ClosestPoint(_transform.position);
             OnDamage(damageData, closestPoint);
         }
 
@@ -104,14 +106,8 @@ namespace CenturionCC.System.Player.Centurion
 
         public override void PostLateUpdate()
         {
-            if (!Utilities.IsValid(_vrcPlayer))
-            {
-                Debug.LogError("[CPlayerCollider] PostLateUpdate: Player is null");
-                return;
-            }
-
             var rot = _vrcPlayer.GetBoneRotation(boneFrom) * _calibratedRotOffset;
-            transform.SetPositionAndRotation(
+            _transform.SetPositionAndRotation(
                 _vrcPlayer.GetBonePosition(boneFrom) + rot * _calibratedPosOffset,
                 rot
             );
@@ -141,7 +137,7 @@ namespace CenturionCC.System.Player.Centurion
             }
 
             var len = Vector3.Distance(from, to);
-            transform.localScale = new Vector3(1, 1, len + heightOffset);
+            _transform.localScale = new Vector3(1, 1, len + heightOffset);
             _calibratedRotOffset = Quaternion.Inverse(_vrcPlayer.GetBoneRotation(boneFrom)) *
                                    Quaternion.LookRotation(to - from);
             _calibratedPosOffset = centerOffset + Vector3.forward * ((len + heightOffset) / 2.0F);
