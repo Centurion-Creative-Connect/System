@@ -164,15 +164,33 @@ namespace CenturionCC.System.Gun
 
         private void RecalculatePivot()
         {
-            _pivotTransform = _pivotType == PivotType.Primary ? primaryHandle : secondaryHandle;
-            _pivotLookAtTransform = _pivotType == PivotType.Primary ? secondaryHandle : primaryHandle;
-            _pivotLookAtOffset = _pivotType == PivotType.Primary ? _secondaryOffset : _primaryOffset * Matrix4x4.Rotate(Quaternion.AngleAxis(_primaryXAngleOffset, Vector3.right));
+            switch (_pivotType)
+            {
+                case PivotType.Primary:
+                {
+                    _pivotTransform = primaryHandle;
+                    _pivotLookAtTransform = secondaryHandle;
+                    _pivotLookAtOffset = _secondaryOffset;
+                    _pivotOffset = _primaryOffset * Matrix4x4.Rotate(Quaternion.AngleAxis(_primaryXAngleOffset, Vector3.right));
+                    _pivotLookAtOffsetPos = _secondaryOffset.GetPosition();
+                    break;
+                }
+                case PivotType.Secondary:
+                {
+                    _pivotTransform = secondaryHandle;
+                    _pivotLookAtTransform = primaryHandle;
+                    _pivotLookAtOffset = _primaryOffset * Matrix4x4.Rotate(Quaternion.AngleAxis(_primaryXAngleOffset, Vector3.right));
+                    _pivotOffset = _pivotTransform.worldToLocalMatrix * target.localToWorldMatrix;
 
-            _pivotOffset = _pivotType == PivotType.Primary ? _primaryOffset * Matrix4x4.Rotate(Quaternion.AngleAxis(_primaryXAngleOffset, Vector3.right)) : _pivotTransform.worldToLocalMatrix * target.localToWorldMatrix;
+                    // store secondaryHandle's offset position relative to target, so it can stay in the previous pose.
+                    _pivotLookAtOffsetPos = target.worldToLocalMatrix.MultiplyPoint3x4(_pivotLookAtTransform.position);
+                    break;
+                }
+            }
+
+            // write to pos/rot for syncing purposes
             _pivotOffsetPos = _pivotOffset.GetPosition();
             _pivotOffsetRot = _pivotOffset.rotation;
-
-            _pivotLookAtOffsetPos = target.worldToLocalMatrix.MultiplyPoint3x4(_pivotLookAtTransform.position);
         }
 
         private void UpdateRigidbody()
@@ -235,7 +253,7 @@ namespace CenturionCC.System.Gun
                     var desiredDir = desiredSecondaryPos - desiredMatrix.GetPosition();
 
                     var rotCorrection = Quaternion.FromToRotation(currentDir, desiredDir);
-                    desiredMatrix *= Matrix4x4.Rotate(rotCorrection);
+                    desiredMatrix = Matrix4x4.TRS(desiredMatrix.GetPosition(), rotCorrection * desiredMatrix.rotation, desiredMatrix.lossyScale);
                     break;
                 }
             }
