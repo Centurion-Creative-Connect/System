@@ -46,6 +46,29 @@ namespace CenturionCC.System.Gun
         }
     }
 
+    public enum SmoothingType
+    {
+        None,
+        Position,
+        Rotation,
+        PositionAndRotation,
+    }
+
+    public static class SmoothingTypeHelper
+    {
+        public static string ToEnumString(this SmoothingType type)
+        {
+            switch (type)
+            {
+                case SmoothingType.None: return "None";
+                case SmoothingType.Position: return "Position";
+                case SmoothingType.Rotation: return "Rotation";
+                case SmoothingType.PositionAndRotation: return "PositionAndRotation";
+                default: return $"UnknownState:{type}";
+            }
+        }
+    }
+
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class GunPositioningHelper : UdonSharpBehaviour
     {
@@ -84,6 +107,12 @@ namespace CenturionCC.System.Gun
         private Quaternion _recoilOffsetRot = Quaternion.identity;
         private Matrix4x4 _secondaryOffset;
         [UdonSynced] private bool _useGravity;
+
+        private SmoothingType _smoothingType;
+        private float _smoothPositionAmount;
+        private float _smoothRotationAmount;
+        // without recoil applied
+        private Matrix4x4 _previousDesiredMatrix;
 
         private void Start()
         {
@@ -167,6 +196,7 @@ namespace CenturionCC.System.Gun
         public void _UpdatePosition()
         {
             var recoilMatrix = Matrix4x4.TRS(_recoilOffsetPos, _recoilOffsetRot, Vector3.one);
+            Matrix4x4 desiredMatrix;
 
             switch (_controlType)
             {
@@ -175,60 +205,88 @@ namespace CenturionCC.System.Gun
                 {
                     if (Networking.IsOwner(gameObject))
                     {
-                        var targetMatrix = target.localToWorldMatrix * _pivotOffset.inverse;
-                        _pivotTransform.SetPositionAndRotation(targetMatrix.GetPosition(), targetMatrix.rotation);
-                        var lookAtMatrix = targetMatrix * _pivotLookAtOffset;
+                        desiredMatrix = target.localToWorldMatrix * _pivotOffset.inverse;
+                        _pivotTransform.SetPositionAndRotation(desiredMatrix.GetPosition(), desiredMatrix.rotation);
+                        var lookAtMatrix = desiredMatrix * _pivotLookAtOffset;
                         _pivotLookAtTransform.SetPositionAndRotation(lookAtMatrix.GetPosition(), lookAtMatrix.rotation);
-                    }
-                    else
-                    {
-                        var targetMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset * recoilMatrix;
-
-#if CENTURIONSYSTEM_GUN_PHYSICS
-                        rb.MovePosition(targetMatrix.GetPosition());
-                        rb.MoveRotation(targetMatrix.rotation);
-#else
-                        target.SetPositionAndRotation(targetMatrix.GetPosition(), targetMatrix.rotation);
-#endif
+                        // make handle follow the target. do not move its position and rotation
+                        return;
                     }
 
+                    // follow pivot transform (owner syncs it's position)
+                    desiredMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset;
                     break;
                 }
                 case ControlType.OneHanded:
                 {
-                    var targetMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset * recoilMatrix;
-
-#if CENTURIONSYSTEM_GUN_PHYSICS
-                    rb.MovePosition(targetMatrix.GetPosition());
-                    rb.MoveRotation(targetMatrix.rotation);
-#else
-                    target.SetPositionAndRotation(targetMatrix.GetPosition(), targetMatrix.rotation);
-#endif
-                    var lookAtMatrix = targetMatrix * _pivotLookAtOffset;
+                    desiredMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset;
+                    var lookAtMatrix = desiredMatrix * _pivotLookAtOffset;
                     _pivotLookAtTransform.SetPositionAndRotation(lookAtMatrix.GetPosition(), lookAtMatrix.rotation);
                     break;
                 }
                 case ControlType.TwoHanded:
                 {
-                    var targetMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset * recoilMatrix;
+                    desiredMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset;
 
                     var desiredSecondaryPos = _pivotLookAtTransform.position;
-                    var currentSecondaryPos = targetMatrix.MultiplyPoint3x4(_pivotLookAtOffsetPos);
+                    var currentSecondaryPos = desiredMatrix.MultiplyPoint3x4(_pivotLookAtOffsetPos);
 
-                    var currentDir = currentSecondaryPos - targetMatrix.GetPosition();
-                    var desiredDir = desiredSecondaryPos - targetMatrix.GetPosition();
+                    var currentDir = currentSecondaryPos - desiredMatrix.GetPosition();
+                    var desiredDir = desiredSecondaryPos - desiredMatrix.GetPosition();
 
                     var rotCorrection = Quaternion.FromToRotation(currentDir, desiredDir);
-
-#if CENTURIONSYSTEM_GUN_PHYSICS
-                    rb.MovePosition(targetMatrix.GetPosition());
-                    rb.MoveRotation(rotCorrection * targetMatrix.rotation);
-#else
-                    target.SetPositionAndRotation(targetMatrix.GetPosition(), rotCorrection * targetMatrix.rotation);
-#endif
+                    desiredMatrix *= Matrix4x4.Rotate(rotCorrection);
                     break;
                 }
             }
+
+            switch (_smoothingType)
+            {
+                default:
+                case SmoothingType.None:
+                {
+                    break;
+                }
+                case SmoothingType.PositionAndRotation:
+                {
+                    var desiredPos = desiredMatrix.GetPosition();
+                    var desiredRot = desiredMatrix.rotation;
+                    var prevDesiredPos = _previousDesiredMatrix.GetPosition();
+                    var prevDesiredRot = _previousDesiredMatrix.rotation;
+                    var prevDesiredScale = _previousDesiredMatrix.lossyScale;
+                    var tPos = 1 - Mathf.Exp(-_smoothPositionAmount * Time.deltaTime);
+                    var tRot = 1 - Mathf.Exp(-_smoothRotationAmount * Time.deltaTime);
+                    desiredMatrix = Matrix4x4.TRS(Vector3.Lerp(prevDesiredPos, desiredPos, tPos), Quaternion.Lerp(prevDesiredRot, desiredRot, tRot), prevDesiredScale);
+                    break;
+                }
+                case SmoothingType.Position:
+                {
+                    var desiredPos = desiredMatrix.GetPosition();
+                    var prevDesiredPos = _previousDesiredMatrix.GetPosition();
+                    var t = 1 - Mathf.Exp(-_smoothPositionAmount * Time.deltaTime);
+                    desiredMatrix = Matrix4x4.TRS(Vector3.Lerp(prevDesiredPos, desiredPos, t), desiredMatrix.rotation, desiredMatrix.lossyScale);
+                    break;
+                }
+                case SmoothingType.Rotation:
+                {
+                    var desiredRot = desiredMatrix.rotation;
+                    var prevDesiredRot = _previousDesiredMatrix.rotation;
+                    var t = 1 - Mathf.Exp(-_smoothRotationAmount * Time.deltaTime);
+                    desiredMatrix = Matrix4x4.TRS(desiredMatrix.GetPosition(), Quaternion.Lerp(prevDesiredRot, desiredRot, t), desiredMatrix.lossyScale);
+                    break;
+                }
+            }
+
+            _previousDesiredMatrix = desiredMatrix;
+            var nextMatrix = desiredMatrix * recoilMatrix;
+
+#if CENTURIONSYSTEM_GUN_PHYSICS
+            rb.MovePosition(nextMatrix.GetPosition());
+            rb.MoveRotation(nextMatrix.rotation);
+#else
+            target.SetPositionAndRotation(nextMatrix.GetPosition(), nextMatrix.rotation);
+#endif
+
         }
 
         [PublicAPI]
@@ -284,6 +342,24 @@ namespace CenturionCC.System.Gun
         public void SetRecoilErgonomics(float recoilErgonomics)
         {
             _recoilErgonomics = recoilErgonomics;
+        }
+
+        [PublicAPI]
+        public void SetSmoothPositionAmount(float smoothPositionAmount)
+        {
+            _smoothPositionAmount = smoothPositionAmount;
+        }
+
+        [PublicAPI]
+        public void SetSmoothRotationAmount(float smoothRotationAmount)
+        {
+            _smoothRotationAmount = smoothRotationAmount;
+        }
+
+        [PublicAPI]
+        public void SetSmoothingType(SmoothingType smoothingType)
+        {
+            _smoothingType = smoothingType;
         }
 
         [PublicAPI]
