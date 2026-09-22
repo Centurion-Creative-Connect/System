@@ -62,6 +62,12 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1114399899849564155, guid: b103a1dd3acc50d4cafd7c836568c8c2,
         type: 3}
+    - target: {fileID: 3137201429385768555, guid: b103a1dd3acc50d4cafd7c836568c8c2,
+        type: 3}
+      propertyPath: serializationData.Prefab
+      value: 
+      objectReference: {fileID: 3137201429385768555, guid: b103a1dd3acc50d4cafd7c836568c8c2,
+        type: 3}
     - target: {fileID: 3748068639473987660, guid: b103a1dd3acc50d4cafd7c836568c8c2,
         type: 3}
       propertyPath: animator
@@ -127,6 +133,12 @@ PrefabInstance:
       propertyPath: m_Name
       value: SampleSimplifiedReloadAssaultRifle
       objectReference: {fileID: 0}
+    - target: {fileID: 7623610305123204698, guid: b103a1dd3acc50d4cafd7c836568c8c2,
+        type: 3}
+      propertyPath: serializationData.Prefab
+      value: 
+      objectReference: {fileID: 7623610305123204698, guid: b103a1dd3acc50d4cafd7c836568c8c2,
+        type: 3}
     - target: {fileID: 7889929274850480810, guid: b103a1dd3acc50d4cafd7c836568c8c2,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -280,6 +292,8 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 3813341777644567273}
+  doForceReload: 0
+  reloadAmount: 0
 --- !u!114 &3813341777644567273
 MonoBehaviour:
   m_ObjectHideFlags: 0

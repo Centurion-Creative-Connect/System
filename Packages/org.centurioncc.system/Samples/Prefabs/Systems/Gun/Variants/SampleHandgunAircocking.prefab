@@ -92,6 +92,7 @@ MonoBehaviour:
   canShootWithoutMagazine: 1
   useWallCheck: 1
   useSafeZoneCheck: 1
+  useGravity: 0
   shooterOffset: {fileID: 8925030073004849081}
   mainHandleOffset: {fileID: 4894054467428419898}
   mainHandlePitchOffset: 10
@@ -321,7 +322,6 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1686121359625187359}
   baseSpeed: 60
-  baseDamage: 100
   baseDrag: 1.5
   baseHopUpStrength: 1
   trailTime: 0.1
@@ -358,6 +358,16 @@ MonoBehaviour:
   lifeTime: 5
   projectileCount: 1
   recoilPattern: {fileID: 0}
+  baseDamage: 100
+  detectionType: 3
+  respectFriendlyFireSetting: 1
+  canDamageSelf: 0
+  canDamageFriendly: 1
+  canDamageEnemy: 1
+  bodyDamageMultiplier: 1
+  headDamageMultiplier: 1
+  armDamageMultiplier: 1
+  legDamageMultiplier: 1
 --- !u!114 &1686121359625187359
 MonoBehaviour:
   m_ObjectHideFlags: 0
