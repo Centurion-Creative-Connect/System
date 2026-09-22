@@ -594,6 +594,12 @@ namespace CenturionCC.System.Gun
             }
         }
 
+        [PublicAPI]
+        public void _SendNetworkGunBehaviourEvent(NetworkEventTarget networkEventTarget, string eventName)
+        {
+            SendCustomNetworkEvent(networkEventTarget, nameof(SendGunBehaviourEvent), eventName);
+        }
+
         /// <summary>
         /// Does the gun have a next bullet to load into the chamber? 
         /// </summary>
