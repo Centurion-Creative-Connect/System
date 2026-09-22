@@ -18,7 +18,7 @@ namespace CenturionCC.System.Gimmick.SteelChallenge
         public bool useAnnouncer;
 
         [SerializeField]
-        private Transform shootingBoxReference;
+        private Collider[] footDetectionArea;
 
         [SerializeField]
         private SteelChallengeLeaderboard leaderboard;
@@ -145,8 +145,6 @@ namespace CenturionCC.System.Gimmick.SteelChallenge
 
         private void Start()
         {
-            if (shootingBoxReference == null)
-                shootingBoxReference = transform;
             _hitTimes = new DateTime[targets.Length];
             foreach (var target in targets)
                 target.game = this;
@@ -373,14 +371,55 @@ namespace CenturionCC.System.Gimmick.SteelChallenge
 
         private bool _IsFootInside()
         {
-            var p = Networking.LocalPlayer;
+            if (footDetectionArea.Length == 0)
+            {
+                return true;
+            }
 
-            var leftFoot = p.GetBonePosition(HumanBodyBones.LeftFoot);
-            var rightFoot = p.GetBonePosition(HumanBodyBones.RightFoot);
-            var footBounds = new Bounds(shootingBoxReference.position, new Vector3(1, 50, 1));
-            var isFootInsideBounds = footBounds.Contains(leftFoot) && footBounds.Contains(rightFoot);
-            var isPlayerInsideBounds = footBounds.Contains(p.GetPosition());
-            return _IsHumanoid(p) ? isFootInsideBounds : isPlayerInsideBounds;
+            var p = Networking.LocalPlayer;
+            var leftFootPos = p.GetBonePosition(HumanBodyBones.LeftFoot);
+            var rightFootPos = p.GetBonePosition(HumanBodyBones.RightFoot);
+
+            if (_IsHumanoid(p))
+            {
+                var leftFootInside = false;
+                var rightFootInside = false;
+                foreach (var footDetectionCollider in footDetectionArea)
+                {
+                    if (!leftFootInside && footDetectionCollider.ClosestPoint(leftFootPos) == leftFootPos)
+                    {
+                        leftFootInside = true;
+
+                        if (rightFootInside)
+                        {
+                            break;
+                        }
+                    }
+
+                    if (!rightFootInside && footDetectionCollider.ClosestPoint(rightFootPos) == rightFootPos)
+                    {
+                        rightFootInside = true;
+
+                        if (leftFootInside)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                return leftFootInside && rightFootInside;
+            }
+
+            var playerPos = p.GetPosition();
+            foreach (var footDetectionCollider in footDetectionArea)
+            {
+                if (Vector3.Distance(footDetectionCollider.ClosestPoint(playerPos), playerPos) < 0.01f)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private bool _IsHumanoid(VRCPlayerApi p)
