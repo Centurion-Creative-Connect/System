@@ -578,6 +578,23 @@ namespace CenturionCC.System.Gun
         }
 
         /// <summary>
+        /// Calls custom event on all behaviours. Network callable.
+        /// </summary>
+        /// <param name="eventName"></param>
+        [PublicAPI]
+        [NetworkCallable(100)]
+        public void SendGunBehaviourEvent(string eventName)
+        {
+            foreach (var behaviour in Behaviours)
+            {
+                if (behaviour != null)
+                {
+                    behaviour.SendCustomEvent(eventName);
+                }
+            }
+        }
+
+        /// <summary>
         /// Does the gun have a next bullet to load into the chamber? 
         /// </summary>
         /// <returns>`true` if the magazine or gun itself can provide the next bullet to shoot, `false` otherwise.</returns>
@@ -649,7 +666,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public void _ShootLocally(ProjectileDataProvider data, ProjectilePoolBase pool,
                                   Vector3 worldPosition, Quaternion worldRotation,
-                                  int shotCount, Guid shotGuid)
+                                  int shotCount, Guid shotGuid, bool consumeBullet = true)
         {
             if (data == null)
             {
