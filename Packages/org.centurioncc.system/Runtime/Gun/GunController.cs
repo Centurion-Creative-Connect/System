@@ -109,7 +109,9 @@ namespace CenturionCC.System.Gun
         private void HandleVRInputs()
         {
             if (!Networking.LocalPlayer.IsUserInVR() && !allowVRInteractionOnDesktop)
+            {
                 return;
+            }
 
             InputGunDirection();
             _wasPerformedThisFrame = (_lastIsActionPressed ^ _isActionPerformed) & _isActionPerformed;
@@ -133,6 +135,11 @@ namespace CenturionCC.System.Gun
 
         private void HandleDesktopInputs()
         {
+            if (Networking.LocalPlayer.IsUserInVR() && !Input.GetKey(KeyCode.LeftShift))
+            {
+                return;
+            }
+
             if (Input.GetKeyDown(KeyCode.B))
             {
                 CycleFireMode();
