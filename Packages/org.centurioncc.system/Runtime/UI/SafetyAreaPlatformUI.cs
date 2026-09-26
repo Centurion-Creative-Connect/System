@@ -259,6 +259,7 @@ namespace CenturionCC.System.UI
         public void DisableResetButton()
         {
             resetButton.interactable = false;
+            SendCustomEventDelayedSeconds(nameof(EnableResetButton), 5f);
         }
 
         public void EnableResetButton()
