@@ -6,7 +6,6 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
 using VRC.SDKBase;
-using NotImplementedException = System.NotImplementedException;
 namespace CenturionCC.System.Gimmick.AreaPlayerCounter
 {
     public abstract class AreaPlayerCounterCallback : UdonSharpBehaviour
@@ -66,6 +65,7 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
                 if (player == null)
                 {
                     CenturionDiagnostic.LogWarning($"[PlayerAreaCounter-{name}] null player in the dictionary!");
+                    _playersInAreaDict.Remove(playerToken);
                     continue;
                 }
 
@@ -179,10 +179,13 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
         [UsedImplicitly]
         public void OnPlayerRemoved(PlayerBase player)
         {
-            if (!_playersInAreaDict.Remove(player)) return;
+            var removeSuccessful = _playersInAreaDict.Remove(player);
+            Recount();
 
-            DecrementTeamCount(player.TeamId);
-            player.OnAreaExit(this);
+            if (removeSuccessful && player != null)
+            {
+                player.OnAreaExit(this);
+            }
         }
 
         private void DecrementTeamCount(int id)
