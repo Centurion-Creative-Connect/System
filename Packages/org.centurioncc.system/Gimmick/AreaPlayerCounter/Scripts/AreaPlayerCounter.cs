@@ -179,8 +179,13 @@ namespace CenturionCC.System.Gimmick.AreaPlayerCounter
         [UsedImplicitly]
         public void OnPlayerRemoved(PlayerBase player)
         {
-            _playersInAreaDict.Remove(player);
+            var removeSuccessful = _playersInAreaDict.Remove(player);
             Recount();
+
+            if (removeSuccessful && player != null)
+            {
+                player.OnAreaExit(this);
+            }
         }
 
         private void DecrementTeamCount(int id)
