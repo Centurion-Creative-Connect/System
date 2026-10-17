@@ -2,7 +2,6 @@
 using CenturionCC.System.Gun.DataStore;
 using DerpyNewbie.Common;
 using JetBrains.Annotations;
-using System;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -31,6 +30,12 @@ namespace CenturionCC.System.Utils.PlayerLocomotion
 
         [SerializeField] [Range(0, 1F)]
         private float baseGunDirectionDirectionThreshold = 0.88F;
+
+        [SerializeField] [Range(0, 1F)]
+        [Tooltip("Additional dot-product margin required to enter walking state from running state.\n" +
+                 "Once walking, player stays walking until gun direction falls below the threshold itself.\n" +
+                 "Prevents sudden speed reductions when gun direction hovers around the threshold.")]
+        private float baseGunSprintDirectionMargin = 0.04F;
 
         [Header("Combat Tag")]
         [SerializeField]
@@ -97,6 +102,12 @@ namespace CenturionCC.System.Utils.PlayerLocomotion
             var head = Networking.LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
             var headForward = head.rotation * Vector3.forward;
 
+            // Hysteresis: require extra margin to enter walking state, but exit at the threshold itself
+            var wasWalking = !_canRun;
+            var threshold = wasWalking
+                ? ActualGunSprintDirectionThreshold
+                : ActualGunSprintDirectionThreshold + baseGunSprintDirectionMargin;
+
             _canRun = true;
             _combatTagged = false;
             foreach (var gun in locallyHeldGuns)
@@ -107,7 +118,7 @@ namespace CenturionCC.System.Utils.PlayerLocomotion
                 var gunForward = firingRot * Vector3.forward;
                 var dot = Vector3.Dot(headForward, gunForward);
 
-                if (dot > ActualGunSprintDirectionThreshold)
+                if (dot > threshold)
                 {
                     _canRun = !ActualUseGunSprint;
                     break;
@@ -311,6 +322,13 @@ namespace CenturionCC.System.Utils.PlayerLocomotion
         {
             get => baseGunDirectionDirectionThreshold;
             set => baseGunDirectionDirectionThreshold = value;
+        }
+
+        [PublicAPI]
+        public float BaseGunSprintDirectionMargin
+        {
+            get => baseGunSprintDirectionMargin;
+            set => baseGunSprintDirectionMargin = value;
         }
 
         [PublicAPI]
