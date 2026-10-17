@@ -100,7 +100,7 @@ namespace CenturionCC.System.Editor.ControlPanel
         public static void OpenWindow()
         {
             var window = GetWindow<CenturionSystemControlPanelWindow>();
-            window.titleContent = new GUIContent("Centurion System Control Panel");
+            window.titleContent = new GUIContent("Centurion System");
             window.Show();
         }
 
