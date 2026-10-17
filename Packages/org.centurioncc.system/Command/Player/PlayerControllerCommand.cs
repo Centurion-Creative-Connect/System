@@ -1,6 +1,4 @@
-﻿using CenturionCC.System.Gun;
-using CenturionCC.System.Utils;
-using CenturionCC.System.Utils.PlayerLocomotion;
+﻿using CenturionCC.System.Utils.PlayerLocomotion;
 using DerpyNewbie.Common;
 using DerpyNewbie.Logger;
 using UdonSharp;
@@ -32,6 +30,7 @@ namespace CenturionCC.System.Command.Player
             "  groundSnapForward [float]\n" +
             "  useGunSprint [bool]\n" +
             "  gunSprintThreshold [float]\n" +
+            "  gunSprintMargin [float]\n" +
             "  gunSprintRun [float]\n" +
             "  gunSprintWalk [float]\n" +
             "  useCombatTag [bool]\n" +
@@ -66,6 +65,9 @@ namespace CenturionCC.System.Command.Player
                 case "gunsprintthreshold":
                 case "dirthreshold":
                 case "gundirup":
+                case "gunsprintdirectionmargin": // proper
+                case "gunsprintmargin":
+                case "dirmargin":
                 case "gunsprintrunspeed": // proper
                 case "gunsprintrun":
                 case "gunsprintwalkspeed": // proper
@@ -121,6 +123,7 @@ namespace CenturionCC.System.Command.Player
                         $"  GunSprintRun   : {gunExt.BaseGunSprintRunSpeed}\n" +
                         $"  GunSprintWalk  : {gunExt.BaseGunSprintWalkSpeed}\n" +
                         $"  DirThreshold   : {gunExt.BaseGunSprintDirectionThreshold}\n" +
+                        $"  DirMargin      : {gunExt.BaseGunSprintDirectionMargin}\n" +
                         $"  UseCombatTag   : {gunExt.BaseUseCombatTag}\n" +
                         $"  CombatTagTime  : {gunExt.BaseCombatTagTime}\n" +
                         $"  CombatTagSpdMul: {gunExt.BaseCombatTagSpeedMultiplier}\n" +
@@ -185,6 +188,13 @@ namespace CenturionCC.System.Command.Player
                     if (hasValue)
                         gunExt.BaseGunSprintDirectionThreshold = value;
                     console.Println($"Base Gun Sprint Direction Threshold: {gunExt.BaseGunSprintDirectionThreshold}");
+                    return;
+                case "gunsprintdirectionmargin":
+                case "gunsprintmargin":
+                case "dirmargin":
+                    if (hasValue)
+                        gunExt.BaseGunSprintDirectionMargin = value;
+                    console.Println($"Base Gun Sprint Direction Margin: {gunExt.BaseGunSprintDirectionMargin}");
                     return;
                 case "gunsprintrunspeed":
                 case "gunsprintrun":
