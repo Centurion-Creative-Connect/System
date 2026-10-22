@@ -15,11 +15,6 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
     [CustomEditor(typeof(GunVariantDataStore))]
     public class GunVariantDataStoreEditor : UnityEditor.Editor
     {
-        public enum TimeUnit
-        {
-            Seconds,
-            Minutes,
-        }
 
         private static readonly string[] PlayerMovementMessages =
         {
@@ -57,6 +52,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
             { "MaxTPMTooltip", new GUIContent("", "Minimum minutes required between single trigger bursts. (Trigger Per Minute.)") },
         };
 
+        private static bool _foldoutBase = true;
         private static bool _foldoutAnimation;
         private static bool _foldoutReferences;
         private static bool _foldoutOffsets;
@@ -110,116 +106,132 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
                 }
             }
 
-            EditorGUILayout.PropertyField(so.FindProperty("uniqueId"));
-            EditorGUILayout.PropertyField(so.FindProperty("weaponName"));
-            EditorGUILayout.PropertyField(so.FindProperty("holsterSize"));
-            EditorGUILayout.PropertyField(so.FindProperty("ergonomics"));
-            EditorGUILayout.PropertyField(so.FindProperty("behaviours"));
-
-            if (GUIUtil.Foldout("Animation Settings", ref _foldoutAnimation))
-            {
-                using (new EditorGUI.IndentLevelScope())
+            using (new GUILayout.VerticalScope("badge"))
+                if (GUIUtil.Foldout("Base Settings", ref _foldoutBase))
                 {
-                    EditorGUILayout.PropertyField(so.FindProperty("animator"));
-                    EditorGUILayout.PropertyField(so.FindProperty("syncedAnimatorParameterNames"));
-                }
-            }
-
-            if (GUIUtil.Foldout("Fire Mode Settings", ref _foldoutFireMode))
-            {
-                using (new EditorGUI.IndentLevelScope())
-                {
-                    _timeUnit = (TimeUnit)EditorGUILayout.EnumPopup("Per Time Scale", _timeUnit);
-                    DrawFireModeInspector(so);
-                }
-            }
-
-            if (GUIUtil.Foldout("Offset References", ref _foldoutOffsets))
-            {
-                using (new EditorGUI.IndentLevelScope())
-                {
-                    EditorGUILayout.PropertyField(so.FindProperty("shooterOffset"));
-                    EditorGUILayout.PropertyField(so.FindProperty("mainHandleOffset"));
-                    EditorGUILayout.PropertyField(so.FindProperty("mainHandlePitchOffset"));
-                    EditorGUILayout.PropertyField(so.FindProperty("subHandleOffset"));
-                    EditorGUILayout.PropertyField(so.FindProperty("isDoubleHanded"));
-                }
-            }
-
-            if (GUIUtil.Foldout("DataStore References", ref _foldoutReferences))
-            {
-                using (new EditorGUI.IndentLevelScope())
-                {
-                    GUIUtil.FoldoutPropertyField(so.FindProperty("projectileData"), 3);
-                    GUIUtil.FoldoutPropertyField(so.FindProperty("audioData"), 3);
-                    GUIUtil.FoldoutPropertyField(so.FindProperty("hapticData"), 3);
-                    GUIUtil.FoldoutPropertyField(so.FindProperty("cameraData"), 3);
-                }
-            }
-
-            if (GUIUtil.Foldout("Reload Settings", ref _foldoutReload))
-            {
-                using (new EditorGUI.IndentLevelScope())
-                {
-                    DrawReloadInspector(so);
-                }
-            }
-
-            if (GUIUtil.Foldout("Message Settings", ref _foldoutMessages))
-            {
-                using (new EditorGUI.IndentLevelScope())
-                {
-                    EditorGUILayout.PropertyField(so.FindProperty("desktopTooltip"));
-                    EditorGUILayout.PropertyField(so.FindProperty("vrTooltip"));
-                }
-            }
-
-            if (GUIUtil.Foldout("ObjectMarker Settings", ref _foldoutObjectMarker))
-            {
-                using (new EditorGUI.IndentLevelScope())
-                {
-                    EditorGUILayout.PropertyField(so.FindProperty("objectType"));
-                    EditorGUILayout.PropertyField(so.FindProperty("objectWeight"));
-                    EditorGUILayout.PropertyField(so.FindProperty("tags"));
-                }
-            }
-
-            if (GUIUtil.Foldout("PlayerController Settings", ref _foldoutPlayerController))
-            {
-                using (new EditorGUI.IndentLevelScope())
-                {
-                    DrawPlayerControllerInspector(so);
-                }
-            }
-
-            if (GUIUtil.Foldout("Advanced Options", ref _foldoutAdvancedOptions))
-            {
-                using (new EditorGUI.IndentLevelScope())
-                {
-                    EditorGUILayout.PropertyField(so.FindProperty("useWallCheck"));
-                    EditorGUILayout.PropertyField(so.FindProperty("useSafeZoneCheck"));
-                    EditorGUILayout.PropertyField(so.FindProperty("projectilePoolOverride"));
-                    EditorGUILayout.PropertyField(so.FindProperty("useGravity"));
-
-                    using (new EditorGUI.DisabledScope(true))
+                    using (new EditorGUI.IndentLevelScope())
                     {
-                        EditorGUILayout.PropertyField(so.FindProperty("dataVersion"));
-                        if (GUIUtil.Foldout("Obsolete Fields", ref _foldoutObsolete))
+                        EditorGUILayout.PropertyField(so.FindProperty("uniqueId"));
+                        EditorGUILayout.PropertyField(so.FindProperty("weaponName"));
+                        EditorGUILayout.PropertyField(so.FindProperty("holsterSize"));
+                        EditorGUILayout.PropertyField(so.FindProperty("ergonomics"));
+                        EditorGUILayout.PropertyField(so.FindProperty("behaviours"));
+                    }
+                }
+
+            using (new GUILayout.VerticalScope("badge"))
+                if (GUIUtil.Foldout("Animation Settings", ref _foldoutAnimation))
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        EditorGUILayout.PropertyField(so.FindProperty("animator"));
+                        EditorGUILayout.PropertyField(so.FindProperty("syncedAnimatorParameterNames"));
+                    }
+                }
+
+            using (new GUILayout.VerticalScope("badge"))
+                if (GUIUtil.Foldout("Fire Mode Settings", ref _foldoutFireMode))
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        _timeUnit = (TimeUnit)EditorGUILayout.EnumPopup("Per Time Scale", _timeUnit);
+                        DrawFireModeInspector(so);
+                    }
+                }
+
+            using (new GUILayout.VerticalScope("badge"))
+                if (GUIUtil.Foldout("Offset References", ref _foldoutOffsets))
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        EditorGUILayout.PropertyField(so.FindProperty("shooterOffset"));
+                        EditorGUILayout.PropertyField(so.FindProperty("mainHandleOffset"));
+                        EditorGUILayout.PropertyField(so.FindProperty("mainHandlePitchOffset"));
+                        EditorGUILayout.PropertyField(so.FindProperty("subHandleOffset"));
+                        EditorGUILayout.PropertyField(so.FindProperty("isDoubleHanded"));
+                    }
+                }
+
+            using (new GUILayout.VerticalScope("badge"))
+                if (GUIUtil.Foldout("DataStore References", ref _foldoutReferences))
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        GUIUtil.FoldoutPropertyField(so.FindProperty("projectileData"), 3);
+                        GUIUtil.FoldoutPropertyField(so.FindProperty("audioData"), 3);
+                        GUIUtil.FoldoutPropertyField(so.FindProperty("hapticData"), 3);
+                        GUIUtil.FoldoutPropertyField(so.FindProperty("cameraData"), 3);
+                    }
+                }
+
+            using (new GUILayout.VerticalScope("badge"))
+                if (GUIUtil.Foldout("Reload Settings", ref _foldoutReload))
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        DrawReloadInspector(so);
+                    }
+                }
+
+            using (new GUILayout.VerticalScope("badge"))
+                if (GUIUtil.Foldout("Message Settings", ref _foldoutMessages))
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        EditorGUILayout.PropertyField(so.FindProperty("desktopTooltip"));
+                        EditorGUILayout.PropertyField(so.FindProperty("vrTooltip"));
+                    }
+                }
+
+            using (new GUILayout.VerticalScope("badge"))
+                if (GUIUtil.Foldout("ObjectMarker Settings", ref _foldoutObjectMarker))
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        EditorGUILayout.PropertyField(so.FindProperty("objectType"));
+                        EditorGUILayout.PropertyField(so.FindProperty("objectWeight"));
+                        EditorGUILayout.PropertyField(so.FindProperty("tags"));
+                    }
+                }
+
+            using (new GUILayout.VerticalScope("badge"))
+                if (GUIUtil.Foldout("PlayerController Settings", ref _foldoutPlayerController))
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        DrawPlayerControllerInspector(so);
+                    }
+                }
+
+            using (new GUILayout.VerticalScope("badge"))
+                if (GUIUtil.Foldout("Advanced Options", ref _foldoutAdvancedOptions))
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        EditorGUILayout.PropertyField(so.FindProperty("useWallCheck"));
+                        EditorGUILayout.PropertyField(so.FindProperty("useSafeZoneCheck"));
+                        EditorGUILayout.PropertyField(so.FindProperty("projectilePoolOverride"));
+                        EditorGUILayout.PropertyField(so.FindProperty("useGravity"));
+
+                        using (new EditorGUI.DisabledScope(true))
                         {
-                            using (new EditorGUI.IndentLevelScope())
+                            EditorGUILayout.PropertyField(so.FindProperty("dataVersion"));
+                            if (GUIUtil.Foldout("Obsolete Fields", ref _foldoutObsolete))
                             {
-                                EditorGUILayout.PropertyField(so.FindProperty("behaviour"));
-                                EditorGUILayout.PropertyField(so.FindProperty("maxRoundsPerSecond"));
+                                using (new EditorGUI.IndentLevelScope())
+                                {
+                                    EditorGUILayout.PropertyField(so.FindProperty("behaviour"));
+                                    EditorGUILayout.PropertyField(so.FindProperty("maxRoundsPerSecond"));
+                                }
                             }
                         }
-                    }
 
-                    if (GUILayout.Button("Run Migration without version check"))
-                    {
-                        CenturionSystemMigrator.UpgradeGunVariantDataStore(target as GunVariantDataStore);
+                        if (GUILayout.Button("Run Migration without version check"))
+                        {
+                            CenturionSystemMigrator.UpgradeGunVariantDataStore(target as GunVariantDataStore);
+                        }
                     }
                 }
-            }
 
             so.ApplyModifiedProperties();
         }
@@ -238,10 +250,10 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
             if (data.IsDoubleHanded)
                 DrawWireSphere(pos + rot * data.SubHandlePositionOffset, .05F, pickupColor, "SubHandle");
 
-            if (data.AudioData != null)
+            if (data.AudioData)
                 GunAudioDataStoreEditor.DrawHandles(data.transform, data.AudioData);
 
-            if (data.ProjectileData != null && data.ProjectileData as GunBulletDataStore != null)
+            if (data.ProjectileData && data.ProjectileData as GunBulletDataStore)
                 GunBulletDataStoreEditor.DrawHandles(data.transform, data.FiringPositionOffset,
                     data.FiringRotationOffset,
                     (GunBulletDataStore)data.ProjectileData);
@@ -255,8 +267,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
             if (string.IsNullOrWhiteSpace(text))
                 return;
 
-            if (style == null)
-                style = new GUIStyle { fontSize = 16, normal = { textColor = Color.white } };
+            style ??= new GUIStyle { fontSize = 16, normal = { textColor = Color.white } };
 
             Handles.zTest = CompareFunction.Disabled;
             Handles.Label(pos + Vector3.up * 0.025F, text, style);
@@ -520,6 +531,11 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
                     GUIUtil.FoldoutPropertyField(property);
                 }
             }
+        }
+        private enum TimeUnit
+        {
+            Seconds,
+            Minutes,
         }
 
         private struct FireModeSetting
