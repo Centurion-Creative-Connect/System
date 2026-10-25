@@ -139,7 +139,7 @@ namespace CenturionCC.System.Gun
         {
             if (!Event.Invoke_CanShoot())
             {
-                ruleId = 200;
+                ruleId = ShotReasonId.CallbackReturnedFalse;
                 return false;
             }
 

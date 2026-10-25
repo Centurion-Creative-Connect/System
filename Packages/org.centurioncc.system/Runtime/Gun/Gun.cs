@@ -24,13 +24,9 @@ namespace CenturionCC.System.Gun
         public override GunVariantDataStore VariantData => variantData;
         #endregion
 
-        protected override void Start()
-        {
-            base.Start();
-
-            updateManager.SubscribeUpdate(this);
-            updateManager.SubscribeSlowUpdate(this);
-        }
+        // Not subscribing to updateManager: Gun has no _Update/_SlowUpdate handlers since positioning moved to
+        // GunPositioningHelper, and empty subscriptions cost an event call per Gun per frame plus SlowUpdate slots
+        // taken away from other subscribers.
 
         #region SerializeFields
         [SerializeField] protected GunVariantDataStore variantData;

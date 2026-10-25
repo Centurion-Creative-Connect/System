@@ -39,6 +39,7 @@ namespace CenturionCC.System.Gun
         private int _isActionPerformed;
 
         private int _lastIsActionPressed;
+        private GunBase[] _offsetAppliedGuns = new GunBase[0];
         private int _wasPerformedThisFrame;
 
         public float CurrentPrimaryXOffset
@@ -71,9 +72,19 @@ namespace CenturionCC.System.Gun
 
         public override void PostLateUpdate()
         {
-            HandleVRInputs();
-            HandleDesktopInputs();
-            HandleLocalHeldGuns();
+            var isUserInVR = Networking.LocalPlayer.IsUserInVR();
+            HandleVRInputs(isUserInVR);
+            HandleDesktopInputs(isUserInVR);
+
+            // Dropping replaces the array, so iterating the current one is safe
+            foreach (var gun in gunManager.GetLocallyHeldGunInstances())
+            {
+                // Locally held guns include ones local player is only supporting, which may become local after polling
+                gun._PollHolders();
+                RefreshPrimaryXOffset(gun);
+
+                if (gun.IsLocal) UpdateLocalGun(gun);
+            }
         }
 
         public override void InputJump(bool value, UdonInputEventArgs args)
@@ -96,6 +107,8 @@ namespace CenturionCC.System.Gun
         {
             foreach (var gun in gunManager.GetLocallyHeldGunInstances())
             {
+                if (!gun.IsLocal) continue;
+
                 // UdonSharp cannot discard a variable with _
                 // ReSharper disable once UnusedVariable
                 gun._GetFiringPositionAndRotation(out var firingPos, out var firingRot);
@@ -106,9 +119,9 @@ namespace CenturionCC.System.Gun
             }
         }
 
-        private void HandleVRInputs()
+        private void HandleVRInputs(bool isUserInVR)
         {
-            if (!Networking.LocalPlayer.IsUserInVR() && !allowVRInteractionOnDesktop)
+            if (!isUserInVR && !allowVRInteractionOnDesktop)
             {
                 return;
             }
@@ -117,10 +130,12 @@ namespace CenturionCC.System.Gun
             _wasPerformedThisFrame = (_lastIsActionPressed ^ _isActionPerformed) & _isActionPerformed;
             _lastIsActionPressed = _isActionPerformed;
 
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             if (_wasPerformedThisFrame != 0)
             {
                 Debug.Log($"[GunController] wasPressedThisFrame: {_wasPerformedThisFrame}, isActionProcessed: {_isActionPerformed}");
             }
+#endif
 
             if (WasPerformedThisFrame((int)fireModeActionType))
             {
@@ -133,9 +148,9 @@ namespace CenturionCC.System.Gun
             }
         }
 
-        private void HandleDesktopInputs()
+        private void HandleDesktopInputs(bool isUserInVR)
         {
-            if (Networking.LocalPlayer.IsUserInVR() && !Input.GetKey(KeyCode.LeftShift))
+            if (isUserInVR && !Input.GetKey(KeyCode.LeftShift))
             {
                 return;
             }
@@ -157,41 +172,66 @@ namespace CenturionCC.System.Gun
             }
         }
 
-        private void HandleLocalHeldGuns()
+        /// <summary>
+        /// Supporting holders must not apply their offset, so track which guns have it applied as they switch between local and supporting.
+        /// </summary>
+        private void RefreshPrimaryXOffset(GunBase gun)
         {
-            foreach (var gun in gunManager.GetLocallyHeldGunInstances())
+            if (!gun.IsLocal)
             {
-                gun.AnimationHelper._SetTriggerProgress(GetMainTriggerPull(gun));
-                gun.PositioningHelper._UpdatePosition();
-
-                foreach (var behaviour in gun.Behaviours)
-                {
-                    if (!behaviour) continue;
-                    behaviour.OnGunUpdate(gun);
-                }
-
-                if (gun.IsInWall)
-                {
-                    if (gun.MainHandle.IsPickedUpLocally)
-                    {
-                        Networking.LocalPlayer.PlayHapticEventInHand(gun.MainHandle.CurrentHand, .2F, .02F, .1F);
-                    }
-                    if (gun.SubHandle && gun.SubHandle.IsPickedUpLocally)
-                    {
-                        Networking.LocalPlayer.PlayHapticEventInHand(gun.SubHandle.CurrentHand, .2F, .02F, .1F);
-                    }
-                }
+                _offsetAppliedGuns = _offsetAppliedGuns.RemoveItem(gun);
+                return;
             }
+
+            if (_offsetAppliedGuns.ContainsItem(gun)) return;
+
+            _offsetAppliedGuns = _offsetAppliedGuns.AddAsSet(gun);
+            ApplyPrimaryXOffsetTo(gun);
+        }
+
+        private void ApplyPrimaryXOffsetTo(GunBase gun)
+        {
+            gun.PositioningHelper.SetPrimaryXAngleOffset(_currentPrimaryXOffset);
+            gun.PositioningHelper._RequestSync();
+        }
+
+        /// <summary>
+        /// Per-frame work for a gun the local player is in control of.
+        /// </summary>
+        private static void UpdateLocalGun(GunBase gun)
+        {
+            gun.AnimationHelper._SetTriggerProgress(GetMainTriggerPull(gun));
+            gun.PositioningHelper._UpdatePosition();
+
+            foreach (var behaviour in gun.Behaviours)
+            {
+                if (!behaviour) continue;
+                behaviour.OnGunUpdate(gun);
+            }
+
+            if (gun.IsInWall)
+            {
+                PlayInWallHaptic(gun.MainHandle);
+                PlayInWallHaptic(gun.SubHandle);
+            }
+        }
+
+        private static void PlayInWallHaptic(GunHandle handle)
+        {
+            if (handle && handle.IsPickedUpLocally)
+                Networking.LocalPlayer.PlayHapticEventInHand(handle.CurrentHand, .2F, .02F, .1F);
         }
 
         [PublicAPI]
         public void SimplifiedReload()
         {
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             Debug.Log("[GunController] SimplifiedReload");
+#endif
 
             foreach (var gun in gunManager.GetLocallyHeldGunInstances())
             {
-                if (gun.ReloadType == ReloadType.None)
+                if (!gun.IsLocal || gun.ReloadType == ReloadType.None)
                 {
                     continue;
                 }
@@ -203,10 +243,13 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public void CycleFireMode()
         {
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             Debug.Log("[GunController] CycleFireMode");
+#endif
 
             foreach (var gun in gunManager.GetLocallyHeldGunInstances())
             {
+                if (!gun.IsLocal) continue;
                 gun.CurrentFireModeIndex++;
             }
         }
@@ -215,8 +258,8 @@ namespace CenturionCC.System.Gun
         {
             foreach (var gun in gunManager.GetLocallyHeldGunInstances())
             {
-                gun.PositioningHelper.SetPrimaryXAngleOffset(_currentPrimaryXOffset);
-                gun.PositioningHelper._RequestSync();
+                if (!gun.IsLocal) continue;
+                ApplyPrimaryXOffsetTo(gun);
             }
         }
 
@@ -240,8 +283,12 @@ namespace CenturionCC.System.Gun
 
         public override void OnPickedUpLocally(GunBase instance)
         {
-            instance.PositioningHelper.SetPrimaryXAngleOffset(_currentPrimaryXOffset);
-            instance.PositioningHelper._RequestSync();
+            RefreshPrimaryXOffset(instance);
+        }
+
+        public override void OnDropLocally(GunBase instance)
+        {
+            _offsetAppliedGuns = _offsetAppliedGuns.RemoveItem(instance);
         }
     }
 }

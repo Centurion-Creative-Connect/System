@@ -74,9 +74,13 @@ namespace CenturionCC.System.Gun
         private bool _hasBulletInChamber;
         private bool _hasCocked;
         private bool _isLocal;
+        private bool _isLocalUserInVR;
         private int _burstCount;
         private int _collisionCount;
         private int _fireModeIndex;
+        private bool _isHeldLocally;
+        private bool _positionedMainHeld;
+        private bool _positionedSubHeld;
         private readonly DataList _highlightingHolster = new DataList();
         #endregion
 
@@ -123,8 +127,11 @@ namespace CenturionCC.System.Gun
         /// <summary>
         /// Is the <see cref="CurrentHolder"/> in VR?
         /// </summary>
+        /// <remarks>
+        /// Local holder is always the local player, so skip resolving <see cref="CurrentHolder"/> in the per-frame local paths.
+        /// </remarks>
         [PublicAPI]
-        public bool IsVR => Utilities.IsValid(CurrentHolder) && CurrentHolder.IsUserInVR();
+        public bool IsVR => IsLocal ? _isLocalUserInVR : Utilities.IsValid(CurrentHolder) && CurrentHolder.IsUserInVR();
 
         /// <summary>
         /// Currently active <see cref="FireMode"/> of this Gun.
@@ -452,76 +459,26 @@ namespace CenturionCC.System.Gun
         public ShotResult _TryToShoot()
         {
             if (!VariantData)
-            {
-                Trigger = TriggerState.Fired;
-
-                if (gunManager) gunManager.Event.Invoke_OnShootCancelled(this, 1);
-                return ShotResult.Cancelled;
-            }
+                return _CancelShot(ShotReasonId.NoVariantData);
 
             if (FireMode == FireMode.Safety)
-            {
-                Trigger = TriggerState.Fired;
-
-                if (gunManager) gunManager.Event.Invoke_OnShootCancelled(this, 12);
-                return ShotResult.Cancelled;
-            }
+                return _CancelShot(ShotReasonId.SelectorSafety);
 
             if (!HasBulletInChamber)
-            {
-                Trigger = TriggerState.Fired;
-
-                if (HasCocked)
-                {
-                    _EmptyShoot();
-                    gunManager.Event.Invoke_OnShootFailed(this, 14);
-                    return ShotResult.Failed;
-                }
-
-                gunManager.Event.Invoke_OnShootCancelled(this, 14);
-                return ShotResult.Cancelled;
-            }
+                return HasCocked ? _FailShot(ShotReasonId.NoBulletInChamber) : _CancelShot(ShotReasonId.NoBulletInChamber);
 
             // ReSharper disable once PossibleNullReferenceException
             if (IsInWall && VariantData.UseWallCheck && (!gunManager || gunManager.UseCollisionCheck))
-            {
-                Trigger = TriggerState.Fired;
-
-                if (gunManager) gunManager.Event.Invoke_OnShootCancelled(this, 100);
-                return ShotResult.Cancelled;
-            }
+                return _CancelShot(ShotReasonId.InWall);
 
             if (gunManager && !gunManager.CanShoot(this, out var reasonId))
-            {
-                Trigger = TriggerState.Fired;
-
-                gunManager.Event.Invoke_OnShootCancelled(this, reasonId);
-                return ShotResult.Cancelled;
-            }
+                return _CancelShot(reasonId);
 
             if (State != GunState.Idle)
-            {
-                Trigger = TriggerState.Fired;
-
-                _EmptyShoot();
-                gunManager.Event.Invoke_OnShootFailed(this, 13);
-                return ShotResult.Failed;
-            }
+                return _FailShot(ShotReasonId.StateNotIdle);
 
             if (!ReloadHelper.HasMagazine && !VariantData.CanShootWithoutMagazine)
-            {
-                Trigger = TriggerState.Fired;
-
-                if (HasCocked)
-                {
-                    _EmptyShoot();
-                    gunManager.Event.Invoke_OnShootFailed(this, 15);
-                    return ShotResult.Failed;
-                }
-
-                gunManager.Event.Invoke_OnShootCancelled(this, 15);
-                return ShotResult.Cancelled;
-            }
+                return HasCocked ? _FailShot(ShotReasonId.NoMagazine) : _CancelShot(ShotReasonId.NoMagazine);
 
             var now = Networking.GetNetworkDateTime();
             if (now.Subtract(LastShotTime).TotalSeconds < SecondsPerRound ||
@@ -558,6 +515,29 @@ namespace CenturionCC.System.Gun
             }
 
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(Internal_NetworkedEmptyShoot));
+        }
+
+        /// <summary>
+        /// Ends the trigger pull without any sound.
+        /// </summary>
+        private ShotResult _CancelShot(int reasonId)
+        {
+            Trigger = TriggerState.Fired;
+
+            if (gunManager) gunManager.Event.Invoke_OnShootCancelled(this, reasonId);
+            return ShotResult.Cancelled;
+        }
+
+        /// <summary>
+        /// Ends the trigger pull with a *click*.
+        /// </summary>
+        private ShotResult _FailShot(int reasonId)
+        {
+            Trigger = TriggerState.Fired;
+
+            _EmptyShoot();
+            if (gunManager) gunManager.Event.Invoke_OnShootFailed(this, reasonId);
+            return ShotResult.Failed;
         }
 
         /// <summary>
@@ -801,14 +781,20 @@ namespace CenturionCC.System.Gun
         {
             if (!Networking.IsOwner(gameObject))
                 Networking.SetOwner(player, gameObject);
-            if (!Networking.IsOwner(MainHandle.gameObject))
+            // Taking ownership of a handle someone else is holding desyncs their hand from the handle
+            if (!Networking.IsOwner(MainHandle.gameObject) && !MainHandle.IsPickedUpByOthers)
                 Networking.SetOwner(player, MainHandle.gameObject);
-            if (SubHandle != null && !Networking.IsOwner(SubHandle.gameObject))
+            if (SubHandle != null && !Networking.IsOwner(SubHandle.gameObject) && !SubHandle.IsPickedUpByOthers)
                 Networking.SetOwner(player, SubHandle.gameObject);
         }
 
         protected void _UpdatePositioningHelper()
         {
+            var mainHeld = _IsHandleHeld(MainHandle);
+            var subHeld = _IsHandleHeld(SubHandle);
+            _positionedMainHeld = mainHeld;
+            _positionedSubHeld = subHeld;
+
             if (SubHandle == null)
             {
                 positioningHelper.SetControlAndPivot(ControlType.OneHanded, PivotType.Primary);
@@ -816,8 +802,8 @@ namespace CenturionCC.System.Gun
             }
 
             positioningHelper.SetControlAndPivot(
-                MainHandle.IsPickedUp && SubHandle.IsPickedUp ? ControlType.TwoHanded : MainHandle.IsPickedUp || SubHandle.IsPickedUp || IsHolstered ? ControlType.OneHanded : ControlType.None,
-                !MainHandle.IsPickedUp && SubHandle.IsPickedUp ? PivotType.Secondary : PivotType.Primary
+                mainHeld && subHeld ? ControlType.TwoHanded : mainHeld || subHeld || IsHolstered ? ControlType.OneHanded : ControlType.None,
+                !mainHeld && subHeld ? PivotType.Secondary : PivotType.Primary
             );
         }
 
@@ -832,6 +818,7 @@ namespace CenturionCC.System.Gun
             // init GunHandle & PositioningHelper
             {
                 var isUserInVR = Networking.LocalPlayer.IsUserInVR();
+                _isLocalUserInVR = isUserInVR;
                 MainHandle.callback = this;
                 MainHandle.handleType = HandleType.MainHandle;
                 MainHandle.Detach();
@@ -841,7 +828,7 @@ namespace CenturionCC.System.Gun
                 {
                     SubHandle.callback = this;
                     SubHandle.handleType = HandleType.SubHandle;
-                    SubHandle.SetPickupable(CanBeTwoHanded && isUserInVR);
+                    SubHandle.SetPickupable(CanBeTwoHanded);
                     SubHandle.Detach();
                 }
 
@@ -867,11 +854,7 @@ namespace CenturionCC.System.Gun
             BulletsInMagazine = 0;
             CollisionCount = 0;
 
-            foreach (var behaviour in Behaviours)
-            {
-                if (behaviour == null) continue;
-                behaviour.Setup(this);
-            }
+            _NotifySetup(Behaviours);
         }
 
         protected bool _AddHighlightingHolster(GunHolster holster)
@@ -935,13 +918,235 @@ namespace CenturionCC.System.Gun
                 return;
             }
 
-            if (ActiveHolster) ActiveHolster.RemoveHolsteredObject(this);
-            MainHandle.UnHolster();
-            ActiveHolster = null;
+            _ClearLocalHolsterState();
             IsHolstered = false;
 
             _UpdatePositioningHelper();
             _RequestSync();
+        }
+
+        /// <summary>
+        /// Local player is in control of this gun when holding MainHandle, or holding SubHandle while no one else holds MainHandle.
+        /// Holding only SubHandle while someone else holds MainHandle makes local player a supporting holder.
+        /// </summary>
+        protected bool ShouldBeLocalHolder => MainHandle.IsPickedUpLocally ||
+                                              (SubHandle != null && SubHandle.IsPickedUpLocally && !MainHandle.IsPickedUpByOthers);
+
+        protected bool IsHeldByOthers => MainHandle.IsPickedUpByOthers || (SubHandle != null && SubHandle.IsPickedUpByOthers);
+
+        private bool IsHeldLocally => MainHandle.IsPickedUpLocally || (SubHandle != null && SubHandle.IsPickedUpLocally);
+
+        /// <summary>
+        /// Brings local holder state in line with who is currently holding which handle. Safe to call any number of times.
+        /// </summary>
+        /// <param name="forceSync">
+        /// Reposition and sync even when nothing changed, e.g. after a local handle event.
+        /// Otherwise positioning is only refreshed when held handles changed, and sync only on local holder change.
+        /// </param>
+        protected void _RefreshHolders(bool forceSync)
+        {
+            var shouldBeLocal = ShouldBeLocalHolder;
+            var hasLocalHolderChanged = shouldBeLocal != IsLocal;
+            if (hasLocalHolderChanged)
+            {
+                if (shouldBeLocal) _BecomeLocalHolder();
+                else _ResignLocalHolder();
+            }
+
+            // Local holder owns positioning and syncing. After letting go, sync the final state once,
+            // unless someone else still holds a handle, in which case they are in control now
+            var isInControl = IsLocal || (hasLocalHolderChanged && !IsHeldByOthers);
+            if (isInControl)
+            {
+                if (hasLocalHolderChanged || forceSync)
+                {
+                    _UpdatePositioningHelper();
+                    _RequestSync();
+                }
+                else if (_HasHeldStateChanged())
+                {
+                    _UpdatePositioningHelper();
+                }
+            }
+
+            _RefreshHeldLocally();
+        }
+
+        private void _BecomeLocalHolder()
+        {
+            IsLocal = true;
+
+            _MakeUnholstered();
+
+            animationHelper._SetPickedUpLocally(true);
+            animationHelper._SetTriggerProgress(0);
+
+            if (playerController != null)
+            {
+                playerController.AddMarker(this);
+            }
+
+            animationHelper.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(animationHelper.SetPickedUpGlobally), true);
+            animationHelper.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(animationHelper.SetVR), IsVR);
+
+            var behaviours = Behaviours;
+            _NotifyGunPickup(behaviours);
+
+            // Interleaved per behaviour on purpose, so each behaviour sees MainHandle before SubHandle
+            foreach (var behaviour in behaviours)
+            {
+                if (behaviour == null) continue;
+                if (MainHandle.IsPickedUpLocally) behaviour.OnHandlePickup(this, MainHandle);
+                if (SubHandle != null && SubHandle.IsPickedUpLocally) behaviour.OnHandlePickup(this, SubHandle);
+            }
+        }
+
+        private void _ResignLocalHolder()
+        {
+            var isHeldByOthers = IsHeldByOthers;
+
+            // Do not holster a gun someone else is still holding
+            if (!isHeldByOthers)
+            {
+                var activeHolsters = _GetActiveHolsters();
+                if (activeHolsters.Length != 0)
+                {
+                    _MakeHolstered(activeHolsters[activeHolsters.Length - 1]);
+                }
+            }
+
+            IsLocal = false;
+
+            animationHelper._SetPickedUpLocally(false);
+            animationHelper._SetTriggerProgress(0);
+
+            if (!isHeldByOthers)
+            {
+                animationHelper.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(animationHelper.SetPickedUpGlobally), false);
+            }
+
+            if (playerController != null)
+            {
+                playerController.RemoveMarker(this);
+            }
+
+            _NotifyGunDrop(Behaviours);
+        }
+
+        /// <summary>
+        /// Notifies GunManager when local player starts or stops holding any handle, including as a supporting holder.
+        /// </summary>
+        private void _RefreshHeldLocally()
+        {
+            var isHeldLocally = IsHeldLocally;
+            if (isHeldLocally == _isHeldLocally) return;
+
+            _isHeldLocally = isHeldLocally;
+            if (!gunManager) return;
+
+            if (isHeldLocally) gunManager.OnGunPickedUpLocally(this);
+            else gunManager.OnGunDroppedLocally(this);
+        }
+
+        /// <summary>
+        /// Remote players picking up or dropping handles are not notified locally, so poll for it while holding this gun.
+        /// </summary>
+        /// <remarks>Called every frame by <see cref="GunController"/> while held locally.</remarks>
+        public void _PollHolders()
+        {
+            _RefreshHolders(false);
+        }
+
+        /// <summary>
+        /// Has any handle been picked up or dropped since positioning was last applied?
+        /// </summary>
+        private bool _HasHeldStateChanged()
+        {
+            return _positionedMainHeld != _IsHandleHeld(MainHandle) || _positionedSubHeld != _IsHandleHeld(SubHandle);
+        }
+
+        /// <summary>
+        /// Is the handle held by anyone?
+        /// </summary>
+        /// <remarks>
+        /// <see cref="GunHandle.IsPickedUp"/> may still be true for the handle being dropped during OnDrop, thus check holder explicitly.
+        /// </remarks>
+        private static bool _IsHandleHeld(GunHandle handle)
+        {
+            return handle != null && (handle.IsPickedUpLocally || handle.IsPickedUpByOthers);
+        }
+        #endregion
+
+        #region BehaviourDispatch
+        // Udon has no delegates, so each GunBehaviourBase event gets its own null-skipping loop
+        private void _NotifySetup(GunBehaviourBase[] behaviours)
+        {
+            foreach (var behaviour in behaviours)
+                if (behaviour != null)
+                    behaviour.Setup(this);
+        }
+
+        private void _NotifyGunPickup(GunBehaviourBase[] behaviours)
+        {
+            foreach (var behaviour in behaviours)
+                if (behaviour != null)
+                    behaviour.OnGunPickup(this);
+        }
+
+        private void _NotifyGunDrop(GunBehaviourBase[] behaviours)
+        {
+            foreach (var behaviour in behaviours)
+                if (behaviour != null)
+                    behaviour.OnGunDrop(this);
+        }
+
+        private void _NotifyHandlePickup(GunBehaviourBase[] behaviours, GunHandle handle)
+        {
+            foreach (var behaviour in behaviours)
+                if (behaviour != null)
+                    behaviour.OnHandlePickup(this, handle);
+        }
+
+        private void _NotifyHandleDrop(GunBehaviourBase[] behaviours, GunHandle handle)
+        {
+            foreach (var behaviour in behaviours)
+                if (behaviour != null)
+                    behaviour.OnHandleDrop(this, handle);
+        }
+
+        private void _NotifyHandleUseDown(GunBehaviourBase[] behaviours, GunHandle handle)
+        {
+            foreach (var behaviour in behaviours)
+                if (behaviour != null)
+                    behaviour.OnHandleUseDown(this, handle);
+        }
+
+        private void _NotifyHandleUseUp(GunBehaviourBase[] behaviours, GunHandle handle)
+        {
+            foreach (var behaviour in behaviours)
+                if (behaviour != null)
+                    behaviour.OnHandleUseUp(this, handle);
+        }
+
+        private void _NotifyTriggerDown(GunBehaviourBase[] behaviours)
+        {
+            foreach (var behaviour in behaviours)
+                if (behaviour != null)
+                    behaviour.OnTriggerDown(this);
+        }
+
+        private void _NotifyTriggerUp(GunBehaviourBase[] behaviours)
+        {
+            foreach (var behaviour in behaviours)
+                if (behaviour != null)
+                    behaviour.OnTriggerUp(this);
+        }
+
+        private void _NotifyAction(GunBehaviourBase[] behaviours)
+        {
+            foreach (var behaviour in behaviours)
+                if (behaviour != null)
+                    behaviour.OnAction(this);
         }
         #endregion
 
@@ -956,49 +1161,24 @@ namespace CenturionCC.System.Gun
                 return;
             }
 
-            // OnHandlePickup is only called locally, thus setting isLocal here is appropriate
-            IsLocal = true;
-
-            _MakeUnholstered();
-
-            animationHelper._SetPickedUpLocally(true);
-            animationHelper._SetTriggerProgress(0);
-
-            // When only one handle is picked up at this time
-            if (MainHandle.IsPickedUpLocally ^ (SubHandle != null && SubHandle.IsPickedUpLocally))
+            // Only the local holder may grab custom handles (e.g. cocking handle)
+            if (handleType == HandleType.CustomHandle && !IsLocal)
             {
-                if (playerController != null)
-                {
-                    playerController.AddMarker(this);
-                }
-
-                if (gunManager)
-                {
-                    gunManager.OnGunPickedUpLocally(this);
-                }
-
-                animationHelper.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(animationHelper.SetPickedUpGlobally), true);
-                animationHelper.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(animationHelper.SetVR), IsVR);
-
-                foreach (var behaviour in behaviours)
-                {
-                    if (behaviour == null) continue;
-                    behaviour.OnGunPickup(this);
-                }
+                instance.ForceDrop();
+                return;
             }
 
-            foreach (var behaviour in behaviours)
-            {
-                if (behaviour == null) continue;
-                behaviour.OnHandlePickup(this, instance);
-            }
+            // When not yet local, becoming local holder calls OnHandlePickup for every locally held handle, including this one
+            if (IsLocal) _NotifyHandlePickup(behaviours, instance);
 
-            _UpdatePositioningHelper();
-            _RequestSync();
+            _RefreshHolders(true);
         }
 
         public override void OnHandleUseDown(GunHandle instance, HandleType handleType)
         {
+            // Supporting holder cannot operate the gun
+            if (!IsLocal) return;
+
             var behaviours = Behaviours;
             if (behaviours == null)
             {
@@ -1011,40 +1191,24 @@ namespace CenturionCC.System.Gun
                 logger.LogError($"{Prefix}OnHandleUseDown: Behaviour is empty!");
             }
 
-            foreach (var behaviour in behaviours)
-            {
-                if (behaviour == null) continue;
-                behaviour.OnHandleUseDown(this, instance);
-            }
+            _NotifyHandleUseDown(behaviours, instance);
 
             switch (handleType)
             {
                 case HandleType.MainHandle:
-                {
                     Trigger = TriggerState.Firing;
-                    foreach (var behaviour in behaviours)
-                    {
-                        if (behaviour == null) continue;
-                        behaviour.OnTriggerDown(this);
-                    }
-
+                    _NotifyTriggerDown(behaviours);
                     break;
-                }
                 case HandleType.SubHandle:
-                {
-                    foreach (var behaviour in behaviours)
-                    {
-                        if (behaviour == null) continue;
-                        behaviour.OnAction(this);
-                    }
-
+                    _NotifyAction(behaviours);
                     break;
-                }
             }
         }
 
         public override void OnHandleUseUp(GunHandle instance, HandleType handleType)
         {
+            if (!IsLocal) return;
+
             var behaviours = Behaviours;
             if (behaviours == null)
             {
@@ -1057,40 +1221,26 @@ namespace CenturionCC.System.Gun
                 logger.LogError($"{Prefix}OnHandleTriggerUp: Behaviour is empty!");
             }
 
-            foreach (var behaviour in behaviours)
+            _NotifyHandleUseUp(behaviours, instance);
+
+            if (handleType != HandleType.MainHandle) return;
+
+            if (Trigger == TriggerState.Fired)
             {
-                if (behaviour == null) continue;
-                behaviour.OnHandleUseUp(this, instance);
+                Trigger = TriggerState.Armed;
             }
 
-            switch (handleType)
+            if (FireMode.ShouldStopOnTriggerUp())
             {
-                case HandleType.MainHandle:
+                if (BurstCount != 0)
                 {
-                    if (Trigger == TriggerState.Fired)
-                    {
-                        Trigger = TriggerState.Armed;
-                    }
-
-                    if (FireMode.ShouldStopOnTriggerUp())
-                    {
-                        if (BurstCount != 0)
-                        {
-                            LastBurstEndedTime = Networking.GetNetworkDateTime();
-                        }
-
-                        Trigger = TriggerState.Armed;
-                    }
-
-                    foreach (var behaviour in behaviours)
-                    {
-                        if (behaviour == null) continue;
-                        behaviour.OnTriggerUp(this);
-                    }
-
-                    break;
+                    LastBurstEndedTime = Networking.GetNetworkDateTime();
                 }
+
+                Trigger = TriggerState.Armed;
             }
+
+            _NotifyTriggerUp(behaviours);
         }
 
         public override void OnHandleDrop(GunHandle instance, HandleType handleType)
@@ -1098,63 +1248,14 @@ namespace CenturionCC.System.Gun
             var behaviours = Behaviours;
             if (behaviours == null || behaviours.Length == 0)
             {
-                CenturionDiagnostic.LogWarning($"{Prefix}OnHandleDrop: Behaviour is null!");
+                CenturionDiagnostic.LogWarning($"{Prefix}OnHandleDrop: Behaviour is null or empty!");
                 return;
             }
 
-            if (behaviours.Length == 0)
-            {
-                logger.LogWarn($"{Prefix}OnHandleDrop: Behaviour is empty!");
-            }
+            // Supporting holder never received OnHandlePickup, so there is nothing to clean up
+            if (IsLocal) _NotifyHandleDrop(behaviours, instance);
 
-            foreach (var behaviour in behaviours)
-            {
-                if (behaviour == null) continue;
-                behaviour.OnHandleDrop(this, instance);
-            }
-
-            // When dropped entirely for local player
-            var mainDroppedLocally = !MainHandle.IsPickedUpLocally;
-            var subDroppedLocally = SubHandle == null || !SubHandle.IsPickedUpLocally;
-            var droppedLocally = mainDroppedLocally && subDroppedLocally;
-            if (droppedLocally)
-            {
-                var activeHolsters = _GetActiveHolsters();
-                if (activeHolsters.Length != 0)
-                {
-                    _MakeHolstered(activeHolsters[activeHolsters.Length - 1]);
-                }
-
-                IsLocal = false;
-
-                animationHelper._SetPickedUpLocally(false);
-                animationHelper._SetTriggerProgress(0);
-
-                // When dropped entirely
-                if (!MainHandle.IsPickedUp && (SubHandle == null || !SubHandle.IsPickedUp))
-                {
-                    animationHelper.SendCustomNetworkEvent(NetworkEventTarget.All, nameof(animationHelper.SetPickedUpGlobally), false);
-                }
-
-                if (playerController != null)
-                {
-                    playerController.RemoveMarker(this);
-                }
-
-                if (gunManager)
-                {
-                    gunManager.OnGunDroppedLocally(this);
-                }
-
-                foreach (var behaviour in behaviours)
-                {
-                    if (behaviour == null) continue;
-                    behaviour.OnGunDrop(this);
-                }
-            }
-
-            _UpdatePositioningHelper();
-            _RequestSync();
+            _RefreshHolders(true);
         }
 
         /// <summary>
@@ -1167,6 +1268,32 @@ namespace CenturionCC.System.Gun
             {
                 _MakeUnholstered();
             }
+        }
+
+        public override void OnOwnershipTransferred(VRCPlayerApi player)
+        {
+            // Local holder must stay owner, e.g. after both players grabbed a free gun at the same time
+            if (!IsLocal || Networking.IsOwner(gameObject)) return;
+
+            _UpdatePositioningHelper();
+            _RequestSync();
+        }
+
+        public override void OnDeserialization()
+        {
+            // Holstering is applied locally only. When someone else takes the gun out of our holster,
+            // only the synced IsHolstered flips, so clean up the leftover local holster state here.
+            if (!IsHolstered && (ActiveHolster != null || MainHandle.IsHolstered))
+            {
+                _ClearLocalHolsterState();
+            }
+        }
+
+        private void _ClearLocalHolsterState()
+        {
+            if (ActiveHolster) ActiveHolster.RemoveHolsteredObject(this);
+            MainHandle.UnHolster();
+            ActiveHolster = null;
         }
 
         private void ProcessStateChange(GunState previousState, GunState nextState)

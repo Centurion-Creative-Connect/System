@@ -17,7 +17,7 @@ namespace CenturionCC.System.Gun.Rule
         [SerializeField] [NewbieInject(SearchScope.Self)]
         private TranslatableMessage cancelledMessage;
 
-        public override int RuleId => 101;
+        public override int RuleId => ShotReasonId.InSafeZone;
         public override TranslatableMessage CancelledMessage => cancelledMessage;
 
         private void Start()
