@@ -1,6 +1,5 @@
 ﻿using CenturionCC.System.Editor.Utils;
 using CenturionCC.System.Gun.DataStore;
-using UdonSharpEditor;
 using UnityEditor;
 using UnityEngine;
 
@@ -34,7 +33,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
 
         public override void OnInspectorGUI()
         {
-            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
+            if (GUIUtil.DrawInspectorHeader(target))
                 return;
 
             if (_showMinArraySizeHelpBox)

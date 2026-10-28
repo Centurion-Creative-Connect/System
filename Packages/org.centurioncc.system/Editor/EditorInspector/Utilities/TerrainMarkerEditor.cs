@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using CenturionCC.System.Editor.Utils;
 using CenturionCC.System.Utils;
-using UdonSharpEditor;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -141,7 +140,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Utilities
 
         public override void OnInspectorGUI()
         {
-            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
+            if (GUIUtil.DrawInspectorHeader(target))
                 return;
 
             if (HasBakedData((TerrainMarker)target))
@@ -196,7 +195,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Utilities
         )
         {
             using (new EditorGUILayout.HorizontalScope(new GUIStyle("RL Element")
-                       { padding = new RectOffset(10, 10, 10, 0) }))
+                { padding = new RectOffset(10, 10, 10, 0) }))
             {
                 // Terrain Texture Preview
                 GUILayout.Box(

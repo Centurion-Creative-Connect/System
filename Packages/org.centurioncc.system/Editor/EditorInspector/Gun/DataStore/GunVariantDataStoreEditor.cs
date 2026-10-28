@@ -4,7 +4,6 @@ using CenturionCC.System.Editor.Utils;
 using CenturionCC.System.Gun;
 using CenturionCC.System.Gun.DataStore;
 using System.Collections.Generic;
-using UdonSharpEditor;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -73,7 +72,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
 
         public override void OnInspectorGUI()
         {
-            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
+            if (GUIUtil.DrawInspectorHeader(target))
                 return;
 
             var so = serializedObject;
