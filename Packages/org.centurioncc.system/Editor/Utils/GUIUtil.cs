@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using UdonSharpEditor;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace CenturionCC.System.Editor.Utils
 {
@@ -22,6 +24,11 @@ namespace CenturionCC.System.Editor.Utils
         public static float HelpBoxWidth = 200;
         public static float HelpBoxHeight = 40;
         public static float HelpBoxButtonWidth = 100;
+
+        /// <summary>
+        /// True while drawing an inspector embedded in another window, e.g. Control Panel.
+        /// </summary>
+        public static bool IsDrawingEmbedded { get; set; }
 
         public static string NotAssignedStringFormat =>
             Application.systemLanguage == SystemLanguage.Japanese
@@ -56,6 +63,15 @@ namespace CenturionCC.System.Editor.Utils
         public static string BoldStringFormat => "<b>{0}</b>";
 
         public static string ColoredStringFormat => "<color=#{0}>{1}</color>";
+
+        /// <summary>
+        /// Draws UdonSharp header unless drawing embedded.
+        /// </summary>
+        /// <returns>true if inspector should stop drawing</returns>
+        public static bool DrawInspectorHeader(Object target)
+        {
+            return !IsDrawingEmbedded && UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target);
+        }
 
         public static Color DepthColor() =>
             Color.Lerp(SurfaceIndentColor, DeepIndentColor, EditorGUI.indentLevel / 5.0F);

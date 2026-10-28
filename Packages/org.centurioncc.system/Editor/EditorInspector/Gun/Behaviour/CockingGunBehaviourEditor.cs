@@ -1,5 +1,5 @@
-﻿using CenturionCC.System.Gun.Behaviour;
-using UdonSharpEditor;
+﻿using CenturionCC.System.Editor.Utils;
+using CenturionCC.System.Gun.Behaviour;
 using UnityEditor;
 using UnityEngine;
 namespace CenturionCC.System.Editor.EditorInspector.Gun.Behaviour
@@ -30,7 +30,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.Behaviour
 
         public override void OnInspectorGUI()
         {
-            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
+            if (GUIUtil.DrawInspectorHeader(target))
                 return;
 
             DrawDefaultInspector();

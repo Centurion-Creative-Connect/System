@@ -15,9 +15,13 @@ namespace CenturionCC.System.Editor.Utils
 
         public static UnityEditor.Editor CreateCustomEditor<T>(Object target) => CreateCustomEditor(target, typeof(T));
 
-        public static UnityEditor.Editor CreateCustomEditor(Object target, Type type)
+        public static UnityEditor.Editor CreateCustomEditor(Object target, Type type) => UnityEditor.Editor.CreateEditor(target, FindCustomEditorType(type));
+
+        public static bool HasCustomEditor(Object target) => target && FindCustomEditorType(target.GetType()) != null;
+
+        private static Type FindCustomEditorType(Type type)
         {
-            if (CustomEditorTypeCache.TryGetValue(type, out var cachedCustomEditorType)) return UnityEditor.Editor.CreateEditor(target, cachedCustomEditorType);
+            if (CustomEditorTypeCache.TryGetValue(type, out var cachedCustomEditorType)) return cachedCustomEditorType;
 
             var customEditor = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(s => s.GetTypes())
@@ -26,7 +30,7 @@ namespace CenturionCC.System.Editor.Utils
                 .FirstOrDefault();
 
             CustomEditorTypeCache[type] = customEditor;
-            return UnityEditor.Editor.CreateEditor(target, customEditor);
+            return customEditor;
         }
 
         public static bool IsCustomEditorFor<T>(this CustomEditor attribute) => attribute.IsCustomEditorFor(typeof(T));

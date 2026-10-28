@@ -1,5 +1,4 @@
 ﻿using CenturionCC.System.Editor.Utils;
-using UdonSharpEditor;
 using UnityEditor;
 
 namespace CenturionCC.System.Editor
@@ -14,7 +13,7 @@ namespace CenturionCC.System.Editor
         public sealed override void OnInspectorGUI()
         {
             // Draws the default convert to UdonBehaviour button, program asset field, sync settings, etc.
-            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target)) return;
+            if (GUIUtil.DrawInspectorHeader(target)) return;
 
             serializedObject.Update();
 
@@ -40,7 +39,7 @@ namespace CenturionCC.System.Editor
 
             serializedObject.ApplyModifiedProperties();
         }
-        
+
         /// <summary>
         /// Draws Information of Component status.
         /// </summary>
@@ -52,7 +51,7 @@ namespace CenturionCC.System.Editor
         /// </summary>
         /// <returns>If something was drawn, returns true. false otherwise.</returns>
         protected abstract bool DrawUtils();
-        
+
         public void DrawDefaultInspector(SerializedObject obj)
         {
             SerializedProperty iterator = serializedObject.GetIterator();

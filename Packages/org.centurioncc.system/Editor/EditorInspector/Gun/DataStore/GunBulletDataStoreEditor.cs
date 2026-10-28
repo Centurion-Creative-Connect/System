@@ -3,7 +3,6 @@ using System.Linq;
 using CenturionCC.System.Editor.Utils;
 using CenturionCC.System.Gun.Centurion;
 using CenturionCC.System.Gun.DataStore;
-using UdonSharpEditor;
 using UnityEditor;
 using UnityEngine;
 
@@ -43,7 +42,7 @@ namespace CenturionCC.System.Editor.EditorInspector.Gun.DataStore
 
         public override void OnInspectorGUI()
         {
-            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
+            if (GUIUtil.DrawInspectorHeader(target))
                 return;
 
             GUILayout.Label("Settings", EditorStyles.boldLabel);
