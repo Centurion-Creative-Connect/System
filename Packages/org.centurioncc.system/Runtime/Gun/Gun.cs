@@ -14,6 +14,10 @@ namespace CenturionCC.System.Gun
         private const float DesktopPickupProximity = 2F;
         private const float DisallowPickupFromBelowRange = -0.1F;
 
+        #region SerializeFields
+        [SerializeField] protected GunVariantDataStore variantData;
+        #endregion
+
         private int _lastShotCount;
 
         private float _nextMainHandlePickupableTime;
@@ -22,17 +26,6 @@ namespace CenturionCC.System.Gun
 
         #region OverridenProperties
         public override GunVariantDataStore VariantData => variantData;
-        #endregion
-
-        // Not subscribing to updateManager: Gun has no _Update/_SlowUpdate handlers since positioning moved to
-        // GunPositioningHelper, and empty subscriptions cost an event call per Gun per frame plus SlowUpdate slots
-        // taken away from other subscribers.
-
-        #region SerializeFields
-        [SerializeField] protected GunVariantDataStore variantData;
-
-        [SerializeField] [NewbieInject]
-        protected UpdateManager updateManager;
         #endregion
 
         #region Internals
