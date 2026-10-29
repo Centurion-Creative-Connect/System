@@ -107,10 +107,11 @@ namespace CenturionCC.System.Gun.Behaviour
                 twist = Mathf.Clamp(twist, 1 - twistMargin, 1);
             }
 
+            // Lock the action closed so a chambered round can't be ejected by cocking again
             if (!canCockAfterCock && instance.State == GunState.Idle && instance.HasBulletInChamber)
             {
                 progress = Mathf.Clamp(progress, 0, cockingMargin);
-                progress = Mathf.Clamp(twist, 1 - twistMargin, 1);
+                twist = Mathf.Clamp(twist, 0, twistMargin);
             }
         }
 
@@ -138,6 +139,25 @@ namespace CenturionCC.System.Gun.Behaviour
             return Mathf.Clamp(signedAngle, twistMinAngle, twistMaxAngle);
         }
 
+        private Transform GetIdleTransform()
+        {
+            return requireTwist && idleTwistPosition != null ? idleTwistPosition : cockingPosition;
+        }
+
+        private Transform GetActiveTransform()
+        {
+            return requireTwist && activeTwistPosition != null ? activeTwistPosition : cockingPosition;
+        }
+
+        /// <summary>
+        /// Clamps local Z of the CustomHandle onto the cocking rail, keeping X/Y of <paramref name="railOrigin"/>.
+        /// </summary>
+        private Vector3 GetPositionOnRail(Vector3 railOrigin, float handleZ)
+        {
+            var cockingZ = cockingPosition.localPosition.z;
+            return new Vector3(railOrigin.x, railOrigin.y, Mathf.Clamp(handleZ, cockingZ - cockingLength, cockingZ));
+        }
+
         private void UpdateCustomHandlePosition(GunBase instance)
         {
             Vector3 targetPos;
@@ -148,14 +168,14 @@ namespace CenturionCC.System.Gun.Behaviour
                 case GunState.Idle:
                 case GunState.Unknown:
                 {
-                    var t = requireTwist && idleTwistPosition != null ? idleTwistPosition : cockingPosition;
+                    var t = GetIdleTransform();
                     targetPos = t.localPosition;
                     targetRot = t.localRotation;
                     break;
                 }
                 case GunState.InCockingTwisting:
                 {
-                    var t = requireTwist && activeTwistPosition != null ? activeTwistPosition : cockingPosition;
+                    var t = GetActiveTransform();
                     targetPos = t.localPosition;
                     targetRot = t.localRotation;
                     break;
@@ -163,81 +183,92 @@ namespace CenturionCC.System.Gun.Behaviour
                 case GunState.InCockingPull:
                 case GunState.InCockingPush:
                 {
-                    var t = requireTwist && activeTwistPosition != null ? activeTwistPosition : cockingPosition;
                     targetPos = cockingPosition.localPosition + cockingPosition.localRotation * new Vector3(0, 0, -cockingLength);
-                    targetRot = t.localRotation;
+                    targetRot = GetActiveTransform().localRotation;
                     break;
                 }
             }
 
-            var handleTransform = customHandle.transform;
-            handleTransform.localPosition = targetPos;
-            handleTransform.localRotation = targetRot;
+            customHandle.transform.SetLocalPositionAndRotation(targetPos, targetRot);
+        }
+
+        /// <summary>
+        /// Forces the CustomHandle out of the player's hand and snaps it to where the current state expects.
+        /// </summary>
+        private void ResetCustomHandle(GunBase instance)
+        {
+            customHandle.ForceDrop();
+            UpdateCustomHandlePosition(instance);
         }
 
         private void DoCocking(GunBase instance)
         {
             float progressNormalized, twistNormalized;
-            // Calculate cocking/twist progress
             if (instance.IsVR)
-            {
                 GetNormalizedProgressAndTwist(instance, out progressNormalized, out twistNormalized);
+            else
+                GetDesktopProgressAndTwist(instance, out progressNormalized, out twistNormalized);
+
+            ApplyCockingProgress(instance, progressNormalized, twistNormalized);
+        }
+
+        /// <summary>
+        /// Desktop has no hand to pull the CustomHandle with, so animate progress and twist over <see cref="desktopCockingTime"/>.
+        /// </summary>
+        private void GetDesktopProgressAndTwist(GunBase instance, out float progressNormalized, out float twistNormalized)
+        {
+            // Initiate desktop cocking on key press
+            var cockingInput = Input.GetKeyDown(desktopCockingKey) || doDesktopCockingAutomatically;
+            var shouldCock = ((!instance.HasCocked && !isBlowBack) || !instance.HasBulletInChamber) &&
+                             instance._HasNextBullet();
+
+            if (!_isOnDesktopCocking && shouldCock && cockingInput)
+            {
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
+                Debug.Log("[CockingGunBehaviour] Begin Desktop Reloading");
+#endif
+                _isOnDesktopCocking = true;
+                _isDesktopCockingCurrentlyPulling = instance.State == GunState.Idle;
+                _desktopCockingTimer = _isDesktopCockingCurrentlyPulling ? 0F : desktopCockingTime / 2F;
+            }
+
+            if (!_isOnDesktopCocking)
+            {
+                progressNormalized = instance.State == GunState.Idle ? 0 : 1;
+                twistNormalized = !requireTwist || instance.State == GunState.Idle ? 0 : 1;
+                return;
+            }
+
+            // With twist, first quarter twists and second quarter pulls; without, first half pulls
+            var timeScale = requireTwist ? desktopCockingTime / 4 : desktopCockingTime / 2;
+            var progressTime = requireTwist ? _desktopCockingTimer - timeScale : _desktopCockingTimer;
+            var twistTime = _desktopCockingTimer;
+
+            progressNormalized = Mathf.Clamp01(progressTime / timeScale);
+            twistNormalized = Mathf.Clamp01(twistTime / timeScale);
+
+            if (_isDesktopCockingCurrentlyPulling)
+            {
+                _desktopCockingTimer += Time.deltaTime;
+
+                // If completed pulling back process
+                if (progressNormalized >= 1) _isDesktopCockingCurrentlyPulling = false;
             }
             else
             {
-                // Initiate desktop cocking on key press
-                var cockingInput = Input.GetKeyDown(desktopCockingKey) || doDesktopCockingAutomatically;
-                var shouldCock = ((!instance.HasCocked && !isBlowBack) || !instance.HasBulletInChamber) &&
-                                 instance._HasNextBullet();
+                _desktopCockingTimer -= Time.deltaTime;
 
-                if (!_isOnDesktopCocking && shouldCock && cockingInput)
+                // If completed reloading process
+                if (_desktopCockingTimer <= 0)
                 {
-                    Debug.Log("[CockingGunBehaviour] Begin Desktop Reloading");
-                    _isOnDesktopCocking = true;
-                    _isDesktopCockingCurrentlyPulling = instance.State == GunState.Idle;
-                    _desktopCockingTimer = _isDesktopCockingCurrentlyPulling ? 0F : desktopCockingTime / 2F;
-                }
-
-                // Do desktop cocking work
-                if (_isOnDesktopCocking)
-                {
-                    var timeScale = requireTwist ? desktopCockingTime / 4 : desktopCockingTime / 2;
-                    var progressTime = requireTwist ? _desktopCockingTimer - timeScale : _desktopCockingTimer;
-                    var twistTime = _desktopCockingTimer;
-
-                    if (_isDesktopCockingCurrentlyPulling)
-                    {
-                        _desktopCockingTimer += Time.deltaTime;
-
-                        twistNormalized = Mathf.Clamp01(twistTime / timeScale);
-                        progressNormalized = Mathf.Clamp01(progressTime / timeScale);
-
-                        // If completed pulling back process
-                        if (progressNormalized >= 1) _isDesktopCockingCurrentlyPulling = false;
-                    }
-                    else
-                    {
-                        _desktopCockingTimer -= Time.deltaTime;
-
-                        progressNormalized = Mathf.Clamp01(progressTime / timeScale);
-                        twistNormalized = Mathf.Clamp01(twistTime / timeScale);
-
-                        // If completed reloading process
-                        if (_desktopCockingTimer <= 0)
-                        {
-                            _isOnDesktopCocking = false;
-                            _desktopCockingTimer = 0F;
-                        }
-                    }
-                }
-                else
-                {
-                    progressNormalized = instance.State == GunState.Idle ? 0 : 1;
-                    twistNormalized = !requireTwist || instance.State == GunState.Idle ? 0 : 1;
+                    _isOnDesktopCocking = false;
+                    _desktopCockingTimer = 0F;
                 }
             }
+        }
 
-            // Change states using GunUtility
+        private void ApplyCockingProgress(GunBase instance, float progressNormalized, float twistNormalized)
+        {
             if (requireTwist)
             {
                 GunUtility.UpdateStateBoltAction(
@@ -262,6 +293,58 @@ namespace CenturionCC.System.Gun.Behaviour
                     1 - cockingAutoLoadMargin
                 );
             }
+        }
+
+        /// <summary>
+        /// Where the CustomHandle should rest after being let go, depending on how far it was pulled and twisted.
+        /// </summary>
+        private Vector3 GetDropPosition(GunBase instance, Vector3 handlePos)
+        {
+            if (returnToCockingPositionOnDrop)
+            {
+                if (cockingHapticData && cockingHapticData.Done && instance)
+                    cockingHapticData.Done.PlayInHand(instance.MainHandle.CurrentHand);
+                return cockingPosition.localPosition;
+            }
+
+            if (requireTwist)
+            {
+                GetNormalizedProgressAndTwist(instance, out var progressNormalized, out var twistNormalized);
+
+                return twistAutoLoadMargin > twistNormalized && cockingAutoLoadMargin > progressNormalized
+                    ? idleTwistPosition.localPosition
+                    : GetPositionOnRail(activeTwistPosition.localPosition, handlePos.z);
+            }
+
+            return cockingAutoLoadMargin > GetProgressNormalized()
+                ? cockingPosition.localPosition
+                : GetPositionOnRail(cockingPosition.localPosition, handlePos.z);
+        }
+
+        private Vector3 GetClosestReferencePosition(Vector3 handlePos, Vector3 fallback)
+        {
+            var transforms = new[]
+            {
+                cockingPosition,
+                idleTwistPosition,
+                activeTwistPosition,
+            };
+
+            var result = fallback;
+            var closestDistance = Mathf.Infinity;
+            foreach (var reference in transforms)
+            {
+                if (reference == null) continue;
+
+                var refPos = reference.localPosition;
+                var distance = Vector3.Distance(refPos, handlePos);
+                if (distance >= closestDistance) continue;
+
+                result = refPos;
+                closestDistance = distance;
+            }
+
+            return result;
         }
 
 #if !COMPILER_UDONSHARP && UNITY_EDITOR
@@ -307,72 +390,79 @@ namespace CenturionCC.System.Gun.Behaviour
         #region GunBehaviourBase
         public override void OnGunPickup(GunBase instance)
         {
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             Debug.Log("[CockingGunBehaviour] OnGunPickup");
+#endif
             UpdateCustomHandlePosition(instance);
             customHandle.SetPickupable(true);
         }
 
         public override void OnGunDrop(GunBase instance)
         {
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             Debug.Log("[CockingGunBehaviour] OnGunDrop");
+#endif
             UpdateCustomHandlePosition(instance);
             customHandle.SetPickupable(false);
         }
 
         public override void OnGunUpdate(GunBase instance)
         {
-            // Shoot a gun whenever it's able to shoot. load a new bullet if it's a blow back variant
             if (instance.Trigger == TriggerState.Firing)
-            {
-                if (isDoubleAction && !instance.HasCocked)
-                {
-                    instance.HasCocked = true;
-                }
+                TryToShoot(instance);
 
-                var shotResult = instance._TryToShoot();
-                var hasSucceeded = shotResult == ShotResult.Succeeded || shotResult == ShotResult.SucceededContinuously;
-                if (hasSucceeded)
-                {
-                    if (doHoldOpenOnLastBullet && instance.BulletsInMagazine == 0 && instance.ReloadHelper.HasMagazine)
-                    {
-                        instance.State = GunState.InCockingPull;
-                        customHandle.ForceDrop();
-                        UpdateCustomHandlePosition(instance);
-                        instance.AnimationHelper._SetCockingProgress(1);
-                    }
-
-                    if (isBlowBack || requireManualPushingAfterFire)
-                    {
-                        instance.HasCocked = true;
-                        instance._LoadBullet();
-                    }
-
-                    if (requireManualPushingAfterFire)
-                    {
-                        instance.State = GunState.InCockingPull;
-                        instance.AnimationHelper._SetCockingProgress(1);
-                    }
-
-                    if (dropCustomHandleOnFire)
-                    {
-                        customHandle.ForceDrop();
-                        UpdateCustomHandlePosition(instance);
-                    }
-                }
-            }
-
+            // In VR, cocking only progresses while the CustomHandle is held
             if (instance.IsVR && !customHandle.IsPickedUpLocally)
-            {
-                Debug.Log("wont process cocking");
                 return;
-            }
 
             DoCocking(instance);
         }
 
+        /// <summary>
+        /// Shoots whenever it's able to, then cycles the action according to the configured action type.
+        /// </summary>
+        private void TryToShoot(GunBase instance)
+        {
+            if (isDoubleAction && !instance.HasCocked)
+            {
+                instance.HasCocked = true;
+            }
+
+            var shotResult = instance._TryToShoot();
+            if (shotResult != ShotResult.Succeeded && shotResult != ShotResult.SucceededContinuously)
+                return;
+
+            // ForceDrop on CustomHandle calls back into OnHandleDrop, so the order of steps below matters
+            if (doHoldOpenOnLastBullet && instance.BulletsInMagazine == 0 && instance.ReloadHelper.HasMagazine)
+            {
+                instance.State = GunState.InCockingPull;
+                ResetCustomHandle(instance);
+                instance.AnimationHelper._SetCockingProgress(1);
+            }
+
+            if (isBlowBack || requireManualPushingAfterFire)
+            {
+                instance.HasCocked = true;
+                instance._LoadBullet();
+            }
+
+            if (requireManualPushingAfterFire)
+            {
+                instance.State = GunState.InCockingPull;
+                instance.AnimationHelper._SetCockingProgress(1);
+            }
+
+            if (dropCustomHandleOnFire)
+            {
+                ResetCustomHandle(instance);
+            }
+        }
+
         public override void Setup(GunBase instance)
         {
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             Debug.Log($"[CockingGunBehaviour] setup called for {instance.name}");
+#endif
             var state = instance.State;
             if (state == GunState.Unknown)
             {
@@ -396,74 +486,17 @@ namespace CenturionCC.System.Gun.Behaviour
         public override void OnHandleDrop(GunBase instance, GunHandle handle)
         {
             if (handle.handleType != HandleType.CustomHandle)
-            {
-                Debug.Log(
-                    $"[CockingGunBehaviour] OnHandleDrop: {instance.name} handle.handleId ({handle.handleType}) != {HandleType.CustomHandle}");
                 return;
-            }
 
-            Vector3 expectedPos;
             var handlePos = customHandle.transform.localPosition;
-            var cockingPos = cockingPosition.localPosition;
-
-            if (returnToCockingPositionOnDrop)
-            {
-                expectedPos = cockingPosition.localPosition;
-                if (cockingHapticData && cockingHapticData.Done && instance)
-                    cockingHapticData.Done.PlayInHand(instance.MainHandle.CurrentHand);
-            }
-            else if (requireTwist)
-            {
-                GetNormalizedProgressAndTwist(instance, out var progressNormalized, out var twistNormalized);
-
-                if (requireTwist && twistAutoLoadMargin > twistNormalized && cockingAutoLoadMargin > progressNormalized)
-                {
-                    expectedPos = idleTwistPosition.localPosition;
-                }
-                else
-                {
-                    var atp = activeTwistPosition.localPosition;
-                    var expectedZ = Mathf.Clamp(handlePos.z, cockingPos.z - cockingLength, cockingPos.z);
-                    expectedPos = new Vector3(atp.x, atp.y, expectedZ);
-                }
-            }
-            else
-            {
-                if (cockingAutoLoadMargin > GetProgressNormalized())
-                {
-                    expectedPos = cockingPosition.localPosition;
-                }
-                else
-                {
-                    var expectedZ = Mathf.Clamp(handlePos.z, cockingPos.z - cockingLength, cockingPos.z);
-                    expectedPos = new Vector3(cockingPos.x, cockingPos.y, expectedZ);
-                }
-            }
-
+            var expectedPos = GetDropPosition(instance, handlePos);
             if (snapToClosestPositionOnDrop)
-            {
-                var transforms = new[]
-                {
-                    cockingPosition,
-                    idleTwistPosition,
-                    activeTwistPosition,
-                };
-
-                var distance = Mathf.Infinity;
-                foreach (var refTransforms in transforms)
-                {
-                    if (refTransforms == null) continue;
-
-                    var refPos = refTransforms.localPosition;
-                    if (Vector3.Distance(refPos, handlePos) < distance) continue;
-
-                    expectedPos = refPos;
-                    distance = Vector3.Distance(refPos, handlePos);
-                }
-            }
+                expectedPos = GetClosestReferencePosition(handlePos, expectedPos);
 
             handle.MoveToLocalPosition(expectedPos, Quaternion.identity);
+#if CENTURIONSYSTEM_GUN_LOGGING || CENTURIONSYSTEM_VERBOSE_LOGGING
             Debug.Log($"[CockingGunBehaviour] OnHandleDrop: {instance.name} moved handle to {expectedPos.ToString("F2")}");
+#endif
 
             // I have no idea, but calling DoCocking twice will fix the desync issue
             DoCocking(instance);

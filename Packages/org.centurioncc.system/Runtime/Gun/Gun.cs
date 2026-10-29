@@ -14,6 +14,10 @@ namespace CenturionCC.System.Gun
         private const float DesktopPickupProximity = 2F;
         private const float DisallowPickupFromBelowRange = -0.1F;
 
+        #region SerializeFields
+        [SerializeField] protected GunVariantDataStore variantData;
+        #endregion
+
         private int _lastShotCount;
 
         private float _nextMainHandlePickupableTime;
@@ -22,21 +26,6 @@ namespace CenturionCC.System.Gun
 
         #region OverridenProperties
         public override GunVariantDataStore VariantData => variantData;
-        #endregion
-
-        protected override void Start()
-        {
-            base.Start();
-
-            updateManager.SubscribeUpdate(this);
-            updateManager.SubscribeSlowUpdate(this);
-        }
-
-        #region SerializeFields
-        [SerializeField] protected GunVariantDataStore variantData;
-
-        [SerializeField] [NewbieInject]
-        protected UpdateManager updateManager;
         #endregion
 
         #region Internals

@@ -105,6 +105,26 @@ namespace CenturionCC.System.Gun
         Failed,
     }
 
+    /// <summary>
+    /// Internal reason ids passed to <see cref="GunManagerCallbackBase.OnShootCancelled"/> and <see cref="GunManagerCallbackBase.OnShootFailed"/>.
+    /// </summary>
+    /// <remarks>
+    /// Values are part of the public contract (<see cref="CenturionCC.System.Gun.Rule.ShootingRuleBase.RuleId"/> shares the same id space). Do not renumber.
+    /// </remarks>
+    public static class ShotReasonId
+    {
+        public const int NoVariantData = 1;
+        public const int ShootNextFlagFalse = 10;
+        public const int GunIsNull = 11;
+        public const int SelectorSafety = 12;
+        public const int StateNotIdle = 13;
+        public const int NoBulletInChamber = 14;
+        public const int NoMagazine = 15;
+        public const int InWall = 100;
+        public const int InSafeZone = 101;
+        public const int CallbackReturnedFalse = 200;
+    }
+
     public enum ReloadType
     {
         None,

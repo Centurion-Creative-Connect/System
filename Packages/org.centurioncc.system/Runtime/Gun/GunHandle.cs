@@ -72,6 +72,24 @@ namespace CenturionCC.System.Gun
         public bool IsPickedUpLocally { get; private set; }
 
         public bool IsPickedUp => pickup && pickup.IsHeld;
+
+        /// <summary>
+        /// Is this handle held by a remote player?
+        /// </summary>
+        /// <remarks>
+        /// Checks the holder rather than <see cref="IsPickedUpLocally"/> so a stale IsHeld during OnDrop is not mistaken for a remote holder.
+        /// </remarks>
+        public bool IsPickedUpByOthers
+        {
+            get
+            {
+                if (!IsPickedUp) return false;
+                var player = CurrentPlayer;
+                // Checked with Utilities.IsValid
+                // ReSharper disable once PossibleNullReferenceException
+                return Utilities.IsValid(player) && !player.isLocal;
+            }
+        }
         public VRC_Pickup.PickupHand CurrentHand => pickup ? pickup.currentHand : VRC_Pickup.PickupHand.None;
 
         [CanBeNull]

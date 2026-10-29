@@ -114,6 +114,16 @@ namespace CenturionCC.System.Gun
         // without recoil applied
         private Matrix4x4 _previousDesiredMatrix;
 
+        private Matrix4x4 _pivotOffsetInverse;
+        private bool _hasRecoil;
+
+        // Idle (ControlType.None) guns are the majority in a world, yet their pose rarely changes.
+        // Remember the poses after the last idle update, so the update can be skipped until something moves or changes.
+        private bool _isDirty = true;
+        private Matrix4x4 _idleTargetMatrix;
+        private Matrix4x4 _idlePivotMatrix;
+        private Matrix4x4 _idleLookAtMatrix;
+
         private void Start()
         {
             if (target == null)
@@ -132,11 +142,63 @@ namespace CenturionCC.System.Gun
         private void Update()
 #endif
         {
+            if (_hasRecoil) DecayRecoil();
+
+#if !CENTURIONSYSTEM_GUN_PHYSICS
+            if (CanSkipIdleUpdate()) return;
+#endif
+
+            _UpdatePosition();
+
+#if !CENTURIONSYSTEM_GUN_PHYSICS
+            RecordIdlePoses();
+#endif
+        }
+
+        private void DecayRecoil()
+        {
             var t = 1 - Mathf.Exp(-_recoilErgonomics * Time.deltaTime);
             _recoilOffsetRot = Quaternion.Lerp(_recoilOffsetRot, Quaternion.identity, t);
             _recoilOffsetPos = Vector3.Lerp(_recoilOffsetPos, Vector3.zero, t);
 
-            _UpdatePosition();
+            // Lerp only approaches zero, so snap once the remainder is imperceptible
+            if (_recoilOffsetRot == Quaternion.identity && _recoilOffsetPos.sqrMagnitude < 1e-8F)
+            {
+                _recoilOffsetRot = Quaternion.identity;
+                _recoilOffsetPos = Vector3.zero;
+                _hasRecoil = false;
+            }
+        }
+
+        /// <summary>
+        /// An idle update is a pure function of the target, pivot and look-at poses plus state that marks <see cref="_isDirty"/>.
+        /// If none of them changed since the last idle update, it would write the exact same poses again.
+        /// </summary>
+        private bool CanSkipIdleUpdate()
+        {
+            if (_isDirty || _hasRecoil || _controlType != ControlType.None || _smoothingType != SmoothingType.None)
+                return false;
+
+            return target.localToWorldMatrix == _idleTargetMatrix &&
+                   _pivotTransform.localToWorldMatrix == _idlePivotMatrix &&
+                   _pivotLookAtTransform.localToWorldMatrix == _idleLookAtMatrix;
+        }
+
+        private void RecordIdlePoses()
+        {
+            if (_controlType != ControlType.None) return;
+
+            // Read back after writing, so float round-trips through the hierarchy don't count as movement
+            _idleTargetMatrix = target.localToWorldMatrix;
+            _idlePivotMatrix = _pivotTransform.localToWorldMatrix;
+            _idleLookAtMatrix = _pivotLookAtTransform.localToWorldMatrix;
+            _isDirty = false;
+        }
+
+        public override void OnOwnershipTransferred(VRCPlayerApi player)
+        {
+            // Owner and non-owner take different paths in _UpdatePosition
+            _isDirty = true;
         }
 
         public override void OnDeserialization()
@@ -145,6 +207,8 @@ namespace CenturionCC.System.Gun
             _pivotLookAtTransform = _pivotType == PivotType.Primary ? secondaryHandle : primaryHandle;
             _pivotLookAtOffset = _pivotType == PivotType.Primary ? _secondaryOffset : _primaryOffset;
             _pivotOffset = Matrix4x4.TRS(_pivotOffsetPos, _pivotOffsetRot, Vector3.one);
+            _pivotOffsetInverse = _pivotOffset.inverse;
+            _isDirty = true;
 
             UpdateRigidbody();
 
@@ -153,10 +217,19 @@ namespace CenturionCC.System.Gun
 #endif
         }
 
+        /// <summary>
+        /// Handles get scaled up on desktop to widen pickup range (<see cref="GunHandle.AdjustScaleForDesktop"/>),
+        /// so use their pose without scale, or every offset from a handle gets scaled along with it.
+        /// </summary>
+        private static Matrix4x4 GetPoseMatrix(Transform t)
+        {
+            return Matrix4x4.TRS(t.position, t.rotation, Vector3.one);
+        }
+
         private void RecalculatePrimary()
         {
-            var primaryOffset = primaryHandle.worldToLocalMatrix * target.localToWorldMatrix;
-            var secondaryOffset = secondaryHandle.worldToLocalMatrix * target.localToWorldMatrix;
+            var primaryOffset = GetPoseMatrix(primaryHandle).inverse * target.localToWorldMatrix;
+            var secondaryOffset = GetPoseMatrix(secondaryHandle).inverse * target.localToWorldMatrix;
 
             _primaryOffset = Matrix4x4.TRS(primaryOffset.GetPosition(), primaryOffset.rotation, Vector3.one);
             _secondaryOffset = Matrix4x4.TRS(secondaryOffset.GetPosition(), secondaryOffset.rotation, Vector3.one);
@@ -180,7 +253,7 @@ namespace CenturionCC.System.Gun
                     _pivotTransform = secondaryHandle;
                     _pivotLookAtTransform = primaryHandle;
                     _pivotLookAtOffset = _primaryOffset * Matrix4x4.Rotate(Quaternion.AngleAxis(_primaryXAngleOffset, Vector3.right));
-                    _pivotOffset = _pivotTransform.worldToLocalMatrix * target.localToWorldMatrix;
+                    _pivotOffset = GetPoseMatrix(_pivotTransform).inverse * target.localToWorldMatrix;
 
                     // store secondaryHandle's offset position relative to target, so it can stay in the previous pose.
                     _pivotLookAtOffsetPos = target.worldToLocalMatrix.MultiplyPoint3x4(_pivotLookAtTransform.position);
@@ -191,6 +264,9 @@ namespace CenturionCC.System.Gun
             // write to pos/rot for syncing purposes
             _pivotOffsetPos = _pivotOffset.GetPosition();
             _pivotOffsetRot = _pivotOffset.rotation;
+
+            _pivotOffsetInverse = _pivotOffset.inverse;
+            _isDirty = true;
         }
 
         private void UpdateRigidbody()
@@ -213,7 +289,6 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public void _UpdatePosition()
         {
-            var recoilMatrix = Matrix4x4.TRS(_recoilOffsetPos, _recoilOffsetRot, Vector3.one);
             Matrix4x4 desiredMatrix;
 
             switch (_controlType)
@@ -223,7 +298,7 @@ namespace CenturionCC.System.Gun
                 {
                     if (Networking.IsOwner(gameObject))
                     {
-                        desiredMatrix = target.localToWorldMatrix * _pivotOffset.inverse;
+                        desiredMatrix = target.localToWorldMatrix * _pivotOffsetInverse;
                         _pivotTransform.SetPositionAndRotation(desiredMatrix.GetPosition(), desiredMatrix.rotation);
                         var lookAtMatrix = desiredMatrix * _pivotLookAtOffset;
                         _pivotLookAtTransform.SetPositionAndRotation(lookAtMatrix.GetPosition(), lookAtMatrix.rotation);
@@ -232,19 +307,19 @@ namespace CenturionCC.System.Gun
                     }
 
                     // follow pivot transform (owner syncs it's position)
-                    desiredMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset;
+                    desiredMatrix = GetPoseMatrix(_pivotTransform) * _pivotOffset;
                     break;
                 }
                 case ControlType.OneHanded:
                 {
-                    desiredMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset;
+                    desiredMatrix = GetPoseMatrix(_pivotTransform) * _pivotOffset;
                     var lookAtMatrix = desiredMatrix * _pivotLookAtOffset;
                     _pivotLookAtTransform.SetPositionAndRotation(lookAtMatrix.GetPosition(), lookAtMatrix.rotation);
                     break;
                 }
                 case ControlType.TwoHanded:
                 {
-                    desiredMatrix = _pivotTransform.localToWorldMatrix * _pivotOffset;
+                    desiredMatrix = GetPoseMatrix(_pivotTransform) * _pivotOffset;
 
                     var desiredSecondaryPos = _pivotLookAtTransform.position;
                     var currentSecondaryPos = desiredMatrix.MultiplyPoint3x4(_pivotLookAtOffsetPos);
@@ -296,7 +371,9 @@ namespace CenturionCC.System.Gun
             }
 
             _previousDesiredMatrix = desiredMatrix;
-            var nextMatrix = desiredMatrix * recoilMatrix;
+            var nextMatrix = _hasRecoil
+                ? desiredMatrix * Matrix4x4.TRS(_recoilOffsetPos, _recoilOffsetRot, Vector3.one)
+                : desiredMatrix;
 
 #if CENTURIONSYSTEM_GUN_PHYSICS
             rb.MovePosition(nextMatrix.GetPosition());
@@ -312,10 +389,6 @@ namespace CenturionCC.System.Gun
         {
             if (!Networking.IsOwner(gameObject))
                 Networking.SetOwner(Networking.LocalPlayer, gameObject);
-
-            foreach (var sync in objectSyncs)
-                if (!Networking.IsOwner(sync.gameObject))
-                    Networking.SetOwner(Networking.LocalPlayer, sync.gameObject);
 
             RequestSerialization();
         }
@@ -353,6 +426,7 @@ namespace CenturionCC.System.Gun
         public void SetGravity(bool useGravity)
         {
             _useGravity = useGravity;
+            _isDirty = true;
             UpdateRigidbody();
         }
 
@@ -385,6 +459,7 @@ namespace CenturionCC.System.Gun
         {
             _recoilOffsetPos += position;
             _recoilOffsetRot *= rotation;
+            _hasRecoil = true;
         }
 
         [PublicAPI]
@@ -412,6 +487,7 @@ namespace CenturionCC.System.Gun
         [PublicAPI]
         public void FlagDiscontinuity()
         {
+            _isDirty = true;
             UpdateRigidbody();
 
             foreach (var sync in objectSyncs)

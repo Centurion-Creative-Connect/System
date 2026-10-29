@@ -92,40 +92,31 @@ namespace CenturionCC.System.Gun
 
         private void SendCancelledOrFailedNotification(int reasonId)
         {
-            // 1   = No VariantData is assigned
-            // 10  = ShootNext flag is false
-            // 11  = Gun is null
-            // 12  = Gun.FireMode is 0 == safety
-            // 13  = Gun.State != Idle
-            // 14  = Gun.HasBulletInChamber == false
-            // 15  = Gun.ReloadHelper.HasMagazine == false && Gun.VariantData.CanShootWithoutMagazine == false
-            // 100 = in wall
-            // 101 = in safe zone
-            // 200 = callback returned false
+            // See ShotReasonId for the meaning of each id
             if (!notifyCancelled)
                 return;
 
             switch (reasonId)
             {
-                case 12:
+                case ShotReasonId.SelectorSafety:
                     SendNotification(onCantShootWhenSelectorSafety, true);
                     break;
-                case 13:
+                case ShotReasonId.StateNotIdle:
                     SendNotification(onCantShootBecauseStateNotIdle, true);
                     break;
-                case 14:
+                case ShotReasonId.NoBulletInChamber:
                     SendNotification(onCantShootBecauseNoBulletInChamber, true);
                     break;
-                case 15:
+                case ShotReasonId.NoMagazine:
                     SendNotification(onCantShootBecauseMagazineNotInserted, true);
                     break;
-                case 100:
+                case ShotReasonId.InWall:
                     SendNotification(onCantShootInWall, true);
                     break;
-                case 101:
+                case ShotReasonId.InSafeZone:
                     SendNotification(onCantShootInSafeZone, true);
                     break;
-                case 200:
+                case ShotReasonId.CallbackReturnedFalse:
                     SendNotification(onCantShootBecauseCallback, false);
                     break;
                 default:
