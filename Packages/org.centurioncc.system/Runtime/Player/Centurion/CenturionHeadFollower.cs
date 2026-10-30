@@ -10,9 +10,6 @@ namespace CenturionCC.System.Player.Centurion
         [SerializeField]
         private Vector3 followingOffset = new Vector3(0, 0.3F, 0);
 
-        [SerializeField]
-        private Vector3 localHeadOffset = new Vector3(0, 0, -1);
-
         private VRCPlayerApi _localPlayer;
 
         private VRCPlayerApi _targetPlayer;
@@ -27,11 +24,7 @@ namespace CenturionCC.System.Player.Centurion
 
         private void Update()
         {
-            var localHead = _localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
-
-            _transform.position = _targetPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position +
-                                  followingOffset;
-            _transform.LookAt(localHead.position + localHead.rotation * localHeadOffset);
+            _transform.position = _targetPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position + followingOffset;
         }
 
         public override void OnPlayerLeft(VRCPlayerApi player)
