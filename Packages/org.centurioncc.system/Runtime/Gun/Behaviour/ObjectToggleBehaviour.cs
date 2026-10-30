@@ -1,6 +1,4 @@
-﻿using System;
-using UdonSharp;
-using UnityEngine;
+﻿using UnityEngine;
 using VRC.Udon.Common.Interfaces;
 namespace CenturionCC.System.Gun.Behaviour
 {
